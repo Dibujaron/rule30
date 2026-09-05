@@ -24,3 +24,10 @@ pub fn now_iso_shape_test() {
   assert string.length(s) == 20
   assert string.ends_with(s, "Z")
 }
+
+pub fn new_run_id_shape_test() {
+  let s = log.new_run_id()
+  assert string.length(s) == 16
+  assert string.contains(s, "T")
+  assert string.ends_with(s, "Z")
+}
