@@ -1,5 +1,9 @@
-//// CLI entry point. For now: the v0 spike — a two-turn conversation with
-//// `claude -p` over stream-json, proving the port layer works on Windows.
+//// CLI entry point.
+////
+//// `gleam run` starts in `harness/`, but every worker session inherits the
+//// BEAM's working directory and every path in the DAG is written relative
+//// to the repository root — so the first thing `main` does, after resolving
+//// the config, is `cd` there.
 
 import argv
 import envoy
@@ -9,13 +13,44 @@ import gleam/list
 import gleam/option.{None, Some}
 import gleam/result
 import harness/claude
+import harness/config
+import harness/dag
+import harness/dispatch
 
 pub fn main() {
-  case argv.load().arguments {
-    ["spike"] -> spike()
-    _ -> io.println("usage: gleam run -- spike")
+  case config.load() {
+    Error(reason) -> io.println_error(reason)
+    Ok(cfg) -> {
+      let _ = set_cwd(cfg.repo_root)
+      run(cfg, argv.load().arguments)
+    }
   }
 }
+
+fn run(cfg: config.Config, arguments: List(String)) -> Nil {
+  case arguments {
+    ["spike"] -> spike()
+    ["status"] -> print_outcome(dispatch.status(cfg))
+    ["prove-one", node_id] ->
+      print_outcome(
+        dispatch.prove_one(cfg, node_id)
+        |> result.map(fn(outcome) {
+          "attempt ended: " <> dag.outcome_to_string(outcome)
+        }),
+      )
+    _ -> io.println("usage: gleam run -- status | prove-one <node-id> | spike")
+  }
+}
+
+fn print_outcome(outcome: Result(String, String)) -> Nil {
+  case outcome {
+    Ok(text) -> io.println(text)
+    Error(reason) -> io.println_error("harness: " <> reason)
+  }
+}
+
+@external(erlang, "harness_ffi", "set_cwd")
+fn set_cwd(dir: String) -> Result(Nil, Nil)
 
 fn spike() {
   let node =
@@ -66,10 +101,13 @@ fn spike() {
 }
 
 fn report(label: String, result: claude.Event, seen: List(claude.Event)) {
-  io.println("== " <> label <> ": " <> int.to_string(list.length(seen)) <> " events")
+  io.println(
+    "== " <> label <> ": " <> int.to_string(list.length(seen)) <> " events",
+  )
   list.each(seen, fn(e) {
     case e {
-      claude.Assistant(raw) -> io.println("assistant: " <> claude.assistant_text(raw))
+      claude.Assistant(raw) ->
+        io.println("assistant: " <> claude.assistant_text(raw))
       claude.RateLimit(u, _, _) ->
         io.println("rate limit five_hour utilization " <> float_to_string(u))
       claude.Init(id, _) -> io.println("init " <> id)

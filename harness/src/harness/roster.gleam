@@ -170,15 +170,16 @@ pub fn scorecard_text(s: Scorecard) -> String {
   <> ", abandoned "
   <> int.to_string(s.abandoned)
   <> ", $"
-  <> dollars(s.cost_usd)
+  <> usd(s.cost_usd)
   <> ", calibration "
   <> int.to_string(s.calibration_hits)
   <> "/"
   <> int.to_string(s.calibration_total)
 }
 
-/// A dollar amount to the cent: `2.1` renders as `"2.10"`, not `"2.1"`.
-fn dollars(amount: Float) -> String {
+/// A dollar amount to the cent: `2.1` renders as `"2.10"`, not `"2.1"` and
+/// certainly not `float_to_binary`'s `"2.10000000000000008882e+00"`.
+pub fn usd(amount: Float) -> String {
   let cents = float.round(amount *. 100.0)
   int.to_string(cents / 100)
   <> "."
