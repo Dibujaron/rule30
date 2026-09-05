@@ -171,6 +171,27 @@ pub fn name_identity(
   }
 }
 
+/// Send one line to a session, logging it first. Every turn the harness
+/// sends — the task, a verdict, a nudge, a ceremony's questions — goes
+/// through here, because half a conversation is not a transcript: the log
+/// has to answer "what was this agent actually asked?" as well as "what did
+/// it say?".
+fn say(session: claude.Session, l: log.Log, text: String) -> Nil {
+  log.raw(l, "sent", text)
+  claude.send(session, text)
+}
+
+/// A turn the session is not going to answer. Killing the port outright
+/// terminates the Node shim and leaves `claude.exe` running underneath it,
+/// so close stdin first and give the shim a few seconds to take its child
+/// down with it; `drain` kills if that grace runs out.
+fn stop(session: claude.Session, l: log.Log) -> Nil {
+  claude.finish(session)
+  drain(session, l, log.mono_ms() + stop_budget_ms)
+}
+
+const stop_budget_ms = 5000
+
 /// How the ceremony ended. `gone` says the child is already dead, so there
 /// is nothing left to close.
 type Ceremony {
@@ -185,10 +206,10 @@ fn ask_name(
   l: log.Log,
   may_retry: Bool,
 ) -> Ceremony {
-  claude.send(session, prompt)
+  say(session, l, prompt)
   case claude.read_turn(session, timeout_ms) {
     Error(Nil) -> {
-      claude.kill(session)
+      stop(session, l)
       Ceremony(Error("naming ceremony: no reply within the turn timeout"), True)
     }
     Ok(#(session, result_event, seen)) -> {
@@ -236,15 +257,16 @@ fn ask_color(
   case roster.valid_color(naming.color) {
     True -> Ceremony(Ok(naming), False)
     False -> {
-      claude.send(
+      say(
         session,
+        l,
         "\""
           <> naming.color
           <> "\" is not a colour I can use: it must be written as # followed by six hex digits, like #7b2d8e. Choose another colour and reply with the same JSON.",
       )
       case claude.read_turn(session, timeout_ms) {
         Error(Nil) -> {
-          claude.kill(session)
+          stop(session, l)
           Ceremony(Ok(naming), True)
         }
         Ok(#(_session, result_event, seen)) -> {
@@ -346,10 +368,10 @@ fn ask_color_only(
   l: log.Log,
   may_retry: Bool,
 ) -> ColorResult {
-  claude.send(session, prompt)
+  say(session, l, prompt)
   case claude.read_turn(session, timeout_ms) {
     Error(Nil) -> {
-      claude.kill(session)
+      stop(session, l)
       ColorResult(None, True)
     }
     Ok(#(session, result_event, seen)) -> {
@@ -457,16 +479,73 @@ pub fn attempt(
   let started = log.now_iso()
   let attempt_n = list.length(node.attempts) + 1
   let notebook = roster.read_notebook(cfg.agents_dir, identity)
-  let brief_path =
+  case
     write_brief(
       l,
       node,
       attempt_n,
       brief.text(cfg, d, node, identity, notebook),
     )
+  {
+    // No brief, no attempt: the brief carries the worker's identity, its
+    // constraints and the served list, and a session started without one is
+    // a differently-briefed agent pretending to be this one.
+    Error(reason) -> #(
+      failed_attempt(identity, model, node, started, reason),
+      None,
+    )
+    Ok(brief_path) ->
+      run_session(
+        cfg,
+        deps,
+        node,
+        identity,
+        model,
+        guard_,
+        l,
+        brief_path,
+        started,
+      )
+  }
+}
+
+/// An attempt that never got as far as a session.
+fn failed_attempt(
+  identity: roster.Identity,
+  model: String,
+  node: dag.Node,
+  started: String,
+  reason: String,
+) -> dag.Attempt {
+  dag.Attempt(
+    identity: identity.name,
+    session_id: "",
+    model:,
+    started:,
+    ended: log.now_iso(),
+    outcome: dag.TimedOut,
+    estimate: node.size,
+    reported: False,
+    cost_usd: 0.0,
+    turns: 0,
+    notes: reason,
+  )
+}
+
+fn run_session(
+  cfg: config.Config,
+  deps: Deps,
+  node: dag.Node,
+  identity: roster.Identity,
+  model: String,
+  guard_: guard.Guard,
+  l: log.Log,
+  brief_path: String,
+  started: String,
+) -> #(dag.Attempt, Option(Report)) {
   let session = claude.start(launch(cfg, model, guard_, brief_path))
 
-  claude.send(session, deps.task_message)
+  say(session, l, deps.task_message)
   let #(tally, ending) =
     turn_loop(Turn(
       cfg:,
@@ -488,10 +567,14 @@ pub fn attempt(
       started:,
       ended: log.now_iso(),
       outcome: ending.outcome,
+      // With no report there is no re-pricing: the node's own size stands
+      // in, and `reported` says it is not the worker's estimate, so the
+      // scorecard does not score it as calibration.
       estimate: case ending.report {
         Some(r) -> r.estimate
         None -> node.size
       },
+      reported: option.is_some(ending.report),
       cost_usd: tally.cost_usd,
       turns: tally.turns,
       notes: ending.notes,
@@ -547,7 +630,7 @@ fn launch(
 fn turn_loop(t: Turn) -> #(Tally, Ending) {
   case claude.read_turn(t.session, t.cfg.turn_timeout_ms) {
     Error(Nil) -> {
-      claude.kill(t.session)
+      stop(t.session, t.l)
       let tally = with_session_id(t)
       #(
         tally,
@@ -557,7 +640,7 @@ fn turn_loop(t: Turn) -> #(Tally, Ending) {
             tally,
             "no turn result within "
               <> int.to_string(t.cfg.turn_timeout_ms)
-              <> " ms; session killed",
+              <> " ms; session closed, then killed",
           ),
           None,
           True,
@@ -702,7 +785,7 @@ fn adjudicate(t: Turn, report: Report) -> #(Tally, Ending) {
     False ->
       case t.rounds < t.cfg.max_verify_rounds {
         True -> {
-          claude.send(t.session, text <> "\n\nFix the proof and report again.")
+          say(t.session, t.l, text <> "\n\nFix the proof and report again.")
           turn_loop(Turn(..t, rounds: t.rounds + 1))
         }
         False -> #(
@@ -743,7 +826,7 @@ fn nudge(
 ) -> #(Tally, Ending) {
   case t.rounds < t.cfg.max_verify_rounds {
     True -> {
-      claude.send(t.session, message)
+      say(t.session, t.l, message)
       turn_loop(Turn(..t, rounds: t.rounds + 1))
     }
     False -> #(
@@ -829,17 +912,33 @@ fn drain(session: claude.Session, l: log.Log, deadline: Int) -> Nil {
   }
 }
 
+/// Write the brief this attempt's session is started with. A failure here
+/// fails the attempt: `--append-system-prompt-file` on a file that is not
+/// there would start a session with none of this, and silently.
 fn write_brief(
   l: log.Log,
   node: dag.Node,
   attempt_n: Int,
   text: String,
-) -> String {
+) -> Result(String, String) {
   let dir = l.dir <> "/briefs"
   let path = dir <> "/" <> node.id <> "-" <> int.to_string(attempt_n) <> ".md"
-  let _ = simplifile.create_directory_all(dir)
-  let _ = simplifile.write(path, text)
-  path
+  use _ <- result.try(
+    simplifile.create_directory_all(dir)
+    |> result.map_error(fn(e) {
+      "could not create " <> dir <> ": " <> simplifile.describe_error(e)
+    }),
+  )
+  use _ <- result.try(
+    simplifile.write(path, text)
+    |> result.map_error(fn(e) {
+      "could not write the brief to "
+      <> path
+      <> ": "
+      <> simplifile.describe_error(e)
+    }),
+  )
+  Ok(path)
 }
 
 fn raw_of(event: claude.Event) -> String {

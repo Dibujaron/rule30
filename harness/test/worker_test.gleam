@@ -186,6 +186,7 @@ fn a_dag() -> dag.Dag {
         ended: "t1",
         outcome: dag.GaveUp,
         estimate: dag.M,
+        reported: True,
         cost_usd: 0.2,
         turns: 6,
         notes: "Finset.filter_insert never fired; the coercion to ℝ was the wall.",

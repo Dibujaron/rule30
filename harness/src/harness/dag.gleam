@@ -41,6 +41,12 @@ pub type Outcome {
 }
 
 /// A record of one Claude Code session dispatched at a node.
+///
+/// `reported` says whether `estimate` is the worker's own re-pricing or just
+/// the node's size copied in because the attempt never produced a structured
+/// report. Only a re-pricing is evidence about the identity's calibration:
+/// an attempt that died before reporting would otherwise score a free hit
+/// for agreeing with a number it never saw.
 pub type Attempt {
   Attempt(
     identity: String,
@@ -50,6 +56,7 @@ pub type Attempt {
     ended: String,
     outcome: Outcome,
     estimate: Size,
+    reported: Bool,
     cost_usd: Float,
     turns: Int,
     notes: String,
@@ -77,10 +84,43 @@ pub type Dag {
   Dag(nodes: List(Node))
 }
 
-/// Parse a `Dag` from its JSON text representation.
+/// Parse a `Dag` from its JSON text representation, rejecting a DAG whose
+/// nodes would share a proof file.
 pub fn decode(text: String) -> Result(Dag, String) {
-  json.parse(from: text, using: dag_decoder())
-  |> result.map_error(fn(e) { string.inspect(e) })
+  use dag <- result.try(
+    json.parse(from: text, using: dag_decoder())
+    |> result.map_error(fn(e) { string.inspect(e) }),
+  )
+  use _ <- result.try(no_duplicate_proof_paths(dag))
+  Ok(dag)
+}
+
+/// Two node ids that pascal-case to the same module — `evolve_left_edge` and
+/// `evolveLeftEdge`, say — would be dispatched at the same file, and the
+/// second worker to close would silently overwrite the first. Windows paths
+/// are case-insensitive too, so the comparison is.
+fn no_duplicate_proof_paths(dag: Dag) -> Result(Nil, String) {
+  let paths =
+    list.map(dag.nodes, fn(n) { #(n.id, string.lowercase(proof_path(n))) })
+  case
+    list.find(paths, fn(entry) {
+      list.count(paths, fn(other) { other.1 == entry.1 }) > 1
+    })
+  {
+    Error(Nil) -> Ok(Nil)
+    Ok(#(_, path)) ->
+      Error(
+        "two or more nodes map to the same proof file `"
+        <> path
+        <> "`: "
+        <> {
+          paths
+          |> list.filter(fn(entry) { entry.1 == path })
+          |> list.map(fn(entry) { entry.0 })
+          |> string.join(", ")
+        },
+      )
+  }
 }
 
 /// Render a `Dag` to its JSON text representation.
@@ -321,6 +361,10 @@ fn attempt_decoder() -> decode.Decoder(Attempt) {
   use ended <- decode.field("ended", decode.string)
   use outcome <- decode.field("outcome", outcome_decoder())
   use estimate <- decode.field("estimate", size_decoder())
+  // Absent on attempts recorded before the field existed. Those all carried
+  // a report — the only outcomes on the board then were `proved` ones — so
+  // `True` is the honest default, and it keeps their calibration unchanged.
+  use reported <- decode.optional_field("reported", True, decode.bool)
   use cost_usd <- decode.field("cost_usd", decode.float)
   use turns <- decode.field("turns", decode.int)
   use notes <- decode.field("notes", decode.string)
@@ -332,6 +376,7 @@ fn attempt_decoder() -> decode.Decoder(Attempt) {
     ended:,
     outcome:,
     estimate:,
+    reported:,
     cost_usd:,
     turns:,
     notes:,
@@ -377,6 +422,7 @@ fn attempt_to_json(attempt: Attempt) -> json.Json {
     #("ended", json.string(attempt.ended)),
     #("outcome", json.string(outcome_to_string(attempt.outcome))),
     #("estimate", json.string(size_to_string(attempt.estimate))),
+    #("reported", json.bool(attempt.reported)),
     #("cost_usd", json.float(attempt.cost_usd)),
     #("turns", json.int(attempt.turns)),
     #("notes", json.string(attempt.notes)),

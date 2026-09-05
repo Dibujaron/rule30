@@ -49,9 +49,20 @@ pub fn verify(repo_root: String, lake: String, node: dag.Node) -> Verdict {
   }
 }
 
+/// Build the proof module *and* `Rule30.Statements`. The check theorem in
+/// `verify_check` imports both, and `lake env lean` will not build a missing
+/// dependency for itself — a stale `Statements` olean turns a real proof
+/// into a `CheckFailed` that reads like the worker's fault.
 fn verify_build(repo_root: String, lake: String, node: dag.Node) -> Verdict {
   let proof_module = dag.proof_module(node)
-  case shell.run(lake, ["build", proof_module], repo_root, 600_000) {
+  case
+    shell.run(
+      lake,
+      ["build", "Rule30.Statements", proof_module],
+      repo_root,
+      600_000,
+    )
+  {
     Error(msg) -> BuildFailed(msg)
     Ok(shell.Run(status:, output:)) if status != 0 -> BuildFailed(output)
     Ok(_) -> verify_check(repo_root, lake, node)

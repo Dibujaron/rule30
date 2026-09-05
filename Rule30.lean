@@ -9,9 +9,12 @@ Root module. Importing `Rule30` pulls in the whole Lean core of the project:
   by design.
 * `Rule30.Statements` — seed lemmas for the harness to dispatch. All `sorry`,
   by design: this file states, `Rule30/Proofs/` proves.
+* `Rule30.Proofs` — every closed node's proof, so a root build checks them
+  too. The dispatcher maintains that file's import list.
 
-Those two files are the only places a `sorry` is permitted.
+Those two `sorry` files are the only places a `sorry` is permitted.
 -/
 import Rule30.Basic
 import Rule30.Prize
 import Rule30.Statements
+import Rule30.Proofs

@@ -21,6 +21,7 @@ import harness/log
 import harness/roster
 import harness/worker
 import harness/worker/brief
+import simplifile
 
 /// Dispatch one attempt at one node, end to end. The `Ok` is how the
 /// attempt ended, not whether the node closed — `dag.Closed` is the only
@@ -43,7 +44,17 @@ pub fn prove_one(
         <> "` is not an open leaf: it is "
         <> dag.status_to_string(node.status)
         <> " and its dependencies are "
-        <> dependency_summary(d, node),
+        <> dependency_summary(d, node)
+        <> case node.status {
+          // A claim outlives the run that made it: a dispatcher that
+          // crashed mid-attempt leaves its node claimed with nothing left
+          // running, and nothing else ever clears it.
+          dag.Claimed ->
+            ". If no attempt is actually running, `gleam run -- reopen "
+            <> node_id
+            <> "` puts it back on the board."
+          _ -> ""
+        },
       )
   })
   let failed = failed_attempts(node)
@@ -114,10 +125,126 @@ pub fn prove_one(
     )
   let d = dag.update(d, record(claimed, attempt))
   use _ <- result.try(dag.save(d, cfg.dag_path))
+  use _ <- result.try(case attempt.outcome {
+    dag.Closed -> index_proof(cfg, l, claimed)
+    _ -> Ok(Nil)
+  })
 
   write_channels(cfg, l, identity, node_id, model, attempt, report)
   io.println(summary(d, l, identity, attempt, node_id))
   Ok(attempt.outcome)
+}
+
+// --- the proofs index ---------------------------------------------------------
+
+/// Where the import list of every closed proof lives, relative to the repo
+/// root. `Rule30.lean` imports it, so `lake build` from the root builds the
+/// proofs; nothing else does.
+pub const proofs_index = "Rule30/Proofs.lean"
+
+/// Add a closed node's module to `Rule30/Proofs.lean`, so the next root
+/// `lake build` compiles it. A proof nothing imports is a proof nobody
+/// notices has rotted.
+fn index_proof(
+  cfg: config.Config,
+  l: log.Log,
+  node: dag.Node,
+) -> Result(Nil, String) {
+  let path = cfg.repo_root <> "/" <> proofs_index
+  let existing = simplifile.read(path) |> result.unwrap("")
+  let updated = with_import(existing, dag.proof_module(node))
+  log.event(l, "index", [
+    #("node", json.string(node.id)),
+    #("module", json.string(dag.proof_module(node))),
+    #("file", json.string(proofs_index)),
+  ])
+  simplifile.write(path, updated)
+  |> result.map_error(fn(e) {
+    "could not add "
+    <> dag.proof_module(node)
+    <> " to "
+    <> path
+    <> ": "
+    <> simplifile.describe_error(e)
+  })
+}
+
+/// `existing` with `import <module>` present exactly once, the imports
+/// sorted, and everything above the first of them — the file's header
+/// comment — left exactly as it was. Idempotent: re-closing a node does not
+/// add the line twice. The file is header-then-imports and nothing else, so
+/// this does not have to think about code below the import block.
+pub fn with_import(existing: String, module: String) -> String {
+  let lines = string.split(existing, "\n")
+  let is_import = fn(line) { string.starts_with(line, "import ") }
+  let header =
+    lines
+    |> list.take_while(fn(line) { !is_import(line) })
+    |> drop_trailing_blanks
+  let imports =
+    ["import " <> module, ..list.filter(lines, is_import)]
+    |> list.unique
+    |> list.sort(string.compare)
+  string.join(list.append(header, imports), "\n") <> "\n"
+}
+
+fn drop_trailing_blanks(lines: List(String)) -> List(String) {
+  lines
+  |> list.reverse
+  |> list.drop_while(fn(line) { string.trim(line) == "" })
+  |> list.reverse
+}
+
+// --- reopening ----------------------------------------------------------------
+
+/// Put a `Claimed` node back on the board. A crashed or killed dispatcher
+/// leaves its node claimed forever — `prove_one` refuses a claimed node, and
+/// nothing else ever clears the status — so this is the manual undo. Only
+/// `Claimed` is reopened: an `Abandoned` node is a decision, and a `Proved`
+/// one has a proof.
+pub fn reopen(cfg: config.Config, node_id: String) -> Result(String, String) {
+  use d <- result.try(dag.load(cfg.dag_path))
+  use node <- result.try(
+    dag.get(d, node_id)
+    |> result.replace_error("no node `" <> node_id <> "` in " <> cfg.dag_path),
+  )
+  case node.status {
+    dag.Claimed -> {
+      let reopened = dag.Node(..node, status: dag.Open)
+      use _ <- result.try(dag.save(dag.update(d, reopened), cfg.dag_path))
+      // The DAG is the source of truth, so a hand edit to it is an event
+      // with a reason, like every dispatch decision.
+      use l <- result.try(log.open(cfg.runs_root, log.new_run_id()))
+      log.event(l, "reopen", [
+        #("node", json.string(node_id)),
+        #("from", json.string(dag.status_to_string(node.status))),
+        #("to", json.string(dag.status_to_string(dag.Open))),
+        #("attempts", json.int(list.length(node.attempts))),
+        #(
+          "reason",
+          json.string(
+            "asked for by hand: a claim outlives the run that made it",
+          ),
+        ),
+      ])
+      Ok(
+        "`"
+        <> node_id
+        <> "` was claimed with "
+        <> int.to_string(list.length(node.attempts))
+        <> " attempt(s) recorded and is now open. A claim outlives the run "
+        <> "that made it, so this is how a crashed attempt gets its node back.",
+      )
+    }
+    other ->
+      Error(
+        "`"
+        <> node_id
+        <> "` is "
+        <> dag.status_to_string(other)
+        <> ", not claimed; only a claimed node can be reopened",
+      )
+  }
 }
 
 /// Every node, then the open leaves in the order the dispatcher would take

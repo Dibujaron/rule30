@@ -58,6 +58,7 @@ fn attempt(outcome: dag.Outcome) -> dag.Attempt {
     ended: "t1",
     outcome:,
     estimate: dag.S,
+    reported: True,
     cost_usd: 0.0,
     turns: 1,
     notes: "",
@@ -99,6 +100,73 @@ pub fn prove_one_refuses_a_node_with_no_statement_test() {
   let assert Error(reason) = dispatch.prove_one(cfg(), "ghost_lemma")
   assert string.contains(reason, "not_a_theorem_anywhere")
   assert string.contains(reason, "Statements.lean")
+}
+
+pub fn prove_one_points_a_claimed_node_at_reopen_test() {
+  let c = cfg()
+  let assert Ok(d) = dag.load(c.dag_path)
+  let assert Ok(n) = dag.get(d, "harness_probe")
+  let assert Ok(_) =
+    dag.save(dag.update(d, Node(..n, status: dag.Claimed)), c.dag_path)
+  let assert Error(reason) = dispatch.prove_one(c, "harness_probe")
+  assert string.contains(reason, "it is claimed")
+  assert string.contains(reason, "reopen harness_probe")
+}
+
+// --- reopen -------------------------------------------------------------------
+
+pub fn reopen_puts_a_claimed_node_back_on_the_board_test() {
+  let c = cfg()
+  let assert Ok(d) = dag.load(c.dag_path)
+  let assert Ok(n) = dag.get(d, "harness_probe")
+  let assert Ok(_) =
+    dag.save(dag.update(d, Node(..n, status: dag.Claimed)), c.dag_path)
+
+  let assert Ok(said) = dispatch.reopen(c, "harness_probe")
+  assert string.contains(said, "is now open")
+  let assert Ok(after) = dag.load(c.dag_path)
+  let assert Ok(reopened) = dag.get(after, "harness_probe")
+  assert reopened.status == dag.Open
+}
+
+pub fn reopen_refuses_anything_that_is_not_claimed_test() {
+  let c = cfg()
+  // Open: there is nothing to undo.
+  let assert Error(reason) = dispatch.reopen(c, "harness_probe")
+  assert string.contains(reason, "is open, not claimed")
+
+  let assert Ok(d) = dag.load(c.dag_path)
+  let assert Ok(n) = dag.get(d, "harness_probe")
+  let assert Ok(_) =
+    dag.save(dag.update(d, Node(..n, status: dag.Proved)), c.dag_path)
+  let assert Error(reason) = dispatch.reopen(c, "harness_probe")
+  assert string.contains(reason, "is proved, not claimed")
+
+  let assert Error(reason) = dispatch.reopen(c, "no_such_node")
+  assert string.contains(reason, "no node `no_such_node`")
+}
+
+// --- the proofs index ---------------------------------------------------------
+
+pub fn with_import_adds_one_sorted_line_and_keeps_the_header_test() {
+  let header = "/-\n# Rule30.Proofs\n\nThe dispatcher maintains this.\n-/"
+  let existing = header <> "\nimport Rule30.Proofs.EvolveLeftEdge\n"
+  let after = dispatch.with_import(existing, "Rule30.Proofs.CenterColumnZero")
+  assert after
+    == header
+    <> "\nimport Rule30.Proofs.CenterColumnZero\nimport Rule30.Proofs.EvolveLeftEdge\n"
+}
+
+pub fn with_import_is_idempotent_test() {
+  let existing = "/-\nheader\n-/\nimport Rule30.Proofs.CenterColumnZero\n"
+  let once = dispatch.with_import(existing, "Rule30.Proofs.CenterColumnZero")
+  assert once == existing
+  assert dispatch.with_import(once, "Rule30.Proofs.CenterColumnZero") == once
+}
+
+pub fn with_import_seeds_an_empty_file_test() {
+  assert dispatch.with_import("", "Rule30.Proofs.CenterColumnZero")
+    == "import Rule30.Proofs.CenterColumnZero\n"
 }
 
 // --- what counts against the ladder -------------------------------------------

@@ -10,6 +10,7 @@
 //// Nothing here spends the subscription or touches the real DAG.
 
 import envoy
+import gleam/erlang/process
 import gleam/int
 import gleam/json
 import gleam/list
@@ -36,16 +37,20 @@ type Scenario {
     verdicts: List(verify.Verdict),
     max_verify_rounds: Int,
     turn_timeout_ms: Int,
+    ignore_eof: Bool,
   )
 }
 
 /// What a scripted session left behind. `eof` is the fake shim's own record
-/// that it was told to close, so an orphaned session is detectable.
+/// that it was told to close and `killed` its record that it was shut down
+/// from outside, so an orphaned session is detectable either way.
 type Run {
   Run(
     attempt: dag.Attempt,
     report: Option(worker.Report),
     eof: Bool,
+    killed: Bool,
+    events: String,
     verify_calls: Int,
     elapsed_ms: Int,
   )
@@ -58,6 +63,7 @@ fn scenario(name: String, script: List(List(String))) -> Scenario {
     verdicts: [],
     max_verify_rounds: 4,
     turn_timeout_ms: 20_000,
+    ignore_eof: False,
   )
 }
 
@@ -67,10 +73,16 @@ fn go(s: Scenario) -> Run {
   let assert Ok(_) = simplifile.create_directory_all(dir)
   let script_path = dir <> "/script.json"
   let marker_path = dir <> "/eof"
+  let killed_path = dir <> "/killed"
   let calls_path = dir <> "/verify-calls"
   let assert Ok(_) = simplifile.write(script_path, script_json(s.script))
   envoy.set("HARNESS_FAKE_SCRIPT", script_path)
   envoy.set("HARNESS_FAKE_MARKER", marker_path)
+  envoy.set("HARNESS_FAKE_KILLED", killed_path)
+  case s.ignore_eof {
+    True -> envoy.set("HARNESS_FAKE_IGNORE_EOF", "1")
+    False -> envoy.unset("HARNESS_FAKE_IGNORE_EOF")
+  }
 
   let base = base_cfg()
   let cfg =
@@ -97,6 +109,13 @@ fn go(s: Scenario) -> Run {
     attempt:,
     report:,
     eof: exists(marker_path),
+    // A killed shim writes its marker as it goes down, just after the port
+    // was closed — so give it a moment rather than racing it.
+    killed: case s.ignore_eof {
+      True -> wait_for(killed_path, log.mono_ms() + 3000)
+      False -> exists(killed_path)
+    },
+    events: simplifile.read(l.dir <> "/events.jsonl") |> result.unwrap(""),
     verify_calls: line_count(calls_path),
     elapsed_ms: log.mono_ms() - started,
   )
@@ -169,6 +188,19 @@ fn line_count(path: String) -> Int {
 
 fn exists(path: String) -> Bool {
   simplifile.is_file(path) |> result.unwrap(False)
+}
+
+/// `exists`, but willing to wait: a marker written by another OS process as
+/// it dies may land a few milliseconds after the harness has moved on.
+fn wait_for(path: String, deadline: Int) -> Bool {
+  case exists(path), log.mono_ms() < deadline {
+    True, _ -> True
+    False, False -> False
+    False, True -> {
+      process.sleep(50)
+      wait_for(path, deadline)
+    }
+  }
 }
 
 // --- the lines a session is made of -------------------------------------------
@@ -553,12 +585,56 @@ pub fn in_progress_past_the_round_budget_is_budget_exhausted_test() {
 
 // --- a silent turn ------------------------------------------------------------
 
-pub fn a_silent_turn_times_out_and_does_not_wait_on_a_dead_port_test() {
+pub fn a_silent_turn_closes_the_session_before_killing_it_test() {
   let r = go(Scenario(..scenario("silent-turn", [[]]), turn_timeout_ms: 1000))
   assert r.attempt.outcome == dag.TimedOut
-  assert string.contains(r.attempt.notes, "session killed")
-  assert !r.eof
-  // The killed port has no more to say: draining it would block for the
-  // full 30 s budget, so the loop must not try.
+  assert string.contains(r.attempt.notes, "session closed, then killed")
+  // Closing the port outright kills the shim and orphans `claude.exe` under
+  // it, so a timed-out turn is closed politely first — and the shim, given
+  // the chance, takes its child down with it.
+  assert r.eof
+  // Still bounded: the polite close gets seconds, not the full drain budget.
   assert r.elapsed_ms < 15_000
+}
+
+pub fn a_session_that_will_not_close_is_killed_test() {
+  // The fake ignores `__EOF__`, which is a claude that will not exit. The
+  // harness must escalate rather than wait: the shim's own shutdown path
+  // (where the real one kills claude's process tree) has to run.
+  let r =
+    go(
+      Scenario(
+        ..scenario("silent-turn-unclosable", [[]]),
+        turn_timeout_ms: 1000,
+        ignore_eof: True,
+      ),
+    )
+  assert r.attempt.outcome == dag.TimedOut
+  assert r.eof
+  assert r.killed
+  assert r.elapsed_ms < 20_000
+}
+
+// --- what the harness said ----------------------------------------------------
+
+pub fn every_line_the_harness_sends_is_logged_test() {
+  let r =
+    go(
+      Scenario(
+        ..scenario("sent-lines", [
+          [init_line("sess-s"), result_line("sess-s", False, "proved")],
+          [result_line("sess-s", False, "proved")],
+        ]),
+        verdicts: [
+          verify.BuildFailed("unknown identifier 'foo'"),
+          verify.Verified(["propext"], "depends on axioms: [propext]"),
+        ],
+      ),
+    )
+  assert r.attempt.outcome == dag.Closed
+  // The task message and the verdict the harness sent back are both in the
+  // log, raw: a transcript missing the harness's half is not a transcript.
+  assert string.contains(r.events, "\"kind\":\"sent\"")
+  assert string.contains(r.events, "Prove it.")
+  assert string.contains(r.events, "Fix the proof and report again.")
 }

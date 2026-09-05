@@ -13,6 +13,15 @@
 //   HARNESS_FAKE_MARKER   optional path. Written when the harness sends the
 //                         `__EOF__` sentinel, so a test can prove the
 //                         session was closed rather than orphaned.
+//   HARNESS_FAKE_KILLED   optional path. Written when this process is shut
+//                         down from outside — our stdin closing (the Erlang
+//                         port was closed) or a signal — which is where the
+//                         real shim kills claude's process tree. A test that
+//                         sees this marker knows the child is gone rather
+//                         than orphaned.
+//   HARNESS_FAKE_IGNORE_EOF  when set, `__EOF__` is recorded but not obeyed,
+//                         so a test can drive the harness's escalation from
+//                         "close politely" to "kill".
 //
 // Two sentinels may appear inside a turn's lines:
 //
@@ -26,6 +35,8 @@ import { createInterface } from "node:readline";
 
 const scriptPath = process.env.HARNESS_FAKE_SCRIPT;
 const markerPath = process.env.HARNESS_FAKE_MARKER;
+const killedPath = process.env.HARNESS_FAKE_KILLED;
+const ignoreEof = !!process.env.HARNESS_FAKE_IGNORE_EOF;
 
 if (!scriptPath) {
   process.stderr.write("fake_shim: HARNESS_FAKE_SCRIPT is not set\n");
@@ -48,12 +59,19 @@ function leave(status) {
   process.stdout.write("", () => process.exit(status));
 }
 
+// The real shim's shutdown path: stdin gone, or a signal, means kill the
+// child and go. There is no child here, so record that it happened.
+function shutDown(reason) {
+  if (killedPath) writeFileSync(killedPath, reason + "\n");
+  leave(0);
+}
+
 const lines = createInterface({ input: process.stdin, crlfDelay: Infinity });
 
 lines.on("line", (line) => {
   if (line === "__EOF__") {
     if (markerPath) writeFileSync(markerPath, "__EOF__\n");
-    leave(0);
+    if (!ignoreEof) leave(0);
     return;
   }
   const turn = turns[next++] ?? [];
@@ -67,4 +85,8 @@ lines.on("line", (line) => {
   }
 });
 
-lines.on("close", () => leave(0));
+lines.on("close", () => shutDown("close"));
+
+for (const signal of ["SIGTERM", "SIGINT", "SIGBREAK"]) {
+  process.on(signal, () => shutDown(signal));
+}

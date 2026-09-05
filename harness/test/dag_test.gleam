@@ -1,5 +1,6 @@
 import gleam/list
 import gleam/option.{None, Some}
+import gleam/string
 import harness/dag.{type Node, Attempt, Dag, Node}
 
 fn node(
@@ -58,6 +59,7 @@ pub fn round_trip_json_test() {
             ended: "t1",
             outcome: dag.GaveUp,
             estimate: dag.L,
+            reported: True,
             cost_usd: 0.5,
             turns: 7,
             notes: "stuck on abs",
@@ -80,6 +82,33 @@ pub fn proof_module_preserves_tail_case_test() {
   let n = node("centerColumn_zero", [], dag.Open, dag.S)
   assert dag.proof_module(n) == "Rule30.Proofs.CenterColumnZero"
   assert dag.proof_path(n) == "Rule30/Proofs/CenterColumnZero.lean"
+}
+
+pub fn decode_rejects_two_nodes_that_share_a_proof_file_test() {
+  // `evolve_left_edge` and `evolveLeftEdge` both pascal-case to
+  // `EvolveLeftEdge`, so the second worker to close would silently overwrite
+  // the first — and on Windows the paths are the same file regardless of
+  // case.
+  let clashing =
+    Dag([
+      node("evolve_left_edge", [], dag.Open, dag.S),
+      node("evolveLeftEdge", [], dag.Open, dag.S),
+      node("centerColumn_zero", [], dag.Open, dag.S),
+    ])
+  let assert Error(reason) = dag.decode(dag.encode(clashing))
+  assert string.contains(reason, "same proof file")
+  assert string.contains(reason, "evolve_left_edge, evolveLeftEdge")
+
+  // The same DAG without the clash decodes.
+  let assert Ok(_) =
+    dag.decode(
+      dag.encode(
+        Dag([
+          node("evolve_left_edge", [], dag.Open, dag.S),
+          node("centerColumn_zero", [], dag.Open, dag.S),
+        ]),
+      ),
+    )
 }
 
 pub fn served_is_proved_only_test() {

@@ -210,6 +210,7 @@ fn attempt(
     ended: "t1",
     outcome:,
     estimate:,
+    reported: True,
     cost_usd: cost,
     turns: 3,
     notes: "",
@@ -260,6 +261,21 @@ pub fn scorecard_counts_only_this_identitys_attempts_test() {
   assert s.calibration_total == 4
   assert roster.scorecard_text(s, None)
     == "Thessaly: closed 2, abandoned 1, $2.10, calibration 3/4"
+}
+
+pub fn an_attempt_with_no_report_is_not_calibration_evidence_test() {
+  // A session that died before reporting has its node's own size copied in
+  // as `estimate`. Counting that as a hit would score the identity for
+  // agreeing with a number it never saw.
+  let unreported =
+    dag.Attempt(
+      ..attempt("Thessaly", dag.TimedOut, dag.M, 0.0),
+      reported: False,
+    )
+  let d = Dag([node_with("b", dag.M, [unreported])])
+  let s = roster.scorecard(d, "Thessaly")
+  assert s.calibration_hits == 0
+  assert s.calibration_total == 0
 }
 
 pub fn scorecard_text_includes_the_colour_when_present_test() {

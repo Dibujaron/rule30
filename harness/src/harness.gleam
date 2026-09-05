@@ -38,7 +38,11 @@ fn run(cfg: config.Config, arguments: List(String)) -> Nil {
           "attempt ended: " <> dag.outcome_to_string(outcome)
         }),
       )
-    _ -> io.println("usage: gleam run -- status | prove-one <node-id> | spike")
+    ["reopen", node_id] -> print_outcome(dispatch.reopen(cfg, node_id))
+    _ ->
+      io.println(
+        "usage: gleam run -- status | prove-one <node-id> | reopen <node-id> | spike",
+      )
   }
 }
 

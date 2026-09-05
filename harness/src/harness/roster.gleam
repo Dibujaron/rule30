@@ -131,7 +131,10 @@ pub fn append_notebook(
 ///
 /// `calibration` counts the attempts whose own size estimate matched the
 /// node's recorded size: an identity that consistently calls an `M` an `S`
-/// is telling you something about both.
+/// is telling you something about both. Only attempts that actually carried
+/// a report are counted — an attempt with no report has the node's own size
+/// copied into `estimate`, and scoring that would be marking an identity's
+/// homework against a number it never wrote.
 pub type Scorecard {
   Scorecard(
     name: String,
@@ -162,9 +165,13 @@ fn tally(acc: Scorecard, node: dag.Node, attempt: dag.Attempt) -> Scorecard {
     dag.GaveUp | dag.BudgetExhausted -> acc.abandoned + 1
     _ -> acc.abandoned
   }
-  let hits = case attempt.estimate == node.size {
+  let hits = case attempt.reported && attempt.estimate == node.size {
     True -> acc.calibration_hits + 1
     False -> acc.calibration_hits
+  }
+  let total = case attempt.reported {
+    True -> acc.calibration_total + 1
+    False -> acc.calibration_total
   }
   Scorecard(
     name: acc.name,
@@ -172,7 +179,7 @@ fn tally(acc: Scorecard, node: dag.Node, attempt: dag.Attempt) -> Scorecard {
     abandoned:,
     cost_usd: acc.cost_usd +. attempt.cost_usd,
     calibration_hits: hits,
-    calibration_total: acc.calibration_total + 1,
+    calibration_total: total,
   )
 }
 
