@@ -1,3 +1,4 @@
+import gleam/list
 import gleam/string
 import harness/guard.{Rules}
 import harness/lock
@@ -34,6 +35,20 @@ pub fn lake_build_acquires_and_other_bash_denied_test() {
   let post =
     "{\"hook_event_name\":\"PostToolUse\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"lake build\"},\"tool_response\":\"ok\"}"
   assert guard.decide(rules, post) == guard.ReleaseBuild
+}
+
+pub fn only_a_finished_build_releases_the_lock_test() {
+  // `lake env lean` never took the lock, so its PostToolUse must not give
+  // one back — a sibling worker's build would be the one released.
+  let env =
+    "{\"hook_event_name\":\"PostToolUse\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"lake env lean x.lean\"},\"tool_response\":\"ok\"}"
+  assert guard.decide(rules, env) == guard.Allow
+  let denied =
+    "{\"hook_event_name\":\"PostToolUse\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"rm -rf /\"},\"tool_response\":\"ok\"}"
+  assert guard.decide(rules, denied) == guard.Allow
+  let read =
+    "{\"hook_event_name\":\"PostToolUse\",\"tool_name\":\"Read\",\"tool_input\":{\"file_path\":\"x\"}}"
+  assert guard.decide(rules, read) == guard.Allow
 }
 
 pub fn lake_env_lean_with_windows_path_is_allowed_test() {
@@ -117,8 +132,72 @@ pub fn write_settings_produces_the_documented_shape_test() {
   assert string.contains(content, "5555")
   assert string.contains(content, "PreToolUse")
   assert string.contains(content, "PostToolUse")
+  assert string.contains(content, "PreCompact")
   assert string.contains(content, "--data-binary @-")
   let assert Ok(_) = simplifile.delete("build/test-runs")
+}
+
+pub fn the_hook_command_fails_closed_when_curl_fails_test() {
+  // Claude Code blocks a tool call only on exit 2. curl's transport failures
+  // exit 6/7/28, which are "no opinion" — so a bare curl means an
+  // unreachable guard allows everything.
+  let command = guard.hook_command("abc123", 5555, 280, "PreToolUse")
+  assert string.starts_with(command, "curl -s -m 280")
+  assert string.contains(command, "|| { printf '%s' '")
+  assert string.contains(command, "; exit 2; }")
+  assert string.contains(command, "\"permissionDecision\":\"deny\"")
+  assert string.contains(command, "harness guard unreachable")
+  assert string.contains(command, "\"hookEventName\":\"PreToolUse\"")
+}
+
+pub fn every_generated_hook_carries_the_failure_branch_test() {
+  let assert Ok(_) = simplifile.create_directory_all("build/test-runs")
+  let g = guard.Guard(port: 5555, token: "abc123", settings_path: "unused")
+  let path = "build/test-runs/settings-failclosed.json"
+  let assert Ok(_) = guard.write_settings(g, path)
+  let assert Ok(content) = simplifile.read(path)
+  // Three hooks, three failure branches.
+  assert count(content, "exit 2; }") == 3
+  assert count(content, "curl -s -m ") == 3
+  let assert Ok(_) = simplifile.delete("build/test-runs")
+}
+
+fn count(haystack: String, needle: String) -> Int {
+  list.length(string.split(haystack, needle)) - 1
+}
+
+// --- PreCompact ---------------------------------------------------------------
+
+pub fn precompact_archives_the_transcript_test() {
+  let dir = "build/test-runs/precompact"
+  let assert Ok(_) = simplifile.create_directory_all(dir)
+  let transcript = dir <> "/live.jsonl"
+  let assert Ok(_) = simplifile.write(transcript, "{\"a\":1}\n{\"b\":2}\n")
+  let input =
+    "{\"hook_event_name\":\"PreCompact\",\"session_id\":\"sess-9\",\"transcript_path\":\""
+    <> transcript
+    <> "\"}"
+  let assert guard.Archive(session_id:, transcript_path:) =
+    guard.decide(rules, input)
+  assert session_id == "sess-9"
+  assert transcript_path == transcript
+  // An archive is not a permission decision: the session compacts as usual.
+  assert guard.decision_json(guard.decide(rules, input), "PreCompact") == "{}"
+
+  let assert Ok(copied) = guard.archive_transcript(dir, session_id, transcript)
+  assert string.contains(copied, dir <> "/transcripts/sess-9-precompact-")
+  assert string.ends_with(copied, ".jsonl")
+  // The stamp is a legal Windows filename: no colons survive from now_iso().
+  let assert Ok(#(_, name)) = string.split_once(copied, "/transcripts/")
+  assert !string.contains(name, ":")
+  let assert Ok(archived) = simplifile.read(copied)
+  assert archived == "{\"a\":1}\n{\"b\":2}\n"
+  let assert Ok(_) = simplifile.delete(dir)
+}
+
+pub fn precompact_without_a_transcript_is_allowed_test() {
+  let input = "{\"hook_event_name\":\"PreCompact\",\"session_id\":\"sess-9\"}"
+  assert guard.decide(rules, input) == guard.Allow
 }
 
 pub fn guard_http_denies_rm_over_hook_endpoint_test() {

@@ -46,8 +46,10 @@ pub type Decision {
   AcquireBuild
   /// Block the tool call, and tell Claude Code why.
   Deny(reason: String)
-  /// A `Bash` call just finished: give the build lock back.
+  /// A `lake build` just finished: give the build lock back.
   ReleaseBuild
+  /// The session is about to compact: copy its transcript aside first.
+  Archive(session_id: String, transcript_path: String)
 }
 
 /// The handful of fields `decide` cares about, pulled out of a hook's JSON.
@@ -57,12 +59,20 @@ type HookInput {
     tool_name: String,
     file_path: String,
     command: String,
+    session_id: String,
+    transcript_path: String,
   )
 }
 
 fn hook_input_decoder() -> decode.Decoder(HookInput) {
   use event <- decode.field("hook_event_name", decode.string)
   use tool_name <- decode.optional_field("tool_name", "", decode.string)
+  use session_id <- decode.optional_field("session_id", "", decode.string)
+  use transcript_path <- decode.optional_field(
+    "transcript_path",
+    "",
+    decode.string,
+  )
   use file_path <- decode.then(decode.optionally_at(
     ["tool_input", "file_path"],
     "",
@@ -73,7 +83,14 @@ fn hook_input_decoder() -> decode.Decoder(HookInput) {
     "",
     decode.string,
   ))
-  decode.success(HookInput(event:, tool_name:, file_path:, command:))
+  decode.success(HookInput(
+    event:,
+    tool_name:,
+    file_path:,
+    command:,
+    session_id:,
+    transcript_path:,
+  ))
 }
 
 fn parse_hook_input(hook_input: String) -> Result(HookInput, json.DecodeError) {
@@ -93,10 +110,18 @@ pub fn decide(rules: Rules, hook_input: String) -> Decision {
 fn decide_input(rules: Rules, hi: HookInput) -> Decision {
   case hi.event {
     "PreToolUse" -> decide_pre(rules, hi)
+    // Only a build releases the build lock. Every `Bash` call used to, so a
+    // `lake env lean` finishing while a sibling worker held the lock handed
+    // that worker's lock away.
     "PostToolUse" ->
-      case hi.tool_name {
-        "Bash" -> ReleaseBuild
-        _ -> Allow
+      case hi.tool_name, decide_bash(hi.command) {
+        "Bash", AcquireBuild -> ReleaseBuild
+        _, _ -> Allow
+      }
+    "PreCompact" ->
+      case hi.transcript_path {
+        "" -> Allow
+        path -> Archive(session_id: hi.session_id, transcript_path: path)
       }
     _ -> Allow
   }
@@ -235,8 +260,41 @@ pub fn decision_json(d: Decision, event_name: String) -> String {
         ),
       ])
       |> json.to_string
-    Allow | AcquireBuild | ReleaseBuild -> "{}"
+    Allow | AcquireBuild | ReleaseBuild | Archive(..) -> "{}"
   }
+}
+
+/// Copy a session's transcript into `<log_dir>/transcripts/` before Claude
+/// Code compacts it away. The name carries the session id and the moment it
+/// was taken, colons stripped so it is a legal Windows filename.
+pub fn archive_transcript(
+  log_dir: String,
+  session_id: String,
+  transcript_path: String,
+) -> Result(String, String) {
+  let dir = log_dir <> "/transcripts"
+  let name =
+    case session_id {
+      "" -> "unknown"
+      id -> id
+    }
+    <> "-precompact-"
+    <> string.replace(log.now_iso(), ":", "")
+    <> ".jsonl"
+  let destination = dir <> "/" <> name
+  use _ <- result.try(
+    simplifile.create_directory_all(dir)
+    |> result.map_error(simplifile.describe_error),
+  )
+  use text <- result.try(
+    simplifile.read_bits(transcript_path)
+    |> result.map_error(simplifile.describe_error),
+  )
+  use _ <- result.try(
+    simplifile.write_bits(to: destination, bits: text)
+    |> result.map_error(simplifile.describe_error),
+  )
+  Ok(destination)
 }
 
 /// Start the guard: a fresh token, an HTTP server on `port` bound to
@@ -324,7 +382,7 @@ fn respond_to_hook(
     Ok(hi) -> #(hi.event, hi.tool_name)
     Error(_) -> #("", "")
   }
-  let decision = apply_side_effects(decide(rules, body), rules, lock)
+  let decision = apply_side_effects(decide(rules, body), rules, lock, log)
   log.event(log, "guard", [
     #("event", json.string(event_name)),
     #("tool", json.string(tool_name)),
@@ -333,13 +391,16 @@ fn respond_to_hook(
   json_response(200, decision_json(decision, event_name))
 }
 
-/// Turn `AcquireBuild`/`ReleaseBuild` into actual lock operations. An
-/// `AcquireBuild` that times out becomes a `Deny`, so the worker never
-/// thinks it holds a lock it does not.
+/// Turn `AcquireBuild`/`ReleaseBuild` into actual lock operations, and
+/// `Archive` into a copied transcript. An `AcquireBuild` that times out
+/// becomes a `Deny`, so the worker never thinks it holds a lock it does not;
+/// an archive that fails is logged and the compaction proceeds, because
+/// blocking a session over a missing log file would cost more than the file.
 fn apply_side_effects(
   decision: Decision,
   rules: Rules,
   lock: Subject(lock.Msg),
+  l: log.Log,
 ) -> Decision {
   case decision {
     AcquireBuild ->
@@ -350,6 +411,20 @@ fn apply_side_effects(
     ReleaseBuild -> {
       lock.release(lock, rules.holder)
       ReleaseBuild
+    }
+    Archive(session_id:, transcript_path:) -> {
+      let outcome = case
+        archive_transcript(l.dir, session_id, transcript_path)
+      {
+        Ok(destination) -> destination
+        Error(reason) -> "not archived: " <> reason
+      }
+      log.event(l, "precompact", [
+        #("session", json.string(session_id)),
+        #("transcript", json.string(transcript_path)),
+        #("archived", json.string(outcome)),
+      ])
+      Archive(session_id:, transcript_path:)
     }
     other -> other
   }
@@ -378,16 +453,38 @@ pub fn write_settings(guard: Guard, path: String) -> Result(Nil, String) {
   |> result.map_error(simplifile.describe_error)
 }
 
-fn settings_json(token: String, port: Int) -> json.Json {
+/// The hook command a generated `settings.json` carries, for one event.
+///
+/// It must **fail closed**. Claude Code blocks a `PreToolUse` call only when
+/// the hook exits 2; every transport failure curl has — connection refused
+/// (7), timeout (28), a URL it cannot resolve (6) — exits non-zero but not
+/// 2, which Claude Code reads as "no opinion" and allows the tool call. So a
+/// bare `curl` means that with the guard down, every Edit, Write and Bash a
+/// worker asks for is permitted. The `|| { …; exit 2; }` tail is what turns
+/// an unreachable guard into a denial.
+///
+/// Claude Code spawns hook commands through Git Bash on Windows (it refuses
+/// to run them at all when Git Bash is missing), so this is POSIX `sh`, not
+/// `cmd.exe`: `||`, `{ … ; }` and `printf` are all honoured.
+pub fn hook_command(
+  token: String,
+  port: Int,
+  timeout_s: Int,
+  event_name: String,
+) -> String {
   let url = "http://127.0.0.1:" <> int.to_string(port) <> "/hook"
-  let curl_hook = fn(timeout_s: Int) {
-    "curl -s -m "
-    <> int.to_string(timeout_s)
-    <> " -X POST -H \"x-harness-token: "
-    <> token
-    <> "\" --data-binary @- "
-    <> url
-  }
+  "curl -s -m "
+  <> int.to_string(timeout_s)
+  <> " -X POST -H \"x-harness-token: "
+  <> token
+  <> "\" --data-binary @- "
+  <> url
+  <> " || { printf '%s' '"
+  <> decision_json(Deny("harness guard unreachable"), event_name)
+  <> "'; exit 2; }"
+}
+
+fn settings_json(token: String, port: Int) -> json.Json {
   json.object([
     #(
       "enabledPlugins",
@@ -401,14 +498,26 @@ fn settings_json(token: String, port: Int) -> json.Json {
           json.preprocessed_array([
             hook_matcher(
               "Edit|Write|MultiEdit|NotebookEdit|Bash",
-              curl_hook(280),
+              hook_command(token, port, 280, "PreToolUse"),
               300,
             ),
           ]),
         ),
         #(
           "PostToolUse",
-          json.preprocessed_array([hook_matcher("Bash", curl_hook(20), 30)]),
+          json.preprocessed_array([
+            hook_matcher(
+              "Bash",
+              hook_command(token, port, 20, "PostToolUse"),
+              30,
+            ),
+          ]),
+        ),
+        #(
+          "PreCompact",
+          json.preprocessed_array([
+            hook_matcher("", hook_command(token, port, 60, "PreCompact"), 90),
+          ]),
         ),
       ]),
     ),
