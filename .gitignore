@@ -16,3 +16,9 @@ credentials.json
 
 # Gleam
 /harness/build/
+
+# Subagent worktrees
+/.claude/worktrees/
+
+# SDD workspace
+/.superpowers/
