@@ -19,7 +19,11 @@ offer $10,000 each for three questions about the center column, all open:
 
 1. **Aperiodicity** — does it ever become periodic?
 2. **Balance** — does each color occur with equal asymptotic frequency?
-3. **Irreducibility** — does computing the *n*th cell require at least O(*n*) effort?
+3. **Irreducibility** — is there a shortcut, or must you simulate?
+
+[`docs/prize.md`](docs/prize.md) explains all three in plain English, including
+why P3 is far harder to *state* than the other two and must not be dispatched
+as a solver goal.
 
 Stating these precisely in Lean is the near-term deliverable. Proving them is
 not expected. The realistic goal is a working harness, and fluency with the
