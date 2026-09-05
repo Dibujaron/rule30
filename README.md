@@ -9,8 +9,15 @@ lets Claude agents do the proving.
 
 ## Status
 
-**Design stage.** The design is written and approved; nothing is implemented
-yet. See [`docs/superpowers/specs/2026-09-05-rule30-design.md`](docs/superpowers/specs/2026-09-05-rule30-design.md).
+**Harness v1.** `prove-one` closes seeded nodes: given a node id from
+`blueprint/dag.json`, the dispatcher runs one Claude Code worker session
+against it, verifies the result with `lake build` and an axiom check, and
+records the outcome. See
+[`docs/superpowers/specs/2026-09-05-harness-design.md`](docs/superpowers/specs/2026-09-05-harness-design.md)
+for the design and
+[`docs/superpowers/plans/2026-09-05-harness.md`](docs/superpowers/plans/2026-09-05-harness.md)
+for the build plan. The Rule 30 formalization itself is designed in
+[`docs/superpowers/specs/2026-09-05-rule30-design.md`](docs/superpowers/specs/2026-09-05-rule30-design.md).
 
 ## The ambition
 
@@ -44,15 +51,33 @@ its ideas are adopted here:
 - **every theorem carries a natural-language description**, so results get
   reused instead of silently reproved.
 
-## Planned layout
+## Layout
 
 ```
 Rule30/            Lean: all 256 elementary CAs defined generically, then rule 30
-harness/           Claude Agent SDK prover harness + Prove2Me client
-blueprint/dag.json local DAG mirror — the dispatcher's source of truth
+Rule30/Statements.lean  captain-authored seed lemmas, sorry until dispatched
+Rule30/Proofs/     one file per closed node, one theorem each
+harness/ (Gleam)   the dispatcher, worker loop, verifier, guards — drives the
+                   Claude Code CLI as a subprocess, not the Agent SDK
+blueprint/dag.json the DAG: nodes, deps, status, attempts — dispatcher's source of truth
+agents/            one notebook per identity, versioned in git
+runs/              events.jsonl, journal.md, transcripts, one directory per run
 explorer/          BigInt Rule 30 engine and center-column statistics
-docs/              glossary, prize statements, mission drafts
+docs/              glossary, prize statements, specs and plans
 ```
+
+## Running the harness
+
+```
+cd harness && gleam run -- status              # list DAG nodes and open leaves
+cd harness && gleam run -- prove-one <node-id>  # dispatch one worker at one node
+```
+
+`prove-one` runs a Claude Code session as one worker, restricted to editing
+its node's `Rule30/Proofs/<Pascal>.lean` and running `lake build`/`lake env`,
+then verifies the result locally and records it in `blueprint/dag.json`,
+`agents/<name>.md`, and `runs/<run-id>/`. See `CLAUDE.md` for the worker
+contract and conventions.
 
 ## Learning Lean from an FP background
 
