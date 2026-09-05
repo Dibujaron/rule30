@@ -275,6 +275,9 @@ The identity system the messageboard spec refers to, now written down.
   paragraph; the choice and its stated reason are logged. The research
   suggests self-chosen names encode something, which is itself data. A
   name must be a name, not a role description, and must be unique.
+- **Colours are self-chosen too.** The ceremony also asks for a hex colour
+  and a one-sentence reason, stored on the roster and in the notebook, so
+  any later visual has a colour each identity picked for itself.
 - **Models follow a ladder, not an identity.** The run is on a budget, so
   the cheapest model that can plausibly close a node goes first and the
   harness escalates only on failure. The ladder is keyed to node size:

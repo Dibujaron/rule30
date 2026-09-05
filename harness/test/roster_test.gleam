@@ -12,6 +12,7 @@ fn thessaly() -> Identity {
     created: "2026-09-05T21:15:00Z",
     naming_reason: "A plain of long horizons; the cone is a plain seen edge on.",
     opening: "I work the edges of the cone.",
+    color: None,
   )
 }
 
@@ -22,12 +23,42 @@ fn ravel() -> Identity {
     created: "2026-09-05T21:20:00Z",
     naming_reason: "Counting is unravelling.",
     opening: "I count black cells and bound their ratios.",
+    color: Some("#7b2d8e"),
   )
 }
 
 pub fn round_trip_json_test() {
   let r = Roster([thessaly(), ravel()])
   assert roster.decode(roster.encode(r)) == Ok(r)
+}
+
+pub fn round_trip_json_without_a_colour_test() {
+  let r = Roster([thessaly()])
+  assert roster.decode(roster.encode(r)) == Ok(r)
+  assert thessaly().color == None
+}
+
+pub fn round_trip_json_with_a_colour_test() {
+  let r = Roster([ravel()])
+  assert roster.decode(roster.encode(r)) == Ok(r)
+  assert ravel().color == Some("#7b2d8e")
+}
+
+pub fn a_legacy_roster_with_no_color_field_at_all_still_loads_test() {
+  let text =
+    "{\"identities\":[{\"name\":\"Emmy\",\"region\":\"P2\",\"created\":\"2026-09-05T21:33:04Z\",\"naming_reason\":\"r\",\"opening\":\"o\"}]}"
+  let assert Ok(r) = roster.decode(text)
+  assert r.identities
+    == [
+      Identity(
+        name: "Emmy",
+        region: "P2",
+        created: "2026-09-05T21:33:04Z",
+        naming_reason: "r",
+        opening: "o",
+        color: None,
+      ),
+    ]
 }
 
 pub fn load_of_a_missing_file_is_an_empty_roster_test() {
@@ -86,6 +117,13 @@ pub fn naming_prompt_carries_the_region_and_its_description_test() {
   assert string.contains(p, "- \"name\": the name you choose")
 }
 
+pub fn naming_prompt_asks_for_a_colour_and_its_reason_test() {
+  let p = roster.naming_prompt("P1", roster.region_description("P1"))
+  assert string.contains(p, "\"color\"")
+  assert string.contains(p, "\"color_reason\"")
+  assert string.contains(p, "#rrggbb")
+}
+
 pub fn region_descriptions_are_the_spec_wording_test() {
   assert roster.region_description("P1")
     == "the geometry of the light cone and its edges, where periodicity provably holds"
@@ -93,9 +131,25 @@ pub fn region_descriptions_are_the_spec_wording_test() {
     == "the density bookkeeping behind the balance conjecture: counting black cells and bounding ratios in ℝ"
 }
 
-pub fn naming_schema_requires_all_three_fields_test() {
+pub fn naming_schema_requires_all_five_fields_test() {
   let s = roster.naming_schema()
-  assert string.contains(s, "\"required\":[\"name\",\"reason\",\"opening\"]")
+  assert string.contains(
+    s,
+    "\"required\":[\"name\",\"reason\",\"opening\",\"color\",\"color_reason\"]",
+  )
+}
+
+// --- colours ------------------------------------------------------------------
+
+pub fn valid_color_accepts_hex_case_insensitively_test() {
+  assert roster.valid_color("#7B2D8E") == True
+  assert roster.valid_color("#7b2d8e") == True
+}
+
+pub fn valid_color_rejects_malformed_colours_test() {
+  assert roster.valid_color("7b2d8e") == False
+  assert roster.valid_color("#7b2d8") == False
+  assert roster.valid_color("#ggggggg") == False
 }
 
 // --- notebooks --------------------------------------------------------------
@@ -204,8 +258,18 @@ pub fn scorecard_counts_only_this_identitys_attempts_test() {
   assert s.abandoned == 1
   assert s.calibration_hits == 3
   assert s.calibration_total == 4
-  assert roster.scorecard_text(s)
+  assert roster.scorecard_text(s, None)
     == "Thessaly: closed 2, abandoned 1, $2.10, calibration 3/4"
+}
+
+pub fn scorecard_text_includes_the_colour_when_present_test() {
+  let d =
+    Dag([node_with("a", dag.S, [attempt("Emmy", dag.Closed, dag.S, 0.18)])])
+  let s = roster.scorecard(d, "Emmy")
+  assert roster.scorecard_text(s, Some("#7b2d8e"))
+    == "Emmy (#7b2d8e): closed 1, abandoned 0, $0.18, calibration 1/1"
+  assert roster.scorecard_text(s, None)
+    == "Emmy: closed 1, abandoned 0, $0.18, calibration 1/1"
 }
 
 pub fn budget_exhausted_counts_as_abandoned_test() {

@@ -156,7 +156,9 @@ pub fn status(cfg: config.Config) -> Result(String, String) {
 
 /// The identity for this node's region, naming one if the region has none
 /// yet. A newly named identity is saved to the roster and its notebook is
-/// opened with the paragraph it wrote about itself.
+/// opened with the paragraph it wrote about itself. An identity that already
+/// exists but never chose a colour — the roster predates the ceremony
+/// asking for one — gets a short backfill ceremony before dispatch.
 fn ensure_identity(
   cfg: config.Config,
   roster_: roster.Roster,
@@ -166,9 +168,13 @@ fn ensure_identity(
   l: log.Log,
 ) -> Result(roster.Identity, String) {
   case roster.for_region(roster_, node.region) {
-    Some(identity) -> Ok(identity)
+    Some(identity) ->
+      case identity.color {
+        Some(_) -> Ok(identity)
+        None -> Ok(backfill_color(cfg, roster_, identity, model, g, l))
+      }
     None -> {
-      use identity <- result.try(worker.name_identity(
+      use #(identity, color_reason) <- result.try(worker.name_identity(
         cfg,
         roster_,
         node.region,
@@ -182,7 +188,7 @@ fn ensure_identity(
         cfg.agents_dir,
         identity,
         identity.created <> " — named for " <> node.region,
-        identity.naming_reason,
+        naming_entry(identity, color_reason),
       ))
       log.event(l, "naming", [
         #("name", json.string(identity.name)),
@@ -190,6 +196,56 @@ fn ensure_identity(
         #("reason", json.string(identity.naming_reason)),
       ])
       Ok(identity)
+    }
+  }
+}
+
+/// The naming ceremony's notebook entry: the naming reason, plus, when a
+/// colour was actually settled on, the colour reason as its own paragraph.
+fn naming_entry(
+  identity: roster.Identity,
+  color_reason: Option(String),
+) -> String {
+  case identity.color, color_reason {
+    Some(color), Some(reason) ->
+      identity.naming_reason <> "\n\nColour: " <> color <> " — " <> reason
+    _, _ -> identity.naming_reason
+  }
+}
+
+/// An identity named before colours existed: ask it, on its own, to choose
+/// one. A colour it settles on is saved to the roster and recorded in its
+/// notebook; two bad answers and it dispatches uncoloured rather than
+/// failing outright.
+fn backfill_color(
+  cfg: config.Config,
+  roster_: roster.Roster,
+  identity: roster.Identity,
+  model: String,
+  g: guard.Guard,
+  l: log.Log,
+) -> roster.Identity {
+  case worker.choose_color(cfg, identity, model, g.settings_path, l) {
+    None -> identity
+    Some(#(color, reason)) -> {
+      let colored = roster.Identity(..identity, color: Some(color))
+      let roster_ = roster.replace(roster_, colored)
+      case roster.save(roster_, cfg.roster_path) {
+        Ok(Nil) -> Nil
+        Error(err) -> io.println_error("harness/dispatch: " <> err)
+      }
+      case
+        roster.append_notebook(
+          cfg.agents_dir,
+          colored,
+          log.now_iso() <> " — chose a colour",
+          "Colour: " <> color <> " — " <> reason,
+        )
+      {
+        Ok(Nil) -> Nil
+        Error(err) -> io.println_error("harness/dispatch: " <> err)
+      }
+      colored
     }
   }
 }
@@ -289,7 +345,7 @@ fn summary(
       "verifier:",
       attempt.notes,
       "",
-      roster.scorecard_text(roster.scorecard(d, identity.name)),
+      roster.scorecard_text(roster.scorecard(d, identity.name), identity.color),
     ],
     "\n",
   )

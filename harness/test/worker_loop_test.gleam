@@ -129,6 +129,7 @@ fn an_identity() -> roster.Identity {
     created: "2026-09-05T00:00:00Z",
     naming_reason: "a test never names itself",
     opening: "",
+    color: None,
   )
 }
 
@@ -237,6 +238,133 @@ fn api_retry_line(error: String) -> String {
   |> json.to_string
 }
 
+fn naming_result_line(
+  session_id: String,
+  name: String,
+  reason: String,
+  opening: String,
+  color: String,
+  color_reason: String,
+) -> String {
+  json.object([
+    #("type", json.string("result")),
+    #("session_id", json.string(session_id)),
+    #("is_error", json.bool(False)),
+    #("total_cost_usd", json.float(0.01)),
+    #("num_turns", json.int(1)),
+    #(
+      "structured_output",
+      json.object([
+        #("name", json.string(name)),
+        #("reason", json.string(reason)),
+        #("opening", json.string(opening)),
+        #("color", json.string(color)),
+        #("color_reason", json.string(color_reason)),
+      ]),
+    ),
+  ])
+  |> json.to_string
+}
+
+fn color_result_line(
+  session_id: String,
+  color: String,
+  color_reason: String,
+) -> String {
+  json.object([
+    #("type", json.string("result")),
+    #("session_id", json.string(session_id)),
+    #("is_error", json.bool(False)),
+    #("total_cost_usd", json.float(0.01)),
+    #("num_turns", json.int(1)),
+    #(
+      "structured_output",
+      json.object([
+        #("color", json.string(color)),
+        #("color_reason", json.string(color_reason)),
+      ]),
+    ),
+  ])
+  |> json.to_string
+}
+
+/// A `Config` whose shim is the fake, scripted to answer with `script`, for
+/// the naming and colour ceremonies — same trick as `go`, but for
+/// `worker.name_identity` and `worker.choose_color`, which take a `Config`
+/// directly rather than going through `worker.attempt`.
+fn scripted_ceremony(dir: String, script: List(List(String))) -> config.Config {
+  let _ = simplifile.delete(dir)
+  let assert Ok(_) = simplifile.create_directory_all(dir)
+  let script_path = dir <> "/script.json"
+  let assert Ok(_) = simplifile.write(script_path, script_json(script))
+  envoy.set("HARNESS_FAKE_SCRIPT", script_path)
+  envoy.set("HARNESS_FAKE_MARKER", dir <> "/eof")
+  let base = base_cfg()
+  config.Config(..base, shim: base.repo_root <> "/harness/test/fake_shim.mjs")
+}
+
+// --- the naming and colour ceremonies -------------------------------------------
+
+pub fn naming_ceremony_stores_the_colour_it_chose_test() {
+  let dir = "build/test-runs/worker-loop/naming-colour"
+  let cfg =
+    scripted_ceremony(dir, [
+      [
+        init_line("sess-n"),
+        naming_result_line(
+          "sess-n",
+          "Thessaly",
+          "a plain of long horizons",
+          "I work the edges of the cone.",
+          "#7B2D8E",
+          "it is the colour of dusk on the boundary",
+        ),
+      ],
+    ])
+  let assert Ok(l) = log.open(dir, "run")
+  let assert Ok(#(identity, color_reason)) =
+    worker.name_identity(
+      cfg,
+      roster.Roster([]),
+      "P1",
+      "haiku",
+      dir <> "/settings.json",
+      l,
+    )
+  assert identity.name == "Thessaly"
+  assert identity.color == Some("#7b2d8e")
+  assert color_reason == Some("it is the colour of dusk on the boundary")
+}
+
+pub fn colour_ceremony_backfills_a_colour_test() {
+  let dir = "build/test-runs/worker-loop/backfill-colour"
+  let cfg =
+    scripted_ceremony(dir, [
+      [
+        init_line("sess-c"),
+        color_result_line(
+          "sess-c",
+          "#0F0F0F",
+          "it is the colour of a closed proof",
+        ),
+      ],
+    ])
+  let assert Ok(l) = log.open(dir, "run")
+  let identity =
+    roster.Identity(
+      name: "Ravel",
+      region: "P2",
+      created: "2026-09-05T00:00:00Z",
+      naming_reason: "test fixture",
+      opening: "I count black cells.",
+      color: None,
+    )
+  let assert Some(#(color, reason)) =
+    worker.choose_color(cfg, identity, "haiku", dir <> "/settings.json", l)
+  assert color == "#0f0f0f"
+  assert reason == "it is the colour of a closed proof"
+}
+
 // --- (a) a claim is adjudicated, and a failed verdict goes back ----------------
 
 pub fn a_failed_verdict_goes_back_and_the_second_claim_closes_test() {
@@ -267,9 +395,11 @@ pub fn a_failed_verdict_goes_back_and_the_second_claim_closes_test() {
 
 pub fn an_errored_result_is_budget_exhausted_and_is_never_verified_test() {
   let r =
-    go(scenario("cli-error", [
-      [init_line("sess-b"), result_line("sess-b", True, "proved")],
-    ]))
+    go(
+      scenario("cli-error", [
+        [init_line("sess-b"), result_line("sess-b", True, "proved")],
+      ]),
+    )
   assert r.attempt.outcome == dag.BudgetExhausted
   // A session the CLI killed did not prove anything, whatever it claimed.
   assert r.verify_calls == 0
@@ -280,13 +410,15 @@ pub fn an_errored_result_is_budget_exhausted_and_is_never_verified_test() {
 
 pub fn a_rate_limit_at_the_ceiling_parks_the_attempt_test() {
   let r =
-    go(scenario("rate-limit-ceiling", [
-      [
-        init_line("sess-c"),
-        rate_limit_line(0.95),
-        result_line("sess-c", False, "in_progress"),
-      ],
-    ]))
+    go(
+      scenario("rate-limit-ceiling", [
+        [
+          init_line("sess-c"),
+          rate_limit_line(0.95),
+          result_line("sess-c", False, "in_progress"),
+        ],
+      ]),
+    )
   assert r.attempt.outcome == dag.RateLimited
   assert r.attempt.session_id == "sess-c"
   assert string.contains(r.attempt.notes, "sess-c")
@@ -295,13 +427,15 @@ pub fn a_rate_limit_at_the_ceiling_parks_the_attempt_test() {
 
 pub fn an_api_retry_for_rate_limit_parks_the_attempt_test() {
   let r =
-    go(scenario("rate-limit-api-retry", [
-      [
-        init_line("sess-r"),
-        api_retry_line("rate_limit"),
-        result_line("sess-r", False, "in_progress"),
-      ],
-    ]))
+    go(
+      scenario("rate-limit-api-retry", [
+        [
+          init_line("sess-r"),
+          api_retry_line("rate_limit"),
+          result_line("sess-r", False, "in_progress"),
+        ],
+      ]),
+    )
   assert r.attempt.outcome == dag.RateLimited
   assert r.attempt.session_id == "sess-r"
   assert r.eof
@@ -386,9 +520,11 @@ pub fn an_exit_before_a_result_keeps_the_session_id_from_init_test() {
 
 pub fn an_exit_after_a_rate_limit_parks_rather_than_times_out_test() {
   let r =
-    go(scenario("exit-after-rate-limit", [
-      [init_line("sess-p"), rate_limit_line(0.99), "__EXIT__ 1"],
-    ]))
+    go(
+      scenario("exit-after-rate-limit", [
+        [init_line("sess-p"), rate_limit_line(0.99), "__EXIT__ 1"],
+      ]),
+    )
   assert r.attempt.outcome == dag.RateLimited
   assert r.attempt.session_id == "sess-p"
   assert string.contains(r.attempt.notes, "sess-p")
@@ -418,13 +554,7 @@ pub fn in_progress_past_the_round_budget_is_budget_exhausted_test() {
 // --- a silent turn ------------------------------------------------------------
 
 pub fn a_silent_turn_times_out_and_does_not_wait_on_a_dead_port_test() {
-  let r =
-    go(
-      Scenario(
-        ..scenario("silent-turn", [[]]),
-        turn_timeout_ms: 1000,
-      ),
-    )
+  let r = go(Scenario(..scenario("silent-turn", [[]]), turn_timeout_ms: 1000))
   assert r.attempt.outcome == dag.TimedOut
   assert string.contains(r.attempt.notes, "session killed")
   assert !r.eof

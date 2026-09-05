@@ -98,9 +98,14 @@ pub fn live_deps(cfg: config.Config, task_message: String) -> Deps {
 
 // --- the naming ceremony ------------------------------------------------------
 
-/// Ask a fresh session to name itself for `region` and write the opening
-/// paragraph of its notebook. No tools, one turn, and one re-ask if the
-/// first name is malformed or already taken.
+/// Ask a fresh session to name itself for `region`, write the opening
+/// paragraph of its notebook, and choose a colour. No tools, one turn, and
+/// one re-ask if the first name is malformed or already taken; the colour
+/// gets its own one-shot re-ask, and falls back to no colour at all rather
+/// than failing the whole ceremony. The second element of the result is the
+/// colour's stated reason, for the caller to fold into the same notebook
+/// entry as the naming reason — it is not persisted on the `Identity`
+/// itself.
 pub fn name_identity(
   cfg: config.Config,
   roster_: roster.Roster,
@@ -108,7 +113,7 @@ pub fn name_identity(
   model: String,
   guard_settings: String,
   l: log.Log,
-) -> Result(roster.Identity, String) {
+) -> Result(#(roster.Identity, Option(String)), String) {
   let launch =
     claude.Launch(
       node: cfg.node_exe,
@@ -142,14 +147,27 @@ pub fn name_identity(
   shutdown(session, l, ceremony.gone)
   case ceremony.naming {
     Error(reason) -> Error(reason)
-    Ok(naming) ->
-      Ok(roster.Identity(
-        name: naming.name,
-        region:,
-        created: log.now_iso(),
-        naming_reason: naming.reason,
-        opening: naming.opening,
+    Ok(naming) -> {
+      let color = case roster.valid_color(naming.color) {
+        True -> Some(string.lowercase(naming.color))
+        False -> None
+      }
+      let color_reason = case color {
+        Some(_) -> Some(naming.color_reason)
+        None -> None
+      }
+      Ok(#(
+        roster.Identity(
+          name: naming.name,
+          region:,
+          created: log.now_iso(),
+          naming_reason: naming.reason,
+          opening: naming.opening,
+          color:,
+        ),
+        color_reason,
       ))
+    }
   }
 }
 
@@ -184,7 +202,10 @@ fn ask_name(
         Error(reason) -> Ceremony(Error("naming ceremony: " <> reason), gone)
         Ok(naming) ->
           case roster.check_name(roster_, naming.name), may_retry {
-            Ok(Nil), _ -> Ceremony(Ok(naming), gone)
+            // The name is settled; the colour gets its own one-shot re-ask.
+            // `naming_of` only succeeds off a `TurnResult`, never an
+            // `Exited`, so the session is still alive here.
+            Ok(Nil), _ -> ask_color(session, naming, timeout_ms, l)
             Error(reason), False ->
               Ceremony(Error("naming ceremony: " <> reason), gone)
             Error(reason), True ->
@@ -202,10 +223,180 @@ fn ask_name(
   }
 }
 
+/// One re-ask for the colour alone, keeping the settled name, reason and
+/// opening untouched. Unlike an invalid name, an invalid colour after the
+/// re-ask does not fail the ceremony: `naming.color` is simply left as it
+/// was, and `name_identity` turns an unparseable one into `color: None`.
+fn ask_color(
+  session: claude.Session,
+  naming: roster.Naming,
+  timeout_ms: Int,
+  l: log.Log,
+) -> Ceremony {
+  case roster.valid_color(naming.color) {
+    True -> Ceremony(Ok(naming), False)
+    False -> {
+      claude.send(
+        session,
+        "\""
+          <> naming.color
+          <> "\" is not a colour I can use: it must be written as # followed by six hex digits, like #7b2d8e. Choose another colour and reply with the same JSON.",
+      )
+      case claude.read_turn(session, timeout_ms) {
+        Error(Nil) -> {
+          claude.kill(session)
+          Ceremony(Ok(naming), True)
+        }
+        Ok(#(_session, result_event, seen)) -> {
+          list.each(seen, fn(e) { log.raw(l, "naming", raw_of(e)) })
+          log.raw(l, "naming", raw_of(result_event))
+          let gone = case result_event {
+            claude.Exited(..) -> True
+            _ -> False
+          }
+          case naming_of(result_event) {
+            Error(_) -> Ceremony(Ok(naming), gone)
+            Ok(retried) ->
+              Ceremony(
+                Ok(
+                  roster.Naming(
+                    ..naming,
+                    color: retried.color,
+                    color_reason: retried.color_reason,
+                  ),
+                ),
+                gone,
+              )
+          }
+        }
+      }
+    }
+  }
+}
+
 fn naming_of(event: claude.Event) -> Result(roster.Naming, String) {
   case event {
     claude.TurnResult(structured_output: Some(dyn), ..) ->
       roster.naming_from_dynamic(dyn)
+    claude.TurnResult(..) -> Error("the turn carried no structured output")
+    claude.Exited(status) ->
+      Error(
+        "the session exited (" <> int.to_string(status) <> ") before replying",
+      )
+    _ -> Error("unexpected event")
+  }
+}
+
+// --- the backfill colour ceremony ---------------------------------------------
+
+/// For an identity named before colours existed: ask it, on its own, to
+/// choose one. Same launch shape as the naming ceremony — no tools, the
+/// ladder model, one turn plus one re-ask — but the whole exchange is just
+/// the colour. Two bad answers in a row and this gives up quietly: `None`
+/// leaves the identity uncoloured rather than failing the dispatch.
+pub fn choose_color(
+  cfg: config.Config,
+  identity: roster.Identity,
+  model: String,
+  guard_settings: String,
+  l: log.Log,
+) -> Option(#(String, String)) {
+  let launch =
+    claude.Launch(
+      node: cfg.node_exe,
+      shim: cfg.shim,
+      exe: cfg.claude_exe,
+      args: [
+        "-p",
+        "--input-format",
+        "stream-json",
+        "--output-format",
+        "stream-json",
+        "--verbose",
+        "--model",
+        model,
+        "--max-turns",
+        "6",
+        "--disallowedTools",
+        "Bash,Edit,Write,Read,Glob,Grep,Task",
+        "--settings",
+        guard_settings,
+        "--json-schema",
+        roster.color_schema(),
+      ],
+      env: [],
+    )
+  let session = claude.start(launch)
+  let prompt = roster.color_prompt(identity.name, identity.opening)
+  let result = ask_color_only(session, prompt, cfg.turn_timeout_ms, l, True)
+  shutdown(session, l, result.gone)
+  result.choice
+}
+
+/// How the standalone colour ceremony ended: the colour and its stated
+/// reason, if one was ever settled on.
+type ColorResult {
+  ColorResult(choice: Option(#(String, String)), gone: Bool)
+}
+
+fn ask_color_only(
+  session: claude.Session,
+  prompt: String,
+  timeout_ms: Int,
+  l: log.Log,
+  may_retry: Bool,
+) -> ColorResult {
+  claude.send(session, prompt)
+  case claude.read_turn(session, timeout_ms) {
+    Error(Nil) -> {
+      claude.kill(session)
+      ColorResult(None, True)
+    }
+    Ok(#(session, result_event, seen)) -> {
+      list.each(seen, fn(e) { log.raw(l, "colour", raw_of(e)) })
+      log.raw(l, "colour", raw_of(result_event))
+      let gone = case result_event {
+        claude.Exited(..) -> True
+        _ -> False
+      }
+      case color_choice_of(result_event), may_retry {
+        Error(_), True ->
+          ask_color_only(
+            session,
+            "Reply with a JSON object with exactly these two fields, all required: \"color\" (a hex colour that is yours, written #rrggbb) and \"color_reason\" (one sentence on why).",
+            timeout_ms,
+            l,
+            False,
+          )
+        Error(_), False -> ColorResult(None, gone)
+        Ok(choice), _ ->
+          case roster.valid_color(choice.color), may_retry {
+            True, _ ->
+              ColorResult(
+                Some(#(string.lowercase(choice.color), choice.color_reason)),
+                gone,
+              )
+            False, False -> ColorResult(None, gone)
+            False, True ->
+              ask_color_only(
+                session,
+                "\""
+                  <> choice.color
+                  <> "\" is not a colour I can use: it must be written as # followed by six hex digits, like #7b2d8e. Choose another colour and reply with the same JSON.",
+                timeout_ms,
+                l,
+                False,
+              )
+          }
+      }
+    }
+  }
+}
+
+fn color_choice_of(event: claude.Event) -> Result(roster.ColorChoice, String) {
+  case event {
+    claude.TurnResult(structured_output: Some(dyn), ..) ->
+      roster.color_choice_from_dynamic(dyn)
     claude.TurnResult(..) -> Error("the turn carried no structured output")
     claude.Exited(status) ->
       Error(
@@ -504,7 +695,10 @@ fn parked(t: Turn, report: Option(Report), extra: String) -> #(Tally, Ending) {
 fn adjudicate(t: Turn, report: Report) -> #(Tally, Ending) {
   let #(verdict, text) = judge(t)
   case verify.is_verified(verdict) {
-    True -> #(t.tally, Ending(dag.Closed, clip(text, 2000), Some(report), False))
+    True -> #(
+      t.tally,
+      Ending(dag.Closed, clip(text, 2000), Some(report), False),
+    )
     False ->
       case t.rounds < t.cfg.max_verify_rounds {
         True -> {
@@ -576,8 +770,7 @@ fn paused_or(t: Turn, otherwise: dag.Outcome) -> dag.Outcome {
 /// said — which `claude.read_turn` has already put on the session.
 fn with_session_id(t: Turn) -> Tally {
   case t.tally.session_id {
-    "" ->
-      Tally(..t.tally, session_id: option.unwrap(t.session.session_id, ""))
+    "" -> Tally(..t.tally, session_id: option.unwrap(t.session.session_id, ""))
     _ -> t.tally
   }
 }

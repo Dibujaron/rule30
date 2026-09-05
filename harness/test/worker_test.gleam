@@ -42,6 +42,7 @@ fn ravel() -> Identity {
     created: "2026-09-05T21:20:00Z",
     naming_reason: "Counting is unravelling.",
     opening: "I count black cells and bound their ratios.",
+    color: None,
   )
 }
 

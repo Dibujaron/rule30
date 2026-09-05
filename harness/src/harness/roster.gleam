@@ -16,7 +16,7 @@ import gleam/float
 import gleam/int
 import gleam/json
 import gleam/list
-import gleam/option.{type Option}
+import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
 import harness/dag
@@ -31,6 +31,7 @@ pub type Identity {
     created: String,
     naming_reason: String,
     opening: String,
+    color: Option(String),
   )
 }
 
@@ -79,6 +80,20 @@ pub fn for_region(roster: Roster, region: String) -> Option(Identity) {
 /// Add an identity to the roster.
 pub fn add(roster: Roster, identity: Identity) -> Roster {
   Roster(list.append(roster.identities, [identity]))
+}
+
+/// Replace the identity with this name, if one is on the roster. Used to
+/// write back an identity a later ceremony has updated in place, such as
+/// backfilling a colour.
+pub fn replace(roster: Roster, identity: Identity) -> Roster {
+  Roster(
+    list.map(roster.identities, fn(i) {
+      case i.name == identity.name {
+        True -> identity
+        False -> i
+      }
+    }),
+  )
 }
 
 /// Where this identity's notebook lives: `<agents_dir>/<name>.md`.
@@ -162,9 +177,14 @@ fn tally(acc: Scorecard, node: dag.Node, attempt: dag.Attempt) -> Scorecard {
 }
 
 /// One line for the dispatcher's summary, e.g.
-/// `"Thessaly: closed 3, abandoned 1, $2.10, calibration 3/4"`.
-pub fn scorecard_text(s: Scorecard) -> String {
+/// `"Thessaly: closed 3, abandoned 1, $2.10, calibration 3/4"`, or, once an
+/// identity has chosen a colour, `"Emmy (#7b2d8e): closed 2, ..."`.
+pub fn scorecard_text(s: Scorecard, color: Option(String)) -> String {
   s.name
+  <> case color {
+    Some(c) -> " (" <> c <> ")"
+    None -> ""
+  }
   <> ": closed "
   <> int.to_string(s.closed)
   <> ", abandoned "
@@ -207,7 +227,7 @@ pub fn naming_prompt(region: String, region_description: String) -> String {
   <> region
   <> "\": "
   <> region_description
-  <> ". Your work on this region will persist across many sessions through a notebook that only you write. Choose a name for yourself. It must be a name, not a job title, and not the name of a living person. Then write the opening paragraph of your notebook: who you are, in your own words. Reply with a JSON object with exactly these three fields, all required:\n- \"name\": the name you choose (a single capitalised word, letters only)\n- \"reason\": one paragraph on why\n- \"opening\": the opening paragraph of your notebook — who you are, in your own words, three to six sentences"
+  <> ". Your work on this region will persist across many sessions through a notebook that only you write. Choose a name for yourself. It must be a name, not a job title, and not the name of a living person. Then write the opening paragraph of your notebook: who you are, in your own words. Reply with a JSON object with exactly these five fields, all required:\n- \"name\": the name you choose (a single capitalised word, letters only)\n- \"reason\": one paragraph on why\n- \"opening\": the opening paragraph of your notebook — who you are, in your own words, three to six sentences\n- \"color\": a hex colour that is yours, written #rrggbb\n- \"color_reason\": one sentence on why"
 }
 
 /// The `--json-schema` the naming ceremony asks for.
@@ -220,17 +240,32 @@ pub fn naming_schema() -> String {
         #("name", json.object([#("type", json.string("string"))])),
         #("reason", json.object([#("type", json.string("string"))])),
         #("opening", json.object([#("type", json.string("string"))])),
+        #("color", json.object([#("type", json.string("string"))])),
+        #("color_reason", json.object([#("type", json.string("string"))])),
       ]),
     ),
-    #("required", json.array(["name", "reason", "opening"], json.string)),
+    #(
+      "required",
+      json.array(
+        ["name", "reason", "opening", "color", "color_reason"],
+        json.string,
+      ),
+    ),
   ])
   |> json.to_string
 }
 
-/// What the ceremony session answers with: the name it chose, why, and the
-/// opening paragraph of its notebook.
+/// What the ceremony session answers with: the name it chose, why, the
+/// opening paragraph of its notebook, and the colour it chose along with its
+/// stated reason.
 pub type Naming {
-  Naming(name: String, reason: String, opening: String)
+  Naming(
+    name: String,
+    reason: String,
+    opening: String,
+    color: String,
+    color_reason: String,
+  )
 }
 
 /// Decode a ceremony answer out of a turn's `structured_output`.
@@ -243,7 +278,85 @@ fn naming_decoder() -> decode.Decoder(Naming) {
   use name <- decode.field("name", decode.string)
   use reason <- decode.field("reason", decode.string)
   use opening <- decode.field("opening", decode.string)
-  decode.success(Naming(name:, reason:, opening:))
+  use color <- decode.field("color", decode.string)
+  use color_reason <- decode.field("color_reason", decode.string)
+  decode.success(Naming(name:, reason:, opening:, color:, color_reason:))
+}
+
+/// What a standalone colour ceremony (the backfill, for an identity that was
+/// named before colours existed) answers with.
+pub type ColorChoice {
+  ColorChoice(color: String, color_reason: String)
+}
+
+/// Decode a colour ceremony answer out of a turn's `structured_output`.
+pub fn color_choice_from_dynamic(dyn: Dynamic) -> Result(ColorChoice, String) {
+  decode.run(dyn, color_choice_decoder())
+  |> result.map_error(string.inspect)
+}
+
+fn color_choice_decoder() -> decode.Decoder(ColorChoice) {
+  use color <- decode.field("color", decode.string)
+  use color_reason <- decode.field("color_reason", decode.string)
+  decode.success(ColorChoice(color:, color_reason:))
+}
+
+/// The `--json-schema` the standalone colour ceremony asks for.
+pub fn color_schema() -> String {
+  json.object([
+    #("type", json.string("object")),
+    #(
+      "properties",
+      json.object([
+        #("color", json.object([#("type", json.string("string"))])),
+        #("color_reason", json.object([#("type", json.string("string"))])),
+      ]),
+    ),
+    #("required", json.array(["color", "color_reason"], json.string)),
+  ])
+  |> json.to_string
+}
+
+/// The single message the standalone colour ceremony sends, for an identity
+/// that was named before colours existed.
+pub fn color_prompt(name: String, opening: String) -> String {
+  "You are "
+  <> name
+  <> ". "
+  <> opening
+  <> " Choose a hex colour that is yours, written #rrggbb, and say in one sentence why. Reply with a JSON object with exactly these two fields, all required:\n- \"color\": a hex colour that is yours, written #rrggbb\n- \"color_reason\": one sentence on why"
+}
+
+/// Is this a usable colour: `#` followed by exactly six hex digits,
+/// case-insensitive.
+pub fn valid_color(s: String) -> Bool {
+  case string.to_graphemes(s) {
+    [hash, ..rest] ->
+      hash == "#" && list.length(rest) == 6 && list.all(rest, is_hex_digit)
+    [] -> False
+  }
+}
+
+fn is_hex_digit(g: String) -> Bool {
+  case string.lowercase(g) {
+    "0"
+    | "1"
+    | "2"
+    | "3"
+    | "4"
+    | "5"
+    | "6"
+    | "7"
+    | "8"
+    | "9"
+    | "a"
+    | "b"
+    | "c"
+    | "d"
+    | "e"
+    | "f" -> True
+    _ -> False
+  }
 }
 
 /// Is this a usable name: `[A-Z][A-Za-z]{1,19}`, and not already taken.
@@ -292,6 +405,10 @@ fn identity_to_json(identity: Identity) -> json.Json {
     #("created", json.string(identity.created)),
     #("naming_reason", json.string(identity.naming_reason)),
     #("opening", json.string(identity.opening)),
+    #(
+      "color",
+      json.nullable(option.map(identity.color, string.lowercase), json.string),
+    ),
   ])
 }
 
@@ -301,7 +418,19 @@ fn identity_decoder() -> decode.Decoder(Identity) {
   use created <- decode.field("created", decode.string)
   use naming_reason <- decode.field("naming_reason", decode.string)
   use opening <- decode.field("opening", decode.string)
-  decode.success(Identity(name:, region:, created:, naming_reason:, opening:))
+  use color <- decode.optional_field(
+    "color",
+    None,
+    decode.optional(decode.string),
+  )
+  decode.success(Identity(
+    name:,
+    region:,
+    created:,
+    naming_reason:,
+    opening:,
+    color:,
+  ))
 }
 
 fn roster_decoder() -> decode.Decoder(Roster) {
