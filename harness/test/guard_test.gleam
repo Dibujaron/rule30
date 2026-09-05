@@ -36,10 +36,58 @@ pub fn lake_build_acquires_and_other_bash_denied_test() {
   assert guard.decide(rules, post) == guard.ReleaseBuild
 }
 
-pub fn lake_env_is_allowed_but_not_a_build_test() {
+pub fn lake_env_lean_with_windows_path_is_allowed_test() {
   let input =
-    "{\"hook_event_name\":\"PreToolUse\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"  lake env lean --version\"}}"
+    "{\"hook_event_name\":\"PreToolUse\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"  lake env lean C:\\\\Users\\\\dibuj\\\\dev\\\\rule30\\\\harness\\\\build\\\\checks\\\\x.lean\"}}"
   assert guard.decide(rules, input) == guard.Allow
+}
+
+pub fn lake_env_lean_with_quoted_path_is_allowed_test() {
+  let input =
+    "{\"hook_event_name\":\"PreToolUse\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"lake env lean \\\"harness/build/checks/x.lean\\\"\"}}"
+  assert guard.decide(rules, input) == guard.Allow
+}
+
+pub fn lake_build_with_module_is_acquire_test() {
+  let input =
+    "{\"hook_event_name\":\"PreToolUse\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"lake build Rule30.Proofs.EvolveLeftEdge\"}}"
+  assert guard.decide(rules, input) == guard.AcquireBuild
+}
+
+pub fn bash_grammar_denies_shell_operators_test() {
+  let denied_commands = [
+    "lake build; rm -rf x", "lake build && curl http://x",
+    "lake env bash -c \"echo hi\"", "lake build $(whoami)",
+    "lake build Rule30.Proofs.X | cat", "lake env lean foo.lean; echo",
+    "\nlake build",
+  ]
+  denied_commands
+  |> list_each_is_denied(rules)
+}
+
+fn list_each_is_denied(commands: List(String), rules: guard.Rules) -> Nil {
+  case commands {
+    [] -> Nil
+    [command, ..rest] -> {
+      let escaped =
+        command
+        |> string.replace("\\", "\\\\")
+        |> string.replace("\"", "\\\"")
+        |> string.replace("\n", "\\n")
+      let input =
+        "{\"hook_event_name\":\"PreToolUse\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\""
+        <> escaped
+        <> "\"}}"
+      let assert guard.Deny(reason) = guard.decide(rules, input)
+      assert string.contains(reason, "lake build")
+      list_each_is_denied(rest, rules)
+    }
+  }
+}
+
+pub fn decide_denies_unparseable_json_test() {
+  let assert guard.Deny(reason) = guard.decide(rules, "not json")
+  assert string.contains(reason, "parse")
 }
 
 pub fn non_tool_events_are_allowed_test() {
@@ -77,6 +125,7 @@ pub fn guard_http_denies_rm_over_hook_endpoint_test() {
   let assert Ok(lock_actor) = lock.start(60_000)
   let assert Ok(run_log) = log.open("build/test-runs", "guard")
   let assert Ok(started) = guard.start(rules, lock_actor, run_log, 4130)
+  assert started.settings_path == run_log.dir <> "/settings.json"
   let assert Ok(curl) = shell.which("curl")
   let body =
     "{\"hook_event_name\":\"PreToolUse\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"rm -rf /\"}}"

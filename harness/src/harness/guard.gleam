@@ -18,6 +18,7 @@ import gleam/http/request.{type Request}
 import gleam/http/response.{type Response}
 import gleam/int
 import gleam/json
+import gleam/list
 import gleam/result
 import gleam/string
 import harness/lock
@@ -84,7 +85,7 @@ fn parse_hook_input(hook_input: String) -> Result(HookInput, json.DecodeError) {
 /// actual lock acquire/release and logging happen in the HTTP handler.
 pub fn decide(rules: Rules, hook_input: String) -> Decision {
   case parse_hook_input(hook_input) {
-    Error(_) -> Allow
+    Error(_) -> Deny("harness guard: could not parse hook input")
     Ok(hi) -> decide_input(rules, hi)
   }
 }
@@ -117,19 +118,90 @@ fn decide_write(rules: Rules, file_path: String) -> Decision {
   }
 }
 
+/// The characters that, anywhere in the raw (untrimmed) command, deny it
+/// outright — regardless of how the rest of the command tokenises. Checked
+/// before trimming so a leading/embedded newline is caught even though
+/// `string.trim` would otherwise remove a merely-leading one.
+const forbidden_bash_chars = [";", "&", "|", "`", "$", ">", "<", "\n", "\r"]
+
+fn bash_deny() -> Decision {
+  Deny(
+    "harness guard: only 'lake build [modules]' and 'lake env lean <file>' are permitted, with no shell operators",
+  )
+}
+
+fn contains_forbidden_bash_char(command: String) -> Bool {
+  list.any(forbidden_bash_chars, fn(c) { string.contains(command, c) })
+}
+
+/// A strict grammar, not a prefix check. Allowed exactly:
+/// - `lake build` optionally followed by one or more module names
+///   (`[A-Za-z0-9_.]+`), each separated by a single space -> `AcquireBuild`.
+/// - `lake env lean <path>` with exactly one path argument
+///   (`[A-Za-z0-9_./:\\-]+`), optionally wrapped in double quotes -> `Allow`.
+/// Everything else, including any shell operator anywhere in the command,
+/// is denied.
 fn decide_bash(command: String) -> Decision {
-  let trimmed = string.trim(command)
-  case string.starts_with(trimmed, "lake build") {
-    True -> AcquireBuild
-    False ->
-      case string.starts_with(trimmed, "lake env") {
-        True -> Allow
-        False ->
-          Deny(
-            "harness guard: only `lake build …` and `lake env …` are permitted",
-          )
-      }
+  case contains_forbidden_bash_char(command) {
+    True -> bash_deny()
+    False -> match_bash_grammar(string.trim(command))
   }
+}
+
+fn match_bash_grammar(trimmed: String) -> Decision {
+  let tokens =
+    string.split(trimmed, " ")
+    |> list.filter(fn(t) { t != "" })
+  case tokens {
+    ["lake", "build", ..modules] ->
+      case list.all(modules, is_module_name) {
+        True -> AcquireBuild
+        False -> bash_deny()
+      }
+    ["lake", "env", "lean", path] ->
+      case is_lean_path_arg(path) {
+        True -> Allow
+        False -> bash_deny()
+      }
+    _ -> bash_deny()
+  }
+}
+
+const module_name_extra_chars = "_."
+
+const path_extra_chars = "_./:\\-"
+
+const alnum_chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+fn is_module_name(token: String) -> Bool {
+  token != ""
+  && list.all(string.to_graphemes(token), fn(g) {
+    is_alnum(g) || string.contains(module_name_extra_chars, g)
+  })
+}
+
+fn is_lean_path_arg(token: String) -> Bool {
+  let unwrapped = unquote(token)
+  unwrapped != ""
+  && list.all(string.to_graphemes(unwrapped), fn(g) {
+    is_alnum(g) || string.contains(path_extra_chars, g)
+  })
+}
+
+fn unquote(token: String) -> String {
+  let length = string.length(token)
+  case
+    length >= 2
+    && string.starts_with(token, "\"")
+    && string.ends_with(token, "\"")
+  {
+    True -> string.slice(token, 1, length - 2)
+    False -> token
+  }
+}
+
+fn is_alnum(g: String) -> Bool {
+  string.contains(alnum_chars, g)
 }
 
 /// Compare paths after replacing `\` with `/`, lowercasing the drive
@@ -189,11 +261,7 @@ pub fn start(
       <> string.inspect(err)
     }),
   )
-  Ok(Guard(
-    port:,
-    token:,
-    settings_path: rules.repo_root <> "/.claude/settings.json",
-  ))
+  Ok(Guard(port:, token:, settings_path: log.dir <> "/settings.json"))
 }
 
 fn handle_request(
@@ -205,7 +273,7 @@ fn handle_request(
 ) -> Response(mist.ResponseData) {
   case req.method, req.path {
     Post, "/hook" -> authorize(req, rules, lock, log, token)
-    _, _ -> empty_response(404)
+    _, _ -> deny_response(404, "harness guard: not found")
   }
 }
 
@@ -218,9 +286,16 @@ fn authorize(
 ) -> Response(mist.ResponseData) {
   case request.get_header(req, "x-harness-token") {
     Ok(t) if t == token -> handle_hook(req, rules, lock, log)
-    _ -> empty_response(403)
+    _ -> deny_response(403, "harness guard: invalid or missing token")
   }
 }
+
+/// 16 MiB — generous enough that an ordinary large `Write`'s hook payload
+/// is still judged by `decide` rather than denied outright for size, while
+/// still bounding memory. Anything over this (or non-UTF-8) fails closed:
+/// see the finding this responds to, guard.gleam's HTTP error paths used
+/// to reply with a body identical to Allow.
+const max_hook_body_bytes = 16_777_216
 
 fn handle_hook(
   req: Request(mist.Connection),
@@ -228,11 +303,12 @@ fn handle_hook(
   lock: Subject(lock.Msg),
   log: log.Log,
 ) -> Response(mist.ResponseData) {
-  case mist.read_body(req, 1_000_000) {
-    Error(_) -> empty_response(400)
+  case mist.read_body(req, max_hook_body_bytes) {
+    Error(_) -> deny_response(400, "harness guard: could not read hook input")
     Ok(with_body) ->
       case bit_array.to_string(with_body.body) {
-        Error(_) -> empty_response(400)
+        Error(_) ->
+          deny_response(400, "harness guard: could not read hook input")
         Ok(body) -> respond_to_hook(body, rules, lock, log)
       }
   }
@@ -285,8 +361,11 @@ fn json_response(status: Int, body: String) -> Response(mist.ResponseData) {
   |> response.set_body(mist.Bytes(bytes_tree.from_string(body)))
 }
 
-fn empty_response(status: Int) -> Response(mist.ResponseData) {
-  json_response(status, "{}")
+/// A deny reply for an HTTP-layer failure (bad token, bad path, unreadable
+/// body) — never the `"{}"` that a real `Allow` produces, so a hook script
+/// that ignores curl's exit status still sees a deny.
+fn deny_response(status: Int, reason: String) -> Response(mist.ResponseData) {
+  json_response(status, decision_json(Deny(reason), "PreToolUse"))
 }
 
 /// Write the generated `settings.json` a worker's Claude Code session
