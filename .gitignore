@@ -13,3 +13,6 @@ credentials.json
 
 # Harness run artifacts
 /runs/
+
+# Gleam
+/harness/build/
