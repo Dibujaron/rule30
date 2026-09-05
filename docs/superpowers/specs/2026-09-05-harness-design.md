@@ -1,7 +1,9 @@
 # Harness and dispatcher — Design
 
 **Date:** 2026-09-05
-**Status:** proposed, awaiting Dib's review. Nothing implemented.
+**Status:** approved 2026-09-05; v1 implemented the same day on branch `harness`
+(see `docs/superpowers/plans/2026-09-05-harness.md`). Two nodes closed end to
+end by self-named identities.
 
 This is task 4 from the main design: `harness/` — the dispatcher, the worker
 loop, and the identity substrate the messageboard design assumes but never
