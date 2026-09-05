@@ -115,8 +115,10 @@ pub fn send(session: Session, text: String) -> Nil {
   port_send(session.port, line)
 }
 
-/// Read the next event, waiting up to `timeout_ms`. Non-JSON lines (claude
-/// prints a few, e.g. plugin warnings) come back as `Other`.
+/// Read the next event, waiting up to `timeout_ms` for it — elapsed time,
+/// not silence: a line that arrives in pieces cannot extend the budget
+/// piece by piece. Non-JSON lines (claude prints a few, e.g. plugin
+/// warnings) come back as `Other`.
 pub fn next(session: Session, timeout_ms: Int) -> Result(Event, Nil) {
   case port_recv(session.port, timeout_ms) {
     Line(line) -> Ok(parse_event(line))
@@ -127,6 +129,12 @@ pub fn next(session: Session, timeout_ms: Int) -> Result(Event, Nil) {
 
 /// Read events until the next `Result` (or `Exited`), returning it and every
 /// event seen on the way, oldest first.
+///
+/// `timeout_ms` is each event's budget, so what this bounds is how long a
+/// working session may go silent — a turn that keeps talking may run as long
+/// as it likes. That is deliberate: a 40-turn proof session is minutes of
+/// legitimate work, and the thing worth killing is the one that has stopped
+/// saying anything at all.
 pub fn read_turn(
   session: Session,
   timeout_ms: Int,

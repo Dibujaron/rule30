@@ -5,27 +5,54 @@
 %% keeps the Gleam side free of Erlang message-format details.
 -module(harness_ffi).
 -export([spawn_port/3, port_send/2, port_recv/2, port_close/1,
-         run_cmd/4, find_executable/1, now_iso/0, run_id/0, mono_ms/0, token/0,
-         set_cwd/1]).
+         run_cmd/4, to_utf8/1, find_executable/1, now_iso/0, run_id/0,
+         mono_ms/0, token/0, set_cwd/1]).
+
+%% ---- Deadlines -------------------------------------------------------------
+
+%% Every timeout here bounds *elapsed* time, not silence. A `receive ... after
+%% T` restarts its clock on each message, so a chatty child could hold a
+%% caller past any budget by saying something every T-1 ms. So compute the
+%% deadline once and pass what is left of it to each `after`.
+deadline(TimeoutMs) -> erlang:monotonic_time(millisecond) + TimeoutMs.
+
+remaining(Deadline) -> max(0, Deadline - erlang:monotonic_time(millisecond)).
 
 %% ---- Run a command to completion ------------------------------------------
 
 %% run_cmd(Exe, Args, Cwd, TimeoutMs) -> {run, Status, Output} | timeout
-%%   stdout and stderr are interleaved in Output.
+%%   stdout and stderr are interleaved in Output, which is a raw binary: a
+%%   compiler's output is not guaranteed to be UTF-8, and the Gleam side
+%%   converts it lossily rather than crashing on it.
 run_cmd(Exe, Args, Cwd, TimeoutMs) ->
     Port = open_port({spawn_executable, binary_to_list(Exe)},
                      [{args, [binary_to_list(A) || A <- Args]},
                       {cd, binary_to_list(Cwd)},
                       binary, stream, use_stdio, exit_status, stderr_to_stdout, hide]),
-    collect(Port, TimeoutMs, <<>>).
+    collect(Port, deadline(TimeoutMs), <<>>).
 
-collect(Port, TimeoutMs, Acc) ->
+collect(Port, Deadline, Acc) ->
     receive
-        {Port, {data, Bin}} -> collect(Port, TimeoutMs, <<Acc/binary, Bin/binary>>);
+        {Port, {data, Bin}} -> collect(Port, Deadline, <<Acc/binary, Bin/binary>>);
         {Port, {exit_status, S}} -> {run, S, Acc}
-    after TimeoutMs ->
+    after remaining(Deadline) ->
         try erlang:port_close(Port) catch _:_ -> false end,
         timeout
+    end.
+
+%% to_utf8(Bin) -> Bin'   Valid UTF-8, always.
+%%   Output that is already UTF-8 passes through unchanged. Anything else is
+%%   reinterpreted as latin1, which is defined for every byte — so a stray
+%%   0xFF from a tool that wrote code-page bytes becomes a printable
+%%   character instead of taking down the caller.
+to_utf8(Bin) ->
+    case unicode:characters_to_binary(Bin, utf8) of
+        Utf8 when is_binary(Utf8) -> Utf8;
+        _ ->
+            case unicode:characters_to_binary(Bin, latin1) of
+                Latin1 when is_binary(Latin1) -> Latin1;
+                _ -> <<>>
+            end
     end.
 
 %% find_executable(Name) -> {ok, AbsolutePath} | {error, nil}
@@ -91,19 +118,20 @@ port_send(Port, Line) ->
 
 %% port_recv(Port, TimeoutMs) ->
 %%   {line, Line} | {exit, Status} | timeout
-%% Pieces of an over-long line are reassembled before returning.
+%% Pieces of an over-long line are reassembled before returning, and
+%% TimeoutMs bounds the whole reassembly, not each piece.
 port_recv(Port, TimeoutMs) ->
-    port_recv(Port, TimeoutMs, <<>>).
+    port_recv(Port, deadline(TimeoutMs), <<>>).
 
-port_recv(Port, TimeoutMs, Acc) ->
+port_recv(Port, Deadline, Acc) ->
     receive
         {Port, {data, {eol, Bin}}} ->
             {line, <<Acc/binary, Bin/binary>>};
         {Port, {data, {noeol, Bin}}} ->
-            port_recv(Port, TimeoutMs, <<Acc/binary, Bin/binary>>);
+            port_recv(Port, Deadline, <<Acc/binary, Bin/binary>>);
         {Port, {exit_status, Status}} ->
             {exit, Status}
-    after TimeoutMs ->
+    after remaining(Deadline) ->
         timeout
     end.
 
