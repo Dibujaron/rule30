@@ -60,7 +60,11 @@ pub fn release(lock: Subject(Msg), holder: String) -> Nil {
   process.send(lock, Release(holder))
 }
 
-fn handle(state: State, msg: Msg, auto_release_ms: Int) -> actor.Next(State, Msg) {
+fn handle(
+  state: State,
+  msg: Msg,
+  auto_release_ms: Int,
+) -> actor.Next(State, Msg) {
   case msg {
     Acquire(reply:, holder:) ->
       handle_acquire(state, reply, holder, auto_release_ms)
@@ -85,10 +89,7 @@ fn handle_acquire(
     }
     Some(_) ->
       actor.continue(
-        State(
-          ..state,
-          waiting: list.append(state.waiting, [#(reply, holder)]),
-        ),
+        State(..state, waiting: list.append(state.waiting, [#(reply, holder)])),
       )
   }
 }
