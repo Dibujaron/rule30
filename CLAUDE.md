@@ -28,7 +28,7 @@ proof done by assertion.
 - Mathlib naming, used throughout: theorems and proofs `snake_case`
   (`evolve_left_edge`), definitions returning data `lowerCamelCase`
   (`centerColumnDensity`), types/structures/`Prop`s `UpperCamelCase`
-  (`ElementaryCA`). See `docs/glossary.md` for why the terseness is earned.
+  (`Config`). See `docs/glossary.md` for why the terseness is earned.
 - `sorry` is allowed in exactly two files: `Rule30/Prize.lean` (the three
   prize conjectures, permanently) and `Rule30/Statements.lean` (seeded
   lemmas awaiting proof). It must never appear in `Rule30/Proofs/`.
@@ -65,7 +65,7 @@ could prove. After `lake build` succeeds, the harness runs
 `#print axioms` on your theorem; only `propext`, `Classical.choice`, and
 `Quot.sound` may appear. End every turn with the structured report the
 harness requests (outcome, your size estimate, notebook entry, journal
-entry) — the dispatcher writes files from that report, you don't edit
+entry, posts for peers) — the dispatcher writes files from that report, you don't edit
 `agents/` or `runs/` yourself.
 
 ## Teaching contract
@@ -91,6 +91,8 @@ entries, notebook entries, commit messages, board posts):
 
 ## Boundaries
 
+- The `--bare` flag is never used when launching a worker — bare mode would
+  switch workers to API-key billing instead of subscription login.
 - No agent creates accounts, mints API keys, or POSTs to any external
   service (Prove2Me included). That stays a human decision.
 - The three prize conjectures in `Rule30/Prize.lean` stay `sorry`. Weakening
