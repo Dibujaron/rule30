@@ -1,0 +1,112 @@
+{
+  "nodes": [
+    {
+      "id": "evolve_eq_false_of_outside_cone",
+      "region": "P1",
+      "lean_name": "evolve_eq_false_of_outside_cone",
+      "description": "Outside the light cone, nothing happens: after t steps every cell farther than t from the origin is still white.",
+      "deps": [],
+      "status": "open",
+      "size": "M",
+      "proof_file": null,
+      "attempts": [],
+      "verified": null
+    },
+    {
+      "id": "evolve_left_edge",
+      "region": "P1",
+      "lean_name": "evolve_left_edge",
+      "description": "The left edge is always black: the cell at -t after t steps is black for every t.",
+      "deps": ["evolve_eq_false_of_outside_cone"],
+      "status": "open",
+      "size": "M",
+      "proof_file": null,
+      "attempts": [],
+      "verified": null
+    },
+    {
+      "id": "evolve_right_edge",
+      "region": "P1",
+      "lean_name": "evolve_right_edge",
+      "description": "The right edge is always black: the cell at t after t steps is black for every t.",
+      "deps": ["evolve_eq_false_of_outside_cone"],
+      "status": "open",
+      "size": "M",
+      "proof_file": null,
+      "attempts": [],
+      "verified": null
+    },
+    {
+      "id": "evolve_left_second_diagonal",
+      "region": "P1",
+      "lean_name": "evolve_left_second_diagonal",
+      "description": "The second diagonal from the left is all black: the cell at -t after t+1 steps is black.",
+      "deps": ["evolve_eq_false_of_outside_cone", "evolve_left_edge"],
+      "status": "open",
+      "size": "M",
+      "proof_file": null,
+      "attempts": [],
+      "verified": null
+    },
+    {
+      "id": "evolve_left_third_diagonal",
+      "region": "P1",
+      "lean_name": "evolve_left_third_diagonal",
+      "description": "The third diagonal from the left is all white: the cell at -t after t+2 steps is white.",
+      "deps": ["evolve_left_edge", "evolve_left_second_diagonal"],
+      "status": "open",
+      "size": "M",
+      "proof_file": null,
+      "attempts": [],
+      "verified": null
+    },
+    {
+      "id": "centerColumn_zero",
+      "region": "P2",
+      "lean_name": "centerColumn_zero",
+      "description": "The centre column starts black: the initial configuration has exactly one black cell, at the origin.",
+      "deps": [],
+      "status": "open",
+      "size": "S",
+      "proof_file": null,
+      "attempts": [],
+      "verified": null
+    },
+    {
+      "id": "centerColumnDensity_nonneg",
+      "region": "P2",
+      "lean_name": "centerColumnDensity_nonneg",
+      "description": "The density is never negative: it is a count divided by a natural.",
+      "deps": [],
+      "status": "open",
+      "size": "S",
+      "proof_file": null,
+      "attempts": [],
+      "verified": null
+    },
+    {
+      "id": "centerColumnDensity_le_one",
+      "region": "P2",
+      "lean_name": "centerColumnDensity_le_one",
+      "description": "The density never exceeds one: the filtered set is a subset of range N, so its cardinality is at most N.",
+      "deps": [],
+      "status": "open",
+      "size": "M",
+      "proof_file": null,
+      "attempts": [],
+      "verified": null
+    },
+    {
+      "id": "centerColumnDensity_succ",
+      "region": "P2",
+      "lean_name": "centerColumnDensity_succ",
+      "description": "The density recurrence: the count of black cells among the first N+1 equals the count among the first N plus one if cell N is black.",
+      "deps": [],
+      "status": "open",
+      "size": "M",
+      "proof_file": null,
+      "attempts": [],
+      "verified": null
+    }
+  ]
+}
