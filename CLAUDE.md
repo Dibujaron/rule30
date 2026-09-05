@@ -40,10 +40,11 @@ Rule30/Basic.lean          all 256 elementary CAs defined generically, then rule
 Rule30/Prize.lean          the three prize conjectures; sorry, forever
 Rule30/Statements.lean     captain-authored seed lemmas; sorry until dispatched; workers never edit or import this file
 Rule30/Proofs/<Node>.lean  one file per closed node, one theorem, importable by later proofs
+Rule30/Proofs.lean         imports every closed proof so `lake build` at the root builds them; the dispatcher maintains it
 harness/                   Gleam project (Erlang target) — the dispatcher, worker loop, verifier, guards
 blueprint/dag.json         the DAG: nodes, deps, status, attempts — the dispatcher's source of truth
 agents/<name>.md           one notebook per identity, versioned in git
-runs/<run-id>/             events.jsonl, journal.md, session transcripts for one run
+runs/<run-id>/             one run's record: events.jsonl, journal.md, briefs/, the generated settings.json, and transcripts/ if a session was compacted
 explorer/                  BigInt Rule 30 engine and center-column statistics (empirical, not Lean)
 docs/                      glossary, prize statements, specs and plans under docs/superpowers/
 ```
@@ -52,9 +53,11 @@ docs/                      glossary, prize statements, specs and plans under doc
 
 You were started by `harness/` to close one DAG node. Your system prompt
 carries a brief naming the one file you may edit — your node's
-`Rule30/Proofs/<Pascal>.lean` — and nothing else. You may run only
-`lake build …` and `lake env …`; any other shell command is denied by a
-hook, not by convention. Never `import Rule30.Statements` — the harness
+`Rule30/Proofs/<Pascal>.lean` — and nothing else. The only two shell
+commands you may run are `lake build [modules]` and `lake env lean <one
+file>`, exactly: no shell operators (`;`, `&&`, `|`, backticks, `$`, `>`,
+`<`), one bare command per Bash call. Anything else is denied by a hook, not
+by convention. Never `import Rule30.Statements` — the harness
 checks your proof against the statement file itself, from outside your
 session, with a generated `type_of%` check theorem, so the two must never
 share a name or see each other.
@@ -100,13 +103,22 @@ entries, notebook entries, commit messages, board posts):
   shortcut.
 - Workers never edit `Rule30/Basic.lean`, `Rule30/Prize.lean`, or
   `Rule30/Statements.lean` — only their own file under `Rule30/Proofs/`.
+- The guard bounds *which files and which commands* a worker may use, not
+  what Lean elaboration may then do: verifying a proof means elaborating it,
+  so the trust boundary is the model plus the command allowlist, not a
+  sandbox.
 
 ## Running the harness
 
 ```
-cd harness && gleam run -- status              # list nodes and open leaves
+cd harness && gleam run -- status               # list nodes and open leaves
 cd harness && gleam run -- prove-one <node-id>  # dispatch one worker at one node
+cd harness && gleam run -- reopen <node-id>     # a crashed run left a node `claimed`; put it back on the board
 ```
+
+A node stays `claimed` until an attempt finishes, so a dispatcher that
+crashed mid-attempt leaves one stuck. `reopen` is the manual undo, and
+refuses any status but `claimed`.
 
 See `docs/superpowers/specs/2026-09-05-harness-design.md` for the full
 design and `docs/superpowers/plans/2026-09-05-harness.md` for the build plan.

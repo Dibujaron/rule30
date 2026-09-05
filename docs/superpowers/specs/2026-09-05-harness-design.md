@@ -111,9 +111,11 @@ harness/                         Gleam project, Erlang target
   hooks/settings.json            hook config handed to every worker via --settings
 blueprint/dag.json               the state
 agents/<name>.md                 one notebook per identity, versioned in git
-runs/<run-id>/                   events.jsonl, journal.md, session transcripts
+runs/<run-id>/                   events.jsonl, journal.md, briefs/, settings.json,
+                                 transcripts/ (archived on compaction)
 Rule30/Statements.lean           captain-authored, all `sorry`, workers may not edit
 Rule30/Proofs/<Node>.lean        one file per closed node; importable by later proofs
+Rule30/Proofs.lean               imports every closed proof; the dispatcher maintains it
 ```
 
 ### The DAG (`blueprint/dag.json`)
@@ -231,7 +233,15 @@ endpoint and echoes the reply, so hook logic lives in Gleam:
 | `PreCompact` | archive the full transcript before summarisation |
 
 The endpoint binds to localhost only and rejects requests without the
-per-run token the settings file carries.
+per-run token the settings file carries. Each hook command ends in
+`|| { …deny…; exit 2; }`, because Claude Code blocks a call only on exit 2
+and curl's transport failures exit 6/7/28: without that tail, a guard that
+is down permits everything.
+
+The guard bounds **which files and which commands** a worker may use, not
+what Lean elaboration may do once a permitted command runs — verifying a
+proof means elaborating it, so the trust boundary is the model plus the
+allowlist, not a sandbox.
 
 ### Verification (`verify.gleam`)
 

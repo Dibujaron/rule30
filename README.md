@@ -57,11 +57,14 @@ its ideas are adopted here:
 Rule30/            Lean: all 256 elementary CAs defined generically, then rule 30
 Rule30/Statements.lean  captain-authored seed lemmas, sorry until dispatched
 Rule30/Proofs/     one file per closed node, one theorem each
+Rule30/Proofs.lean imports every closed proof, so `lake build` at the root builds
+                   them too; the dispatcher maintains the list
 harness/ (Gleam)   the dispatcher, worker loop, verifier, guards — drives the
                    Claude Code CLI as a subprocess, not the Agent SDK
 blueprint/dag.json the DAG: nodes, deps, status, attempts — dispatcher's source of truth
 agents/            one notebook per identity, versioned in git
-runs/              events.jsonl, journal.md, transcripts, one directory per run
+runs/              one directory per run: events.jsonl, journal.md, briefs/, the
+                   generated settings.json, and transcripts/ if a session compacted
 explorer/          BigInt Rule 30 engine and center-column statistics
 docs/              glossary, prize statements, specs and plans
 ```
@@ -69,15 +72,21 @@ docs/              glossary, prize statements, specs and plans
 ## Running the harness
 
 ```
-cd harness && gleam run -- status              # list DAG nodes and open leaves
+cd harness && gleam run -- status               # list DAG nodes and open leaves
 cd harness && gleam run -- prove-one <node-id>  # dispatch one worker at one node
+cd harness && gleam run -- reopen <node-id>     # release a node a crashed run left `claimed`
 ```
 
 `prove-one` runs a Claude Code session as one worker, restricted to editing
-its node's `Rule30/Proofs/<Pascal>.lean` and running `lake build`/`lake env`,
-then verifies the result locally and records it in `blueprint/dag.json`,
-`agents/<name>.md`, and `runs/<run-id>/`. See `CLAUDE.md` for the worker
+its node's `Rule30/Proofs/<Pascal>.lean` and running exactly
+`lake build [modules]` or `lake env lean <one file>`, then verifies the
+result locally and records it in `blueprint/dag.json`, `agents/<name>.md`,
+`Rule30/Proofs.lean` and `runs/<run-id>/`. See `CLAUDE.md` for the worker
 contract and conventions.
+
+The guard behind those restrictions bounds which files and commands a worker
+may use, not what Lean elaboration may do once it runs: verifying a proof
+means elaborating it, so the trust boundary is the model plus the allowlist.
 
 ## Learning Lean from an FP background
 
