@@ -415,15 +415,7 @@ fn turn_loop(t: Turn) -> #(Tally, Ending) {
           case t.rate_limited, is_error {
             // Park the attempt rather than losing it: a rate limit is a
             // pause, and the session id is how a later run resumes.
-            True, _ -> #(
-              t.tally,
-              Ending(
-                dag.RateLimited,
-                note(t.tally, "the five-hour window is rate limiting"),
-                report,
-                False,
-              ),
-            )
+            True, _ -> park(t, report)
             False, True -> #(
               t.tally,
               Ending(
@@ -469,16 +461,50 @@ fn act_on(t: Turn, report: Option(Report)) -> #(Tally, Ending) {
   }
 }
 
+/// Park a rate-limited turn — but adjudicate a `proved` claim first. A rate
+/// limit is a pause, and a paused attempt costs the node nothing; throwing
+/// away a proof that builds because the window happened to throttle the same
+/// turn would cost it a whole attempt. Nothing goes back to the worker
+/// either way: the window is what it is, and another turn would spend it for
+/// nothing.
+fn park(t: Turn, report: Option(Report)) -> #(Tally, Ending) {
+  let claim = case report {
+    Some(r) ->
+      case r.outcome {
+        "proved" -> Some(r)
+        _ -> None
+      }
+    None -> None
+  }
+  case claim {
+    None -> parked(t, report, "")
+    Some(r) -> {
+      let #(verdict, text) = judge(t)
+      case verify.is_verified(verdict) {
+        True -> #(t.tally, Ending(dag.Closed, clip(text, 2000), Some(r), False))
+        False ->
+          parked(t, report, "; the proof did not verify: " <> clip(text, 1000))
+      }
+    }
+  }
+}
+
+fn parked(t: Turn, report: Option(Report), extra: String) -> #(Tally, Ending) {
+  #(
+    t.tally,
+    Ending(
+      dag.RateLimited,
+      note(t.tally, "the five-hour window is rate limiting" <> extra),
+      report,
+      False,
+    ),
+  )
+}
+
 /// The worker claims a proof. Run the verifier; a failing verdict goes
 /// straight back as the next user turn.
 fn adjudicate(t: Turn, report: Report) -> #(Tally, Ending) {
-  let verdict = t.deps.verify(t.node)
-  let text = verify.verdict_text(verdict)
-  log.event(t.l, "verify", [
-    #("node", json.string(t.node.id)),
-    #("verified", json.bool(verify.is_verified(verdict))),
-    #("verdict", json.string(text)),
-  ])
+  let #(verdict, text) = judge(t)
   case verify.is_verified(verdict) {
     True -> #(t.tally, Ending(dag.Closed, clip(text, 2000), Some(report), False))
     False ->
@@ -501,6 +527,19 @@ fn adjudicate(t: Turn, report: Report) -> #(Tally, Ending) {
         )
       }
   }
+}
+
+/// Run the verifier on this node and log what it found. The verdict's own
+/// text is what goes back to the worker and into the attempt's notes.
+fn judge(t: Turn) -> #(verify.Verdict, String) {
+  let verdict = t.deps.verify(t.node)
+  let text = verify.verdict_text(verdict)
+  log.event(t.l, "verify", [
+    #("node", json.string(t.node.id)),
+    #("verified", json.bool(verify.is_verified(verdict))),
+    #("verdict", json.string(text)),
+  ])
+  #(verdict, text)
 }
 
 /// Send one more message and go round again, if there are rounds left.

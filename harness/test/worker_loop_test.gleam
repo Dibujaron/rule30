@@ -304,6 +304,52 @@ pub fn an_api_retry_for_rate_limit_parks_the_attempt_test() {
     ]))
   assert r.attempt.outcome == dag.RateLimited
   assert r.attempt.session_id == "sess-r"
+  assert r.eof
+}
+
+pub fn a_rate_limited_turn_whose_proof_verifies_still_closes_test() {
+  let r =
+    go(
+      Scenario(
+        ..scenario("rate-limit-then-proved", [
+          [
+            init_line("sess-v"),
+            api_retry_line("rate_limit"),
+            result_line("sess-v", False, "proved"),
+          ],
+        ]),
+        verdicts: [verify.Verified(["propext"], "depends on axioms: [propext]")],
+      ),
+    )
+  // A pause is not a reason to throw away a proof that builds: the claim is
+  // adjudicated first, and only what did not close is parked.
+  assert r.attempt.outcome == dag.Closed
+  assert r.verify_calls == 1
+  assert string.contains(r.attempt.notes, "VERIFIED")
+  assert r.eof
+}
+
+pub fn a_rate_limited_turn_whose_proof_fails_is_parked_test() {
+  let r =
+    go(
+      Scenario(
+        ..scenario("rate-limit-then-unproved", [
+          [
+            init_line("sess-w"),
+            rate_limit_line(0.97),
+            result_line("sess-w", False, "proved"),
+          ],
+        ]),
+        verdicts: [verify.BuildFailed("unknown identifier 'foo'")],
+      ),
+    )
+  assert r.attempt.outcome == dag.RateLimited
+  assert r.attempt.session_id == "sess-w"
+  assert string.contains(r.attempt.notes, "sess-w")
+  // Adjudicated once, and no verdict sent back: the window is throttling
+  // us, so another turn would spend it for nothing.
+  assert r.verify_calls == 1
+  assert r.eof
 }
 
 pub fn an_api_retry_for_anything_else_does_not_park_the_attempt_test() {
@@ -321,6 +367,7 @@ pub fn an_api_retry_for_anything_else_does_not_park_the_attempt_test() {
       ),
     )
   assert r.attempt.outcome == dag.GaveUp
+  assert r.eof
 }
 
 // --- (d) the CLI dies before saying anything conclusive ------------------------
@@ -345,6 +392,8 @@ pub fn an_exit_after_a_rate_limit_parks_rather_than_times_out_test() {
   assert r.attempt.outcome == dag.RateLimited
   assert r.attempt.session_id == "sess-p"
   assert string.contains(r.attempt.notes, "sess-p")
+  // The child died on its own, so there was nothing to send `__EOF__` to.
+  assert !r.eof
 }
 
 // --- (e) the round budget runs out --------------------------------------------
