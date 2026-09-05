@@ -45,9 +45,52 @@ correspondence, and it is exact rather than metaphorical.
 | `∀ n, P n` | A generic function `(n) => Proof<P<n>>` | The return **type depends on the argument's value**. TS and Kotlin can't express that; this is the genuinely new idea. |
 | `∃ n, P n` | A pair of `(witness, evidence)` | In `Prop` you generally *cannot* extract the witness as runtime data. It's a pair you can't always destructure. |
 | `theorem` / `lemma` | Same thing | Pure convention: `lemma` signals a smaller helper. |
+| currying | `(a) => (b) => c` in TS | Not opt-in — *every* Lean function takes one argument. `f a` with `f : A → B → C` is a value of type `B → C`, so there is no such thing as arity, and no "missing argument" error. You get a type mismatch instead. |
 | `elan` | `rustup` / `sdkman` | — |
 | `lake` | `cargo` / `gradle` | — |
 | `lake build` | `gradle build` | Typechecking *is* the verification. There's no separate test run. |
+
+## Naming conventions
+
+Lean names look cryptic from an industry-code perspective. Two different things
+are going on, and only one of them is a licence for terseness.
+
+**Theorem names are a searchable encoding of the statement**, not an
+abbreviation for convenience:
+
+```lean
+add_comm         -- a + b = b + a
+mul_le_mul_left  -- multiplication preserves ≤ on the left
+succ_ne_zero     -- n + 1 ≠ 0
+```
+
+You can derive the name from the statement and vice versa — closer to a
+chemical formula than an identifier. That is what makes ~200k Mathlib lemmas
+findable, and it is why the terseness is earned.
+
+**Definitions of concepts use full words.** `Continuous`, `Differentiable`,
+`IsCompact`, `MeasureTheory.Measure`. The surviving abbreviations (`deriv`,
+`iff`, `comm`, `assoc`) are ones the field already used — not ones an author
+coined. Terseness at the call site comes from a **namespace**, the same trick
+as a Kotlin `object` or a TS module:
+
+```lean
+namespace ElementaryCA
+def step (r : Fin 256) ... -- `step` inside, `ElementaryCA.step` outside
+end ElementaryCA
+```
+
+Case carries information:
+
+| Kind | Case | Example |
+|---|---|---|
+| Types, structures, `Prop`s | `UpperCamelCase` | `Continuous`, `IsCompact` |
+| Definitions returning data | `lowerCamelCase` | `padicValNat` |
+| Theorems and proofs | `snake_case` | `add_comm` |
+
+So an ordinary code-review instinct about naming transfers intact. What does
+*not* transfer is that theorem names get to be cryptic — and only because they
+are systematically cryptic.
 
 ## The DAG is a build graph
 
