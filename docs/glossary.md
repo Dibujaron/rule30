@@ -1,11 +1,17 @@
-# Lean → FP glossary
+# Learning Lean through TypeScript and Kotlin
 
-The owner of this project reads functional programming fluently (TypeScript and
-Kotlin) and is learning Lean. **Every agent working here must translate Lean
-concepts into those terms when reporting to a human.** See `CLAUDE.md`.
+Lean's ideas mostly have close relatives in functional programming. If you write
+FP in TypeScript or Kotlin — as Dib does — you already hold most of the
+concepts and are mainly learning new names, plus one genuinely new idea
+(dependent types).
 
-This is a living document. When you catch yourself using a Lean term that isn't
-here, add it.
+This document anchors Lean vocabulary to things you already know. It is
+scaffolding toward reading Lean directly, not a permanent translation layer —
+so it always gives the **real Lean term**, and it says **where each analogy
+breaks**, because an analogy whose seams you can't see quietly becomes a
+misconception.
+
+Living document. When you hit a term that isn't here, add it.
 
 ## The bridge
 
@@ -19,50 +25,54 @@ theorem foo : P := someProof    -- Lean
 ```
 
 "Proving a theorem" means "constructing a value that typechecks at the required
-type." Almost everything else follows from this.
+type." Most of the rest follows from this. It's called the Curry–Howard
+correspondence, and it is exact rather than metaphorical.
 
-## Terms
+## Vocabulary
 
-| Lean | Nearest FP equivalent | Notes |
+| Lean | What you already know | Where the analogy breaks |
 |---|---|---|
-| `sorry` | Kotlin `TODO()` | Inhabits any type, so the build still passes. A hole. |
-| `by ...` | A builder DSL block | Opens *tactic* mode — a program that constructs the proof value. |
-| tactic | A step in that builder program | `simp`, `decide`, `rfl`, `induction` … |
-| `decide` | Exhaustive `when` that the compiler *runs* | Brute force over a finite domain. |
-| `rfl` | "both sides reduce to the same thing" | Proof by computation. |
-| `simp` | Rewrite/normalize with a rule set | The workhorse tactic; can be slow and surprising. |
-| Mathlib | The math standard library | Huge. The skill is knowing what's already in it. |
-| `Prop` | The type of propositions | Distinct from `Type`, which is the type of data. |
-| `ℤ → Bool` | `(i: BigInt) => boolean` | A CA configuration is literally a function. |
-| `Fin n` | Branded/refined int, `0..n-1` | `Fin 256` = a rule number. |
-| `∀ n, P n` | A generic function `(n) => Proof<P<n>>` | Universal quantification is a function type. |
-| `∃ n, P n` | A pair `(witness, evidence)` | Like a data class holding the value *and* the proof. |
-| `theorem` / `lemma` | No formal difference | Convention only: `lemma` = smaller helper. |
-| `elan` | `rustup` / `sdkman` | Toolchain version manager. |
-| `lake` | `cargo` / `gradle` | Build tool and package manager. |
-| `lake build` | `gradle build` | Typechecks everything. |
+| `sorry` | Kotlin's `TODO()` — a hole that still typechecks | `TODO()` is honest: it throws at runtime. `sorry` never fails; it silently yields an unproved theorem. Strictly more dangerous. |
+| `by ...` | A builder DSL block (`buildString { }`, Gradle) | It builds a *proof value*, and it runs at compile time. |
+| tactic | One step in that builder | No real equivalent — tactics are metaprograms that can inspect the goal. |
+| `rfl` | "both sides are already the same" | Not `==`. It's equality *after computation* (definitional equality), which is subtler than it looks. |
+| `decide` | An exhaustive `when` the compiler actually runs | Requires the proposition be *decidable* (an algorithm exists). It evaluates during typechecking, so it can be slow or blow up. |
+| `simp` | Normalize with a rewrite rule set | Nondeterministic in practice — the rule set is huge and results can surprise you. |
+| Mathlib | The standard library, for math | Far bigger than any stdlib you've used. Searching it (`exact?`, `apply?`, Loogle) is its own skill. |
+| `Prop` | The type of propositions | Proof-irrelevant: any two proofs of the same `Prop` are considered equal. No FP analogue. |
+| `ℤ → Bool` | `(i: BigInt) => boolean` | None — a CA configuration really is just this function. |
+| `Fin n` | A branded/refined int, `0..n-1` | Carries a *proof* of the bound, not just a tag. |
+| `∀ n, P n` | A generic function `(n) => Proof<P<n>>` | The return **type depends on the argument's value**. TS and Kotlin can't express that; this is the genuinely new idea. |
+| `∃ n, P n` | A pair of `(witness, evidence)` | In `Prop` you generally *cannot* extract the witness as runtime data. It's a pair you can't always destructure. |
+| `theorem` / `lemma` | Same thing | Pure convention: `lemma` signals a smaller helper. |
+| `elan` | `rustup` / `sdkman` | — |
+| `lake` | `cargo` / `gradle` | — |
+| `lake build` | `gradle build` | Typechecking *is* the verification. There's no separate test run. |
 
 ## The DAG is a build graph
 
-Read the theorem DAG as a Gradle task graph. This analogy is load-bearing for
-the harness and holds up well:
+Read the theorem DAG as a Gradle task graph. This one holds up well:
 
-| DAG term | Build-graph equivalent |
+| DAG term | Build graph |
 |---|---|
 | node | a task |
 | edge | a dependency |
 | a node with `sorry` | an unbuilt task |
-| **open leaf** | a task whose dependencies are all satisfied — *ready to run* |
+| **open leaf** | a task whose dependencies are satisfied — *ready to run* |
 | the **frontier** | the current set of ready tasks |
 | closing a leaf | a task completing, freeing its dependents |
 | dispatcher | the scheduler picking ready tasks |
+
+Where it breaks: build tasks are cached by input hash, whereas a proof is
+either there or not — and a proof can be *wrong* in ways a build artifact can't
+(see below).
 
 ## The `sorry` hazard
 
 **A build full of `sorry` passes.** `lake build` succeeding means the statements
 are well-formed, not that anything was proved — exactly like a Kotlin project
-full of `TODO()` compiling green.
+full of `TODO()` compiling green. Lean emits a warning, but the build is green.
 
 This is why `npm run verify` audits for `sorry` and fails on any that isn't a
-whitelisted prize conjecture. Never report "the build passes" as evidence that
-a proof landed; report the sorry audit.
+whitelisted prize conjecture. Never offer "the build passes" as evidence that a
+proof landed; cite the sorry audit instead.

@@ -50,12 +50,13 @@ explorer/          BigInt Rule 30 engine and center-column statistics
 docs/              glossary, prize statements, mission drafts
 ```
 
-## Notes for readers who don't write Lean
+## Learning Lean from an FP background
 
-[`docs/glossary.md`](docs/glossary.md) translates Lean concepts into functional
-programming terms (TypeScript/Kotlin). The short version: a theorem statement
-is a **type**, a proof is a **value of that type**, and `sorry` is Kotlin's
-`TODO()` — which means **a build full of `sorry` still passes**.
+[`docs/glossary.md`](docs/glossary.md) anchors Lean vocabulary to TypeScript
+and Kotlin concepts, and marks where each analogy breaks down. The short
+version: a theorem statement is a **type**, a proof is a **value of that
+type**, and `sorry` is Kotlin's `TODO()` — which means **a build full of
+`sorry` still passes**.
 
 ## Verification
 
