@@ -144,7 +144,7 @@ fn your_constraints(node: dag.Node) -> String {
   <> "`. Every other write is denied by a hook, not by convention.\n"
   <> "- The only shell commands you may run are `lake build "
   <> dag.proof_module(node)
-  <> "` and `lake env lean …`. Everything else is denied.\n"
+  <> "` and `lake env lean <file>`. Everything else is denied, and so is any shell operator — no `;`, `&&`, `|`, backticks, `$`, `>` or `<`. One bare command per Bash call.\n"
   <> "- Never `import Rule30.Statements`. The harness checks your proof against the statement file from outside your session, so the two must never see each other.\n"
   <> "- No `sorry`, and no axiom beyond `propext`, `Classical.choice`, `Quot.sound`.\n"
   <> "- The harness verifies with a generated check theorem — `theorem harness_check : type_of% Statements."
