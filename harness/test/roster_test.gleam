@@ -83,7 +83,7 @@ pub fn naming_prompt_carries_the_region_and_its_description_test() {
   assert string.contains(p, "\"P1\"")
   assert string.contains(p, "the geometry of the light cone")
   assert string.contains(p, "It must be a name, not a job title")
-  assert string.contains(p, "{\"name\": …, \"reason\": …, \"opening\": …}")
+  assert string.contains(p, "- \"name\": the name you choose")
 }
 
 pub fn region_descriptions_are_the_spec_wording_test() {

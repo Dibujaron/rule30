@@ -123,11 +123,9 @@ pub fn name_identity(
         "--verbose",
         "--model",
         model,
-        // Two, not one: a malformed or colliding name is re-asked in the
-        // same session, and a `--max-turns 1` session has nothing left to
-        // answer with.
+        // Six, not one: schema rejections each cost a turn, and a re-ask needs room.
         "--max-turns",
-        "2",
+        "6",
         "--disallowedTools",
         "Bash,Edit,Write,Read,Glob,Grep,Task",
         "--settings",

@@ -207,7 +207,7 @@ pub fn naming_prompt(region: String, region_description: String) -> String {
   <> region
   <> "\": "
   <> region_description
-  <> ". Your work on this region will persist across many sessions through a notebook that only you write. Choose a name for yourself. It must be a name, not a job title, and not the name of a living person. Then write the opening paragraph of your notebook: who you are, in your own words. Reply with JSON: {\"name\": …, \"reason\": …, \"opening\": …}."
+  <> ". Your work on this region will persist across many sessions through a notebook that only you write. Choose a name for yourself. It must be a name, not a job title, and not the name of a living person. Then write the opening paragraph of your notebook: who you are, in your own words. Reply with a JSON object with exactly these three fields, all required:\n- \"name\": the name you choose (a single capitalised word, letters only)\n- \"reason\": one paragraph on why\n- \"opening\": the opening paragraph of your notebook — who you are, in your own words, three to six sentences"
 }
 
 /// The `--json-schema` the naming ceremony asks for.
