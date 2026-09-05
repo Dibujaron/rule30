@@ -12,3 +12,8 @@ require mathlib from git
 
 @[default_target]
 lean_lib «Rule30» where
+
+-- Not a default target: the A051023 oracle check is expensive (`3 ^ t` per
+-- term) and should not be paid on every agent rebuild. Run `lake build Oracle`.
+lean_lib «Oracle» where
+  srcDir := "test"
