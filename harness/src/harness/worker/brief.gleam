@@ -203,42 +203,82 @@ fn how_to_report() -> String {
 
 // --- the task ----------------------------------------------------------------
 
-/// The first user turn. Reads `Rule30/Statements.lean` relative to the
-/// working directory, which `dispatch` has already set to the repo root.
-pub fn task_message(node: dag.Node) -> String {
-  let source = simplifile.read("Rule30/Statements.lean") |> result.unwrap("")
+/// The first user turn, or the reason there cannot be one. Reads
+/// `Rule30/Statements.lean` under `cfg.repo_root`.
+pub fn task_message(
+  cfg: config.Config,
+  node: dag.Node,
+) -> Result(String, String) {
+  let path = cfg.repo_root <> "/" <> statements_file
+  use source <- result.try(
+    simplifile.read(path)
+    |> result.map_error(fn(e) {
+      "cannot read " <> path <> ": " <> simplifile.describe_error(e)
+    }),
+  )
   task_message_from(node, source)
 }
 
 /// `task_message` with the statement file's text supplied — the pure half,
 /// so it can be tested without a working directory.
-pub fn task_message_from(node: dag.Node, statements_source: String) -> String {
-  "Prove `"
-  <> node.lean_name
-  <> "` in `"
-  <> dag.proof_path(node)
-  <> "`. The statement to prove, exactly:\n\n```lean\n"
-  <> signature(statements_source, node.lean_name)
-  <> "\n```\n\nDescription: "
-  <> node.description
-  <> ". Estimated size: "
-  <> dag.size_to_string(node.size)
-  <> ". Start by creating the file with the imports you need (`import Rule30.Basic`, plus any served module), then iterate with `lake build "
-  <> dag.proof_module(node)
-  <> "`."
+pub fn task_message_from(
+  node: dag.Node,
+  statements_source: String,
+) -> Result(String, String) {
+  use sig <- result.try(signature(statements_source, node.lean_name))
+  Ok(
+    "Prove `"
+    <> node.lean_name
+    <> "` in `"
+    <> dag.proof_path(node)
+    <> "`. The statement to prove, exactly:\n\n```lean\n"
+    <> sig
+    <> "\n```\n\nDescription: "
+    <> node.description
+    <> ". Estimated size: "
+    <> dag.size_to_string(node.size)
+    <> ". Start by creating the file with the imports you need (`import Rule30.Basic`, plus any served module), then iterate with `lake build "
+    <> dag.proof_module(node)
+    <> "`.",
+  )
 }
+
+const statements_file = "Rule30/Statements.lean"
 
 /// The theorem's signature, copied out of `Rule30/Statements.lean`: from the
 /// line starting `theorem <lean_name>` up to and including the first
 /// `:= by`, with that `:= by` cut back to `:=` so the worker is handed a
 /// hole to fill rather than a tactic block to continue.
-pub fn signature(statements_source: String, lean_name: String) -> String {
-  statements_source
-  |> string.split("\n")
-  |> list.drop_while(fn(line) { !declares(line, lean_name) })
-  |> list.take(40)
-  |> take_to_assignment([])
-  |> string.join("\n")
+///
+/// `Error` when the file declares no such theorem. That is not a shrug: a
+/// node whose `lean_name` is in no statement file cannot be dispatched at
+/// all, and handing a worker an empty ```lean block instead would be the
+/// harness lying quietly.
+pub fn signature(
+  statements_source: String,
+  lean_name: String,
+) -> Result(String, String) {
+  case
+    statements_source
+    |> string.split("\n")
+    |> list.drop_while(fn(line) { !declares(line, lean_name) })
+  {
+    [] ->
+      Error(
+        "no `theorem "
+        <> lean_name
+        <> "` in "
+        <> statements_file
+        <> ": a node's lean_name must name a statement the captain wrote",
+      )
+    lines ->
+      Ok(
+        lines
+        |> list.take(40)
+        |> take_to_assignment([])
+        |> string.join("\n"),
+      )
+  }
 }
 
 /// Does this line open the declaration of `lean_name` — matching

@@ -110,11 +110,11 @@ pub fn a_report_with_an_unknown_size_is_rejected_test() {
 
 pub fn signature_copies_a_one_line_statement_test() {
   assert brief.signature(statements(), "centerColumn_zero")
-    == "theorem centerColumn_zero : centerColumn 0 = true :="
+    == Ok("theorem centerColumn_zero : centerColumn 0 = true :=")
 }
 
 pub fn signature_copies_a_multi_line_statement_test() {
-  let sig = brief.signature(statements(), "centerColumnDensity_succ")
+  let assert Ok(sig) = brief.signature(statements(), "centerColumnDensity_succ")
   assert string.starts_with(sig, "theorem centerColumnDensity_succ (N : ℕ) :")
   assert string.ends_with(sig, ":=")
   assert !string.contains(sig, ":= by")
@@ -125,18 +125,26 @@ pub fn signature_copies_a_multi_line_statement_test() {
 pub fn signature_does_not_match_a_longer_name_test() {
   let source =
     "theorem foo_bar (n : ℕ) : n = n := by\n  rfl\n\ntheorem foo : True := by\n  trivial\n"
-  assert brief.signature(source, "foo") == "theorem foo : True :="
+  assert brief.signature(source, "foo") == Ok("theorem foo : True :=")
 }
 
-pub fn signature_of_an_absent_name_is_empty_test() {
-  assert brief.signature(statements(), "not_a_theorem") == ""
+pub fn signature_of_an_absent_name_is_an_error_test() {
+  let assert Error(reason) = brief.signature(statements(), "not_a_theorem")
+  assert string.contains(reason, "not_a_theorem")
+  assert string.contains(reason, "Rule30/Statements.lean")
 }
 
 // --- the task message ---------------------------------------------------------
 
+pub fn task_message_of_an_absent_statement_is_an_error_test() {
+  let n = node("no_such_lemma", dag.S, [])
+  let assert Error(reason) = brief.task_message_from(n, statements())
+  assert string.contains(reason, "no_such_lemma")
+}
+
 pub fn task_message_carries_the_exact_statement_and_the_file_to_write_test() {
   let n = node("centerColumn_zero", dag.S, [])
-  let msg = brief.task_message_from(n, statements())
+  let assert Ok(msg) = brief.task_message_from(n, statements())
   assert string.starts_with(
     msg,
     "Prove `centerColumn_zero` in `Rule30/Proofs/CenterColumnZero.lean`.",

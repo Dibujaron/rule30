@@ -78,6 +78,24 @@ fn size_decoder() -> decode.Decoder(dag.Size) {
   })
 }
 
+/// What `attempt` needs from outside itself: the adjudicator for a `proved`
+/// claim, and the first user turn. Both are passed in rather than reached
+/// for — the verifier because "was this claim actually adjudicated?" is then
+/// an observable fact a test can assert, and the task message because a node
+/// whose statement cannot be found must fail before a session is ever
+/// started.
+pub type Deps {
+  Deps(verify: fn(dag.Node) -> verify.Verdict, task_message: String)
+}
+
+/// The real dependencies: `verify.verify` against this run's repo and lake.
+pub fn live_deps(cfg: config.Config, task_message: String) -> Deps {
+  Deps(
+    verify: fn(node) { verify.verify(cfg.repo_root, cfg.lake, node) },
+    task_message:,
+  )
+}
+
 // --- the naming ceremony ------------------------------------------------------
 
 /// Ask a fresh session to name itself for `region` and write the opening
@@ -105,8 +123,11 @@ pub fn name_identity(
         "--verbose",
         "--model",
         model,
+        // Two, not one: a malformed or colliding name is re-asked in the
+        // same session, and a `--max-turns 1` session has nothing left to
+        // answer with.
         "--max-turns",
-        "1",
+        "2",
         "--disallowedTools",
         "Bash,Edit,Write,Read,Glob,Grep,Task",
         "--settings",
@@ -118,9 +139,10 @@ pub fn name_identity(
     )
   let session = claude.start(launch)
   let prompt = roster.naming_prompt(region, roster.region_description(region))
-  let outcome = ask_name(session, roster_, prompt, cfg.turn_timeout_ms, l, True)
-  shutdown(session, l)
-  case outcome {
+  let ceremony =
+    ask_name(session, roster_, prompt, cfg.turn_timeout_ms, l, True)
+  shutdown(session, l, ceremony.gone)
+  case ceremony.naming {
     Error(reason) -> Error(reason)
     Ok(naming) ->
       Ok(roster.Identity(
@@ -133,6 +155,12 @@ pub fn name_identity(
   }
 }
 
+/// How the ceremony ended. `gone` says the child is already dead, so there
+/// is nothing left to close.
+type Ceremony {
+  Ceremony(naming: Result(roster.Naming, String), gone: Bool)
+}
+
 fn ask_name(
   session: claude.Session,
   roster_: roster.Roster,
@@ -140,19 +168,27 @@ fn ask_name(
   timeout_ms: Int,
   l: log.Log,
   may_retry: Bool,
-) -> Result(roster.Naming, String) {
+) -> Ceremony {
   claude.send(session, prompt)
   case claude.read_turn(session, timeout_ms) {
-    Error(Nil) -> Error("naming ceremony: no reply within the turn timeout")
+    Error(Nil) -> {
+      claude.kill(session)
+      Ceremony(Error("naming ceremony: no reply within the turn timeout"), True)
+    }
     Ok(#(session, result_event, seen)) -> {
       list.each(seen, fn(e) { log.raw(l, "naming", raw_of(e)) })
       log.raw(l, "naming", raw_of(result_event))
+      let gone = case result_event {
+        claude.Exited(..) -> True
+        _ -> False
+      }
       case naming_of(result_event) {
-        Error(reason) -> Error("naming ceremony: " <> reason)
+        Error(reason) -> Ceremony(Error("naming ceremony: " <> reason), gone)
         Ok(naming) ->
           case roster.check_name(roster_, naming.name), may_retry {
-            Ok(Nil), _ -> Ok(naming)
-            Error(reason), False -> Error("naming ceremony: " <> reason)
+            Ok(Nil), _ -> Ceremony(Ok(naming), gone)
+            Error(reason), False ->
+              Ceremony(Error("naming ceremony: " <> reason), gone)
             Error(reason), True ->
               ask_name(
                 session,
@@ -183,9 +219,16 @@ fn naming_of(event: claude.Event) -> Result(roster.Naming, String) {
 
 // --- the turn loop ------------------------------------------------------------
 
-/// How one attempt ended, before it is turned into a `dag.Attempt`.
+/// How one attempt ended, before it is turned into a `dag.Attempt`. `gone`
+/// says the child is already dead — killed, or exited on its own — so there
+/// is no stdin left to close and nothing left to drain.
 type Ending {
-  Ending(outcome: dag.Outcome, notes: String, report: Option(Report))
+  Ending(
+    outcome: dag.Outcome,
+    notes: String,
+    report: Option(Report),
+    gone: Bool,
+  )
 }
 
 /// What the last `result` event said about the session as a whole.
@@ -200,6 +243,7 @@ type Tally {
 type Turn {
   Turn(
     cfg: config.Config,
+    deps: Deps,
     node: dag.Node,
     l: log.Log,
     session: claude.Session,
@@ -213,6 +257,7 @@ type Turn {
 /// alongside the worker's last report.
 pub fn attempt(
   cfg: config.Config,
+  deps: Deps,
   d: dag.Dag,
   node: dag.Node,
   identity: roster.Identity,
@@ -232,10 +277,11 @@ pub fn attempt(
     )
   let session = claude.start(launch(cfg, model, guard_, brief_path))
 
-  claude.send(session, brief.task_message(node))
+  claude.send(session, deps.task_message)
   let #(tally, ending) =
     turn_loop(Turn(
       cfg:,
+      deps:,
       node:,
       l:,
       session:,
@@ -243,7 +289,7 @@ pub fn attempt(
       rounds: 0,
       rate_limited: False,
     ))
-  shutdown(session, l)
+  shutdown(session, l, ending.gone)
 
   let attempt =
     dag.Attempt(
@@ -313,14 +359,19 @@ fn turn_loop(t: Turn) -> #(Tally, Ending) {
   case claude.read_turn(t.session, t.cfg.turn_timeout_ms) {
     Error(Nil) -> {
       claude.kill(t.session)
+      let tally = with_session_id(t)
       #(
-        t.tally,
+        tally,
         Ending(
-          dag.TimedOut,
-          "no turn result within "
-            <> int.to_string(t.cfg.turn_timeout_ms)
-            <> " ms; session killed",
+          paused_or(t, dag.TimedOut),
+          note(
+            tally,
+            "no turn result within "
+              <> int.to_string(t.cfg.turn_timeout_ms)
+              <> " ms; session killed",
+          ),
           None,
+          True,
         ),
       )
     }
@@ -335,10 +386,18 @@ fn turn_loop(t: Turn) -> #(Tally, Ending) {
             || hit_ceiling(seen, t.cfg.rate_limit_ceiling),
         )
       case event {
-        claude.Exited(status) -> #(
-          t.tally,
-          Ending(dag.TimedOut, "exited " <> int.to_string(status), None),
-        )
+        claude.Exited(status) -> {
+          let tally = with_session_id(t)
+          #(
+            tally,
+            Ending(
+              paused_or(t, dag.TimedOut),
+              note(tally, "exited " <> int.to_string(status)),
+              None,
+              True,
+            ),
+          )
+        }
         claude.TurnResult(
           session_id:,
           is_error:,
@@ -360,9 +419,9 @@ fn turn_loop(t: Turn) -> #(Tally, Ending) {
               t.tally,
               Ending(
                 dag.RateLimited,
-                "five-hour window at or above the ceiling; resume session "
-                  <> session_id,
+                note(t.tally, "the five-hour window is rate limiting"),
                 report,
+                False,
               ),
             )
             False, True -> #(
@@ -371,6 +430,7 @@ fn turn_loop(t: Turn) -> #(Tally, Ending) {
                 dag.BudgetExhausted,
                 "the CLI ended the session: " <> clip(raw, 1000),
                 report,
+                False,
               ),
             )
             False, False -> act_on(t, report)
@@ -396,7 +456,7 @@ fn act_on(t: Turn, report: Option(Report)) -> #(Tally, Ending) {
     Some(r) ->
       case r.outcome {
         "proved" -> adjudicate(t, r)
-        "abandoned" -> #(t.tally, Ending(dag.GaveUp, r.summary, Some(r)))
+        "abandoned" -> #(t.tally, Ending(dag.GaveUp, r.summary, Some(r), False))
         // in_progress: the model ended its turn early, so ask for more.
         _ ->
           nudge(
@@ -412,7 +472,7 @@ fn act_on(t: Turn, report: Option(Report)) -> #(Tally, Ending) {
 /// The worker claims a proof. Run the verifier; a failing verdict goes
 /// straight back as the next user turn.
 fn adjudicate(t: Turn, report: Report) -> #(Tally, Ending) {
-  let verdict = verify.verify(t.cfg.repo_root, t.cfg.lake, t.node)
+  let verdict = t.deps.verify(t.node)
   let text = verify.verdict_text(verdict)
   log.event(t.l, "verify", [
     #("node", json.string(t.node.id)),
@@ -420,7 +480,7 @@ fn adjudicate(t: Turn, report: Report) -> #(Tally, Ending) {
     #("verdict", json.string(text)),
   ])
   case verify.is_verified(verdict) {
-    True -> #(t.tally, Ending(dag.Closed, clip(text, 2000), Some(report)))
+    True -> #(t.tally, Ending(dag.Closed, clip(text, 2000), Some(report), False))
     False ->
       case t.rounds < t.cfg.max_verify_rounds {
         True -> {
@@ -436,6 +496,7 @@ fn adjudicate(t: Turn, report: Report) -> #(Tally, Ending) {
               <> " rounds. Last verdict:\n"
               <> clip(text, 2000),
             Some(report),
+            False,
           ),
         )
       }
@@ -454,34 +515,87 @@ fn nudge(
       claude.send(t.session, message)
       turn_loop(Turn(..t, rounds: t.rounds + 1))
     }
-    False -> #(t.tally, Ending(dag.BudgetExhausted, exhausted_notes, report))
+    False -> #(
+      t.tally,
+      Ending(dag.BudgetExhausted, exhausted_notes, report, False),
+    )
   }
 }
 
+/// A rate limit outranks whatever else went wrong: the spec's line is that
+/// nothing is lost to a rate limit, it is paused. `RateLimited` puts the
+/// node back on the board without burning a rung of its model ladder;
+/// `TimedOut` on a rate-limited session would too, but it would lose the
+/// reason.
+fn paused_or(t: Turn, otherwise: dag.Outcome) -> dag.Outcome {
+  case t.rate_limited {
+    True -> dag.RateLimited
+    False -> otherwise
+  }
+}
+
+/// The session id a later run resumes from. A turn's `result` carries one,
+/// but a session that died before its first result has only what `init`
+/// said — which `claude.read_turn` has already put on the session.
+fn with_session_id(t: Turn) -> Tally {
+  case t.tally.session_id {
+    "" ->
+      Tally(..t.tally, session_id: option.unwrap(t.session.session_id, ""))
+    _ -> t.tally
+  }
+}
+
+fn note(tally: Tally, text: String) -> String {
+  case tally.session_id {
+    "" -> text
+    id -> text <> "; resume session " <> id
+  }
+}
+
+/// The two signals that mean the subscription window is throttling us: a
+/// `rate_limit_event` at or above the ceiling, and a `system/api_retry`
+/// whose error is `rate_limit`.
 fn hit_ceiling(events: List(claude.Event), ceiling: Float) -> Bool {
   list.any(events, fn(e) {
     case e {
       claude.RateLimit(five_hour_utilization:, ..) ->
         five_hour_utilization >=. ceiling
+      claude.ApiRetry(error:, ..) -> error == "rate_limit"
       _ -> False
     }
   })
 }
 
 /// Close stdin and read until the child exits, killing it if it will not.
-fn shutdown(session: claude.Session, l: log.Log) -> Nil {
-  claude.finish(session)
-  drain(session, l)
+/// A child that is already gone is left alone: sending `__EOF__` to a dead
+/// port and then waiting on it is 30 s of nothing.
+fn shutdown(session: claude.Session, l: log.Log, gone: Bool) -> Nil {
+  case gone {
+    True -> Nil
+    False -> {
+      claude.finish(session)
+      drain(session, l, log.mono_ms() + drain_budget_ms)
+    }
+  }
 }
 
-fn drain(session: claude.Session, l: log.Log) -> Nil {
-  case claude.next(session, 30_000) {
-    Ok(claude.Exited(_)) -> Nil
-    Ok(event) -> {
-      log.raw(l, "stream", raw_of(event))
-      drain(session, l)
-    }
-    Error(Nil) -> claude.kill(session)
+const drain_budget_ms = 30_000
+
+/// Read what is left of the stream until the child exits. The 30 s is the
+/// whole drain's budget, not each event's: a chatty shutdown must not be
+/// able to extend it indefinitely.
+fn drain(session: claude.Session, l: log.Log, deadline: Int) -> Nil {
+  case deadline - log.mono_ms() {
+    remaining if remaining > 0 ->
+      case claude.next(session, remaining) {
+        Ok(claude.Exited(_)) -> Nil
+        Ok(event) -> {
+          log.raw(l, "stream", raw_of(event))
+          drain(session, l, deadline)
+        }
+        Error(Nil) -> claude.kill(session)
+      }
+    _ -> claude.kill(session)
   }
 }
 

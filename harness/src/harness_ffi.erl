@@ -5,7 +5,8 @@
 %% keeps the Gleam side free of Erlang message-format details.
 -module(harness_ffi).
 -export([spawn_port/3, port_send/2, port_recv/2, port_close/1,
-         run_cmd/4, find_executable/1, now_iso/0, run_id/0, token/0, set_cwd/1]).
+         run_cmd/4, find_executable/1, now_iso/0, run_id/0, mono_ms/0, token/0,
+         set_cwd/1]).
 
 %% ---- Run a command to completion ------------------------------------------
 
@@ -47,6 +48,11 @@ run_id() ->
     {{Y,Mo,D},{H,Mi,S}} = calendar:universal_time(),
     list_to_binary(io_lib:format("~4..0B~2..0B~2..0BT~2..0B~2..0B~2..0BZ",
                                  [Y,Mo,D,H,Mi,S])).
+
+%% mono_ms() -> milliseconds from an arbitrary origin, never going backwards.
+%%   For measuring a budget; meaningless as a wall clock.
+mono_ms() ->
+    erlang:monotonic_time(millisecond).
 
 %% token() -> 32 lowercase hex characters from a CSPRNG.
 token() ->

@@ -1,0 +1,70 @@
+// A scripted stand-in for `shim/claude_shim.mjs`, so the worker's turn loop
+// can be driven offline.
+//
+// It is launched exactly as the real shim is — `node fake_shim.mjs
+// <path-to-claude.exe> [claude args...]` — and ignores every one of those
+// arguments. What it says instead comes from a script file:
+//
+//   HARNESS_FAKE_SCRIPT   path to a JSON array of "turns". Each turn is an
+//                         array of stdout lines, emitted after the next
+//                         stdin user message. Turns are consumed in order;
+//                         once they run out, a further message gets silence
+//                         (which is what a turn timeout looks like).
+//   HARNESS_FAKE_MARKER   optional path. Written when the harness sends the
+//                         `__EOF__` sentinel, so a test can prove the
+//                         session was closed rather than orphaned.
+//
+// Two sentinels may appear inside a turn's lines:
+//
+//   __EXIT__      exit 0 after flushing what came before it
+//   __EXIT__ <n>  exit with status <n>
+//
+// which is how a test scripts a CLI that dies mid-conversation.
+
+import { readFileSync, writeFileSync } from "node:fs";
+import { createInterface } from "node:readline";
+
+const scriptPath = process.env.HARNESS_FAKE_SCRIPT;
+const markerPath = process.env.HARNESS_FAKE_MARKER;
+
+if (!scriptPath) {
+  process.stderr.write("fake_shim: HARNESS_FAKE_SCRIPT is not set\n");
+  process.exit(64);
+}
+
+let turns;
+try {
+  turns = JSON.parse(readFileSync(scriptPath, "utf8"));
+} catch (err) {
+  process.stderr.write(`fake_shim: cannot read ${scriptPath}: ${err.message}\n`);
+  process.exit(65);
+}
+
+let next = 0;
+
+function leave(status) {
+  // Flush before exiting: the Erlang port must see the lines, then the
+  // exit status, in that order.
+  process.stdout.write("", () => process.exit(status));
+}
+
+const lines = createInterface({ input: process.stdin, crlfDelay: Infinity });
+
+lines.on("line", (line) => {
+  if (line === "__EOF__") {
+    if (markerPath) writeFileSync(markerPath, "__EOF__\n");
+    leave(0);
+    return;
+  }
+  const turn = turns[next++] ?? [];
+  for (const out of turn) {
+    if (out === "__EXIT__" || out.startsWith("__EXIT__ ")) {
+      const status = out === "__EXIT__" ? 0 : Number(out.slice(9).trim());
+      leave(Number.isFinite(status) ? status : 0);
+      return;
+    }
+    process.stdout.write(out + "\n");
+  }
+});
+
+lines.on("close", () => leave(0));

@@ -117,8 +117,18 @@ pub fn now_iso() -> String {
   now_iso_ffi()
 }
 
+/// A monotonic millisecond counter. Not a wall clock — the origin is
+/// arbitrary — but the right thing to subtract when a budget has to hold
+/// across several waits.
+pub fn mono_ms() -> Int {
+  mono_ms_ffi()
+}
+
 @external(erlang, "harness_ffi", "now_iso")
 fn now_iso_ffi() -> String
+
+@external(erlang, "harness_ffi", "mono_ms")
+fn mono_ms_ffi() -> Int
 
 @external(erlang, "harness_ffi", "run_id")
 fn run_id_ffi() -> String

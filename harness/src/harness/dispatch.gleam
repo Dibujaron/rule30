@@ -20,6 +20,7 @@ import harness/lock
 import harness/log
 import harness/roster
 import harness/worker
+import harness/worker/brief
 
 /// Dispatch one attempt at one node, end to end. The `Ok` is how the
 /// attempt ended, not whether the node closed — `dag.Closed` is the only
@@ -58,6 +59,11 @@ pub fn prove_one(
       <> " failed attempts)",
     ),
   )
+  // Before anything is started: a node whose statement is not in
+  // `Rule30/Statements.lean` has nothing to dispatch a worker about, and
+  // finding that out after the guard is up and an identity has been named
+  // wastes both.
+  use task_message <- result.try(brief.task_message(cfg, node))
   use roster_ <- result.try(roster.load(cfg.roster_path))
   use l <- result.try(log.open(cfg.runs_root, log.new_run_id()))
   use lock_actor <- result.try(
@@ -96,7 +102,16 @@ pub fn prove_one(
   use _ <- result.try(dag.save(d, cfg.dag_path))
 
   let #(attempt, report) =
-    worker.attempt(cfg, d, claimed, identity, model, g, l)
+    worker.attempt(
+      cfg,
+      worker.live_deps(cfg, task_message),
+      d,
+      claimed,
+      identity,
+      model,
+      g,
+      l,
+    )
   let d = dag.update(d, record(claimed, attempt))
   use _ <- result.try(dag.save(d, cfg.dag_path))
 
@@ -280,9 +295,21 @@ fn summary(
   )
 }
 
-fn failed_attempts(node: dag.Node) -> Int {
+/// How many attempts at this node count against its model ladder: the two
+/// outcomes that mean a model was given the node and could not close it.
+///
+/// A `RateLimited` or `TimedOut` attempt is a pause, not a verdict on the
+/// model — the spec's line is that nothing is lost to a rate limit. Counting
+/// one would escalate the ladder for free and, at an `L` node whose ladder
+/// is one rung long, abandon the node outright.
+pub fn failed_attempts(node: dag.Node) -> Int {
   node.attempts
-  |> list.count(fn(a) { a.outcome != dag.Closed })
+  |> list.count(fn(a) {
+    case a.outcome {
+      dag.GaveUp | dag.BudgetExhausted -> True
+      dag.Closed | dag.Reduced | dag.RateLimited | dag.TimedOut -> False
+    }
+  })
 }
 
 /// The stated reason a node was dispatched, for the event log — the spec
