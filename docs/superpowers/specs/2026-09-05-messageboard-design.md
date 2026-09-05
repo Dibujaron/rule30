@@ -74,9 +74,18 @@ Per Dib's explicit call, the dispatcher **may** hold a node pending a peer
 answer. This is the interesting version and also the one that can deadlock, so
 three constraints are not optional:
 
-1. **Every pending request has a timeout.** On expiry the node proceeds without
-   the answer. A node never blocks indefinitely, and "waited and gave up" is a
-   logged outcome, not a hang.
+1. **Every pending request has a timeout**, and expiry is a *routing event*,
+   not a dead end. The dispatcher either redirects the question to the
+   next-best candidate or terminates it. Redirects are bounded — a total
+   attempt count and a total wall-clock budget per request — so a question
+   cannot wander the roster indefinitely.
+
+   **The requester always receives an explicit terminal signal**, exactly one
+   of `answered`, `timed_out`, or `no_qualified_recipient`. Silence is not an
+   outcome: an agent that receives nothing cannot distinguish "still waiting"
+   from "nobody knows", and will either stall or invent the answer it was
+   asking for. A node never blocks indefinitely, and "waited and gave up" is a
+   logged outcome rather than a hang.
 2. **A request is never routed to a blocked agent**, and requests carry a hop
    limit. This makes wait-for cycles unconstructible rather than merely
    unlikely.
