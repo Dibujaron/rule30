@@ -78,14 +78,7 @@ pub fn prove_one(
   ))
   use _ <- result.try(guard.write_settings(g, g.settings_path))
 
-  use #(_roster, identity) <- result.try(ensure_identity(
-    cfg,
-    roster_,
-    node,
-    model,
-    g,
-    l,
-  ))
+  use identity <- result.try(ensure_identity(cfg, roster_, node, model, g, l))
   log.event(l, "dispatch", [
     #("node", json.string(node_id)),
     #("identity", json.string(identity.name)),
@@ -156,9 +149,9 @@ fn ensure_identity(
   model: String,
   g: guard.Guard,
   l: log.Log,
-) -> Result(#(roster.Roster, roster.Identity), String) {
+) -> Result(roster.Identity, String) {
   case roster.for_region(roster_, node.region) {
-    Some(identity) -> Ok(#(roster_, identity))
+    Some(identity) -> Ok(identity)
     None -> {
       use identity <- result.try(worker.name_identity(
         cfg,
@@ -181,7 +174,7 @@ fn ensure_identity(
         #("region", json.string(identity.region)),
         #("reason", json.string(identity.naming_reason)),
       ])
-      Ok(#(roster_, identity))
+      Ok(identity)
     }
   }
 }
