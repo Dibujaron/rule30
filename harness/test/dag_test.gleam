@@ -76,6 +76,12 @@ pub fn proof_module_is_pascal_test() {
   assert dag.proof_path(n) == "Rule30/Proofs/EvolveEqFalseOfOutsideCone.lean"
 }
 
+pub fn proof_module_preserves_tail_case_test() {
+  let n = node("centerColumn_zero", [], dag.Open, dag.S)
+  assert dag.proof_module(n) == "Rule30.Proofs.CenterColumnZero"
+  assert dag.proof_path(n) == "Rule30/Proofs/CenterColumnZero.lean"
+}
+
 pub fn served_is_proved_only_test() {
   let d =
     Dag([node("a", [], dag.Proved, dag.S), node("b", [], dag.Open, dag.S)])

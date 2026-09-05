@@ -203,8 +203,17 @@ pub fn proof_path(node: Node) -> String {
 fn pascal_case(id: String) -> String {
   id
   |> string.split("_")
-  |> list.map(string.capitalise)
+  |> list.map(capitalise_first_grapheme)
   |> string.join("")
+}
+
+/// Uppercase only the first grapheme of `part`, leaving the rest exactly as
+/// written (unlike `string.capitalise`, which lowercases the tail too).
+fn capitalise_first_grapheme(part: String) -> String {
+  case string.pop_grapheme(part) {
+    Ok(#(first, rest)) -> string.uppercase(first) <> rest
+    Error(Nil) -> part
+  }
 }
 
 /// Render a `Size` to its JSON string form.

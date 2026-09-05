@@ -81,4 +81,12 @@ theorem centerColumnDensity_succ (N : ℕ) :
       centerColumnDensity N * (N : ℝ) + (if centerColumn N then 1 else 0) := by
   sorry
 
+/-! ## Harness self-test -/
+
+/-- A trivially true statement that exists only so the harness's verifier
+tests have something to prove without touching a real node's proof file. It
+is deliberately absent from `blueprint/dag.json`. -/
+theorem harness_probe : True := by
+  sorry
+
 end Statements

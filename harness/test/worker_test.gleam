@@ -139,7 +139,7 @@ pub fn task_message_carries_the_exact_statement_and_the_file_to_write_test() {
   let msg = brief.task_message_from(n, statements())
   assert string.starts_with(
     msg,
-    "Prove `centerColumn_zero` in `Rule30/Proofs/CentercolumnZero.lean`.",
+    "Prove `centerColumn_zero` in `Rule30/Proofs/CenterColumnZero.lean`.",
   )
   assert string.contains(msg, "The statement to prove, exactly:")
   assert string.contains(
@@ -148,7 +148,7 @@ pub fn task_message_carries_the_exact_statement_and_the_file_to_write_test() {
   )
   assert string.contains(msg, "Description: the centre column starts black.")
   assert string.contains(msg, "Estimated size: S.")
-  assert string.contains(msg, "lake build Rule30.Proofs.CentercolumnZero")
+  assert string.contains(msg, "lake build Rule30.Proofs.CenterColumnZero")
   assert string.contains(msg, "import Rule30.Basic")
 }
 
@@ -250,9 +250,9 @@ pub fn brief_states_the_constraints_test() {
   let text = brief.text(cfg(), d, n, ravel(), "")
   assert string.contains(
     text,
-    "The only file you may edit is `Rule30/Proofs/CentercolumnZero.lean`",
+    "The only file you may edit is `Rule30/Proofs/CenterColumnZero.lean`",
   )
-  assert string.contains(text, "lake build Rule30.Proofs.CentercolumnZero")
+  assert string.contains(text, "lake build Rule30.Proofs.CenterColumnZero")
   assert string.contains(text, "Never `import Rule30.Statements`")
   assert string.contains(text, "No `sorry`")
   assert string.contains(text, "type_of% Statements.centerColumn_zero")
