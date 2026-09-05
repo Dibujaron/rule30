@@ -1,0 +1,15 @@
+# Lean
+/.lake/
+/build/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Prove2Me credentials — never commit
+credentials.json
+.env
+*.apikey
+
+# Harness run artifacts
+/runs/
