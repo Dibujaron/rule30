@@ -1,0 +1,11 @@
+{
+  "enabledPlugins": {"superpowers@claude-plugins-official": false},
+  "hooks": {
+    "PreToolUse": [{"matcher": "Edit|Write|MultiEdit|NotebookEdit|Bash",
+      "hooks": [{"type": "command", "timeout": 300,
+        "command": "curl -s -m 280 -X POST -H \"x-harness-token: <TOKEN>\" --data-binary @- http://127.0.0.1:<PORT>/hook"}]}],
+    "PostToolUse": [{"matcher": "Bash",
+      "hooks": [{"type": "command", "timeout": 30,
+        "command": "curl -s -m 20 -X POST -H \"x-harness-token: <TOKEN>\" --data-binary @- http://127.0.0.1:<PORT>/hook"}]}]
+  }
+}
