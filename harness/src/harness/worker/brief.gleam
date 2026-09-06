@@ -116,10 +116,7 @@ pub fn report_schema() -> String {
                     #("body", json.object([#("type", json.string("string"))])),
                   ]),
                 ),
-                #(
-                  "required",
-                  json.array(["title", "area", "severity", "body"], json.string),
-                ),
+                #("required", json.array(["title"], json.string)),
               ]),
             ),
             #(

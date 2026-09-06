@@ -942,6 +942,10 @@ fn write_channels(
 /// A worker's reported bugs, appended to the board with the provenance the
 /// dispatcher already holds. Never deduped: two workers describing the same
 /// friction in their own words are two pieces of evidence.
+///
+/// The event is logged before the board write is attempted, not after: a
+/// failed `load` or `save` must not also lose the worker's own words to
+/// nothing but a filesystem error on stderr.
 fn file_reported_bugs(
   cfg: config.Config,
   l: log.Log,
@@ -950,9 +954,17 @@ fn file_reported_bugs(
   attempt: dag.Attempt,
   reported: List(worker.ReportedBug),
 ) -> Nil {
-  case reported {
+  case worth_filing(reported) {
     [] -> Nil
-    _ ->
+    reported -> {
+      list.each(reported, fn(rb) {
+        log.event(l, "bug", [
+          #("from", json.string(identity.name)),
+          #("node", json.string(node_id)),
+          #("title", json.string(rb.title)),
+          #("body", json.string(rb.body)),
+        ])
+      })
       case bugs.load(cfg.bugs_path) {
         Error(reason) -> io.println_error("harness/dispatch: " <> reason)
         Ok(board) -> {
@@ -983,19 +995,23 @@ fn file_reported_bugs(
               )
             })
           case bugs.save(board, cfg.bugs_path) {
-            Ok(Nil) ->
-              list.each(reported, fn(rb) {
-                log.event(l, "bug", [
-                  #("from", json.string(identity.name)),
-                  #("node", json.string(node_id)),
-                  #("title", json.string(rb.title)),
-                ])
-              })
+            Ok(Nil) -> Nil
             Error(reason) -> io.println_error("harness/dispatch: " <> reason)
           }
         }
       }
+    }
   }
+}
+
+/// Bugs actually worth putting on the board: a malformed report can decode a
+/// bug down to an empty title (see `worker.reported_bug_decoder`) rather than
+/// failing outright, and a titleless row is not useful. Public for its test,
+/// like `worker.hit_ceiling` — a pure filter is worth testing directly.
+pub fn worth_filing(
+  reported: List(worker.ReportedBug),
+) -> List(worker.ReportedBug) {
+  list.filter(reported, fn(rb) { rb.title != "" })
 }
 
 fn summary(

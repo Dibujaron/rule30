@@ -397,3 +397,51 @@ pub fn schema_offers_bugs_without_requiring_it_test() {
     json.parse(schema, decode.at(["required"], decode.list(decode.string)))
   assert !list.contains(required, "bugs")
 }
+
+pub fn a_bug_items_required_matches_what_the_decoder_actually_requires_test() {
+  // Only `title` is `decode.field` in `reported_bug_decoder`; `area`,
+  // `severity` and `body` are all `optional_field`. The item-level
+  // `required` must say the same thing, or this is the schema-disagrees-
+  // with-the-decoder defect again, one level down.
+  let schema = brief.report_schema()
+  let assert Ok(required) =
+    json.parse(
+      schema,
+      decode.at(
+        ["properties", "bugs", "items", "required"],
+        decode.list(decode.string),
+      ),
+    )
+  assert required == ["title"]
+}
+
+pub fn a_malformed_bug_does_not_poison_the_whole_report_test() {
+  // One well-formed bug object next to one missing its `title` — the field
+  // `decode.field` used to require. The regression this guards: a single
+  // malformed entry in `bugs` must degrade to an empty title, not fail the
+  // whole `Report` decode and take `outcome`, `notebook` and `journal` with
+  // it — the same blast radius as `posts-required-in-schema-not-in-decoder`,
+  // reached by a different route.
+  let json_text =
+    "{\"outcome\":\"proved\",\"estimate\":\"M\",\"summary\":\"s\",\"notebook\":\"n\",\"journal\":\"j\",\"posts\":[],\"bugs\":[{\"title\":\"Guard refused lake env lean\",\"area\":\"guard\",\"severity\":\"blocks\",\"body\":\"I needed it to check one file.\"},{\"area\":\"guard\"}]}"
+  let assert Ok(dyn) = json.parse(json_text, decode.dynamic)
+  let assert Ok(report) = worker.report_from_dynamic(dyn)
+  assert report.outcome == "proved"
+  assert report.notebook == "n"
+  assert report.journal == "j"
+  assert report.bugs
+    == [
+      worker.ReportedBug(
+        title: "Guard refused lake env lean",
+        area: "guard",
+        severity: "blocks",
+        body: "I needed it to check one file.",
+      ),
+      worker.ReportedBug(
+        title: "",
+        area: "guard",
+        severity: "friction",
+        body: "",
+      ),
+    ]
+}

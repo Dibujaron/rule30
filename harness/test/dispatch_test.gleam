@@ -8,6 +8,7 @@ import gleam/string
 import harness/config
 import harness/dag.{Attempt, Dag, Node}
 import harness/dispatch
+import harness/worker
 import simplifile
 
 fn cfg() -> config.Config {
@@ -206,4 +207,20 @@ pub fn a_closed_attempt_is_not_a_failure_test() {
       attempt(dag.Reduced),
     ])
   assert dispatch.failed_attempts(n) == 0
+}
+
+pub fn worth_filing_drops_a_bug_that_lost_its_title_test() {
+  // A malformed bug object decodes to `title: ""` (see
+  // `worker.reported_bug_decoder`) rather than failing the whole report; the
+  // titleless result must not reach the board as a nameless row.
+  let good =
+    worker.ReportedBug(
+      title: "Guard refused lake env lean",
+      area: "guard",
+      severity: "blocks",
+      body: "I needed it to check one file.",
+    )
+  let titleless =
+    worker.ReportedBug(title: "", area: "guard", severity: "friction", body: "")
+  assert dispatch.worth_filing([good, titleless]) == [good]
 }

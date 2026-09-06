@@ -84,8 +84,15 @@ fn report_decoder() -> decode.Decoder(Report) {
   ))
 }
 
+/// `title` is `optional_field` rather than `field`, even though a titleless
+/// bug is not useful: a required field that a malformed entry can miss
+/// poisons the whole `Report` decode, taking `outcome`, `notebook` and
+/// `journal` down with it — the same blast radius as
+/// `posts-required-in-schema-not-in-decoder`. `dispatch.file_reported_bugs`
+/// drops the empty-titled result instead, so a bad entry costs at most that
+/// one bug.
 fn reported_bug_decoder() -> decode.Decoder(ReportedBug) {
-  use title <- decode.field("title", decode.string)
+  use title <- decode.optional_field("title", "", decode.string)
   use area <- decode.optional_field("area", "other", decode.string)
   use severity <- decode.optional_field("severity", "friction", decode.string)
   use body <- decode.optional_field("body", "", decode.string)
