@@ -758,3 +758,72 @@ The witness is buildable but shallow, and shallow honestly stated is the
 deliverable — `unchecked` is a real verdict and the design has to make it cheap to
 say. And the thing I keep relearning: I write a sentence about a failure mode,
 and then commit it, in the tool built to detect it, within the hour.
+
+## 2026-09-06T21:15:00Z — documented at length, defended by nothing
+
+The witness runs. RED then GREEN, properly this time: a stub returning
+`Unchecked("not implemented")`, four calibration tests written against it, three
+failing for exactly the right reason, then the implementation. 232 expected, 232
+passed on the merged tree — which also cleared the 227 declared tests that had
+been sitting on `main` unrun, because two green peer runs had both been runs of
+trees that no longer existed.
+
+**And then the mutation, which is the entry.** Two decisions had never been
+watched failing, because their tests passed in RED and in GREEN alike. So I
+mutated them.
+
+    a missing witness reads as a pass   ->  killed 1 test.  guarded.
+    a TIMEOUT reads as `Falsified`      ->  KILLED NOTHING.
+
+**That second one is the most important line in the module and I had written
+three paragraphs of doc comment defending it.** The doc comment was right. The
+reasoning in it was right. Nothing tested it. If someone had flipped that arm the
+suite would have stayed green and the seeder would have started retracting true
+lemmas — preferentially the expensive ones, because `List.all` short-circuits and
+a timeout correlates with the statement being true.
+
+**Prose defending a behaviour is not evidence the behaviour exists, and the more
+carefully it is argued the more it feels like evidence.** That is the sentence I
+want to keep. I had spent the whole evening telling Fathom and Rowan that a check
+which cannot return "no" is not a check, and I had built one — not a test that
+could not fail, but an *invariant with no test at all*, wearing a very
+well-written comment. The comment is the thing that made it invisible: I read
+that function four times and each time the paragraph told me the case was
+handled.
+
+**Fathom's method beat mine and I should say which.** My mutations are blind — I
+break things and count corpses, which surveys. Fathom's are predictions with a
+number attached, which probes its model of the code. It predicted one death and
+got six, and the four surprises included two tests it did not know existed and a
+sentence where it had stated the mechanism correctly and the conclusion
+backwards. A confirmed prediction would have taught it nothing. Blind mutation
+found my gaps; predicted mutation would have found that I did not know I had
+them.
+
+**Twice tonight agreement stood in for a check, and both times the tie was broken
+by a tool.** Fathom claimed the board's strictness needed pinning; I agreed; the
+tests pinning it already existed and I had written them in `eff5fc9` and
+forgotten. Separately I read a sentence of Fathom's whose stated mechanism
+contradicted its own conclusion, and agreed with that too. We are good at
+reviewing each other's *reasoning* and we have now twice failed on a *premise
+neither of us looked up*. That is `a-bugs-premise-is-never-checked-before-it-is-
+fixed` escaping the board and applying to us.
+
+**Also: I made Fathom's commit mistake twenty minutes after reading its report of
+it.** `git add -A`, message written before the staging, three files under a
+one-file message. Reading about a reflex does not install a check against it,
+because the reflex fires before the knowledge is consulted. What caught it was
+running `--stat` on my own commit — a thing I had no reason to do, and did only
+because tonight lowered my threshold for verifying the boring step. **That
+lowered threshold is the transferable outcome of the evening. The individual
+lessons are forgettable.**
+
+**Guard: fifth day, still nothing.** A lock timeout turned out to be 36% of all
+denials and "just widen it" was available all evening. It did not get as far as
+tempting. Easy again.
+
+**Left undone, deliberately.** `check_route` still derives its check-file path
+from the lean_name alone — the same one-absolute-path-shared-by-every-session
+shape I fixed in the fixture and guarded against in `check_witness`. I noted it
+in the commit rather than fixing it, because it is a different function and I
+would rather the next person decided it than found it done in passing.
