@@ -8,9 +8,11 @@
 ////
 //// So the write is unavoidable and the *delete* is the hazard: the fixture
 //// is removed on the way out, and a runner killed between the write and the
-//// delete leaves a file behind — or, if the name ever collided with a real
-//// node, removed that node's proof. Three guards below make the worst case
-//// litter rather than loss. See the bug
+//// delete leaves a file behind — or, if the name ever collided with a file
+//// something else owns, removed that. Two things can own it: a real DAG
+//// node, and another test runner. `probe_claims_no_real_node_test` rules out
+//// the first; a per-run token in the fixture id rules out the second, so no
+//// two runners ever name the same file. See the bug
 //// `offline-fixtures-write-into-the-live-checkout`.
 
 import envoy
@@ -44,16 +46,43 @@ fn repo() -> String {
 ///
 /// `probe_claims_no_real_node_test` is what keeps this true rather than
 /// merely intended.
-const probe_id = "harness_probe_fixture"
+const probe_prefix = "harness_probe_fixture"
+
+/// A fixture id nothing else on this machine can be holding: the prefix plus
+/// 32 hex characters of CSPRNG, fresh per call.
+///
+/// The token is what makes concurrent suites safe, and it is not decoration.
+/// Two runners on this machine write into the same checkout — both default
+/// `HARNESS_REPO_ROOT` there, because that is where the built `.lake` is —
+/// so a constant id gave every runner one absolute path with no lock on it.
+/// Measured, 2026-09-06: a healthy peer's write tripped another suite's
+/// "already exists" guard for four spurious failures. The destructive
+/// direction is NOT reachable — the `is_file` check below precedes the write
+/// and the delete, and a failed `let assert` panics, so a runner that finds a
+/// peer's file aborts before it can remove it. What remains is the window
+/// where both runners pass that check before either writes; every
+/// interleaving of it ends in a failed assertion here rather than a wrong
+/// verdict. Loud and spurious, never silent.
+///
+/// The cost, which is real: litter from a killed runner no longer has one
+/// known name. Untidy beats silently wrong.
+fn probe_id() -> String {
+  probe_prefix <> "_" <> token()
+}
+
+/// 32 lowercase hex characters from a CSPRNG. Same source `guard.gleam` uses
+/// for its auth token.
+@external(erlang, "harness_ffi", "token")
+fn token() -> String
 
 /// The statement this fixture proves. Unlike the id, this *must* match a
 /// real `Statements.` declaration: `verify` writes
 /// `type_of% Statements.<lean_name>` into its check theorem.
 const probe_lean_name = "harness_probe"
 
-fn harness_probe() -> Node {
+fn harness_probe(id: String) -> Node {
   Node(
-    id: probe_id,
+    id:,
     region: "P2",
     lean_name: probe_lean_name,
     description: "",
@@ -74,10 +103,16 @@ fn harness_probe() -> Node {
 /// and a fixture board cannot tell us that.
 pub fn probe_claims_no_real_node_test() {
   let assert Ok(d) = dag.load(repo() <> "/blueprint/dag.json")
-  let probe_path = dag.proof_path(harness_probe())
+  // The prefix, not one generated id: a token makes any single id collide
+  // with nothing by luck, which would make this test pass without testing
+  // anything. What must hold is that no real node's file can begin where a
+  // fixture's file begins, however the token comes out.
+  // "Rule30/Proofs/HarnessProbeFixture", the path a fixture file must start
+  // with once the token is appended.
+  let stem = string.drop_end(dag.proof_path(harness_probe(probe_prefix)), 5)
   let collisions =
     d.nodes
-    |> list.filter(fn(n) { dag.proof_path(n) == probe_path })
+    |> list.filter(fn(n) { string.starts_with(dag.proof_path(n), stem) })
     |> list.map(fn(n) { n.id })
   assert collisions == []
 }
@@ -92,12 +127,15 @@ pub fn probe_claims_no_real_node_test() {
 /// never be the thing that deletes a file it did not create.
 fn verify_with_proof(body: String) -> verify.Verdict {
   let root = repo()
-  let path = root <> "/" <> dag.proof_path(harness_probe())
+  // One node, built once and used for both the path and the verify call. A
+  // fresh `probe_id()` per call would write one file and verify another.
+  let node = harness_probe(probe_id())
+  let path = root <> "/" <> dag.proof_path(node)
   let assert Ok(_) = simplifile.create_directory_all(root <> "/Rule30/Proofs")
   let assert Ok(False) = simplifile.is_file(path)
   let assert Ok(_) = simplifile.write(path, body)
   let assert Ok(lake) = shell.which("lake")
-  let v = verify.verify(root, lake, harness_probe())
+  let v = verify.verify(root, lake, node)
   let assert Ok(_) = simplifile.delete(path)
   v
 }
@@ -132,4 +170,18 @@ pub fn rejects_forbidden_import_test() {
     )
   let assert verify.ForbiddenImport(_) = v
   Nil
+}
+
+/// The regression guard for the concurrency half of
+/// `offline-fixtures-write-into-the-live-checkout`.
+///
+/// Two runners must never derive the same fixture path. This asserts the
+/// property directly rather than trying to stage two suites: if `probe_id`
+/// ever goes back to being a constant — which is what it was, and what read
+/// as obviously safe — this fails, and nothing else in the file would.
+pub fn two_fixture_ids_never_collide_test() {
+  assert probe_id() != probe_id()
+  // And both are still fixture paths, so the prefix guarantee that
+  // `probe_claims_no_real_node_test` rests on survives the token.
+  assert string.starts_with(probe_id(), probe_prefix <> "_")
 }
