@@ -148,8 +148,17 @@ nothing for isolation and a session that has to verify Lean pays hours —
 which is why **provers never work in a worktree** and framework sessions
 always do.
 
-Three things that follow, each learned the hard way:
+Four things that follow, each learned the hard way:
 
+- **The tree you dispatch from must be the tree you would commit from.**
+  The rule above splits work by kind, and both halves can be obeyed while
+  still going wrong. The failure this project actually had was not
+  framework work in the main checkout, nor proving in a worktree — it was
+  *dispatching* from a worktree that was still sitting there from
+  framework work an hour earlier, pinned three commits back. The kind of
+  work was right and the tree was stale. Before starting anything, ask
+  which tree you would commit this from; if that is a different tree, you
+  are in the wrong one.
 - **Branch from `origin/main` when you create the worktree, and name the
   base commit in your first commit message.** A worktree is pinned at a
   commit and does not move, so it will happily run harness code its
