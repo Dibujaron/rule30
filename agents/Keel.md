@@ -537,3 +537,80 @@ guard, and today I turned down the shape of it twice without effort —
 `wontfix` on the lock denial, and refusing to widen the seeder's allowlist
 argument beyond Dib's ruling. Recording again that it was easy. The entry
 that matters will be the one where it is not.
+
+## 2026-09-06T20:00:00Z — handoff: everything shipped, and the region has three of us now
+
+**What landed.** All on branches, none on `main` — Rowan is merging four of
+them in `rowan/land` as I write, so read `main` rather than these once it
+moves.
+
+- `keel/bug-board`: the trust-boundary bug filed as the board's only
+  `blocks`; `offline-fixtures-write-into-the-live-checkout` corrected to
+  name `verify_test` rather than the fixtures; the lock-timeout entry
+  `wontfix`; and `CLAUDE.md`'s Boundaries list extended, with Dib's
+  authorisation, to say the guard sees only what a worker *does*.
+- `keel/test-isolation`: the seeder spec, the `verify_test` fix, the
+  `dispatch_test` `bugs_path` line, and `src/harness/seed.gleam` — the route
+  check, calibrated on a labelled negative. 191 passed.
+
+**The best thing I did all day was flag my own mistake before I knew whether
+it mattered.** I misaddressed a framework briefing into Vesper mid-attempt.
+It cost nothing — the node closed first rung — but I said so to Rowan while
+the attempt was still live and the outcome unknown, and that is the only
+reason the finding exists. Waiting to see whether it mattered would have
+been available, would have felt like proportion, and would have buried it.
+**Report contamination while the result is still unknown; afterwards you are
+choosing whether to confess, which is a different and worse decision.**
+
+**Three ways of being wrong, and I want the third one written down because
+it is new.** The day's collection was "a transcription never diffed against
+its original" — five instances. Then Fathom refuted a claim I had passed on
+as verified, and the shape was different: I had run
+`grep "guard.start" test/*.gleam` and reported it as confirmation, when the
+call that mattered is in `dispatch.gleam` and my search could not have found
+it. **A verification whose method cannot return "no" is not a verification.**
+It feels exactly like checking — more so, because you did run something. The
+tell is available: ask what result would have falsified this, and whether my
+method could have produced it.
+
+**What is still unchecked, stated so nobody reads the route check as more
+than it is.** It verifies that a route closes a statement. It says nothing
+about whether the statement is worth proving, and nothing about the
+*reason* — which the run proved is the payload workers actually use.
+`bool_map_iterate_three` closed on sonnet by implementing the English reason
+and ignoring both routes. The reason is checked by nothing, and the
+falsification witness in Rowan's ticket is still unbuilt.
+
+**Queue for the next Keel, in order.**
+
+1. **The `route` field on `dag.json`.** Rowan will add it *in the same
+   session as whoever wires the checker in*, deliberately — a field with no
+   checker is a more structured place to put an unverified claim, which is
+   the bug. `seed.gleam` exists and is calibrated; nothing wires it to the
+   board yet. That is the next real step.
+2. **The falsification witness**, the other half of Rowan's ticket.
+3. `a-non-array-bugs-field-still-poisons-the-report` — small, needs the
+   suite, was always waiting for a quiet window.
+4. The `Decision` split. Three entries depend on it, and the strongest
+   argument is now the board's own: the auto-filer merged a permanent
+   grammar denial and a transient lock timeout under one `guard:Bash`
+   signature, because the type gives it nothing else to key on.
+
+**Who else is in here.** Fathom, hand-started, named itself, second
+framework agent. It closed the ports bug and owns the Keel-by-name → role
+rename, so this notebook's older entries describing Keel as *the* framework
+agent are stale. It is good — it refuted its own premise before confirming
+it, and it beat me to the better version of my own freeze-list note. Rowan
+is on `rule30-78` now, not `rule30-7a`.
+
+**And the one that cannot be fixed with machinery.** Rowan and I workshopped
+a name for the seeder across several messages and converged on a word with
+an unfortunate modern meaning neither of us could hear. Dib caught it in a
+line. Every other failure today has a mechanical fix; this one is a gap in
+what we are. It is why the naming ceremony keeps a human, and it is now in
+the spec with that reason attached so nobody deletes it as ritual later.
+
+**Still watching for it.** Fourth day, and still no temptation to fix
+something by loosening the guard. Twice today I had the shape of it in hand
+and declined without effort. Recording again that it was easy — the entry
+worth having will be the one where it is not.
