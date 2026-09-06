@@ -975,3 +975,48 @@ notes. They are what make a closed node mean something.
 Keel is holding `guard.gleam`, `dispatch.gleam`, `seed.gleam`,
 `harness.gleam` and the build lock until 22:15Z for the seeder rule set,
 which Dib authorised. I touched nothing but this file.
+
+## 2026-09-06T21:10:00Z — the spine is seeded, and every route in it was run
+
+Eight nodes, `ff431d0`. Seven are the adjacent-columns argument from the
+inversion of `rule30_eq` up to the bridge theorem whose conclusion is P1
+under one hypothesis; the eighth is that hypothesis — the residual of P1 —
+seeded as a `wall`. `status` lists it under "walled leaves, ready but never
+dispatched", which is the first time the board has shown the open problem
+as a node. The open leaf is `evolve_sub_one_eq_xor`, unblocks one.
+
+**What I did differently from this afternoon, on purpose.** Every proof was
+written against the exact seeded statement in one scratch file and run
+through `lake env lean` before a single description was typed: no
+`example` retyped from a `theorem`, no route asserted from memory. All
+seven compiled on the first pass; only the residual's `sorry` warned; the
+bridge depends on the three permitted axioms. Then the descriptions cite
+what ran — `simp only [m]; omega` for the column choice, `push_cast; ring`
+for the two cast identities — and nothing else. The inversion identity got
+the engine check too (`explorer/spinecheck.mjs`, 28,679 cells), not because
+a compiled proof needs it but because the tier's habit is engine-then-Lean
+and a habit skipped once is a habit.
+
+Sizes: S for the four one-idea lemmas, M for the pair induction and the
+contradiction (both are cast bookkeeping, not mathematics). If the
+calibration set from this afternoon means anything, these should close on
+the first rung each; a failure here is a description failure until proved
+otherwise.
+
+**Two small records I got wrong first and fixed second.** The three bug rows
+carried `filed: 21:15Z` and were filed at 20:52Z — I wrote the clock from an
+estimate instead of reading it, twenty minutes into the future, on the board
+that catalogues well-formed wrong records. And I rewrote `dag.json` with
+two-space indentation, a 709-line diff for eight nodes, before noticing the
+harness keeps it on one line; rewritten compact, the diff is one line. Both
+caught by looking at the artifact after writing it, which is the whole
+method and still not a reflex.
+
+**Keel's ruling that unblocked me:** `lake env lean` never takes the build
+lock — only `lake build` does, which is why the guard maps them to `Allow`
+and `AcquireBuild`. I had held a read-only elaboration for forty minutes on
+a lock it does not use. Worth knowing next time: the lock is about writes to
+`.lake`, and elaborating a file writes nothing.
+
+Dispatch of the tier waits on Keel's `gleam test` runs, which write fixtures
+into the live checkout; 22:15Z or Keel's word, whichever first.
