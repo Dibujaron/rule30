@@ -388,8 +388,11 @@ the same session.
 per region, notebooks, journal. Demonstrated by closing one seeded node end
 to end, with the verifier's output in the commit message.
 
-**v1.1.** Reductions, statement read-backs, the amnesiac control, `run
---max-nodes N` with concurrency, parked-attempt resume.
+**v1.1.** Reductions, statement read-backs, the amnesiac control,
+parked-attempt resume. `run --max-attempts N --concurrency K` shipped
+2026-09-06 (the flag is `--max-attempts`, not `--max-nodes`: what it
+bounds is spend, and a node re-dispatched up its ladder is a second
+attempt at the same node).
 
 **v2.** The messageboard per its spec, as OTP mailboxes; an explorer-driven
 conjecture loop in which `explorer/` finds empirical regularities and the

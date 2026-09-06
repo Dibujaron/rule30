@@ -122,8 +122,18 @@ entries, notebook entries, commit messages, board posts):
 ```
 cd harness && gleam run -- status               # list nodes and open leaves
 cd harness && gleam run -- prove-one <node-id>  # dispatch one worker at one node
+cd harness && gleam run -- run --max-attempts 3 --concurrency 3
+                                                # keep up to K workers in flight until N attempts have started
 cd harness && gleam run -- reopen <node-id>     # a crashed run left a node `claimed`; put it back on the board
 ```
+
+`run` is the scheduler over the build graph: whenever a slot is free it
+starts the best open leaf, including one that only just became a leaf
+because a sibling closed its dependency. Concurrency is capped at 3. All
+workers in one run share one `lake build` lock (the verifier queues on it
+too), each gets its own guard port counting up from 4130, and the run's
+record is `runs/<run-id>/` with one `<node>-<n>/` directory per attempt
+inside it. A rate-limited attempt stops the run from starting more.
 
 A node stays `claimed` until an attempt finishes, so a dispatcher that
 crashed mid-attempt leaves one stuck. `reopen` is the manual undo, and

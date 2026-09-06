@@ -6,6 +6,7 @@
 //// A worker writes only its one proof file; the notebook, the journal and
 //// the DAG are written here, from the worker's report, verbatim.
 
+import gleam/erlang/process.{type Pid, type Subject}
 import gleam/int
 import gleam/io
 import gleam/json
@@ -19,6 +20,8 @@ import harness/guard
 import harness/lock
 import harness/log
 import harness/roster
+import harness/schedule.{type Plan}
+import harness/verify
 import harness/worker
 import harness/worker/brief
 import simplifile
@@ -137,6 +140,473 @@ pub fn prove_one(
   Ok(attempt.outcome)
 }
 
+// --- run: several attempts, up to a few at once ------------------------------
+
+/// What `run` reaches outside itself for, so a test can hand it stand-ins:
+/// the verifier (given the run's build lock, since a verification is a
+/// `lake build` too and must queue with the workers') and the proofs-index
+/// writer.
+pub type Env {
+  Env(
+    verifier: fn(Subject(lock.Msg)) -> fn(dag.Node) -> verify.Verdict,
+    index: fn(dag.Node) -> Result(Nil, String),
+  )
+}
+
+/// The real thing: `verify.verify` under the build lock, and
+/// `Rule30/Proofs.lean`.
+pub fn live_env(cfg: config.Config) -> Env {
+  Env(
+    verifier: fn(build_lock: Subject(lock.Msg)) {
+      fn(node: dag.Node) {
+        let holder = node.id <> " (verifier)"
+        case lock.acquire(build_lock, holder, 600_000) {
+          True -> {
+            let verdict = verify.verify(cfg.repo_root, cfg.lake, node)
+            lock.release(build_lock, holder)
+            verdict
+          }
+          False ->
+            verify.BuildFailed(
+              "the build lock was held by another worker for ten minutes",
+            )
+        }
+      }
+    },
+    index: fn(node) { write_index(cfg, node) },
+  )
+}
+
+/// Dispatch up to `plan.max_attempts` attempts, keeping up to
+/// `plan.concurrency` in flight, until the plan is spent or nothing is left
+/// to start. The DAG is a build graph and this is its scheduler: whenever a
+/// slot frees up, the best open leaf goes into it — including a leaf that
+/// only just became one because a sibling closed its dependency. The `Ok`
+/// is the run's closing summary.
+pub fn run(cfg: config.Config, plan: Plan) -> Result(String, String) {
+  run_with(cfg, plan, live_env(cfg))
+}
+
+/// `run` with its environment injected.
+pub fn run_with(
+  cfg: config.Config,
+  plan: Plan,
+  env: Env,
+) -> Result(String, String) {
+  use d <- result.try(dag.load(cfg.dag_path))
+  use roster_ <- result.try(roster.load(cfg.roster_path))
+  use run_log <- result.try(log.open(cfg.runs_root, log.new_run_id()))
+  use build_lock <- result.try(
+    lock.start(240_000)
+    |> result.map_error(fn(e) {
+      "could not start the build lock: " <> string.inspect(e)
+    }),
+  )
+  log.event(run_log, "run", [
+    #("max_attempts", json.int(plan.max_attempts)),
+    #("concurrency", json.int(plan.concurrency)),
+  ])
+  let done = process.new_subject()
+  let selector =
+    process.new_selector()
+    |> process.select(done)
+    |> process.select_monitors(fn(down) {
+      case down {
+        process.ProcessDown(pid:, reason:, ..) ->
+          Crashed(pid, string.inspect(reason))
+        process.PortDown(..) -> Noise
+      }
+    })
+  let run_ =
+    Run(
+      cfg:,
+      plan:,
+      env:,
+      run_log:,
+      build_lock:,
+      done:,
+      selector:,
+      verify: env.verifier(build_lock),
+    )
+  let state =
+    RunState(
+      d:,
+      roster_:,
+      running: [],
+      dispatched: 0,
+      skip: [],
+      halted: None,
+      finished: [],
+      next_port: cfg.guard_port,
+    )
+  use state <- result.try(loop(run_, state))
+  let text = run_summary(state)
+  log.summary(run_log, text)
+  io.println(text)
+  Ok(text)
+}
+
+/// Everything about one `run` that does not change while it runs.
+type Run {
+  Run(
+    cfg: config.Config,
+    plan: Plan,
+    env: Env,
+    run_log: log.Log,
+    build_lock: Subject(lock.Msg),
+    done: Subject(Done),
+    selector: process.Selector(Done),
+    verify: fn(dag.Node) -> verify.Verdict,
+  )
+}
+
+/// One attempt in flight: the process running it, and what the run needs
+/// to record it when it comes back.
+type InFlight {
+  InFlight(
+    pid: Pid,
+    node_id: String,
+    identity: roster.Identity,
+    model: String,
+    attempt_log: log.Log,
+  )
+}
+
+/// One attempt that came back, for the closing summary.
+type Finished {
+  Finished(node_id: String, identity: String, attempt: dag.Attempt)
+}
+
+type RunState {
+  RunState(
+    d: dag.Dag,
+    roster_: roster.Roster,
+    running: List(InFlight),
+    dispatched: Int,
+    /// Nodes this run will not start again: an attempt at them crashed, or
+    /// their brief could not be written.
+    skip: List(String),
+    /// Why no further attempt will be started, once there is a reason.
+    halted: Option(String),
+    finished: List(Finished),
+    /// Guard ports are handed out in sequence and never reused within a
+    /// run, so a finished attempt's guard — still listening, since nothing
+    /// stops it — can never collide with a new one.
+    next_port: Int,
+  )
+}
+
+/// What the run process waits for.
+type Done {
+  Returned(node_id: String, attempt: dag.Attempt, report: Option(worker.Report))
+  Crashed(pid: Pid, reason: String)
+  Noise
+}
+
+fn loop(run_: Run, state: RunState) -> Result(RunState, String) {
+  use state <- result.try(fill(run_, state))
+  case state.running {
+    [] -> Ok(state)
+    _ -> {
+      let msg = process.selector_receive_forever(run_.selector)
+      use state <- result.try(handle(run_, state, msg))
+      loop(run_, state)
+    }
+  }
+}
+
+/// Start attempts until the plan says stop or nothing is startable.
+fn fill(run_: Run, state: RunState) -> Result(RunState, String) {
+  let candidate = case state.halted {
+    Some(_) -> None
+    None ->
+      schedule.next_to_start(
+        state.d,
+        run_.plan,
+        running: list.length(state.running),
+        dispatched: state.dispatched,
+        skip: state.skip,
+      )
+  }
+  case candidate {
+    None -> Ok(state)
+    Some(node) -> {
+      use state <- result.try(start(run_, state, node))
+      fill(run_, state)
+    }
+  }
+}
+
+/// Stand up one attempt at `node` in its own process: its own guard on the
+/// next port, its own log directory under the run's, the identity for its
+/// region (named or coloured first, inline, if it has to be), and the node
+/// claimed in the DAG before the worker is launched.
+fn start(
+  run_: Run,
+  state: RunState,
+  node: dag.Node,
+) -> Result(RunState, String) {
+  let cfg = run_.cfg
+  let failed = failed_attempts(node)
+  use model <- result.try(
+    config.model_for(node.size, failed)
+    |> result.replace_error(
+      "ladder exhausted for `" <> node.id <> "` although it is an open leaf",
+    ),
+  )
+  case brief.task_message(cfg, node) {
+    // No statement, no attempt — but not the run's end either: skip the
+    // node and let the loop find another.
+    Error(reason) -> {
+      log.event(run_.run_log, "skip", [
+        #("node", json.string(node.id)),
+        #("reason", json.string(reason)),
+      ])
+      io.println_error(
+        "harness/dispatch: skipping " <> node.id <> ": " <> reason,
+      )
+      Ok(RunState(..state, skip: [node.id, ..state.skip]))
+    }
+    Ok(task_message) -> {
+      let attempt_n = list.length(node.attempts) + 1
+      use attempt_log <- result.try(log.open(
+        run_.run_log.dir,
+        node.id <> "-" <> int.to_string(attempt_n),
+      ))
+      let port = state.next_port
+      use g <- result.try(guard.start(
+        guard.Rules(
+          repo_root: cfg.repo_root,
+          allowed_write: cfg.repo_root <> "/" <> dag.proof_path(node),
+          holder: node.id,
+        ),
+        run_.build_lock,
+        attempt_log,
+        port,
+      ))
+      use _ <- result.try(guard.write_settings(g, g.settings_path))
+      use identity <- result.try(ensure_identity(
+        cfg,
+        state.roster_,
+        node,
+        model,
+        g,
+        attempt_log,
+      ))
+      // A ceremony may have written the roster; read it back so the next
+      // attempt in this run sees the name and colour.
+      use roster_ <- result.try(roster.load(cfg.roster_path))
+      log.event(run_.run_log, "dispatch", [
+        #("node", json.string(node.id)),
+        #("identity", json.string(identity.name)),
+        #("model", json.string(model)),
+        #("reason", json.string(dispatch_reason(state.d, node, failed))),
+        #("port", json.int(port)),
+        #("log", json.string(attempt_log.dir)),
+        #("in_flight", json.int(list.length(state.running) + 1)),
+      ])
+      let claimed =
+        dag.Node(
+          ..node,
+          status: dag.Claimed,
+          proof_file: Some(dag.proof_path(node)),
+        )
+      let d = dag.update(state.d, claimed)
+      use _ <- result.try(dag.save(d, cfg.dag_path))
+      let deps = worker.Deps(verify: run_.verify, task_message:)
+      let done = run_.done
+      let pid =
+        process.spawn_unlinked(fn() {
+          let #(attempt, report) =
+            worker.attempt(
+              cfg,
+              deps,
+              d,
+              claimed,
+              identity,
+              model,
+              g,
+              attempt_log,
+            )
+          process.send(done, Returned(claimed.id, attempt, report))
+        })
+      let _monitor = process.monitor(pid)
+      Ok(
+        RunState(
+          ..state,
+          d:,
+          roster_:,
+          running: [
+            InFlight(pid:, node_id: node.id, identity:, model:, attempt_log:),
+            ..state.running
+          ],
+          dispatched: state.dispatched + 1,
+          next_port: port + 1,
+        ),
+      )
+    }
+  }
+}
+
+fn handle(run_: Run, state: RunState, msg: Done) -> Result(RunState, String) {
+  case msg {
+    Noise -> Ok(state)
+    Returned(node_id:, attempt:, report:) ->
+      case list.find(state.running, fn(f) { f.node_id == node_id }) {
+        Error(Nil) -> Ok(state)
+        Ok(flight) -> returned(run_, state, flight, attempt, report)
+      }
+    Crashed(pid:, reason:) ->
+      // A normal exit after `Returned` also arrives here, for a process
+      // that is no longer in flight; only a process that died without
+      // reporting is a crash.
+      case list.find(state.running, fn(f) { f.pid == pid }) {
+        Error(Nil) -> Ok(state)
+        Ok(flight) -> crashed(run_, state, flight, reason)
+      }
+  }
+}
+
+/// Fold a returned attempt into the DAG, index a closed proof, write the
+/// worker's three channels, and free its slot.
+fn returned(
+  run_: Run,
+  state: RunState,
+  flight: InFlight,
+  attempt: dag.Attempt,
+  report: Option(worker.Report),
+) -> Result(RunState, String) {
+  let cfg = run_.cfg
+  use node <- result.try(
+    dag.get(state.d, flight.node_id)
+    |> result.replace_error("`" <> flight.node_id <> "` vanished from the DAG"),
+  )
+  let recorded = record(node, attempt)
+  let d = dag.update(state.d, recorded)
+  use _ <- result.try(dag.save(d, cfg.dag_path))
+  case attempt.outcome {
+    dag.Closed -> {
+      log.event(run_.run_log, "index", [
+        #("node", json.string(node.id)),
+        #("module", json.string(dag.proof_module(node))),
+        #("file", json.string(proofs_index)),
+      ])
+      case run_.env.index(recorded) {
+        Ok(Nil) -> Nil
+        Error(reason) -> io.println_error("harness/dispatch: " <> reason)
+      }
+    }
+    _ -> Nil
+  }
+  write_channels(
+    cfg,
+    run_.run_log,
+    flight.identity,
+    node.id,
+    flight.model,
+    attempt,
+    report,
+  )
+  log.summary(
+    flight.attempt_log,
+    summary(d, flight.attempt_log, flight.identity, attempt, node.id),
+  )
+  let halted = case attempt.outcome, state.halted {
+    dag.RateLimited, None ->
+      Some("rate limit reached at " <> node.id <> "; nothing more was started")
+    _, halted -> halted
+  }
+  Ok(
+    RunState(
+      ..state,
+      d:,
+      running: list.filter(state.running, fn(f) { f.node_id != node.id }),
+      halted:,
+      finished: [
+        Finished(node.id, flight.identity.name, attempt),
+        ..state.finished
+      ],
+    ),
+  )
+}
+
+/// An attempt's process died without reporting. Put the node back on the
+/// board — with no attempt recorded, since nothing is known about it — and
+/// do not start it again in this run.
+fn crashed(
+  run_: Run,
+  state: RunState,
+  flight: InFlight,
+  reason: String,
+) -> Result(RunState, String) {
+  use node <- result.try(
+    dag.get(state.d, flight.node_id)
+    |> result.replace_error("`" <> flight.node_id <> "` vanished from the DAG"),
+  )
+  let d = dag.update(state.d, dag.Node(..node, status: dag.Open))
+  use _ <- result.try(dag.save(d, run_.cfg.dag_path))
+  log.event(run_.run_log, "crashed", [
+    #("node", json.string(node.id)),
+    #("reason", json.string(reason)),
+  ])
+  io.println_error(
+    "harness/dispatch: the attempt at "
+    <> node.id
+    <> " crashed and the node is open again: "
+    <> reason,
+  )
+  Ok(
+    RunState(
+      ..state,
+      d:,
+      running: list.filter(state.running, fn(f) { f.node_id != node.id }),
+      skip: [node.id, ..state.skip],
+    ),
+  )
+}
+
+fn run_summary(state: RunState) -> String {
+  let finished = list.reverse(state.finished)
+  let rows =
+    finished
+    |> list.map(fn(f) {
+      string.pad_end(f.node_id, 34, " ")
+      <> string.pad_end(f.identity, 9, " ")
+      <> string.pad_end(f.attempt.model, 8, " ")
+      <> string.pad_end(dag.outcome_to_string(f.attempt.outcome), 18, " ")
+      <> "$"
+      <> string.pad_end(roster.usd(f.attempt.cost_usd), 7, " ")
+      <> int.to_string(f.attempt.turns)
+      <> " turns"
+    })
+  let closed = list.count(finished, fn(f) { f.attempt.outcome == dag.Closed })
+  let cost = list.fold(finished, 0.0, fn(acc, f) { acc +. f.attempt.cost_usd })
+  string.join(
+    list.flatten([
+      [""],
+      rows,
+      [
+        "",
+        int.to_string(list.length(finished))
+          <> " attempt(s), "
+          <> int.to_string(closed)
+          <> " closed, $"
+          <> roster.usd(cost)
+          <> " in all",
+      ],
+      case state.halted {
+        Some(reason) -> ["halted: " <> reason]
+        None -> []
+      },
+      case state.skip {
+        [] -> []
+        skipped -> ["skipped: " <> string.join(list.reverse(skipped), ", ")]
+      },
+    ]),
+    "\n",
+  )
+}
+
 // --- the proofs index ---------------------------------------------------------
 
 /// Where the import list of every closed proof lives, relative to the repo
@@ -152,14 +622,19 @@ fn index_proof(
   l: log.Log,
   node: dag.Node,
 ) -> Result(Nil, String) {
-  let path = cfg.repo_root <> "/" <> proofs_index
-  let existing = simplifile.read(path) |> result.unwrap("")
-  let updated = with_import(existing, dag.proof_module(node))
   log.event(l, "index", [
     #("node", json.string(node.id)),
     #("module", json.string(dag.proof_module(node))),
     #("file", json.string(proofs_index)),
   ])
+  write_index(cfg, node)
+}
+
+/// The write behind `index_proof`, without the event.
+fn write_index(cfg: config.Config, node: dag.Node) -> Result(Nil, String) {
+  let path = cfg.repo_root <> "/" <> proofs_index
+  let existing = simplifile.read(path) |> result.unwrap("")
+  let updated = with_import(existing, dag.proof_module(node))
   simplifile.write(path, updated)
   |> result.map_error(fn(e) {
     "could not add "

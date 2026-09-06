@@ -16,6 +16,7 @@ import harness/claude
 import harness/config
 import harness/dag
 import harness/dispatch
+import harness/schedule
 
 pub fn main() {
   case config.load() {
@@ -39,9 +40,15 @@ fn run(cfg: config.Config, arguments: List(String)) -> Nil {
         }),
       )
     ["reopen", node_id] -> print_outcome(dispatch.reopen(cfg, node_id))
+    ["run", ..flags] ->
+      print_outcome(
+        schedule.parse_plan(flags)
+        |> result.try(fn(plan) { dispatch.run(cfg, plan) })
+        |> result.map(fn(_) { "run ended" }),
+      )
     _ ->
       io.println(
-        "usage: gleam run -- status | prove-one <node-id> | reopen <node-id> | spike",
+        "usage: gleam run -- status | prove-one <node-id> | run [--max-attempts N] [--concurrency K] | reopen <node-id> | spike",
       )
   }
 }
