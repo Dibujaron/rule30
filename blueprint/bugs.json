@@ -32,9 +32,9 @@
       "signature": null,
       "filed": "2026-09-06T02:16:01Z",
       "occurrences": 1,
-      "status": "open",
-      "resolution": null,
-      "fixed": null
+      "status": "fixed",
+      "resolution": "guard.gleam now logs a node key alongside every decision (holder was already the node id; the doc comment just called it an identity), with event_fields extracted so it is testable without an HTTP server; commit 0451d47.",
+      "fixed": "2026-09-06T14:53:43Z"
     },
     {
       "id": "parked-attempt-leaves-untracked-proof-file",
@@ -69,7 +69,7 @@
       "filed": "2026-09-06T02:16:03Z",
       "occurrences": 1,
       "status": "fixed",
-      "resolution": "hit_ceiling now decodes rate_limit_info.status and only closes the window on a non-allowed* status or a rate_limit api_retry; commit 7c3fc4e.",
+      "resolution": "hit_ceiling now decodes rate_limit_info.status and only closes the window on a non-allowed* status or a rate_limit api_retry; commit 7c3fc4e. Follow-up commit f64d488 fixed decode.subfield making status required (a missing status was silently swallowed into Other instead of RateLimit); it now decodes with a \"\" default so a status-less event keeps the pre-status fail-closed behaviour.",
       "fixed": "2026-09-06T02:32:00Z"
     },
     {
@@ -193,6 +193,24 @@
       "session_id": null,
       "signature": null,
       "filed": "2026-09-06T15:03:57Z",
+      "occurrences": 1,
+      "status": "open",
+      "resolution": null,
+      "fixed": null
+    },
+    {
+      "id": "guard-events-do-not-record-the-denied-command",
+      "title": "A guard event says a command was denied but not which command",
+      "area": "guard",
+      "severity": "friction",
+      "body": "Reported by Rowan, 2026-09-06, run 20260906T150452Z. Filed as a second sighting of guard-events-carry-no-node first, which was wrong twice over: that bug was already fixed in 0451d47, and my run was driven from a worktree pinned at 54d2f2b, so what I saw was the pre-fix code. The observation below is what survives once that is stripped out, and it is a different defect.\n\nguard.event_fields logs node, event, tool and decision. 0451d47 added the node, which settles attribution. What is still absent is the command. A Deny therefore reads as `tool: Bash, decision: Deny(only 'lake build [modules]' and 'lake env lean <file>' are permitted...)` and never says what the worker actually tried to run.\n\nWhy that matters more than attribution did. The denial message names the rule, so a reader knows which rule fired, but not whether it should have: a worker reaching for `lake build --help` and a worker reaching for `rm -rf` produce byte-identical events. Deciding whether the guard is correctly tight or wrongly tight is exactly the judgement this project needs the log for, and that judgement needs the command.\n\nIt is also unrecoverable from anywhere else, which is the part that makes it worth fixing rather than working around. An *allowed* command survives in the turn-end stream events: the full `lake build Rule30.Proofs.EvolveRightEdge` appears five times in run 20260906T144745Z's record. A *denied* one is refused at PreToolUse, so no tool_use is ever emitted and nothing reaches the stream. The guard is the only component that sees the command at the moment it is refused, so the guard event is the only place it can be recorded.\n\nSame dependent as the bug it came from: a bug auto-filed from a denial would carry no content to act on and no signature to dedupe two different denials apart.\n\nNote for whoever fixes it: the command can carry secrets in general, though not under this grammar, which permits only lake invocations. Worth a moment's thought before logging it verbatim, not a reason to skip it.",
+      "reported_by": "Rowan",
+      "source": "hand",
+      "node": null,
+      "run": "20260906T150452Z",
+      "session_id": null,
+      "signature": null,
+      "filed": "2026-09-06T15:12:25Z",
       "occurrences": 1,
       "status": "open",
       "resolution": null,
