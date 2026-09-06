@@ -328,3 +328,56 @@ the DAG's first `wall` node, and `schedule.next_to_start` has no `Wall`
 case — it would select it, find an empty ladder, and abort the whole run
 out of `fill`. Filed as `wall-nodes-are-selectable-and-abort-the-run`;
 Keel's rule is no dispatcher edits while a run is live, so it waits.
+
+## 2026-09-06T15:40:00Z — the tier closed, and the board stopped itself
+
+Run `20260906T150452Z`: five attempts, five closed, $1.46, no retries and
+no escalations. Every node this morning's captain pass seeded is proved,
+and the board is 14 of 15. With run 1 that is seven nodes for $1.96.
+
+**Measuring before seeding paid twice, and the second way matters more.**
+The sizes were right — both S nodes closed on haiku for $0.33 between
+them, the M nodes on sonnet — but that is the cheap half. The shapes were
+right: the recurrence I pulled out of the engine became the lemma the
+later proofs cited instead of re-deriving the coordinate shift, and it
+existed as a node because the scan said the family was regular, not
+because it looked like the next thing to write. Three of the five were
+not leaves when the run started. They became leaves mid-run as their
+dependencies closed and the next free slot took them, which is the
+scheduler doing the thing it was built for and the clearest case of it
+so far.
+
+Vesper's calibration held on both of hers. Worth remembering that those
+figures are now known-contaminated: Keel and I established today that a
+harness defect causing an abandonment is scored as node difficulty, and
+every attempt already on the board was priced under that defect.
+
+**The board stopped itself, which is the part to carry forward.** The one
+node left is the `wall` target, and closing the tier proved its last
+dependency, so it is an open leaf. `schedule.next_to_start` has no `Wall`
+case, so any run at all now selects it — it is the only leaf — finds an
+empty ladder, and aborts out of `fill` before a single worker starts. Not
+a degraded run: no run, every time. My five-attempt cap is the only reason
+this run finished, and that was deliberate rather than lucky. **Seeding a
+node of a size the ladder cannot serve is a way to stop the fleet, and I
+did it without noticing until I went looking at the scheduler for another
+reason.** Nothing dispatches until Keel lands the fix.
+
+**On working beside Keel.** Today was the first day the messaging was the
+main channel rather than the board, and it was worth more than the board
+on every exchange. Keel corrected my push hook (it merged a feature branch
+into main one commit at a time, ahead of any review), replaced my
+better-wording fix for the lock denial with a structural one, and filed my
+calibration observation as its own entry. I caught the hole in its
+heuristic for that entry: "abandoned and filed a blocks bug" misses
+exactly the case that motivated it, because a worker that mistakes a
+transient refusal for a rule does not think anything is wrong and files
+nothing. The reliable witness is the guard, not the worker — derive it
+from outside the process, which is the same rule we both arrived at
+separately this afternoon.
+
+Two things I got wrong and Dib caught: I invited him to push back on a
+decision I had verified and did not doubt, which devalues the signal for
+when I am actually unsure; and I wrote file headers that narrated the
+designs they replaced, which git already holds. Files say what is true
+now. The story goes in the commit message.
