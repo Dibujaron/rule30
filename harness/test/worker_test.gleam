@@ -448,3 +448,64 @@ pub fn a_malformed_bug_does_not_poison_the_whole_report_test() {
       ),
     ]
 }
+
+pub fn a_non_array_bugs_field_does_not_poison_the_report_test() {
+  // The route `a_malformed_bug_does_not_poison_the_whole_report_test` leaves
+  // open. That test fixes the per-*element* route: each entry is decoded on
+  // its own, so one bad object costs one bug. This is the per-*field* route.
+  // If `bugs` is not an array at all, the array decode itself fails, and
+  // that failure is not per-element — it threads up through
+  // `optional_field` and fails the entire `Report`, discarding `outcome`.
+  // A worker that proved a theorem and wrote a string where an array was
+  // expected loses the proof.
+  let json_text =
+    "{\"outcome\":\"proved\",\"estimate\":\"M\",\"summary\":\"s\",\"notebook\":\"n\",\"journal\":\"j\",\"posts\":[],\"bugs\":\"the guard refused lake env lean\"}"
+  let assert Ok(dyn) = json.parse(json_text, decode.dynamic)
+  let assert Ok(report) = worker.report_from_dynamic(dyn)
+  assert report.outcome == "proved"
+  assert report.notebook == "n"
+  assert report.journal == "j"
+  // Degrades to absent, which is the treatment the field already gets when
+  // it is not there at all. A bug reported in the wrong shape is lost; that
+  // is the deliberate trade, and it is strictly better than losing a proof.
+  assert report.bugs == []
+}
+
+pub fn an_object_valued_bugs_field_does_not_poison_the_report_test() {
+  // The other shape of the same mistake, and the likelier one: a single bug
+  // written bare instead of wrapped in an array.
+  let json_text =
+    "{\"outcome\":\"proved\",\"estimate\":\"M\",\"summary\":\"s\",\"notebook\":\"n\",\"journal\":\"j\",\"posts\":[],\"bugs\":{\"title\":\"Guard refused lake env lean\",\"area\":\"guard\"}}"
+  let assert Ok(dyn) = json.parse(json_text, decode.dynamic)
+  let assert Ok(report) = worker.report_from_dynamic(dyn)
+  assert report.outcome == "proved"
+  assert report.bugs == []
+}
+
+pub fn a_non_array_posts_field_does_not_poison_the_report_test() {
+  // `posts` has the identical defect and nobody had filed it. Found while
+  // verifying the `bugs` premise: the two fields are read two lines apart
+  // in the same function, and two rounds of work fixed only one of them.
+  let json_text =
+    "{\"outcome\":\"proved\",\"estimate\":\"M\",\"summary\":\"s\",\"notebook\":\"n\",\"journal\":\"j\",\"posts\":\"Thessaly: the cone lemma helped\"}"
+  let assert Ok(dyn) = json.parse(json_text, decode.dynamic)
+  let assert Ok(report) = worker.report_from_dynamic(dyn)
+  assert report.outcome == "proved"
+  assert report.notebook == "n"
+  assert report.posts == []
+}
+
+pub fn a_malformed_post_does_not_poison_the_report_test() {
+  // And `posts` is the worse of the two, because `decode.list(decode.string)`
+  // fails on a well-formed array holding one wrong-typed element — a route
+  // `bugs` has been immune to since it moved to `decode.dynamic` plus
+  // `list.filter_map`. One number in an array of strings costs a proved
+  // outcome. The good posts must survive alongside.
+  let json_text =
+    "{\"outcome\":\"proved\",\"estimate\":\"M\",\"summary\":\"s\",\"notebook\":\"n\",\"journal\":\"j\",\"posts\":[\"Thessaly: the cone lemma helped\",7,\"Vesper: the recurrence closes it\"]}"
+  let assert Ok(dyn) = json.parse(json_text, decode.dynamic)
+  let assert Ok(report) = worker.report_from_dynamic(dyn)
+  assert report.outcome == "proved"
+  assert report.posts
+    == ["Thessaly: the cone lemma helped", "Vesper: the recurrence closes it"]
+}

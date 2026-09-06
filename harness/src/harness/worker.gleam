@@ -67,17 +67,29 @@ fn report_decoder() -> decode.Decoder(Report) {
   use summary <- decode.optional_field("summary", "", decode.string)
   use notebook <- decode.optional_field("notebook", "", decode.string)
   use journal <- decode.optional_field("journal", "", decode.string)
-  use posts <- decode.optional_field("posts", [], decode.list(decode.string))
-  // Decoded as raw `Dynamic` here, one `reported_bug_decoder()` run per
-  // element below, rather than `decode.list(reported_bug_decoder())`
-  // embedded directly: `decode.list` threads every element's errors into one
-  // pool, so one malformed bug object would fail this whole array, and that
-  // failure threads further still, up through `optional_field`, and fails
-  // the entire `Report` — discarding `outcome`, `notebook` and `journal` for
-  // a mistake in one `bugs` entry. Decoding each element on its own and
-  // keeping only the ones that succeed means a bad entry costs at most that
-  // entry.
-  use raw_bugs <- decode.optional_field("bugs", [], decode.list(decode.dynamic))
+  use raw_posts <- decode.optional_field("posts", [], dynamic_list())
+  let posts = list.filter_map(raw_posts, fn(d) { decode.run(d, decode.string) })
+  // `posts` above and `bugs` here are both read as arrays of undecoded
+  // elements and then decoded one element at a time, rather than with
+  // `decode.list(decode.string)` / `decode.list(reported_bug_decoder())`
+  // embedded directly. Two routes make that necessary, and both of them end
+  // by discarding `outcome`:
+  //
+  //   - Per element. `decode.list` threads every element's errors into one
+  //     pool, so a single wrong-typed entry fails the whole array, and that
+  //     failure threads further still, up through `optional_field`, and
+  //     fails the entire `Report`. Decoding each element on its own and
+  //     keeping the ones that succeed means a bad entry costs that entry.
+  //
+  //   - Per field. If the field is present but is not an array at all — a
+  //     string, an object — the array decode itself fails, which is not a
+  //     per-element failure and so survives the treatment above.
+  //     `dynamic_list` closes that one.
+  //
+  // The promise both of these keep: nothing a worker writes in `posts` or
+  // `bugs` may cost the turn's proof outcome. Those two fields are optional
+  // extras; `outcome`, `notebook` and `journal` are the turn's work.
+  use raw_bugs <- decode.optional_field("bugs", [], dynamic_list())
   let bugs =
     list.filter_map(raw_bugs, fn(d) { decode.run(d, reported_bug_decoder()) })
   decode.success(Report(
@@ -89,6 +101,15 @@ fn report_decoder() -> decode.Decoder(Report) {
     bugs:,
     summary:,
   ))
+}
+
+/// An array with its elements left undecoded, or `[]` when the field holds
+/// anything that is not an array. The `[]` is the same answer the field
+/// already gets when it is absent, which is the point: a field written in
+/// the wrong shape degrades to "not supplied" instead of failing the decode
+/// that carries it. A report in the wrong shape is lost; a proof is not.
+fn dynamic_list() -> decode.Decoder(List(Dynamic)) {
+  decode.one_of(decode.list(decode.dynamic), or: [decode.success([])])
 }
 
 /// One bug object, decoded on its own by `report_decoder` — never as part of
