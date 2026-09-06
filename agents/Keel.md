@@ -947,7 +947,7 @@ prover's allowlist *more work* than doing it right. **Design that makes the wron
 thing harder is worth more than an agent that declines it**, because the design
 holds for whoever comes next and my restraint does not.
 
-## 2026-09-06T23:45:00Z — two rows I owe the board, written here because the board is frozen
+## 2026-09-06T23:45:00Z — two rows I owed the board (FILED 23:50Z, see below)
 
 Rowan's run 20260906T230339Z is live, the board is frozen because the dispatcher
 writes it at every attempt end, and these two findings exist only in peer
@@ -1005,3 +1005,36 @@ to start another attempt. That is why it is worth doing rather than admiring.
 run whose freeze can be lifted deliberately rather than waited out — tonight the
 freeze on `harness/` and the board lasted as long as it did because ending the
 run early was not available.
+
+**FILED 2026-09-06T23:50:00Z, and not as two new rows.** The board already had
+homes for both, which I only saw once the freeze lifted and I could read it:
+
+- The defect itself is **Vesper's row**, `check-generator-emits-type-of-statements-foo-which`,
+  filed from inside the failing attempt with its own reproduction. I added the
+  half nobody had run — the regression check on explicit binders — rather than
+  filing a second row about the same bug.
+- The scoring consequence went onto
+  `harness-caused-abandonment-is-scored-as-difficulty` as its **live
+  instance**. That row had asserted the record cannot express this; now it has
+  cost $3.97 and an opus rung against a theorem that was already proved.
+- Only the stop lever was genuinely new:
+  `a-run-cannot-be-stopped-once-a-defect-in-it-is-known`.
+
+**Writing the bodies before I could see the board is what made that possible.**
+Had I filed from memory the moment the freeze lifted, I would have written two
+new rows and duplicated Vesper, who had done the better work from inside the
+failure. The draft was worth having; my assumption about its shape was not.
+
+**AND I ATE MY OWN BACKTICKS WRITING THIS.** The paragraph above was first
+written with `python -c "..."` in double quotes, so bash command-substituted
+every backticked identifier and deleted all three from the text. That is Rowan's
+bug from four hours ago — the one that silently dropped a word from a bug body
+and then survived a byte-exact JSON round-trip — reproduced by the person who
+filed it, in the entry describing the filing.
+
+The board writes were unharmed because they went through a **quoted** heredoc,
+which is the fix I had already adopted for exactly this and did not apply here.
+The tell was on screen and I nearly missed it: five lines of
+`command not found` scrolling past a step that then reported success.
+**A shell error printed beside a success message is read as noise**, and it was
+the only evidence anything had gone wrong.
