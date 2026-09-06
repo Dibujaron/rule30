@@ -38,6 +38,10 @@ correspondence, and it is exact rather than metaphorical.
 | `rfl` | "both sides are already the same" | Not `==`. It's equality *after computation* (definitional equality), which is subtler than it looks. |
 | `decide` | An exhaustive `when` the compiler actually runs | Requires the proposition be *decidable* (an algorithm exists). It evaluates during typechecking, so it can be slow or blow up. |
 | `simp` | Normalize with a rewrite rule set | Nondeterministic in practice — the rule set is huge and results can surprise you. |
+| `simp only [a, b]` | The same engine restricted to the lemmas you name | This is the one to commit. Bare `simp` draws on every `@[simp]` lemma in Mathlib, so a proof it closes today can break on a Mathlib bump — which is why `lakefile.lean` pins a commit rather than tracking head. |
+| `simp?` | `simp`, but it prints the `simp only […]` that would do the same job | Not a different tactic — a way of asking the bulldozer to show its work so you can replace it with surgery. Run it before committing a bare `simp`. |
+| `push_cast` | `simp` restricted to cast lemmas, oriented to push `↑` inward | Coercions like `ℕ → ℤ` do not distribute over `+` on their own. `-(↑(n+1))` and `-(↑n + 1)` are different terms, and `rw` will not match across the gap. |
+| `rw [h]` | Rewrite once, at the first match, in the direction you named | Its sibling `simp` rewrites everything, everywhere, repeatedly. The idiomatic split: `rw` for the steps that need judgment, `simp` for the residue that does not. |
 | Mathlib | The standard library, for math | Far bigger than any stdlib you've used. Searching it (`exact?`, `apply?`, Loogle) is its own skill. |
 | `Prop` | The type of propositions | Proof-irrelevant: any two proofs of the same `Prop` are considered equal. No FP analogue. |
 | `ℤ → Bool` | `(i: BigInt) => boolean` | None — a CA configuration really is just this function. |
