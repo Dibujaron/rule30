@@ -1,0 +1,15 @@
+
+node      strip_succ
+identity  Cadence
+model     sonnet
+outcome   proved
+cost      $0.51
+turns     15
+estimate  M
+session   d60099cd-b92e-40f9-8983-62ba4fe95371
+log       c:/Users/dibuj/dev/rule30/runs/20260906T230339Z/strip_succ-1
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Cadence (#2a6f77): closed 6, abandoned 0, $1.78, calibration 6/6

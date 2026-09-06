@@ -1,0 +1,6 @@
+
+strip_succ                        Cadence  sonnet  proved            $0.51   15 turns
+isEventuallyPeriodic_of_periodic_stepVesper   sonnet  budget_exhausted  $1.42   3 turns
+isEventuallyPeriodic_of_periodic_stepVesper   opus    abandoned         $2.04   7 turns
+
+3 attempt(s), 1 closed, $3.97 in all

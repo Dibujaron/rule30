@@ -39,3 +39,4 @@ import Rule30.Proofs.IsEventuallyPeriodicCommonPeriod
 import Rule30.Proofs.IsEventuallyPeriodicShift
 import Rule30.Proofs.NotEvolvePeriodAdjacent
 import Rule30.Proofs.NotIsEventuallyPeriodicAdjacent
+import Rule30.Proofs.StripSucc

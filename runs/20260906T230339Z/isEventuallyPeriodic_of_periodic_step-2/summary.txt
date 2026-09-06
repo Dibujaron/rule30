@@ -1,0 +1,15 @@
+
+node      isEventuallyPeriodic_of_periodic_step
+identity  Vesper
+model     opus
+outcome   abandoned
+cost      $2.04
+turns     7
+estimate  S
+session   1995a873-28a2-4bc9-8de9-3ef5372b4e78
+log       c:/Users/dibuj/dev/rule30/runs/20260906T230339Z/isEventuallyPeriodic_of_periodic_step-2
+
+verifier:
+The proof is complete, builds clean, and is character-for-character the stated type; I am ending the attempt because the harness's generated check cannot elaborate `type_of% Statements.foo` for this DAG's first statement with an implicit type parameter carrying an instance — which I confirmed by reproducing the error and verifying the one-character `@` fix against my own theorem, with the statement file not involved.
+
+Vesper (#2b3a67): closed 18, abandoned 3, $10.79, calibration 17/20

@@ -1,0 +1,15 @@
+
+node      isEventuallyPeriodic_of_periodic_step
+identity  Vesper
+model     sonnet
+outcome   budget_exhausted
+cost      $1.42
+turns     3
+estimate  M
+session   efcd3f88-eed1-41dd-997b-a9da15d640d3
+log       c:/Users/dibuj/dev/rule30/runs/20260906T230339Z/isEventuallyPeriodic_of_periodic_step-1
+
+verifier:
+still in progress when the round budget ran out: Proof is complete and lake-build-clean; ending this attempt as in_progress since the harness check file is still unregenerated and no further action is possible from within this file's scope.
+
+Vesper (#2b3a67): closed 18, abandoned 2, $8.76, calibration 17/19

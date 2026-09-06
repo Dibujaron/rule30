@@ -214,3 +214,53 @@ Uses only the standard three axioms (propext, Classical.choice, Quot.sound), inh
 ## 2026-09-06T21:44:24Z — centerColumn_not_eventually_periodic_of_right (haiku, proved)
 
 **Bridge lemmas are transparent:** When a hypothesis has the form "if X then Y", applying it to a proof of X and feeding the result to a contradiction lemma (via a pair or tuple) reads as the direct encoding of "X is impossible" — no intermediate steps or names needed. This pattern appears three times now in the P1 region: here, in `not_isEventuallyPeriodic_adjacent`, and in the driven-sequence node. For anyone building a final contradiction from eventually-periodic neighbors, the shape is always `intro hc; exact not_isEventuallyPeriodic_adjacent i ⟨hc, h hc⟩` where `h` is the propagation rule and `i` is the coordinate pair.
+
+## 2026-09-06T23:23:03Z — isEventuallyPeriodic_of_periodic_step (opus, abandoned)
+
+**THE BIG ONE — the `type_of%` check cannot handle `{α : Type} [C α]` statements, and no worker-side fix exists.** Proof is correct and builds clean; the harness verdict came back FAILED twice, identically:
+
+```
+checks/isEventuallyPeriodic_of_periodic_step.lean:3:33: error: typeclass instance problem is stuck
+  Fintype ?m.1
+checks/...:4:14: error: Unknown constant `harness_check`
+```
+
+Column 33 of line 3 is exactly where the statement's name starts (`theorem harness_check : type_of% ` = 33 chars), so the error is on the Statements side, before the proof is consulted. The statement opens `{S : Type} [Fintype S]`; naming it bare in term position inserts `?S` and then asks for `Fintype ?S`, which Lean refuses to attempt while the type argument is a metavariable. `type_of%` gives no expected type, so `?S` is never determined. Second error is just `#print axioms` failing on a declaration line 3 never produced.
+
+**How to prove this kind of thing from inside a worker's cage — the reusable trick.** I could not read the check file usefully or edit it, so I reproduced its *shape* inside my own proof file, aimed at my own theorem, with `Rule30.Statements` neither imported nor involved:
+
+```lean
+private theorem diag_bare :
+    type_of% isEventuallyPeriodic_of_periodic_step :=
+  isEventuallyPeriodic_of_periodic_step
+
+private theorem diag_at :
+    type_of% @isEventuallyPeriodic_of_periodic_step :=
+  @isEventuallyPeriodic_of_periodic_step
+```
+
+`diag_bare` reproduced the error character for character (col 13, exactly where the bare identifier begins after `    type_of% `). `diag_at` produced nothing. Same theorem, same file, opposite outcomes ⇒ cause is the line's shape, not the statement file and not my proof. Then delete both and rebuild. **Generalize: when you suspect the harness rather than yourself, build the harness's construct locally against your own theorem. It converts "I argued" into "I measured", costs one build, and is the difference between a bug report that gets actioned and one that gets doubted.** This is the CLAUDE.md "distrust a result you dislike as hard as one you like" rule with an actual method attached — my first report reasoned to the right answer with no evidence, which was luck.
+
+**Fix filed:** emit `type_of% @Statements.foo := @foo`. `@` suppresses implicit insertion so the full `∀ {S} [inst], ...` comes back with nothing to synthesize. Note it makes the check *stricter* (compares whole quantified types incl. binder structure), so it cannot admit a weakened restatement.
+
+**The road not taken, and do not take it.** A `@[default_instance]` `Fintype` instance would let Lean fill `?S` with an arbitrary type and the check would go green — for a *specialised* statement that is not the one asked for. That is fabricating a pass, forbidden by the exact-type rule, and it would pollute instance resolution for every downstream file. It was available and it would have looked like success. Name it and refuse it.
+
+**Watch for the quieter sibling.** Implicit *value* params under `type_of%` do not get stuck — they instantiate silently and check a type that is not the stated one. That fails *open*, which is worse. Same `@` fix.
+
+---
+
+Proof content, for the record:
+
+**Found the file already complete.** Attempt 1 (sonnet) wrote a full correct proof, then reported `budget_exhausted` before verification. Built first try untouched. Second time in P1 (see [[evolve-left-second-diagonal]]). But [[bool-map-iterate-three]] is the counter-case — an inherited attempt dead on arrival with an unknown identifier. **Build the inherited file before either trusting or distrusting it; the build is the only thing that settles which case you are in.**
+
+**No Rule30 content at all.** Pure finite-state-machine lemma. `import Rule30.Basic` + `import Mathlib.Tactic` is the whole import list, no served lemma cited. P1's served-lemma list can be entirely irrelevant to a node.
+
+**A helper with an ordering hypothesis beats `wlog`.** Brief specced `wlog hlt : (x:ℕ) < y generalizing x y`. Better: prove `have core : ∀ a b : ℕ, a < b → s (N + a*p) = s (N + b*p) → <goal>` once, then `rcases lt_or_gt_of_ne (Fin.val_injective.ne hxy) with hlt | hlt` and close both branches with `core x y hlt hfxy` / `core y x hlt hfxy.symm`. One proof, both orderings, no `wlog` side-goal bookkeeping. `Fin.val_injective.ne` gets `(x:ℕ) ≠ (y:ℕ)` from `x ≠ y` on `Fin n`.
+
+**The omega-atom trap is real; the brief's fix is exact.** `omega` treats `a * p`, `b * p`, `(b - a) * p` as three unrelated atoms — variable×variable is nonlinear. Hoist `have hmul : a * p + (b - a) * p = b * p := by rw [← Nat.add_mul]; congr 1; omega` into context first; then every later index-shuffle closes by bare `omega`. (`rw [← Nat.add_mul]` gives `(a + (b - a)) * p`; `congr 1` reduces to the linear `a + (b - a) = b`.) **General rule: when omega must relate `f x` and `f y` for nonlinear `f`, hand it one hypothesis equating the atoms and it does the surrounding linear arithmetic itself.**
+
+**`positivity` cannot prove `0 < (b - a) * p`** — needs `a < b` plus truncated Nat subtraction. Use `Nat.mul_pos (by omega) hp`.
+
+**Pigeonhole idiom (first in P1):** `Fintype.exists_ne_map_eq_of_card_lt (fun k : Fin (Fintype.card S + 1) => s (N + (k:ℕ) * p)) (by simp)`. Indexing by `Fin (card S + 1)` makes the side condition `card S < card (Fin (card S + 1))`, closed by `simp` via `Fintype.card_fin`. Returns `⟨x, y, hxy, hfxy⟩`.
+
+**Note repair.** The inherited note said the argument chains "cell by cell" — borrowed from the neighbouring diagonal proofs, meaningless in a lemma with no cells and no automaton — and ran nine lines against the six-line ceiling. Rewrote both.

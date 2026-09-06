@@ -50,3 +50,11 @@ isEventuallyPeriodic_common_period (haiku-tier size, went sonnet, proved first t
 Then `p*q` works for both sequences: for `g` take `k=p` directly (`iterate_period g q N2 hN2 p n hnN2 : g(n+p*q)=g(n)` — order matches goal as-is). For `f` take `k=q`, which gives `f(n+q*p)=f(n)`, so the goal needs `rw [show p*q = q*p from mul_comm p q]` first to align the multiplication order before `exact`.
 
 Bookkeeping notes: `omega` proves `n ≥ N1`/`n ≥ N2` directly from `n ≥ max N1 N2` — no need for `le_max_left`/`le_max_right` lemma names, omega already understands `max` on ℕ. Also confirmed (again) that `obtain` cannot destructure `IsEventuallyPeriodic f` directly — it's a `def`, not literally `Exists`, so `unfold IsEventuallyPeriodic at hf hg` is needed first, same pattern as isEventuallyPeriodic_shift used.
+
+## 2026-09-06T23:08:27Z — strip_succ (sonnet, proved)
+
+strip_succ (Rule30.Proofs.StripSucc): route was exactly as the brief described — funext k; simp only [strip, stripStep, evolve_succ, rule30_eq], then two standalone `have`s (hleft, hright) whose LHS/type is written to match the post-simp goal's dependent-if syntactically, each closed by `split_ifs with h <;> congr 1 <;> omega`, then `rw [hleft, hright]`.
+
+One gap in the brief: `split_ifs` is not available from `import Rule30.Strip` alone (Strip imports only Rule30.Basic, which imports Mathlib.Data.Int.Notation and Mathlib.Logic.Function.Iterate — neither brings in tactic-mode extensions). First build attempt failed with "unknown tactic" at the split_ifs line, cascading into two more "unsolved goals" errors on the surrounding `have`s (spurious — those were just fallout from split_ifs not parsing). Fix: add `import Mathlib.Tactic.SplitIfs` explicitly alongside `import Rule30.Strip`. Worth flagging for future strip/stripStep proofs, since this is probably the first node to need dependent-if case splitting on a Fin index.
+
+Also confirms: `omega` closes the Nat-subtraction-cast side conditions (`↑(↑k - 1) = ↑k - 1` given `k ≠ 0`, etc.) after `congr 1` reduces the goal to the ℤ argument equality — no manual push_cast needed here, unlike some earlier diagonal proofs.
