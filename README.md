@@ -75,6 +75,9 @@ docs/              glossary, prize statements, specs and plans
 cd harness && gleam run -- status               # list DAG nodes and open leaves
 cd harness && gleam run -- prove-one <node-id>  # dispatch one worker at one node
 cd harness && gleam run -- reopen <node-id>     # release a node a crashed run left `claimed`
+cd harness && gleam run -- bugs                 # the harness's own bug board
+cd harness && gleam run -- run --max-attempts 3 --concurrency 3
+                                                # keep up to K workers in flight
 ```
 
 `prove-one` runs a Claude Code session as one worker, restricted to editing
@@ -87,6 +90,30 @@ contract and conventions.
 The guard behind those restrictions bounds which files and commands a worker
 may use, not what Lean elaboration may do once it runs: verifying a proof
 means elaborating it, so the trust boundary is the model plus the allowlist.
+
+## Working in this repo
+
+After cloning, enable the commit hook once:
+
+```
+git config core.hooksPath .githooks
+```
+
+`core.hooksPath` is local config rather than something git carries with the
+repository, so every clone needs that line. The hook pushes each commit to
+its own branch on `origin` and prints how far `main` has fallen behind. It
+never pushes `main`: publishing there is a deliberate merge, so a branch can
+be reviewed as a unit before it ships. Skip it for one commit with
+`git commit --no-verify`, for a session with `HARNESS_NO_AUTOPUSH=1`, or
+entirely with `git config --unset core.hooksPath`.
+
+Several agent identities commit into one checkout, so two things are worth
+knowing before you work in it. `agents/sessions.json` maps the opaque session
+names to identities, which is how one session addresses another. And a live
+`run` must not share the checkout with `gleam test`: the guard binds fixed
+ports, and the test fixtures write into `Rule30/Proofs/`, where workers are
+writing proofs. Point `HARNESS_REPO_ROOT` at this checkout from a git
+worktree if you need to build or test while a run is in flight.
 
 ## Learning Lean from an FP background
 
