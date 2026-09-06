@@ -121,3 +121,59 @@ pub fn a_route_without_its_import_fails_test() {
     check("bool_map_iterate_three", Claimed(Route("revert f; decide", [])))
   assert string.contains(out, "Decidable")
 }
+
+// --- the falsification witness ------------------------------------------------
+//
+// The calibration below is labelled the same way the route check's is, and for
+// the same reason: a checker that only ever sees input it accepts has not been
+// shown to work. Here the labelled negative is not a subtle one — it is a
+// witness that evaluates to `false`, which the checker must call `Falsified`
+// and must not call anything else.
+
+/// **`#eval false` exits 0.** Measured 2026-09-06 against the real toolchain.
+///
+/// This is the whole reason `witness_verdict` reads stdout rather than the exit
+/// status. A checker built on the status would pass every false statement it
+/// was ever given while reporting that it checked them.
+pub fn a_false_witness_exits_zero_and_must_still_be_falsified_test() {
+  let assert seed.Falsified(_) = seed.witness_verdict("t < 16", 0, "false\n")
+}
+
+pub fn a_true_witness_holds_and_keeps_its_range_test() {
+  let assert seed.WitnessHolds(range) =
+    seed.witness_verdict("t < 16", 0, "true\n")
+  assert range == "t < 16"
+}
+
+/// A witness that did not elaborate says NOTHING about the statement, so it
+/// must not share a verdict with one that evaluated to `false`. Collapsing
+/// these two would retract true lemmas on a typo in the witness.
+pub fn a_witness_that_does_not_elaborate_is_broken_not_falsified_test() {
+  let assert seed.WitnessBroken(_) =
+    seed.witness_verdict("t < 16", 1, "error: unknown identifier `foo`")
+  // And a zero exit with output that is neither Bool is equally not a verdict
+  // about the statement — `#eval` of a non-Bool prints something else entirely.
+  let assert seed.WitnessBroken(_) =
+    seed.witness_verdict("t < 16", 0, "[1, 2, 3]")
+}
+
+/// Exit status alone must never decide. Same output, both statuses, and the
+/// status is not what separates them.
+pub fn status_zero_does_not_make_a_verdict_test() {
+  let assert seed.WitnessBroken(_) = seed.witness_verdict("r", 0, "")
+  let assert seed.WitnessBroken(_) = seed.witness_verdict("r", 1, "true")
+}
+
+pub fn witness_source_never_imports_the_statement_file_test() {
+  let src =
+    seed.witness_source(seed.Witness(
+      expression: "(List.range 4).all (fun t => centerColumn t == true)",
+      imports: [],
+      range: "t < 4",
+    ))
+  assert !string.contains(src, "Rule30.Statements")
+  assert string.contains(src, "import Rule30.Basic")
+  // The range travels with the source, so a leftover check file says what it
+  // was checking.
+  assert string.contains(src, "-- range: t < 4")
+}

@@ -183,3 +183,76 @@ pub fn check_route(
       }
   }
 }
+
+// --- the falsification witness -----------------------------------------------
+
+/// A claim that a statement survives a finite search, and the range searched.
+///
+/// `expression` must evaluate to a `Bool` under `#eval`. `range` is prose for
+/// the record — "t < 16", "all 63 diagonals to N=200" — because a witness
+/// that passes is only ever evidence about the range it covered, and a node
+/// carrying `WitnessHolds` with no stated range is a claim nobody can size.
+pub type Witness {
+  Witness(expression: String, imports: List(String), range: String)
+}
+
+pub type WitnessClaim {
+  NoWitness
+  Claims(Witness)
+}
+
+/// The verdict on one witness, and it has four cases on purpose.
+///
+/// `Falsified` and `WitnessBroken` MUST NOT be collapsed: the first says the
+/// statement is false on the range, the second says the witness did not
+/// elaborate and therefore says nothing at all about the statement. Reading a
+/// broken check as a falsified statement would retract true lemmas; reading it
+/// as a pass would admit false ones.
+///
+/// `Unchecked` is a real verdict and is expected to be common. `evolve` costs
+/// 3^t neighbour evaluations, so the usable depth is about t < 18 — measured
+/// 2026-09-06: t=16 in 12s, t=18 in 84s, t=20 over 120s. Most claims about
+/// periodicity live past that.
+pub type WitnessVerdict {
+  WitnessHolds(range: String)
+  Falsified(output: String)
+  WitnessBroken(output: String)
+  Unchecked(reason: String)
+}
+
+/// The Lean source a witness is judged on: proof-file imports, then `#eval`.
+///
+/// Deliberately does NOT import `Rule30.Statements`. A witness evaluates the
+/// definitions, not the seeded claim about them — importing the statement file
+/// would let a witness accidentally reference a `sorry`-backed lemma and
+/// evaluate something that was never proved.
+pub fn witness_source(witness: Witness) -> String {
+  let imports =
+    [base_import, ..witness.imports]
+    |> list.unique
+    |> list.map(fn(m) { "import " <> m })
+    |> string.join("\n")
+  imports <> "\n-- range: " <> witness.range <> "\n#eval " <> witness.expression <> "\n"
+}
+
+/// Read a verdict out of what `lake env lean` printed.
+///
+/// **`#eval false` exits 0.** Verified 2026-09-06. So the exit status is not
+/// the answer and cannot be — a checker built on it passes every false
+/// statement silently, which is `sorry`'s failure mode (a success report over
+/// nothing) moved to the statement side. The verdict is the stdout text, and
+/// anything that is neither exactly `true` nor exactly `false` is a broken
+/// check rather than a falsified statement.
+///
+/// See the board: `a-checker-built-on-exit-status-passes-every-false-statement`.
+pub fn witness_verdict(
+  range: String,
+  status: Int,
+  output: String,
+) -> WitnessVerdict {
+  case string.trim(output) {
+    "true" if status == 0 -> WitnessHolds(range)
+    "false" if status == 0 -> Falsified(output)
+    _ -> WitnessBroken(output)
+  }
+}
