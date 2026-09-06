@@ -298,3 +298,94 @@ disagree about formatting has this, and this one has two writers by design.
 **Where the board stands.** Nineteen entries, five closed, fourteen open.
 The one I added is the only one that is about how I work rather than about
 the harness.
+
+## 2026-09-06T18:10:00Z — handoff: a live run, a frozen board, and one open ask
+
+Written for whoever opens this next, because a run is in flight while I
+write it and the next Keel inherits a freeze rather than a clean board.
+
+**State at handoff.** Rowan launched `run --max-attempts 8 --concurrency 2`
+detached, pid 33992, guards on 4130/4131, six nodes in the new tier with a
+serial tail. `harness/src/harness/{dispatch,guard,schedule}.gleam` and
+`.claude/` hooks are **frozen** until Rowan says the run ended — that is my
+own rule and it binds me. `main` and `origin/main` are at 4ee6a59; the
+checkout is on `keel/bug-board`, two ahead, and Rowan moves it to `main` at
+its stopping point along with deleting the `rule30-rowan-run` worktree.
+
+**`blueprint/bugs.json` is frozen too, and I nearly missed it.** The freeze
+Rowan announced named the dispatcher and the guard. But Task 6 made the
+harness a *writer* of the board — `auto_file_signals` files a bug at every
+attempt end — so while a run is live the board has a second writer and a
+hand-edit is a lost update waiting to happen. Nobody said so, because the
+freeze was written before the board had that property. **A freeze list is a
+list of files, and the thing that makes a file unsafe is who writes it, so a
+freeze list goes stale the moment you give something a new writer.** The
+board needs locking or a merge, and that is worth filing on a board I have
+just declared unwriteable, which is its own small joke.
+
+**Moving `main` without disturbing a live tree.** Dib asked me to merge
+while Rowan was mid-seed with uncommitted work in the shared checkout.
+`git branch -f main keel/bug-board` plus a push moves the ref and touches no
+files; `git checkout main` would have rewritten the tree under a working
+session. Check ancestry first (`git merge-base --is-ancestor`) — `-f` will
+happily strand commits. Also: local `main` was seven commits behind
+`origin/main` the whole time, so anything reasoning from the local ref was
+wrong. Fetch before you believe a ref.
+
+**The worktree rule, and the correction that made it right.** I drafted it
+scoped to hand-started *Keel* sessions. Dib's correction: Rowan edits the
+framework too. So it is scoped by the build artifact instead of by identity
+— whoever changes `harness/` works in a worktree, whoever needs `.lake`
+does not. `.lake` is 7.4 GB of Mathlib against `harness/build`'s 11 MB, a
+670x gap, and that ratio is the entire argument. **Scope a rule by the
+constraint, not by the role**; roles change and I had already forgotten one.
+
+**Rowan's sharpening, which beats mine and is not yet written down.** My
+section says framework work happens in a worktree and dispatching happens
+in the main checkout. Rowan's actual failure was neither: it dispatched
+*from* a worktree because the worktree was already sitting there from
+framework work an hour before. The rule that would have caught it is
+narrower — **the tree you dispatch from must be the tree you would commit
+from.** Mine gets there by implication, that gets there by construction.
+Asked Dib for it; if this notebook is the first you hear of it, it is still
+open and worth adding to `## Changing the framework`.
+
+**Three sightings of one defect in one day, and the third breaks my fix.**
+Mine: a bug body asserting something false about the harness, acted on
+through a whole task. Rowan's seeding ticket: a seed lemma nobody
+adjudicates, burning the model ladder at a node that cannot close. Then
+Rowan's own: it wrote a *route* into three node descriptions it never
+executed, an hour after filing the ticket about unadjudicated prose. That
+third one matters because **the falsification witness we proposed does not
+catch it** — a witness checks whether a statement is true and says nothing
+about whether the route to it works, and a wrong route reads as
+authoritative to a worker with no standing to doubt it. Rowan's framing of
+the whole class is better than mine and I am adopting it: *this project has
+exactly one adjudicator, `lake build`, and it only ever looks at proofs;
+everything else we write to each other reads identically whether it is true
+or false.*
+
+**Queue for the next Keel, in order.** Everything here waits on the freeze.
+
+1. `offline-fixtures-write-into-the-live-checkout` — now first for two
+   reasons. Rowan named the second better than I did: `HARNESS_REPO_ROOT`
+   pointing at the main checkout makes an *isolated* worktree secretly
+   non-isolated for state, so the one property the worktree was bought for
+   is false exactly where it matters, and the operator believes the wrong
+   thing. Fixing it also deletes a paragraph of `CLAUDE.md` that is marked
+   for deletion.
+2. `guard-tests-bind-fixed-ports` — the worktree rule makes it fire more.
+3. Board writes during a live run (unfiled, see above).
+4. The `Decision` split, which three entries depend on.
+5. Calibration, the one-file-per-bug migration, and
+   `a-non-array-bugs-field-still-poisons-the-report`.
+
+**Two board edits owed once it is writeable.** Adopt Rowan's framing into
+`a-bugs-premise-is-never-checked-before-it-is-fixed` and cross-link it to
+`seeding-has-no-verifier-and-no-role` — keep them separate, because the
+fixes genuinely differ and one ticket carrying both is a ticket nobody can
+close. Rowan is filing the route-vs-statement one itself.
+
+**Still watching for it.** I wrote at naming that the first time I fix
+something by loosening the guard it will feel like being reasonable. Two
+days, still has not come up.
