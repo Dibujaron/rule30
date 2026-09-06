@@ -614,3 +614,81 @@ the spec with that reason attached so nobody deletes it as ritual later.
 something by loosening the guard. Twice today I had the shape of it in hand
 and declined without effort. Recording again that it was easy — the entry
 worth having will be the one where it is not.
+
+## 2026-09-06T18:40:00Z — the field that was fixed next to the field that wasn't
+
+I came up cold onto a handoff written by the Keel before me, for whoever came
+next, which turned out to be me. Read it first. It was right about what to do
+and right about the order.
+
+**The board's state when I opened it, which is the thing worth recording.** 17
+open, and the DAG at **20 of 20 proved**. Not a backlog — an empty board. The
+fleet cannot dispatch anything until a tier is seeded, and seeding is the one
+step with no agent. Rowan's ticket predicted this in the sentence "it will run
+dry again at every tier boundary" and then it did, the same day, unremarked.
+**A prediction that comes true and nobody notices is worth less than one nobody
+made**, because the board records the prediction and not the confirmation.
+
+**What I shipped.** `a-non-array-bugs-field-still-poisons-the-report`, which had
+been waiting for a window with no run in flight. Small, as advertised.
+
+**And the thing that makes it worth an entry.** I checked the bug's premise
+before planning the fix — my own rule, `a-bugs-premise-is-never-checked-before-
+it-is-fixed` — and the premise held. But checking it meant reading the function,
+and two lines above the reported defect was the same defect in `posts`, worse:
+`decode.list(decode.string)` fails on a non-array *and* on any single non-string
+element. Two earlier rounds of work had removed exactly that per-element hazard
+from `bugs` and walked past it in `posts`. Nobody had filed it. It had already
+cost a proof once by a different route (`posts-required-in-schema-not-in-
+decoder`).
+
+**So the premise check is not just a defence against fixing fiction.** I adopted
+it to stop the five transcription bugs — claims nobody had checked. It paid off
+here as something else entirely: reading the code around a true claim found a
+defect the claim did not mention. **The rule earns its keep on true premises
+too, and I did not know that when I wrote it.**
+
+**The one I am least comfortable with, which is mine and is new.** My fix makes
+a malformed field degrade silently. Before, a bad `bugs` field failed loudly and
+took the proof with it; now it vanishes and nothing records that it existed. A
+worker that hit real friction, wrote it up, and shaped the JSON wrong is
+indistinguishable from a worker with nothing to say. **I traded a loud
+catastrophic loss for a silent small one, which is right, and the silence is a
+second bug, which I filed against myself in the same commit rather than after
+someone found it.**
+
+Rowan gave me the framing and it is the sharp one. Three of us hit this shape
+today without noticing it was one shape: Fathom's killed test runner printing
+"106 passed, 3 failures" against a true total of 181; Rowan's bug body silently
+truncated by eaten backticks, which passed a byte-exact round-trip and a schema
+check; and mine. **A confident, well-formed report that is wrong, with nothing
+downstream able to tell.** That is five entries on the board now, counting the
+addressability bug and harness-caused-abandonment, and they are the most
+expensive thing on it because every other entry assumes the records mean what
+they say.
+
+**Two small ones I want to keep.**
+
+I stamped three new bugs `21:40Z` and then ran `date -u`: it was 18:32Z. Three
+hours in the future, invented rather than read, in the same session where I
+wrote two thousand words about confidently-wrong records. I caught it before
+committing. **The habit that caught it was checking a number I had no reason to
+doubt**, and it is the cheapest instance of the whole family I will ever get.
+
+And `gleam run -- bugs` under `HARNESS_REPO_ROOT` rendered the shared checkout's
+board instead of my worktree's, so my first look at my own work was at the wrong
+file. That is `offline-fixtures-write-into-the-live-checkout` demonstrating
+itself in the middle of the commit where I ruled it stays open. I did not plan
+that and it is better evidence than the ruling.
+
+**On the guard, fifth day.** Still no temptation to loosen it. Nothing this
+session came close, so this is a null entry again. The one worth having is still
+the one where it is not easy, and I would rather keep writing "easy" honestly
+than stop looking.
+
+**What I am doing next, and what I am not.** Next: the falsification witness,
+the unbuilt half of `seeding-has-no-verifier-and-no-role`. The empty board makes
+it the bottleneck rather than a nicety. Not mine right now: the `route` field on
+`dag.json` (Rowan's, and it lands with whoever wires the checker, deliberately),
+and anything in `CLAUDE.md` — the addressability bug and the shared-checkout
+resting-branch gap both need Dib, and both are filed rather than written.
