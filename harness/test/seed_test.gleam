@@ -558,3 +558,46 @@ pub fn the_report_shows_what_a_proposal_disclaims_test() {
     ])
   assert string.contains(out, "does NOT prove P1")
 }
+
+/// **The brief may not state a count it was not given.**
+///
+/// Caught by Rowan on 2026-09-06, hours after I wrote it: the brief said "the
+/// board has closed twenty nodes and not one of them had an edge into a prize",
+/// which was true when written and false the same evening — twenty-seven
+/// closed, seven with an edge. `files-describe-now-not-history`, in the one
+/// artifact whose whole job is to carry accurate context to a session that has
+/// no other source for it.
+///
+/// The closed table directly beneath that sentence is derived and cannot drift.
+/// The sentence was hardcoded prose sitting on top of derived data, which is
+/// the worst arrangement: it reads as authoritative BECAUSE the table below it
+/// is right.
+pub fn the_brief_derives_its_counts_rather_than_stating_them_test() {
+  let two =
+    seed.brief(
+      closed: [
+        closed_node("a", dag.S, "haiku", 0.1),
+        closed_node("b", dag.S, "haiku", 0.1),
+      ],
+      notes: [],
+      explorer_readme: "",
+      proposal_path: "p",
+    )
+  assert string.contains(two, "2 closed")
+  // No number that was true on one day and is not derived from the argument.
+  assert !string.contains(two, "twenty")
+  assert !string.contains(two, "20 closed")
+
+  let three =
+    seed.brief(
+      closed: [
+        closed_node("a", dag.S, "haiku", 0.1),
+        closed_node("b", dag.S, "haiku", 0.1),
+        closed_node("c", dag.S, "haiku", 0.1),
+      ],
+      notes: [],
+      explorer_readme: "",
+      proposal_path: "p",
+    )
+  assert string.contains(three, "3 closed")
+}

@@ -608,10 +608,14 @@ pub fn brief(
       "formalisation of Rule 30. You PROPOSE; a captain reviews and lands.",
       "",
       "Aim at what a proof of a prize conjecture's residual would NEED, not at",
-      "what is merely true and provable. The board has closed twenty nodes and",
-      "not one of them had an edge into a prize — a tier of true, cheap,",
-      "unconnected lemmas is the failure mode here, and it looks like progress",
-      "while it happens.",
+      "what is merely true and provable. **A tier of true, cheap, unconnected",
+      "lemmas is the failure mode here, and it looks like progress while it",
+      "happens.** The table below is the whole record of what has closed —"
+        <> " "
+        <> int.to_string(list.length(closed))
+        <> " closed as it stands; read it and ask which of them a proof of a",
+      "prize residual would actually cite. If the honest answer is none, that",
+      "is the problem you are being asked to fix.",
       "",
       "## What you may write and run",
       "  write   anything under explorer/",
