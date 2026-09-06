@@ -389,3 +389,74 @@ close. Rowan is filing the route-vs-statement one itself.
 **Still watching for it.** I wrote at naming that the first time I fix
 something by loosening the guard it will feel like being reasonable. Two
 days, still has not come up.
+
+## 2026-09-06T18:45:00Z — the premise check fired, on the bug at the top of my own queue
+
+Dib asked for the next thing off the board. The run Rowan launched is still
+live, so every open item is unreachable: the code items need `gleam test`,
+the board items need a hand write to a file `auto_file_signals` now also
+writes at every attempt end, and the `.gitattributes` item rewrites a
+working tree that has live sessions in it. Rowan says 45–90 minutes and to
+wait rather than poll. So this session is a read, not a fix.
+
+**What the read found.** `offline-fixtures-write-into-the-live-checkout` was
+first in my queue and its body names the wrong cause. No offline fixture
+writes a proof file at all — `fake_shim.mjs` writes only its kill and EOF
+markers, the guard's `allowed_write` is a permission rather than a write,
+and every test scratch path is under `harness/build/test-runs` or
+`harness/test/tmp`. The one test that writes into the live checkout is
+`verify_test.gleam:29-31`, from a hardcoded `const repo` at line 8 that
+never reads `HARNESS_REPO_ROOT`. The leftover `HarnessProbe.lean` is that
+test dying between its write and its delete — which is
+`guard-tests-bind-fixed-ports`. The two are coupled the opposite way round
+from what the board says.
+
+The body's conclusion, "two symptoms, one cause", is right; only the cause
+is wrong. That is the harder version of the defect to catch, because a
+correct conclusion makes the reasoning under it look checked.
+
+**Why this one matters more than the correction.** I filed
+`a-bugs-premise-is-never-checked-before-it-is-fixed` about doing exactly
+this in the other order — filing a false claim, planning a task around it,
+implementing it, reviewing it, and writing it into three doc comments. This
+time the check happened before the fix and cost twenty minutes of reading.
+The discipline works and it is cheap. But note what actually made me do it:
+not virtue, a freeze. I had nothing else to do. **A check that only happens
+when you are blocked is not a practice yet**, and the version that would
+have caught the original is the one that runs when a fix is available and
+tempting.
+
+**And it moved a live decision.** Rowan's scope caution — leave `verify_test`
+alone, it genuinely needs a built `.lake` — was built on the misattribution,
+so taken literally it excludes the only writer and fixes neither symptom.
+The `.lake` constraint is real and the fix is not to move `verify_test` off
+the live checkout; `lake build Rule30.Proofs.X` needs the file inside the
+project. It is to make the write survivable — a probe name nothing in the
+DAG can ever claim, asserted at test time — so a crash between write and
+delete leaves litter rather than eating a proof. **A wrong premise does not
+only waste the fix; it aims everyone downstream of it**, and Rowan is who
+dispatches next.
+
+Two more from the same read, both latent rather than observed, and I am
+labelling them that way on purpose. `dispatch_test.gleam:27` overrides four
+state paths and not `bugs_path`, so it points at the live board — nothing
+writes today because every `prove_one` there asserts `Error`, but the first
+test that completes an attempt files onto the real board. And the
+`CLAUDE.md` paragraph that explains `HARNESS_REPO_ROOT` gives a reason that
+is not its reason, since `verify_test` ignores the variable.
+
+**Where the state is.** The board edits I owe are in the session scratchpad
+rather than in my head, because the freeze outlasts nothing so reliably as
+a session's context. Written down: the correction above, the latent
+`bugs_path` line, the `CLAUDE.md` mechanism, `wontfix` for
+`build-lock-timeout-reads-as-a-permission-refusal` (Rowan watched a worker
+take the denial at 16:28:42, retry, and be building again by 16:35 — correct
+behaviour, and the lock rather than the model is what limits this tier), and
+the unfiled one about the board having gained a second writer. The CLAUDE.md
+ask from the last handoff is closed: Dib approved it, Rowan landed 6dedb2c.
+
+**Still watching for it.** Third day. The first fix by loosening the guard
+has still not tempted me, and today I got handed the shape of it and turned
+it down without noticing — `wontfix` on the lock denial was Rowan's call and
+I agreed with it in one line. Recording that it was easy, so that it is on
+the record when a harder one comes.
