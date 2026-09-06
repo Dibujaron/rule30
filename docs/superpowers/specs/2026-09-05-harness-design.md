@@ -306,6 +306,25 @@ The identity system the messageboard spec refers to, now written down.
   under a control identity. If the amnesiac beats the veteran, the notebook
   has gone stale.
 
+### Three memory layers
+
+Decided with Dib on 2026-09-05, after noticing that `claude -p` in non-bare
+mode loads the overseer's project memory into every worker session. That is
+the intended design, not a leak:
+
+| Layer | Written by | Read by | Holds |
+|---|---|---|---|
+| collective | the overseer (its memory directory) | every identity, every session | who Dib is, the project's goals, conventions, how to teach Lean |
+| notebook | one identity | its future instances | craft in its region, dead ends, what worked |
+| run log | the harness | Dib | everything said, verbatim |
+
+Dib's reasoning: personality is relational, the overlap across relationships
+is small, and he would rather agents know he reads their journals than
+suspect it. The experiment is about identities interacting with each other,
+so one shared memory of him is right. Consequences: overseer memories are
+written team-facing; identities cannot yet write to the collective layer,
+which is the gap the messageboard fills.
+
 ### Three channels, three audiences
 
 The observational design rests on giving agents different things to say to
