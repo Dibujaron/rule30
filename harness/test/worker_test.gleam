@@ -340,3 +340,25 @@ pub fn a_rate_limit_api_retry_is_a_closed_window_test() {
   let retry = claude.ApiRetry(error: "rate_limit", attempt: 1, raw: "")
   assert worker.hit_ceiling([retry], 0.9) == True
 }
+
+pub fn a_rate_limit_event_decodes_its_status_test() {
+  let line =
+    "{\"type\":\"rate_limit_event\",\"rate_limit_info\":{\"status\":\"allowed_warning\",\"resetsAt\":1788659400,\"rateLimitType\":\"five_hour\",\"utilization\":0.94,\"isUsingOverage\":false,\"surpassedThreshold\":0.9,\"unifiedWindows\":{\"five_hour\":{\"utilization\":0.94,\"resetsAt\":1788659400}}}}"
+  let assert claude.RateLimit(five_hour_utilization:, status:, ..) =
+    claude.parse_event(line)
+  assert five_hour_utilization == 0.94
+  assert status == "allowed_warning"
+}
+
+pub fn a_rate_limit_event_with_no_status_still_decodes_test() {
+  // The regression this guards: `status` must be read with a default, not
+  // required. A hard requirement here means a status-less event (an older
+  // CLI, a seven-day-only event, a shape change) fails the whole decode and
+  // falls back to `Other` in `parse_event` — the rate-limit signal vanishes
+  // rather than merely being misread, and `hit_ceiling` never sees it.
+  let line =
+    "{\"type\":\"rate_limit_event\",\"rate_limit_info\":{\"resetsAt\":1788659400,\"rateLimitType\":\"five_hour\",\"utilization\":0.97,\"unifiedWindows\":{\"five_hour\":{\"utilization\":0.97,\"resetsAt\":1788659400}}}}"
+  let assert claude.RateLimit(five_hour_utilization:, ..) =
+    claude.parse_event(line)
+  assert five_hour_utilization == 0.97
+}

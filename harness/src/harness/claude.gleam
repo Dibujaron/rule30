@@ -210,10 +210,18 @@ fn event_decoder(raw: String) -> decode.Decoder(Event) {
         ["rate_limit_info", "unifiedWindows", "five_hour", "resetsAt"],
         decode.int,
       )
-      use status <- decode.subfield(
+      // Optional, not required: `subfield` here would make a status-less
+      // event fail the whole decode and fall back to `Other` in
+      // `parse_event`, silently dropping the rate-limit signal altogether —
+      // an older CLI, a seven-day-only event, or a shape change would then
+      // never park a run at all, worse than misreading it. `""` does not
+      // start with `"allowed"`, so a missing status keeps the pre-`status`
+      // fail-closed behaviour.
+      use status <- decode.then(decode.optionally_at(
         ["rate_limit_info", "status"],
+        "",
         decode.string,
-      )
+      ))
       decode.success(RateLimit(
         five_hour_utilization: utilization,
         resets_at:,
