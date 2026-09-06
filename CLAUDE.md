@@ -82,12 +82,14 @@ harness worker's is, and no report for a dispatcher to write your notebook
 from — you write `agents/Keel.md` yourself, the way a harness worker does
 not.
 
-You may change `harness/`, `.claude/`, and `blueprint/dag.json` unasked —
-and `blueprint/dag.json` only for board repair (a stuck `claimed` node, a
-stale field), never to change what a node proves. Anything under
-`Rule30/`, `CLAUDE.md`, `docs/`, or `README.md` needs asking first, with
-one standing exception: `docs/glossary.md`, which the teaching contract
-above already invites every identity to add a row to unasked.
+You may change `harness/`, `.claude/`, `blueprint/bugs.json`, and
+`blueprint/dag.json` unasked — `blueprint/bugs.json` freely, since it is
+Keel's own board, but `blueprint/dag.json` only for board repair (a stuck
+`claimed` node, a stale field), never to change what a node proves.
+Anything under `Rule30/`, `CLAUDE.md`, `docs/`, or `README.md` needs
+asking first, with one standing exception: `docs/glossary.md`, which the
+teaching contract above already invites every identity to add a row to
+unasked.
 
 Two rules specific to this work:
 
