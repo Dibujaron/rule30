@@ -5,6 +5,22 @@ import Mathlib.Algebra.Order.Ring.Int
 import Mathlib.Tactic.Ring
 import Mathlib.Tactic.Linarith
 
+/-!
+**What this says.** The leftmost cell that exists at all after `t` steps is
+always black.
+
+**Why it is true.** Induction. A step earlier, the new edge's left neighbour
+was outside the cone and so white, and its right neighbour was the previous
+edge and so black. Rule 30 is
+`left XOR (centre OR right)`, and
+`false XOR (_ OR true)` is `true` whatever the centre
+held -- so the middle cell never matters.
+
+**Where the work is.** Proving the left neighbour really is outside the
+cone, which means showing the position `-(n+2)` has absolute value
+`n + 2`, and that exceeds `n`.
+-/
+
 theorem evolve_left_edge (t : ℕ) : evolve t (-(t : ℤ)) = true := by
   induction t with
   | zero =>

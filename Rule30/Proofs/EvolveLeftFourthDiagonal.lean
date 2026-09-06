@@ -5,6 +5,23 @@ import Rule30.Proofs.EvolveLeftDiagonalRecurrence
 import Mathlib.Algebra.Order.Ring.Int
 import Mathlib.Tactic.Ring
 
+/-!
+**What this says.** Three steps in from the left edge the colour alternates:
+black at even `t`, white at odd `t`. The first diagonal that is not a
+constant.
+
+**Why it is true.** The recurrence, with two of its three inputs already
+known constants -- the second diagonal is always black, the third always
+white. That collapses it to
+`this entry is the opposite of the previous one`,
+and induction carries it from there.
+
+**Where the work is.** The parity bookkeeping at the end. Turning
+`the opposite of n being even` into
+`n + 1 is even` needs a case split on which `n` actually
+is.
+-/
+
 theorem evolve_left_fourth_diagonal (t : ℕ) :
     evolve (t + 3) (-(t : ℤ)) = decide (t % 2 = 0) := by
   induction t with

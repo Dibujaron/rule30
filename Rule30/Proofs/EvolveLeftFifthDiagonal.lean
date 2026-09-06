@@ -4,6 +4,21 @@ import Rule30.Proofs.EvolveLeftDiagonalRecurrence
 import Mathlib.Algebra.Order.Ring.Int
 import Mathlib.Tactic.Ring
 
+/-!
+**What this says.** Four steps in from the left edge, always black. Constant
+again, one step past the alternating diagonal -- the family does not settle
+into a pattern that can be extrapolated.
+
+**Why it is true.** The recurrence again. Its shallower input is the third
+diagonal, always white, and its own previous entry is black by induction:
+`false XOR (_ OR true)` is `true`, so the middle input
+never matters.
+
+**Where the work is.** Nothing conceptual. The length is index arithmetic --
+rewriting sums and casting between naturals and integers until the three
+positions match what the recurrence expects.
+-/
+
 theorem evolve_left_fifth_diagonal (t : ℕ) : evolve (t + 4) (-(t : ℤ)) = true := by
   induction t with
   | zero => decide

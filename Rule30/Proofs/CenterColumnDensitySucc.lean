@@ -1,6 +1,21 @@
 import Rule30.Basic
 import Rule30.Prize
 
+/-!
+**What this says.** Widening the window by one term: the black count over
+`N + 1` terms is the count over `N` terms, plus one more if the
+newest cell is black.
+
+**Why it is true.** Adding one index to a range adds that one cell to the
+tally and disturbs nothing already counted.
+
+**Where the work is.** Two places. The counting step has to know the new
+index is genuinely new and not already inside the old range. And
+`N = 0` is split off again for the `x / 0 = 0`
+reason. The statement is deliberately multiplied through by `N` rather than
+left as a ratio, so the recurrence never has to divide.
+-/
+
 theorem centerColumnDensity_succ (N : ℕ) :
     centerColumnDensity (N + 1) * ((N + 1 : ℕ) : ℝ) =
       centerColumnDensity N * (N : ℝ) + (if centerColumn N then 1 else 0) := by
