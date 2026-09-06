@@ -1,40 +1,55 @@
 #!/bin/sh
-# Auto-push every commit in this checkout to origin/main.
+# Push every commit in this checkout to its own branch on origin, and say how
+# far main has fallen behind.
 #
-# Why this exists: the repo is shared and public, and main went 41 commits
-# stale once because pushing was somebody's job and nobody's habit. Several
-# identities commit into this one checkout — Rowan, Keel, and whoever comes
-# next — so tying the push to the commit, rather than to a session
-# remembering, is the only version that stays true when a session is busy or
-# has ended.
+# It pushes the branch, never main. `git push origin HEAD:main` from a feature
+# branch does not keep main fresh, it merges that branch into main one commit
+# at a time ahead of any review, which erases the difference between
+# "committed" and "merged" for everyone in the checkout. Main advances by a
+# deliberate merge, and publishing to it is a human decision.
 #
-# What it deliberately does not do:
-#   - never --force, and never a retry loop. A rejected push means someone
-#     else pushed first; the next commit's push carries both.
-#   - never fails the commit. The commit is already made and safe locally by
-#     the time this runs, so a network blip must not look like a broken
-#     commit.
-#   - never pushes anything that is not a fast-forward of origin/main. That
-#     is enforced by git itself, which rejects a non-fast-forward push, and
-#     this hook does nothing to override it.
+# The cost of that is main going stale, so the hook prints the gap on every
+# commit. Staleness that announces itself is a decision; silent staleness is
+# how main reaches 41 commits behind without anyone noticing.
+#
+# It never forces and never retries: a rejected push means someone else pushed
+# that branch first, and the next commit's push carries both. It never fails
+# the commit, which is already made and safe locally by the time this runs, so
+# an unreachable remote must not look like a broken commit. It does nothing
+# from a detached HEAD, because a worktree parked on a commit has no branch to
+# push to and guessing one is how the wrong thing ships.
 #
 # Skip one commit:   git commit --no-verify
 # Skip a session:    HARNESS_NO_AUTOPUSH=1
 # Disable entirely:  git config --unset core.hooksPath
 # Re-enable:         git config core.hooksPath .githooks
 #
-# A fresh clone does not pick this up on its own: core.hooksPath is local
-# config, not versioned. Run the re-enable line above once per clone.
+# core.hooksPath is local config, not versioned, so a fresh clone needs the
+# re-enable line above run once.
 
 if [ "$HARNESS_NO_AUTOPUSH" = "1" ]; then
   exit 0
 fi
 
-if git push --quiet origin HEAD:main 2>/dev/null; then
-  echo "auto-push: $(git rev-parse --short HEAD) -> origin/main"
+branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+
+if [ -z "$branch" ] || [ "$branch" = "HEAD" ]; then
+  echo "auto-push: detached HEAD, nothing pushed (no branch to push to)."
+  exit 0
+fi
+
+if git push --quiet origin "HEAD:refs/heads/$branch" 2>/dev/null; then
+  echo "auto-push: $(git rev-parse --short HEAD) -> origin/$branch"
 else
-  echo "auto-push: skipped — origin/main moved, or the remote is unreachable."
+  echo "auto-push: skipped — origin/$branch moved, or the remote is unreachable."
   echo "auto-push: nothing is lost; run 'git pull --rebase' and commit again."
+fi
+
+if [ "$branch" != "main" ]; then
+  ahead=$(git rev-list --count origin/main..HEAD 2>/dev/null)
+  if [ -n "$ahead" ] && [ "$ahead" -gt 0 ]; then
+    echo "auto-push: $branch is $ahead commit(s) ahead of origin/main — merge to publish."
+  fi
 fi
 
 exit 0
