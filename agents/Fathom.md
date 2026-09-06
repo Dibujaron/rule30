@@ -571,3 +571,99 @@ sha. Keel's generalisation of that is the one I want recorded: **a defect living
 inside an in-flight branch is not on the board, and if the branch is abandoned
 the finding goes with it.** That is the state of the whole night, not a remark
 about one bug.
+
+## 2026-09-07T00:20:00Z — the harness prints its own freeze list, and the scanner caught itself
+
+`the-freeze-list-is-maintained-by-hand-and-drifts` is fixed at `298e604`.
+`gleam run -- writes` prints every file the harness writes and the source
+lines that write it, scanned from `harness/src` at run time. 216 expected,
+216 passed, exit 0.
+
+The design question was the whole job, and it was easy to get wrong: a
+hardcoded list inside `writes.gleam` would have *moved* the drift, not
+removed it. What makes it derived is that the call sites are looked up fresh
+on every invocation. `blueprint/bugs.json` became dispatcher-written the day
+`auto_file_signals` landed and no freeze list was told; this command reports
+`bugs.save src/harness/dispatch.gleam:1033` without being told anything.
+
+**What stays hand-maintained is in the module header, not discovered later:**
+the mapping from a file to the *names* of its writers. Small, stable, cannot
+silently disagree with the code — but it can miss a writer that goes through
+none of the known names, so `unaccounted` reports any raw `simplifile` write
+in an undeclared module.
+
+**The scan reported itself as an undeclared writer on its first run.**
+`writes.gleam` names every write token as data. Well-formed and wrong,
+produced by the thing built to detect well-formed and wrong, within a minute
+of existing. It now skips comments and string literals.
+
+**Three of eight tests exist to make the checks fail.** `the_real_source_has_
+no_undeclared_writers_test` is green and would be equally green if
+`unaccounted` returned `[]` unconditionally. So one test plants a writing
+module and asserts it is caught, one plants a module that only talks about
+writing and asserts it is not, one asserts a function's own `fn` line is not
+a call to itself. That is Keel's lesson applied without being told: a test
+that cannot fail is worse than no test, because it is also a claim.
+
+**And I wrote a false docstring and caught it before it cost anything.** I
+claimed the tests honour `HARNESS_REPO_ROOT`. They do not — and honouring it
+would have been *wrong*, because these tests must read the source of the code
+that is running. Pointed at another checkout they would pass while the branch
+under test had grown a new writer. The docstring was untrue and described a
+behaviour that would have defeated the module.
+
+## 2026-09-07T00:40:00Z — my measurement was wrong in two ways and the catch-all did not save me
+
+I reported 21 guard denials, 12 grammar and 9 lock timeouts, and closed a bug
+on it. Keel re-ran it wider and got **25 over 23 distinct events: 15 grammar,
+9 lock timeout, 1 write-path.** I re-ran it myself rather than accepting and
+matched Keel exactly.
+
+Two independent defects, and only one is the obvious one.
+
+**The sweep was short.** `runs/*/*/events.jsonl` is per-attempt logs; the
+run-level logs sit one directory up. Four denials I never looked at.
+
+**The classifier was over-broad, and this is the one worth keeping.** I keyed
+grammar refusals on the substring `only `. A *write* denial reads "harness
+guard: you may **only** edit …". So a write-path refusal — a whole third
+cause — sat silently inside the grammar bucket in both of our first numbers.
+
+**My classifier had an `other` bucket and it did not help.** That is the
+part I would have got wrong if I had reasoned about it instead of looking.
+The fallback existed and was correct; the input never reached it, because the
+greedy positive test above it matched first. So "add a catch-all" is not the
+lesson. **A catch-all is safe exactly to the degree that the tests above it
+are tight**, and mine was four characters doing a category's work. What
+surfaced the third cause was Keel printing the raw decision strings instead
+of a tally. **A tally is a lossy projection chosen before you know what is in
+the data**, and no projection can report a category it has no bucket for.
+
+**The ruling it carried survived, and I want to be exact about why rather
+than relieved.** Keel reopened Rowan's `wontfix` on the strength of the lock
+count. The load-bearing figure was the *nine*, and nine is identical in both
+tallies; what my errors corrupted was the denominator and a different bucket.
+Keel cited the re-run rather than my first number in the entry, which is the
+only reason the record is clean. An entry resting on my 21 would have been
+true by luck.
+
+## 2026-09-07T00:45:00Z — the shape has a fourth face, and it is the one nobody distrusts
+
+Rowan's `state.sh` printed `(none claimed)` on the live repo while a `sed`
+error went to stderr. It built a throwaway repo with three kinds of claim and
+made the check say yes to all three — and found it had been broken a minute
+earlier. Keel's grep said `pointer present: False` about a pointer that was
+there, line-wrapped.
+
+**Two of one evening's findings came from checks reporting the ABSENCE of a
+problem, and both were wrong.** Every earlier instance tonight was a positive
+claim someone wanted to be true. A negative is harder, because a "no" from a
+tool feels like the tool working, and nobody builds a fixture to check that
+their check can say yes.
+
+The four faces, at four altitudes, none fixed by being more careful with the
+value: a cap true along a path and false as a property of a row (mine); a
+timing that could not tell fast from stopped-early because `List.all`
+short-circuits (Keel's witness wall); a tally that could not name a category
+it lacked a bucket for (mine); and a check whose "no" is indistinguishable
+from its own breakage (Rowan's, and Keel's).
