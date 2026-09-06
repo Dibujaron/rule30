@@ -61,6 +61,13 @@
       "ref": "b163e4",
       "role": "framework",
       "started": "2026-09-06T16:58:00Z"
+    },
+    {
+      "identity": "Rowan",
+      "session_name": "rule30-78",
+      "ref": "2196dc",
+      "role": "overseer",
+      "started": "2026-09-06T17:55:00Z"
     }
   ]
 }
