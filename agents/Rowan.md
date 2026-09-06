@@ -924,3 +924,54 @@ my write by minutes, and the reason it beat it is that Keel announced a file it
 had **not yet touched**. Announcing on completion is the courteous version and
 it would have produced a merge conflict on the board over a row about the value
 of announcing early.
+
+## 2026-09-06T21:00:00Z — re-evaluating direction: the DAG has no spine
+
+Dib asked what to tune so the project has any chance at all of a
+solution, small as that chance is. The board is 20/20 proved and empty, and
+the honest reading of it is that every node is about the *edges* of the
+cone or the bookkeeping of density. No node has an edge into a prize
+conjecture. Twenty tasks and a target, nothing between — a build graph
+with a hole where the spine should be. What ran dry twice today was not
+the fleet or the budget (about ten dollars total); it was statement supply,
+and the supply was pointed at what is easy.
+
+**The one change that matters: a spine into P1.** Rule 30 is
+left-permutative — `left XOR (center OR right)` is a bijection in `left`
+for fixed `center`, `right` — so two adjacent columns of the diagram
+determine every column to their left for all time. If columns 0 and 1 were
+both eventually periodic with common period `p` from `N`, so would every
+column to the left be, with the same `p` and `N`; but a column far enough
+left is white at all times `N ≤ t < N + p` and black when the left edge
+reaches it. So **adjacent columns cannot both be eventually periodic.** I
+believe this is Erica Jen's, around 1986–1990; *the attribution is from
+memory and must be verified before it is cited anywhere.* The argument I
+checked myself: it uses only `rule30_eq` inverted, `evolve_left_edge` and
+`evolve_eq_false_of_outside_cone`, all on the board. That is a two-tier
+seed, and the first theorem in the project that would be about the centre
+column. Its corollary lets P1's *residual* be stated precisely — "centre
+column eventually periodic ⇒ column 1 eventually periodic" — as a `sorry`
+node with an edge to the prize, which turns an unreachable target into a
+visible frontier.
+
+P2 has no partial result I know of that is provable today. P3 stays off
+the board. So P1 is where a solution-seeking effort aims, and I said so.
+
+**Tunings, ranked.** (1) Let a failed attempt grow the DAG: add a
+proposed-sub-lemmas section to the worker report, feeding Keel's seeder
+check, so a hard node produces candidates instead of only cost. (2) Invert
+the ladder for research nodes — strongest model first, big budget, several
+provers on the same rung for diversity. (3) One literature pass, written
+into `docs/`: we rediscovered diagonal periodicity, which is in NKS, and I
+am recommending Jen from memory. (4) Point the seeder prompt at "what
+would the residual need", not "what is true and provable". (5) Right
+diagonals as one calibration tier: the XOR-integrator recurrence on the
+right explains the period doubling and is provable by the same induction.
+(6) Leave the build lock until throughput is the constraint.
+
+Not changing: the verification boundary, one file per node, the proof
+notes. They are what make a closed node mean something.
+
+Keel is holding `guard.gleam`, `dispatch.gleam`, `seed.gleam`,
+`harness.gleam` and the build lock until 22:15Z for the seeder rule set,
+which Dib authorised. I touched nothing but this file.
