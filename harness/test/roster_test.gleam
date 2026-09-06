@@ -75,11 +75,21 @@ pub fn save_then_load_round_trips_through_disk_test() {
   let _ = simplifile.delete(dir)
 }
 
-pub fn for_region_finds_the_specialist_test() {
-  let r = Roster([thessaly(), ravel()])
-  assert roster.for_region(r, "P1") == Some(thessaly())
-  assert roster.for_region(r, "P2") == Some(ravel())
-  assert roster.for_region(r, "P3") == None
+pub fn for_region_lists_the_specialists_in_roster_order_test() {
+  let r = Roster([thessaly(), ravel(), Identity(..thessaly(), name: "Tarn")])
+  assert list.map(roster.for_region(r, "P1"), fn(i) { i.name })
+    == ["Thessaly", "Tarn"]
+  assert roster.for_region(r, "P2") == [ravel()]
+  assert roster.for_region(r, "P3") == []
+}
+
+pub fn idle_for_region_skips_busy_names_and_prefers_the_eldest_test() {
+  let tarn = Identity(..thessaly(), name: "Tarn")
+  let r = Roster([thessaly(), ravel(), tarn])
+  assert roster.idle_for_region(r, "P1", busy: []) == Some(thessaly())
+  assert roster.idle_for_region(r, "P1", busy: ["Thessaly"]) == Some(tarn)
+  assert roster.idle_for_region(r, "P1", busy: ["Thessaly", "Tarn"]) == None
+  assert roster.idle_for_region(r, "P3", busy: []) == None
 }
 
 pub fn add_appends_test() {
@@ -110,7 +120,7 @@ pub fn check_name_rejects_a_collision_test() {
 }
 
 pub fn naming_prompt_carries_the_region_and_its_description_test() {
-  let p = roster.naming_prompt("P1", roster.region_description("P1"))
+  let p = roster.naming_prompt("P1", roster.region_description("P1"), [])
   assert string.contains(p, "\"P1\"")
   assert string.contains(p, "the geometry of the light cone")
   assert string.contains(p, "It must be a name, not a job title")
@@ -118,10 +128,26 @@ pub fn naming_prompt_carries_the_region_and_its_description_test() {
 }
 
 pub fn naming_prompt_asks_for_a_colour_and_its_reason_test() {
-  let p = roster.naming_prompt("P1", roster.region_description("P1"))
+  let p = roster.naming_prompt("P1", roster.region_description("P1"), [])
   assert string.contains(p, "\"color\"")
   assert string.contains(p, "\"color_reason\"")
   assert string.contains(p, "#rrggbb")
+}
+
+pub fn naming_prompt_names_the_siblings_when_the_region_has_them_test() {
+  let alone = roster.naming_prompt("P2", roster.region_description("P2"), [])
+  assert !string.contains(alone, "already")
+  let joined =
+    roster.naming_prompt("P2", roster.region_description("P2"), [
+      "Emmy",
+      "Ravel",
+    ])
+  assert string.contains(
+    joined,
+    "This region already has provers named Emmy and Ravel.",
+  )
+  assert string.contains(joined, "a name none of them has")
+  assert string.contains(joined, "- \"name\": the name you choose")
 }
 
 pub fn region_descriptions_are_the_spec_wording_test() {

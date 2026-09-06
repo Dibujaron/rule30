@@ -135,6 +135,12 @@ too), each gets its own guard port counting up from 4130, and the run's
 record is `runs/<run-id>/` with one `<node>-<n>/` directory per attempt
 inside it. A rate-limited attempt stops the run from starting more.
 
+A persona runs one session at a time. When a leaf's region has no idle
+persona, the run mints a new one through the naming ceremony before
+dispatching, so a region grows a second name the first time two of its
+leaves are ready together. `agents/roster.json` is the record of who
+exists; the `naming` event in the attempt's `events.jsonl` says why.
+
 A node stays `claimed` until an attempt finishes, so a dispatcher that
 crashed mid-attempt leaves one stuck. `reopen` is the manual undo, and
 refuses any status but `claimed`.

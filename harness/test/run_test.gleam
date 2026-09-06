@@ -63,21 +63,48 @@ fn scripted_identity() -> roster.Identity {
   )
 }
 
+/// A second coloured P2 identity, younger than `Scripted`, so two P2 leaves
+/// can run at once without a ceremony.
+fn understudy() -> roster.Identity {
+  roster.Identity(
+    name: "Understudy",
+    region: "P2",
+    created: "2026-09-05T00:00:01Z",
+    naming_reason: "a test never names itself either",
+    opening: "",
+    color: Some("#654321"),
+  )
+}
+
 type Fixture {
   Fixture(cfg: config.Config, dir: String, index_path: String)
 }
 
-/// A fresh test directory holding the DAG, the roster and the runs root,
-/// with the fake shim scripted to play `script` at every session it is
-/// asked for. `port` keeps this test's guards off the port the guard tests
-/// and the live default use.
+/// A fresh test directory holding the DAG, two P2 personas and the runs
+/// root, with the fake shim scripted to play `script` at every session it
+/// is asked for. `port` keeps this test's guards off the port the guard
+/// tests and the live default use.
 fn fixture(name: String, script: List(List(String)), port: Int) -> Fixture {
+  fixture_with_roster(
+    name,
+    script,
+    port,
+    roster.Roster([scripted_identity(), understudy()]),
+  )
+}
+
+/// `fixture` with the roster chosen by the test.
+fn fixture_with_roster(
+  name: String,
+  script: List(List(String)),
+  port: Int,
+  roster_: roster.Roster,
+) -> Fixture {
   let dir = "build/test-runs/run/" <> name
   let _ = simplifile.delete(dir)
   let assert Ok(_) = simplifile.create_directory_all(dir <> "/agents")
   let assert Ok(_) = dag.save(board(), dir <> "/dag.json")
-  let assert Ok(_) =
-    roster.save(roster.Roster([scripted_identity()]), dir <> "/roster.json")
+  let assert Ok(_) = roster.save(roster_, dir <> "/roster.json")
   let script_path = dir <> "/script.json"
   let assert Ok(_) =
     simplifile.write(
@@ -221,7 +248,8 @@ pub fn two_slots_take_both_leaves_and_a_close_opens_the_next_test() {
   let assert [run] = runs
   let journal = read(f.cfg.runs_root <> "/" <> run <> "/journal.md")
   assert string.contains(journal, "Scripted on probe_one")
-  assert string.contains(journal, "Scripted on probe_three")
+  assert string.contains(journal, "Understudy on probe_two")
+  assert string.contains(journal, " on probe_three")
   assert string.contains(text, "3 attempt(s)")
   assert string.contains(
     read(f.cfg.agents_dir <> "/Scripted.md"),
@@ -282,4 +310,86 @@ pub fn a_rate_limit_stops_the_run_from_starting_more_test() {
   assert one.status == dag.Open
   assert node_after(f, "probe_two").attempts == []
   assert string.contains(text, "rate limit")
+}
+
+// --- minting ------------------------------------------------------------------------
+
+/// A result whose `structured_output` answers both a naming ceremony and a
+/// worker's report: the shim plays the same script to every session, and
+/// each decoder reads only the fields it knows.
+fn naming_and_report_line(session_id: String) -> String {
+  json.object([
+    #("type", json.string("result")),
+    #("session_id", json.string(session_id)),
+    #("is_error", json.bool(False)),
+    #("total_cost_usd", json.float(0.05)),
+    #("num_turns", json.int(1)),
+    #(
+      "structured_output",
+      json.object([
+        #("name", json.string("Minted")),
+        #("reason", json.string("a scripted reason")),
+        #("opening", json.string("I am Minted, a scripted opening.")),
+        #("color", json.string("#abcdef")),
+        #("color_reason", json.string("scripted")),
+        #("outcome", json.string("proved")),
+        #("estimate", json.string("S")),
+        #("summary", json.string("scripted proved")),
+        #("notebook", json.string("scripted notebook entry")),
+        #("journal", json.string("scripted journal entry")),
+        #("posts", json.array([], json.string)),
+      ]),
+    ),
+  ])
+  |> json.to_string
+}
+
+/// Every `events.jsonl` under the one run, concatenated.
+fn all_events(f: Fixture) -> String {
+  let assert Ok(runs) = simplifile.read_directory(f.cfg.runs_root)
+  let assert [run] = runs
+  let root = f.cfg.runs_root <> "/" <> run
+  let assert Ok(entries) = simplifile.read_directory(root)
+  entries
+  |> list.map(fn(e) { read(root <> "/" <> e <> "/events.jsonl") })
+  |> list.prepend(read(root <> "/events.jsonl"))
+  |> string.join("\n")
+}
+
+pub fn a_second_persona_is_minted_when_the_only_one_is_busy_test() {
+  // One P2 persona, two P2 leaves, two slots: the second leaf cannot run as
+  // Scripted, so a ceremony names Minted and the leaf runs as them.
+  let f =
+    fixture_with_roster(
+      "mint-on-demand",
+      [[init_line("s"), naming_and_report_line("s")]],
+      4261,
+      roster.Roster([scripted_identity()]),
+    )
+  let assert Ok(text) =
+    dispatch.run_with(
+      f.cfg,
+      Plan(max_attempts: 2, concurrency: 2),
+      env(f, verify.Verified(["propext"], "'harness_check' depends on axioms")),
+    )
+  assert string.contains(text, "2 attempt(s)")
+  // The roster grew by one, and the newcomer's notebook opened in its voice.
+  let assert Ok(after) = roster.load(f.cfg.roster_path)
+  assert list.map(roster.for_region(after, "P2"), fn(i) { i.name })
+    == ["Scripted", "Minted"]
+  let notebook = read(f.cfg.agents_dir <> "/Minted.md")
+  assert string.contains(notebook, "I am Minted, a scripted opening.")
+  assert string.contains(notebook, "scripted notebook entry")
+  // The log says who ran what, and why a name was minted.
+  let events = all_events(f)
+  assert string.contains(events, "\"because\":\"all busy: Scripted\"")
+  assert string.contains(events, "\"identity\":\"Scripted\"")
+  assert string.contains(events, "\"identity\":\"Minted\"")
+  // Both attempts closed.
+  assert node_after(f, "probe_one").status == dag.Proved
+  assert node_after(f, "probe_two").status == dag.Proved
+  let assert [one] = node_after(f, "probe_one").attempts
+  let assert [two] = node_after(f, "probe_two").attempts
+  assert one.identity == "Scripted"
+  assert two.identity == "Minted"
 }
