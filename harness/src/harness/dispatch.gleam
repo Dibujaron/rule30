@@ -91,7 +91,9 @@ pub fn prove_one(
   use g <- result.try(guard.start(
     guard.Rules(
       repo_root: cfg.repo_root,
-      allowed_write: cfg.repo_root <> "/" <> dag.proof_path(node),
+      role: guard.Prover(
+        allowed_write: cfg.repo_root <> "/" <> dag.proof_path(node),
+      ),
       holder: node_id,
     ),
     lock_actor,
@@ -391,7 +393,9 @@ fn start(
       use g <- result.try(guard.start(
         guard.Rules(
           repo_root: cfg.repo_root,
-          allowed_write: cfg.repo_root <> "/" <> dag.proof_path(node),
+          role: guard.Prover(
+            allowed_write: cfg.repo_root <> "/" <> dag.proof_path(node),
+          ),
           holder: node.id,
         ),
         run_.build_lock,

@@ -35,7 +35,33 @@ import simplifile
 /// which node it came from without the reader having to know which attempt
 /// directory it was found in.
 pub type Rules {
-  Rules(repo_root: String, allowed_write: String, holder: String)
+  Rules(repo_root: String, role: Role, holder: String)
+}
+
+/// What a session is allowed to be. **A sum type on purpose**: the seeder's
+/// permission is wider than any prover's, and making the two separate
+/// constructors rather than two settings on one record means a change to
+/// `Seeder` cannot widen `Prover` by accident. The standing rule — that
+/// loosening the guard is never a fix on its own — is about the prover's list,
+/// and this shape keeps that list out of reach of anyone trying to make a
+/// seeder work.
+pub type Role {
+  /// One file, and the `lake` grammar. Unchanged since the guard was written.
+  Prover(allowed_write: String)
+  /// Anything under `explorer/`, plus one proposal file, plus `node <script>`
+  /// where the script is under `explorer/` — in addition to the `lake` grammar.
+  ///
+  /// Granted by Dib on 2026-09-06 with the cost stated rather than glossed:
+  /// **`node` on a file the agent just authored is a shell wearing a hat.**
+  /// The directory fence is a real bound on what gets WRITTEN and a thin one
+  /// on what gets RUN. It buys a seeder that can scan diagonals to N=16000 —
+  /// that morning's one good idea came out of a script which did not exist
+  /// when the pass began — at the price of a wider trust surface, deliberately.
+  ///
+  /// What it does NOT buy: writing `Rule30/Statements.lean` or
+  /// `blueprint/dag.json`. A seeder proposes; Rowan reviews and lands, because
+  /// direction should not change while nobody is watching.
+  Seeder(proposal_path: String)
 }
 
 /// A running guard: the port it listens on, the token hooks must present,
@@ -165,7 +191,7 @@ fn decide_input(rules: Rules, hi: HookInput) -> Decision {
     // `lake env lean` finishing while a sibling worker held the lock handed
     // that worker's lock away.
     "PostToolUse" ->
-      case hi.tool_name, decide_bash(hi.command) {
+      case hi.tool_name, decide_bash_for(rules, hi.command) {
         "Bash", AcquireBuild -> ReleaseBuild
         _, _ -> Allow
       }
@@ -182,20 +208,69 @@ fn decide_pre(rules: Rules, hi: HookInput) -> Decision {
   case hi.tool_name {
     "Edit" | "Write" | "MultiEdit" | "NotebookEdit" ->
       decide_write(rules, hi.file_path)
-    "Bash" -> decide_bash(hi.command)
+    "Bash" -> decide_bash_for(rules, hi.command)
     _ -> Allow
   }
 }
 
 fn decide_write(rules: Rules, file_path: String) -> Decision {
-  case normalise_path(file_path) == normalise_path(rules.allowed_write) {
-    True -> Allow
-    False ->
-      Deny(
-        NotWritable,
-        "harness guard: you may only edit " <> rules.allowed_write,
-      )
+  case rules.role {
+    Prover(allowed_write:) ->
+      case normalise_path(file_path) == normalise_path(allowed_write) {
+        True -> Allow
+        False ->
+          Deny(
+            NotWritable,
+            "harness guard: you may only edit " <> allowed_write,
+          )
+      }
+    Seeder(proposal_path:) ->
+      case
+        normalise_path(file_path) == normalise_path(proposal_path)
+        || under_explorer(rules.repo_root, file_path)
+      {
+        True -> Allow
+        False ->
+          Deny(
+            NotWritable,
+            "harness guard: a seeder may only write under "
+              <> explorer_dir(rules.repo_root)
+              <> " or the proposal file "
+              <> proposal_path,
+          )
+      }
   }
+}
+
+fn explorer_dir(repo_root: String) -> String {
+  normalise_path(repo_root) <> "/explorer"
+}
+
+/// Is `path` inside the repo's `explorer/` directory?
+///
+/// **A `..` segment is a refusal, not something to resolve.** `normalise_path`
+/// collapses slashes and drive-letter case and does not resolve traversal, so
+/// a plain prefix check is defeated by `explorer/../Rule30/Statements.lean` —
+/// precisely the file this role exists not to be able to write. The fix is not
+/// to resolve the path: a fence with a path parser inside it is a fence with a
+/// bug inside it, and the usual way that bug shows up is the parser and the
+/// filesystem disagreeing. Refusing the segment is a property of the string,
+/// checkable by reading it.
+///
+/// The trailing separator is the other half. Without it `explorer_evil/x` is
+/// inside `explorer`, because it starts with those eight characters.
+fn under_explorer(repo_root: String, path: String) -> Bool {
+  let normalised = normalise_path(path)
+  case has_dot_dot_segment(normalised) {
+    True -> False
+    False ->
+      string.starts_with(normalised, explorer_dir(repo_root) <> "/")
+      || string.starts_with(normalised, "explorer/")
+  }
+}
+
+fn has_dot_dot_segment(path: String) -> Bool {
+  string.split(path, "/") |> list.any(fn(segment) { segment == ".." })
 }
 
 /// The characters that, anywhere in the raw (untrimmed) command, deny it
@@ -222,10 +297,45 @@ fn contains_forbidden_bash_char(command: String) -> Bool {
 ///   (`[A-Za-z0-9_./:\\-]+`), optionally wrapped in double quotes -> `Allow`.
 /// Everything else, including any shell operator anywhere in the command,
 /// is denied.
-fn decide_bash(command: String) -> Decision {
+fn decide_bash_for(rules: Rules, command: String) -> Decision {
   case contains_forbidden_bash_char(command) {
     True -> bash_deny()
-    False -> match_bash_grammar(string.trim(command))
+    False -> {
+      let trimmed = string.trim(command)
+      // The `node` arm is reachable ONLY under `Seeder`. A prover falls through
+      // to the same `lake` grammar it has always had, and
+      // `a_prover_still_cannot_run_node_test` exists to fail loudly if that
+      // ever stops being true.
+      case rules.role, node_script(trimmed) {
+        Seeder(..), Ok(script) ->
+          case under_explorer(rules.repo_root, script) {
+            True -> Allow
+            False ->
+              Deny(
+                NotPermitted,
+                "harness guard: a seeder may only run scripts under explorer/",
+              )
+          }
+        _, _ -> match_bash_grammar(trimmed)
+      }
+    }
+  }
+}
+
+/// `node <path>` with exactly one argument, or `Error(Nil)`.
+///
+/// Deliberately no extra arguments. A script that needs a parameter can carry
+/// it in the file the seeder just wrote, and starting tight is the only honest
+/// direction: widening later needs evidence, whereas narrowing later breaks a
+/// role that has come to depend on the width.
+fn node_script(command: String) -> Result(String, Nil) {
+  case string.split(command, " ") {
+    ["node", path] ->
+      case path != "" && list.all(string.to_graphemes(path), is_path_grapheme) {
+        True -> Ok(path)
+        False -> Error(Nil)
+      }
+    _ -> Error(Nil)
   }
 }
 
@@ -263,10 +373,15 @@ fn is_module_name(token: String) -> Bool {
 
 fn is_lean_path_arg(token: String) -> Bool {
   let unwrapped = unquote(token)
-  unwrapped != ""
-  && list.all(string.to_graphemes(unwrapped), fn(g) {
-    is_alnum(g) || string.contains(path_extra_chars, g)
-  })
+  unwrapped != "" && list.all(string.to_graphemes(unwrapped), is_path_grapheme)
+}
+
+/// One character a path argument may contain. Shared by the `lake env lean`
+/// argument and the seeder's `node` argument so the two cannot drift into
+/// permitting different character sets — a difference that would be invisible
+/// until the day one of them accepted something the other refused.
+fn is_path_grapheme(g: String) -> Bool {
+  is_alnum(g) || string.contains(path_extra_chars, g)
 }
 
 fn unquote(token: String) -> String {

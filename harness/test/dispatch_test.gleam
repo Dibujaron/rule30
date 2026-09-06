@@ -281,7 +281,7 @@ pub fn guard_denials_reads_the_rows_the_guard_actually_writes_test() {
   let at = fn(node_id) {
     guard.Rules(
       repo_root: "C:\\r",
-      allowed_write: "C:\\r\\Rule30\\Proofs\\X.lean",
+      role: guard.Prover(allowed_write: "C:\\r\\Rule30\\Proofs\\X.lean"),
       holder: node_id,
     )
   }
@@ -335,7 +335,7 @@ pub fn two_denials_of_one_tool_stay_apart_test() {
   let at =
     guard.Rules(
       repo_root: "C:\\r",
-      allowed_write: "C:\\r\\Rule30\\Proofs\\X.lean",
+      role: guard.Prover(allowed_write: "C:\\r\\Rule30\\Proofs\\X.lean"),
       holder: "probe_one",
     )
   let write = fn(attempted, decision) {
@@ -367,7 +367,7 @@ pub fn a_denial_survives_a_command_full_of_json_test() {
   let at =
     guard.Rules(
       repo_root: "C:\\r",
-      allowed_write: "C:\\r\\Rule30\\Proofs\\X.lean",
+      role: guard.Prover(allowed_write: "C:\\r\\Rule30\\Proofs\\X.lean"),
       holder: "probe_one",
     )
   let nasty = "lake build \"x\",\"denial\":\"build_lock_timeout\""

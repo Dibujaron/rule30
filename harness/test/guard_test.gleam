@@ -11,7 +11,7 @@ import simplifile
 
 const rules = Rules(
   repo_root: "C:\\r",
-  allowed_write: "C:\\r\\Rule30\\Proofs\\X.lean",
+  role: guard.Prover(allowed_write: "C:\\r\\Rule30\\Proofs\\X.lean"),
   holder: "w1",
 )
 
@@ -208,7 +208,7 @@ pub fn guard_events_name_the_node_test() {
   let at_node =
     Rules(
       repo_root: "C:\\r",
-      allowed_write: "C:\\r\\Rule30\\Proofs\\X.lean",
+      role: guard.Prover(allowed_write: "C:\\r\\Rule30\\Proofs\\X.lean"),
       holder: "evolve_left_edge",
     )
   let fields =
