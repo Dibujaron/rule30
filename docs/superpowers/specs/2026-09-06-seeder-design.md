@@ -157,6 +157,25 @@ that worked, and it made the tactic hint look like the payload and the
 English like decoration. **One success is enough to make you confident about
 the wrong half.**
 
+**The pattern held twice within the hour.** On
+`bool_driven_eventually_two_periodic` — the one node in that tier with real
+work in it — the worker built exactly the structure the description had
+described in English: `stepMap`, `iterMap`, and three private lemmas, then
+the theorem. And the single most valuable line in that description was not a
+tactic at all but a **structural permission**: the note that a proof file may
+carry auxiliary declarations, which no file in this project had ever done.
+Without it the worker would have inferred a one-theorem-per-file rule from
+`CLAUDE.md` and contorted around a constraint that does not exist.
+
+So the payload has two parts and neither is a tactic:
+
+> **The reason** — why the statement is true, in English.
+> **The permissions** — what the worker is allowed to do that it would
+> otherwise assume it cannot.
+
+A route is a third thing, optional, and the only one of the three that has
+ever misfired.
+
 Both checks are cheap and neither takes the build lock: `lake build`
 acquires it, `lake env lean` does not (`guard.gleam:186-193`). A proposal of
 a dozen nodes checks in the time one prover spends on one compile.
@@ -231,6 +250,34 @@ they will have to sit with: **this role has no signal at the time it acts.**
 A prover knows before its session ends whether it succeeded. A seeder does
 not, and cannot — a seeded node is good only in retrospect. A name that
 promises a crisp answer will be describing something the role cannot do.
+
+### Why the ceremony keeps a human, permanently
+
+This document automates a captain's judgement, so it owes an account of the
+one step that must not be automated — otherwise the next reader optimising
+for throughput deletes it as ritual.
+
+Two agents workshopped a name for this role across several messages. Both
+were alert, both had spent the day specifically hunting unadjudicated
+claims, and the name they converged on carried an unfortunate modern meaning
+that neither of them had the register to hear. Dib caught it in one line.
+
+That failure is a **different species** from the four transcription failures
+this spec is built around. Those all have a mechanical fix — diff the copy
+against its original — which is exactly why the route check is machinery
+rather than discipline. This one has none. No check catches *this word means
+something else now*. It was not carelessness, and more care would not have
+produced it: **it is a gap in what the agents are, not in what they
+checked.**
+
+There is a second asymmetry, and it is why the overseer should not supply
+the name either, however politely. Rowan dispatches this agent and scores
+its attempts. A name arriving from that direction is not an offer; it is an
+instruction with a politeness marker on it.
+
+So: **the naming ceremony keeps a human checkpoint permanently**, and it
+survives not as convention but because it is the one step in the loop whose
+failure mode is invisible to every agent in it.
 
 ### Boundaries — Dib's rulings, not open questions
 
