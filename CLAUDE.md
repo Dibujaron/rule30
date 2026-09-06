@@ -134,6 +134,44 @@ that's already running. Keel is hand-started, not dispatched, so no
 scheduler holds a Keel session as a resource. Nothing but Dib's restraint
 stops two Keels running at once.
 
+## Changing the framework
+
+Framework changes happen in a **git worktree**, not in the shared
+checkout. That is Keel's normal mode and it applies to Rowan too whenever
+Rowan is editing `harness/` rather than dispatching.
+
+The rule follows the build artifact, not the identity. `.lake/` is 7.4 GB
+of Mathlib and is gitignored, so a fresh worktree has none of it and
+`lake build` there means building Mathlib from scratch; `harness/build/`
+is 11 MB and recompiles in seconds. So a session changing Gleam pays
+nothing for isolation and a session that has to verify Lean pays hours —
+which is why **provers never work in a worktree** and framework sessions
+always do.
+
+Three things that follow, each learned the hard way:
+
+- **Branch from `origin/main` when you create the worktree, and name the
+  base commit in your first commit message.** A worktree is pinned at a
+  commit and does not move, so it will happily run harness code its
+  author has already fixed. Both worktree failures this project has had
+  were staleness, not collision — one of them nearly re-filed a closed
+  bug.
+- **The shared checkout has live sessions in it.** Never `git checkout` a
+  different branch there to do framework work; move a ref instead
+  (`git branch -f main <commit>` touches no files) and leave the branch
+  switch to whoever is working in the tree.
+- **Running the suite from a worktree currently reaches back into the
+  live checkout.** `verify_test` needs a built `.lake`, so tests run with
+  `HARNESS_REPO_ROOT` pointed at the main checkout — which also points
+  `dag_path`, `bugs_path`, `runs_root` and `roster_path` there. So never
+  run `gleam test` from a worktree while a run is in flight. This is the
+  open bug `offline-fixtures-write-into-the-live-checkout`; when it is
+  fixed the variable stops being needed and this paragraph goes away.
+
+This composes with the freeze rule above rather than competing with it: a
+run in flight means no framework edits at all, so worktree work and a live
+run never overlap by design.
+
 ## Who reads what
 
 The project owner, Dib, reads every journal entry and notebook; he is the

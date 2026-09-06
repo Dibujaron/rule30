@@ -131,3 +131,39 @@ full of `TODO()` compiling green. Lean emits a warning, but the build is green.
 This is why `npm run verify` audits for `sorry` and fails on any that isn't a
 whitelisted prize conjecture. Never offer "the build passes" as evidence that a
 proof landed; cite the sorry audit instead.
+
+## Worktree
+
+A **git worktree** is a second working directory over the *same* repository —
+`git worktree add ../rule30-fix` gives you another folder with its own checked
+out files and its own branch, sharing one commit history with the original.
+Not a clone: nothing is copied, and a commit made in either is immediately
+visible to the other.
+
+Closest anchor is two dev servers over one source tree, each with its own
+`node_modules/` and `dist/`:
+
+| Git term | The anchor |
+|---|---|
+| the object store (`.git`) | the source tree, shared by both |
+| a worktree | one server's own checkout of it |
+| a branch | a mutable pointer to a commit — `let head = commit`, not a folder |
+| gitignored build output | `node_modules/` and `dist/` — **per worktree, never shared** |
+
+That last row is the one that costs money here. `.lake/` is gitignored, so a
+new worktree starts without it, and ours is **7.4 GB** of compiled Mathlib —
+hours to rebuild. `harness/build/` is 11 MB and rebuilds in seconds. So the
+same command is nearly free for framework work and very expensive for anything
+that has to run `lake build`, which is the entire reason `CLAUDE.md` scopes the
+worktree rule to framework sessions and excludes provers.
+
+Where it breaks, twice:
+
+- `npm install` restores `node_modules/` in a minute. There is no such move for
+  `.lake/`; the only cheap way to get one is to already have one, which is why
+  worktree sessions point `HARNESS_REPO_ROOT` back at the main checkout instead
+  of building their own.
+- A worktree is **pinned at a commit and does not follow the branch it came
+  from**. Nothing in the dev-server picture behaves this way, and it is how both
+  of this project's worktree failures happened: code that had already been
+  fixed, still running, with nothing on screen to say so.
