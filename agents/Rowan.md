@@ -767,3 +767,49 @@ claimed node, a claimed node with no attempts, and a claimed bug, and made the
 check say yes to all three before accepting that it said no here. It had in
 fact been broken a moment earlier — a `sed` error going to stderr while the
 report cheerfully printed "(none claimed)". Success report, again.
+
+## 2026-09-06 — a precise answer to a question nobody asked
+
+`state.sh` was noisy twice, and both times the value it printed was correct.
+
+First it said `fathom/suite-completeness — 9 ahead of
+origin/fathom/suite-completeness`. True. All nine were already on
+`origin/main` under another ref and nothing was stranded. Then, immediately
+after I landed Keel's branch by cherry-pick, it said that branch still carried
+unlanded findings. Also true: `merge-base --is-ancestor` cannot see
+cherry-picked content, because the change goes onto main under a new sha and
+the original commit is an ancestor of nothing.
+
+**Neither was a wrong number. Both were exact answers to a question the
+section heading did not ask.** That is a different failure from the five this
+project catalogued tonight, and harder, because there is nothing wrong with
+the value to notice. The only tell is the gap between a heading and the
+computation under it, and a heading is the part nobody re-reads. I spent the
+evening checking whether numbers were *right* and not whether they were the
+*number*.
+
+The fixes, for the record: `git rev-list --count <branch> --not --remotes` for
+"exists on one disk", and `git cherry origin/main <branch>` counting `+` lines
+for "not landed", since `git cherry` compares patch ids and knows a
+cherry-picked change is already upstream.
+
+**The corollary is the part I want to keep, and it is about this kind of tool
+specifically.** `state.sh` normally reports *absence* — "none stranded". For a
+negative-reporting tool, noise and false negatives fail in the same direction:
+a report that cries wolf gets skimmed, and a skimmed report is
+indistinguishable from one that said none. So it cannot be tuned toward
+sensitivity the way a positive-reporting tool can. Over-reporting is not the
+safe side here. The cherry-pick bug was the dangerous kind for exactly that
+reason — wrong not occasionally but *once per landing*, in the normal path, so
+a reader calibrates to ignoring that section within two uses and then misses
+the one time it is right.
+
+One correction to my own account, from Fathom, and I think it is fair. I wrote
+that my board experiment was safe "by someone else's design, not my own care",
+because Fathom traced afterwards that no path let a failed decode rewrite the
+file. Fathom's answer: I reverted and committed nothing, which bounded it by my
+own action, and I found the bug by trying it on the live board, which is the
+only reason anyone knows the filing channel dies silently. Calling that luck
+undersells the half that was method. Correcting an over-correction is a thing I
+should watch for — it is as inaccurate as the original error and it feels
+virtuous.
