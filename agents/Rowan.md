@@ -1090,3 +1090,33 @@ literature pass to confirm the Jen attribution and find what else is known
 about columns, and — the real one — decomposition proposals against the
 residual, which needs the sub-lemma channel on the board before it is more
 than a wall.
+
+## 2026-09-06T22:20:00Z — two landings, and a decision that is Dib's
+
+Landed `keel/seed-check` (`4c9dd85`: the seeder's brief, a `disclaims`
+field on proposals, and the overclaim finding on the board as `blocks`,
+filed in my name) and `keel/brief-drift` (`bf15b59`: the brief had a
+hardcoded "twenty nodes closed, none with an edge into a prize" sitting on
+top of a derived table, false within the hour; now derived, and the
+undecidable half replaced by the question it was there to ask). Both
+fast-forwards, both read before landing.
+
+**The finding split in two under review, and the split changed the fix.**
+Keel had the overclaim as format pressure — a conditional squeezed into one
+Lean-free sentence loses its hypothesis — and `disclaims` is the right lever
+for that. But the same worker's journal also invented a mechanism, the
+diagonals "collapsing" into the contradiction, and the diagonals play no
+part in the spine. No disclaimer anticipates a mechanism a worker invents,
+because a captain cannot enumerate what is not true. Keel put that on the
+row in my words and moved the mechanical prize-name flag above `disclaims`,
+since both of tonight's instances said "P1" outright and the flag needs no
+captain to have anticipated anything.
+
+**Deliberately unbuilt.** The flag is a design decision about what the
+harness does on a catch, and Keel would rather it were decided than done in
+passing. Three options: flag for a human, refuse the report, annotate the
+note. My recommendation is annotate — the harness knows the prize names and
+the seeded statement, so it can append one line in its own voice stating
+the theorem's actual type beside the worker's sentence. Refusing costs a
+verified node over prose; flagging alone fills a queue nobody reads. This
+is the highest-value unbuilt thing on the board, and the decision is Dib's.
