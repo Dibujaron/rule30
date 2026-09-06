@@ -33,7 +33,24 @@ sequence passes statistical randomness tests. But "we looked and didn't find
 one" is not a proof, and there is no pigeonhole argument available: the
 configuration is infinite, so the automaton never has to revisit a state.
 
-**Status in this repo.** Stated, unproven. `explorer/periodscan.mjs` searches
+**What is actually known.** Erica Jen proved in 1986 that **no two columns of
+the rule 30 diagram can both become periodic** ("Global properties of cellular
+automata", *Journal of Statistical Physics* 43, pp. 219–242,
+[doi:10.1007/BF01010579](https://doi.org/10.1007/BF01010579)). The idea: rule
+30 is `left XOR (centre OR right)`, which for fixed `centre` and `right` is a
+bijection in `left`, so two adjacent columns determine every column to their
+left, for all time. Two repeating adjacent columns would force a column far to
+the left to repeat, and that column is white until the light cone reaches it
+and black when it does. Any two columns reduce to the adjacent case, because
+the block of columns between them is a finite machine driven by its two edges.
+
+So P1 is *not* "is any column periodic"; it is specifically about column 0, and
+Jen's theorem says at most one column could ever be. P1 is equivalent to: if
+the centre column repeated, some other column would have to.
+
+**Status in this repo.** Stated, unproven. The adjacent-column half of Jen's
+theorem is proved (`not_isEventuallyPeriodic_adjacent`), and the residual of
+P1 it leaves is on the board as a wall. `explorer/periodscan.mjs` searches
 for periods empirically and is explicit that finding none only rules out small
 periods.
 

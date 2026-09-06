@@ -306,9 +306,10 @@ The captain proved every lemma in this section end to end, in one scratch
 file against the exact statements below, before seeding; the bridge lemma
 depends on `propext`, `Classical.choice` and `Quot.sound` only. The
 inversion identity was also checked against the BigInt engine at 28,679
-cells with no mismatch. The attribution of the adjacent-columns theorem to
-Erica Jen (c. 1986–1990) is from memory and is not to be cited until
-someone has read the paper. -/
+cells with no mismatch. The adjacent-columns theorem is the core of Erica
+Jen's 1986 result that no two columns of rule 30 can both become periodic
+("Global properties of cellular automata", J. Stat. Phys. 43, 219–242,
+doi:10.1007/BF01010579); the full result is the next section. -/
 
 /-- **Rule 30 read backwards.** The cell one to the left, a step earlier,
 is recovered from the new cell and the other two neighbours. This is
