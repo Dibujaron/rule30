@@ -19,6 +19,7 @@ import harness/config
 import harness/dag
 import harness/dispatch
 import harness/schedule
+import harness/seed
 import harness/writes
 
 pub fn main() {
@@ -51,9 +52,18 @@ fn run(cfg: config.Config, arguments: List(String)) -> Nil {
       )
     ["bugs", ..flags] -> print_outcome(bug_board(cfg, flags))
     ["writes"] -> print_outcome(writes.report(cfg))
+    // `seed brief` and `seed check` are read-only and take no build lock —
+    // `lake env lean` reads oleans. They are separate verbs rather than
+    // stages of one command on purpose: a captain writing a tier by hand
+    // wants the check without a session, and a session that has written a
+    // proposal wants the check without re-running itself.
+    ["seed", "brief"] -> print_outcome(seed.brief_for(cfg))
+    ["seed", "check"] ->
+      print_outcome(seed.check_file(cfg, seed.proposal_path(cfg.repo_root)))
+    ["seed", "check", path] -> print_outcome(seed.check_file(cfg, path))
     _ ->
       io.println(
-        "usage: gleam run -- status | prove-one <node-id> | run [--max-attempts N] [--concurrency K] | reopen <node-id> | bugs [--area A] [--severity S] [--all] | writes | spike",
+        "usage: gleam run -- status | prove-one <node-id> | run [--max-attempts N] [--concurrency K] | reopen <node-id> | bugs [--area A] [--severity S] [--all] | writes | seed brief | seed check [path] | spike",
       )
   }
 }

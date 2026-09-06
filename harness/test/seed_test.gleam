@@ -601,3 +601,68 @@ pub fn the_brief_derives_its_counts_rather_than_stating_them_test() {
     )
   assert string.contains(three, "3 closed")
 }
+
+// --- reading the proof notes --------------------------------------------------
+
+/// The `/-!` block is the only place the *reason* a proof worked is written in
+/// English, and it is what the brief carries so a seeder inherits the shapes
+/// that closed cheaply.
+pub fn lifts_the_note_out_of_a_proof_file_test() {
+  let file =
+    "import Rule30.Basic\n\n/-!\n**What this says.** The left edge is always 1.\n**Why it is true.** The cone.\n-/\n\ntheorem evolve_left_edge : True := trivial\n"
+  let assert Ok(note) = seed.note_of(file)
+  assert string.contains(note, "The left edge is always 1.")
+  assert string.contains(note, "The cone.")
+  // The delimiters are not part of the note — they are Lean syntax and the
+  // brief is prose.
+  assert !string.contains(note, "/-!")
+  assert !string.contains(note, "-/")
+  // And nothing outside the block leaks in.
+  assert !string.contains(note, "import")
+  assert !string.contains(note, "theorem")
+}
+
+/// A proof file without a note is not an error — older files predate the
+/// convention. It must be skipped rather than contributing an empty section
+/// that reads as a note nobody wrote.
+pub fn a_proof_file_with_no_note_is_skipped_test() {
+  assert seed.note_of("import Rule30.Basic\ntheorem t : True := trivial\n")
+    == Error(Nil)
+}
+
+/// An unterminated block must not swallow the rest of the file. A note is
+/// prose shown to a seeder; a note that is secretly the whole proof would
+/// quietly blow up the brief and teach nothing.
+pub fn an_unterminated_note_is_not_a_note_test() {
+  assert seed.note_of("/-!\n**What this says.** oops\ntheorem t : True := trivial\n")
+    == Error(Nil)
+}
+
+/// Cost is in the brief to be COMPARED at a glance — which shapes are cheap is
+/// the transferable knowledge. `$0.7975254000000002` defeats that: the reader
+/// is doing arithmetic on noise instead of seeing a pattern.
+pub fn costs_are_rendered_as_money_test() {
+  let b =
+    seed.brief(
+      closed: [closed_node("a", dag.M, "sonnet", 0.7975254000000002)],
+      notes: [],
+      explorer_readme: "",
+      proposal_path: "p",
+    )
+  assert string.contains(b, "$0.80")
+  assert !string.contains(b, "0.7975254")
+}
+
+pub fn a_small_cost_keeps_both_places_test() {
+  let b =
+    seed.brief(
+      closed: [closed_node("a", dag.S, "haiku", 0.0709461)],
+      notes: [],
+      explorer_readme: "",
+      proposal_path: "p",
+    )
+  assert string.contains(b, "$0.07")
+  // The prefix alone is not the check: "$0.0709461" contains "$0.07". This
+  // test passed against the unrounded implementation until that was noticed.
+  assert !string.contains(b, "0.0709461")
+}
