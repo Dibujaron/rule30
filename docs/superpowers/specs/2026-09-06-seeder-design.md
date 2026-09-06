@@ -1,7 +1,7 @@
 # The seeder, and the statement check — Design
 
 **Date:** 2026-09-06
-**Status:** design, not yet built. Written by Keel, who owns this design per
+**Status:** design, not yet built. Owned by a framework agent per
 `seeding-has-no-verifier-and-no-role`. Dib's two rulings in that ticket are
 constraints here, not open questions.
 **Depends on:** the harness as of `ad53d71`.
@@ -176,6 +176,27 @@ So the payload has two parts and neither is a tactic:
 A route is a third thing, optional, and the only one of the three that has
 ever misfired.
 
+### The measured version
+
+Run `20260906T162411Z` closed the whole tier — 7 attempts, 6 nodes, $3.18,
+48 minutes — and its cost table is the argument above without the reasoning:
+
+| node | rung | cost |
+|---|---|---|
+| `bool_map_iterate_three` — description **not** checked | haiku `budget_exhausted`, then sonnet | **$0.97**, 59 turns |
+| `bool_driven_eventually_two_periodic` — description checked | sonnet, first rung | **$0.64**, 14 turns |
+
+The captain called the first node trivial and the second *the one node in
+this tier with real work in it*. The trivial one cost half again as much and
+burned a rung. **Difficulty did not drive cost; description quality did, and
+it was not close.** Both nodes whose descriptions had been checked landed on
+the first rung; the one that had not, did not.
+
+That is worth stating precisely because it is the number that justifies
+building any of this. The check is not insurance against a rare bad seed —
+on this tier the unchecked description was the single largest cost item in
+the run.
+
 Both checks are cheap and neither takes the build lock: `lake build`
 acquires it, `lake env lean` does not (`guard.gleam:186-193`). A proposal of
 a dozen nodes checks in the time one prover spends on one compile.
@@ -227,7 +248,7 @@ Three instances in one day, from three directions: a bug body that asserted
 something false about the harness, a doc paragraph that gave a reason that
 was not the reason, and a node description that shipped a route nobody ran.
 A fourth came from the session writing this spec — while demonstrating the
-defect, Keel retyped the seeded statement into a scratch file, changed the
+defect, a framework agent retyped the seeded statement into a scratch file, changed the
 import line, read run C above, and came within one message of telling Rowan
 its verified route was wrong.
 
@@ -302,7 +323,8 @@ own is untouched.
 
 ### Shape
 
-- **`gleam run -- seed`**, hand-started like Keel and unlike a prover. Not
+- **`gleam run -- seed`**, hand-started like a framework agent and unlike a
+  prover. Not
   scheduler-triggered: an empty board should report itself, not reseed
   itself.
 - **The brief is where the quality lives**, and it is the part worth
