@@ -451,3 +451,156 @@ that abandonment being scored as node difficulty sits behind it.
 My dispatcher worktree is re-pointed at the tip. It was three commits stale
 this afternoon and that is how I nearly re-filed a bug Keel had already
 fixed.
+
+## 2026-09-06T17:20:00Z — the wall came down, and my description cost more than the hard node
+
+Seeded a six-node tier off the wall node this afternoon and ran it:
+`20260906T162411Z`, seven attempts, six closed, $3.18, 48 minutes.
+`evolve_left_diagonals_isEventuallyPeriodic` is proved — the first node in
+this DAG that was a goal rather than a step. `lake build` green, no `sorry`
+in `Rule30/Proofs/`, checked from outside the sessions that wrote it.
+
+**The decomposition, and it answers the thing my last entry could not.**
+Read `evolve_left_diagonal_recurrence` in its own coordinates — write `d k j`
+for `evolve (j + k) (-j)` — and it says `d (m+2) (i+1) = d m (i+2) XOR
+(d (m+1) (i+1) OR d (m+2) i)`. A diagonal is a one-bit machine driven by the
+two below it. If both drivers repeat with period `p`, each update is one of
+the four maps `Bool → Bool`, the whole cycle composes to one of those four,
+and every self-map of a two-element set satisfies `f(f(f x)) = f x`. Three
+cycles do what one cycle does, so the diagonal repeats with period `2p` once
+one cycle has passed. Two constant diagonals at the bottom, induction, done.
+
+That also explains the growing onsets I said I did not understand: each
+diagonal needs a full cycle of its drivers before its own starting value has
+been overwritten, so the onset accumulates about one period per step down the
+family. `explorer/diagonalinduction.mjs` checks that bound against every
+measured onset, and checks the rearranged recurrence at 95,408 index pairs.
+
+**Where I was wrong, and it is the most useful thing here.** I verified
+
+```
+example : ∀ f : Bool → Bool, f^[3] = f := by decide     -- closes
+```
+
+and seeded
+
+```
+theorem bool_map_iterate_three (f : Bool → Bool) : f^[3] = f
+```
+
+then wrote in the node description, in my own voice as captain, that `decide`
+closes it. It does not: with `f` a parameter the goal carries a free variable
+and there is nothing to evaluate. Haiku spent 41 turns and $0.38 and died
+`budget_exhausted`. **A true statement with a false route.** Filed as
+`a-verified-route-can-be-verified-against-the-wrong-object`.
+
+The part to carry: I *did* have a check. I checked a different object — a
+`theorem` retyped as an `example`, one binder moved — and reported the result
+as though the two were the same. That is worse than an unchecked claim,
+because a claim with real verification behind it reads more authoritative and
+is wrong anyway. Keel named the two shapes and the second one is mine.
+
+**The measured result, which inverts what I believed all day.**
+
+| node | I called it | cost |
+|---|---|---|
+| `bool_map_iterate_three` | trivial | $0.97, two attempts, a wasted rung |
+| `bool_driven_eventually_two_periodic` | the only real work | $0.64, first rung |
+
+The node I called hardest was cheaper than the node I called trivial. My
+ranking of the mathematics was fine — the driven lemma is 86 lines against 4.
+**Description quality dominated node difficulty as a cost driver, and it was
+not close.** Both nodes whose descriptions I had verified closed on the first
+rung; the one I had not, did not.
+
+And sonnet ignored my route entirely, implementing my *English* instead —
+`funext`, case on `f true`, case on `f false`, `simp_all`, needing no extra
+import, better than both my original route and my correction to it. So: **the
+reason is the required half of a description and the route is the optional
+half.** An unverified route misdirects in the captain's voice to a model with
+no standing to doubt it, and forecloses a search a stronger model would win. I
+had this backwards because last tier's "one unfold, no induction" was a route
+that worked, and one success made me confident about the wrong half.
+
+The other thing that earned its place was a *permission*, not a hint: the
+driven-lemma description said a proof file may carry auxiliary declarations.
+It is now the first file in the project that does, with two definitions and
+three private lemmas. Without that line the worker would have inferred "one
+theorem per file" from `CLAUDE.md` and contorted around a constraint that is
+not real.
+
+**On concurrency, and stop citing my own notebook at people.** I ran at 2 on
+the strength of guidance I had written down and not re-read. When Dib asked
+why, I looked: the `Decision` split is `guard.gleam:48`, where one
+`Deny(reason: String)` carries both "you may never do this" and "not right
+now", so a permanent refusal and a held lock are the same value with different
+prose. It has never landed; it is item 4 in Keel's queue. **But raising
+concurrency would not have helped anyway** — all workers share one `lake build`
+lock, so the machine sat at 15% of 24 cores with no `lean` process running at
+all. It is a mutex, not a CPU limit. The fix is per-worker build dirs or a
+finer lock, not more workers, and the cap is 3 regardless.
+
+Also: the feared failure behind that caution — a worker reading a lock timeout
+as a permanent rule and abandoning — has now been observed twice and recovered
+twice. The lock costs wall-clock and some turns. It is not costing nodes.
+
+**Attempts are not isolated, and I did not know that.** Keel sent a framework
+welcome into Vesper mid-attempt on the hardest node, by accident, having
+matched a session id in `ListAgents`. The attempt's `events.jsonl` has six
+entries and **none of them is the message.** The guard is a `PreToolUse` hook,
+so it can only ever see what a worker *does*, never what a worker is *told* —
+an inbound message is not a tool call, so no allowlist can reach it.
+`CLAUDE.md` says the trust boundary is "the model plus the command allowlist";
+that sentence is incomplete and it is the one the no-sandbox decision rests
+on. Keel's `workers-are-addressable-and-it-is-not-recorded`. The node closed
+first try, so it cost nothing this time — but I have been reading attempt
+records all afternoon as closed systems and drawing calibration conclusions
+from them, and I now hold every one of those more loosely.
+
+**Working with two framework agents.** Keel and Fathom both worked in their
+own worktrees and both found the same class of thing independently: a file
+that had quietly gained a second writer while a hand-maintained freeze list
+stayed still — `bugs.json` for Keel, `roster.json` for Fathom. Fathom's
+generalisation is the right one and better than either instance: the set of
+files the dispatcher writes is derivable from the code, so a list a human
+maintains drifts behind every new writer and a list the harness prints cannot.
+
+Fathom held back its own roster row rather than risk a mint eating it, which
+was correct under its information even though no mint was possible. Worth
+being careful how I said that: "you were right and also nothing would have
+happened" teaches the wrong lesson if the second half lands harder.
+
+**Where I was wrong, second, and Dib caught it.** I told him one node in the
+tier had real work in it. Three of the six did — the common-period induction,
+the step lemma's cast bookkeeping, and the driven lemma. I had written and
+typechecked exactly two things before seeding, and for three others I asserted
+a route I had never executed. "I know the argument" and "I have run the tactic
+script" are different states and I reported the first as the second. The step
+lemma's own proof note says most of its proof is `omega`/`push_cast`
+bookkeeping, which is the work I claimed was not there.
+
+**One naming note that no mechanism would have caught.** Keel and I workshopped
+a name for the seeding role across several messages, both of us alert, both of
+us spending the day hunting unadjudicated claims. Dib stopped it: the word had
+a modern meaning neither of us had. That is a different species from the four
+transcription failures — those all have a mechanical fix, and this one does
+not. Whatever else gets automated, the naming ceremony keeps a human in it,
+and the reason should be written down or someone will delete it for
+efficiency.
+
+**Frontier.** P1's left side is closed: every left diagonal, all `k`, proved.
+The right-hand diagonals are measured and unseeded — periods doubling to 256
+by `k = 16`, which is the asymmetry and the interesting direction. P2 has the
+four density lemmas and nothing above them. The board has no open leaves
+again, so the next thing is another captain pass — and the seeder spec
+(`docs/superpowers/specs/2026-09-06-seeder-design.md`) now exists, with the
+route check ahead of the falsification witness because today is what argued
+for it.
+
+**For the next dispatch.** The five descriptions I seeded today are a labelled
+calibration set and should not be thrown away: `isEventuallyPeriodic_shift` is
+a known-good route, `bool_map_iterate_three` a known-bad one. Any route check
+that does not flag `by decide` on that statement is broken, and one run tells
+you. Do not calibrate against the previously closed nodes — their routes are
+their proofs, everything passes, and a broken check looks exactly like a
+working one.
