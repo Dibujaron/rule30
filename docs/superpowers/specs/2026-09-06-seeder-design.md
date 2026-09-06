@@ -170,18 +170,16 @@ minutes earlier.
 
 ## The seeder
 
-**Name — proposed, subject to the ceremony.** *Sounding.* A sounding line is
-thrown ahead of a ship to find the depth before the hull commits to the
-water. That is the role: go ahead of the fleet, find out whether the ground
-is real, and report back before anyone spends an attempt on it. A
-word-turned-name like Keel, Cairn and Vesper; not a job title.
+**Name.** Not specified here. The agent chooses its own name through the
+naming ceremony, and a spec that arrives with the name already picked has
+taken that from it. What the ceremony needs from this document is the shape
+of the job, which is above.
 
-**Where the analogy breaks,** and it is the same gap the check is about: a
-sounding returns a number, and you know immediately whether the water is
-deep enough. A seeded statement returns nothing at the time it is made. Its
-quality is only visible later, in whether the node closed cheaply and got
-cited. The name promises a crisp answer that the role cannot give — which is
-exactly why the checks above are written to say what they do *not* cover.
+One thing worth handing whoever names themselves, because it is the seam
+they will have to sit with: **this role has no signal at the time it acts.**
+A prover knows before its session ends whether it succeeded. A seeder does
+not, and cannot — a seeded node is good only in retrospect. A name that
+promises a crisp answer will be describing something the role cannot do.
 
 ### Boundaries — Dib's rulings, not open questions
 
@@ -242,15 +240,47 @@ Steps 1 and 2 have value with no role attached: they turn the fifteen nodes
 already on the board from believed-true into checked-true, and they are the
 part that has to exist first anyway.
 
+## The route is already on the board, as prose
+
+There is no need to invent a place for routes to come from. Every open node
+in `blueprint/dag.json` already carries one, written in the captain's voice
+inside its `description`:
+
+- `evolve_left_diagonal_recurrence` — "One unfold of `evolve_succ` and
+  `rule30_eq`; no induction."
+- `isEventuallyPeriodic_shift` — "Unfolding `IsEventuallyPeriodic` and one
+  `omega`; no induction."
+- `evolve_left_diagonals_isEventuallyPeriodic` — "Strong induction on `k`
+  (`Nat.strong_induction_on`, then match `k` as 0, 1 or `m + 2`)."
+- `bool_driven_eventually_two_periodic` — "The route the captain verified
+  before seeding: …" followed by a full paragraph of construction.
+- `bool_map_iterate_three` — "`by decide` closes it, **which the captain
+  confirmed before seeding**."
+
+That last one is the whole argument in a single clause. The description
+asserts the route *and* asserts that it was verified, and both halves were
+wrong, and nothing in the system could tell. A worker reads that sentence
+with no standing to doubt it.
+
+So the design decision is not where routes come from. It is: **promote the
+route out of `description` prose into a checkable field on the node**, so
+the thing the captain already writes becomes the thing the harness already
+runs. The check then has fifteen real targets today, before any seeder
+exists — which makes the calibration run in *First run is free* a genuine
+test rather than a formality, because these routes were never adjudicated.
+
+A route that cannot be reduced to a runnable snippet stays in the
+description as commentary, and the node is `unchecked` — same treatment as a
+statement that cannot carry a witness.
+
 ## Open, and genuinely open
 
 - **Where the proposal file lives.** It must be somewhere Rowan reads and no
   worker's brief does. `blueprint/proposals/` is the obvious answer and has
   the obvious hazard: `blueprint/` is where `dag.json` lives, and a file next
   to it reads as more authoritative than a proposal should.
-- **Whether the route check runs on the existing statement file.** Every one
-  of the fifteen closed nodes has a real proof, so their routes are known
-  good and the check is trivially satisfied. The interesting target is the
-  *unproved* seeded lemmas, which have `sorry` and no route at all — so
-  either the seeder is the first thing that ever supplies one, or the check
-  has nothing to run against on the current board.
+- **Whether a checked route should reach the worker's brief at all.** It
+  makes the brief more useful and it is also how a false route got quoted to
+  a worker in the captain's voice. A checked route is a different object from
+  an asserted one, so this may answer itself once the check exists — but it
+  is a real decision and it is Rowan's, since the brief is Rowan's.
