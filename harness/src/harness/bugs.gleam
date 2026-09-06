@@ -1,6 +1,7 @@
 //// The bug board: things wrong with the project's own machinery, filed by
-//// whoever hit them and worked by Keel. Persisted as JSON beside the DAG,
-//// because both are boards and `blueprint/` is where the work lives.
+//// whoever hit them and worked by the framework agents. Persisted as JSON
+//// beside the DAG, because both are boards and `blueprint/` is where the
+//// work lives.
 ////
 //// Provenance is never taken from the agent that reports it. `reported_by`,
 //// `source`, `node`, `run`, `session_id` and `filed` are stamped by the
@@ -17,7 +18,7 @@ import gleam/string
 import simplifile
 
 /// How badly this got in someone's way. The reporter's claim, not a verdict:
-/// Keel may correct it when working the bug.
+/// A framework agent may correct it when working the bug.
 pub type Severity {
   /// A worker could not finish.
   Blocks
