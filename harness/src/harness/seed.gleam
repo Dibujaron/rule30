@@ -256,3 +256,57 @@ pub fn witness_verdict(
     _ -> WitnessBroken(output)
   }
 }
+
+/// Evaluate one witness and say what it shows.
+///
+/// Runs `lake env lean`, which reads oleans and takes NO build lock — so this
+/// is safe alongside a live run, unlike `lake build`. That matters more here
+/// than for `check_route`: a witness is the expensive check, and a seeder pass
+/// wants to run a dozen of them without waiting behind a prover's compile.
+///
+/// `timeout_ms` is a real parameter and not a formality. `evolve` costs 3^t
+/// neighbour evaluations, so the usable depth is about t < 18 — measured
+/// 2026-09-06 against the real definitions: t=16 in 12s, t=18 in 84s, t=20
+/// over 120s. A timeout is `Unchecked` and never a pass, because `List.all`
+/// short-circuits: a FALSE witness returns almost instantly and a TRUE one
+/// pays the full exponential, so **timing out correlates with the statement
+/// being true** and "no falsification found before the deadline" would pass
+/// exactly the statements too expensive to check. For the same reason the
+/// budget cannot be tuned by watching how long checks take — the ones that
+/// time out are the ones you most wanted an answer to.
+pub fn check_witness(
+  repo_root: String,
+  lake: String,
+  lean_name: String,
+  claim: WitnessClaim,
+  timeout_ms: Int,
+) -> WitnessVerdict {
+  case claim {
+    NoWitness -> Unchecked("no witness supplied")
+    Claims(witness) -> {
+      let dir = repo_root <> "/harness/build/checks/seed"
+      // A per-call token, for the reason `verify_test`'s fixture carries one:
+      // two sessions on this machine share one checkout, and a path derived
+      // only from the node name is one absolute path with no lock on it. That
+      // collision was measured on 2026-09-06 and cost four spurious failures.
+      let path = dir <> "/witness_" <> lean_name <> "_" <> token() <> ".lean"
+      let assert Ok(_) = simplifile.create_directory_all(dir)
+      let assert Ok(_) = simplifile.write(path, witness_source(witness))
+      case shell.run(lake, ["env", "lean", path], repo_root, timeout_ms) {
+        // Every failure to *run* is `Unchecked`, never `Falsified`. A timeout
+        // is the common one and the dangerous one — `shell.run` reports it as
+        // `Error("timeout after N ms")` — because timing out correlates with
+        // the statement being true, so treating it as anything but "I could
+        // not tell" would systematically pass the claims worth checking.
+        Error(msg) -> Unchecked(msg)
+        Ok(shell.Run(status:, output:)) ->
+          witness_verdict(witness.range, status, output)
+      }
+    }
+  }
+}
+
+/// 32 lowercase hex characters from a CSPRNG, the same source `guard.gleam`
+/// uses for its auth token and `verify_test` for its fixture id.
+@external(erlang, "harness_ffi", "token")
+fn token() -> String

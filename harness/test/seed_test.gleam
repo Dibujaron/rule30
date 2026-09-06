@@ -177,3 +177,84 @@ pub fn witness_source_never_imports_the_statement_file_test() {
   // was checking.
   assert string.contains(src, "-- range: t < 4")
 }
+
+/// The witness calibration, against the real toolchain, and the negative is
+/// the point. A checker that only ever sees witnesses it accepts has not been
+/// shown to work — and here the negative is cheap to state and impossible to
+/// argue with: `centerColumn` is not constantly true, so a witness claiming it
+/// is must come back `Falsified`.
+fn check_w(expression: String, range: String) -> seed.WitnessVerdict {
+  let assert Ok(lake) = shell.which("lake")
+  seed.check_witness(
+    repo(),
+    lake,
+    "witness_calibration",
+    seed.Claims(seed.Witness(expression:, imports: [], range:)),
+    180_000,
+  )
+}
+
+/// The known positive. `evolve_left_edge` is a closed node, so this is true —
+/// and t < 12 is inside the tractable range measured on 2026-09-06.
+pub fn a_true_witness_comes_back_holding_test() {
+  let assert seed.WitnessHolds(range) =
+    check_w("(List.range 12).all (fun t => evolve t (-(t:Int)) == true)", "t < 12")
+  assert range == "t < 12"
+}
+
+/// **The known negative. A witness checker that does not flag this is broken.**
+///
+/// `centerColumn` is 1,1,1,0,1,… — not constantly true, and false by t = 3. So
+/// `#eval` prints `false`, and it prints it with EXIT STATUS 0, which is the
+/// whole reason this test exists rather than being assumed.
+pub fn a_false_witness_is_falsified_and_not_a_pass_test() {
+  let assert seed.Falsified(_) =
+    check_w("(List.range 12).all (fun t => centerColumn t == true)", "t < 12")
+}
+
+/// A witness that does not elaborate must not be reported as a statement that
+/// is false. Same split as `Denial`: the thing is wrong, versus I could not
+/// tell.
+pub fn a_witness_that_does_not_compile_is_broken_test() {
+  let assert seed.WitnessBroken(_) =
+    check_w("(List.range 12).all (fun t => no_such_function t)", "t < 12")
+}
+
+pub fn no_witness_is_unchecked_not_a_pass_test() {
+  let assert Ok(lake) = shell.which("lake")
+  let assert seed.Unchecked(_) =
+    seed.check_witness(repo(), lake, "anything", seed.NoWitness, 1000)
+}
+
+/// **A timeout is `Unchecked`, never `Falsified`.** The most important line in
+/// this module and it had no test until a mutation found the hole: flipping
+/// that one arm to `Falsified` killed nothing, so the behaviour was documented
+/// at length and defended by nothing.
+///
+/// It matters more than the other verdicts because the bias runs one way.
+/// `List.all` short-circuits, so a FALSE witness returns almost instantly and
+/// a TRUE one pays the full 3^t — measured 2026-09-06: t=16 in 12s, t=18 in
+/// 84s, t=20 over 120s. So a witness that times out is preferentially a TRUE
+/// one, and reading a timeout as a falsification would retract true lemmas
+/// exactly where the check is most expensive. Reading it as a pass would be
+/// the mirror bug.
+///
+/// A 100ms budget against a witness that needs seconds of Lean startup alone
+/// makes this deterministic without waiting for a real exponential.
+pub fn a_timed_out_witness_is_unchecked_not_falsified_test() {
+  let assert Ok(lake) = shell.which("lake")
+  let verdict =
+    seed.check_witness(
+      repo(),
+      lake,
+      "witness_timeout",
+      seed.Claims(seed.Witness(
+        expression: "(List.range 12).all (fun t => centerColumn t == true)",
+        imports: [],
+        range: "t < 12",
+      )),
+      100,
+    )
+  let assert seed.Unchecked(reason) = verdict
+  assert string.contains(does: reason, contain: "timeout")
+}
