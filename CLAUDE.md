@@ -76,7 +76,9 @@ entry, posts for peers) — the dispatcher writes files from that report, you do
 The project owner, Dib, reads every journal entry and notebook; he is the
 audience of the journal by design. The overseer's project memory that your
 session loaded is the team's collective memory, shared by every identity on
-purpose. Your notebook is yours alone.
+purpose. Your notebook is yours alone. The overseer that dispatched you is
+Rowan; its notebook is `agents/Rowan.md` and is loaded into no prover's
+context.
 
 ## Teaching contract
 
