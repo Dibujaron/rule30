@@ -120,7 +120,7 @@ pub fn check_name_rejects_a_collision_test() {
 }
 
 pub fn naming_prompt_carries_the_region_and_its_description_test() {
-  let p = roster.naming_prompt("P1", roster.region_description("P1"))
+  let p = roster.naming_prompt("P1", roster.region_description("P1"), [])
   assert string.contains(p, "\"P1\"")
   assert string.contains(p, "the geometry of the light cone")
   assert string.contains(p, "It must be a name, not a job title")
@@ -128,10 +128,26 @@ pub fn naming_prompt_carries_the_region_and_its_description_test() {
 }
 
 pub fn naming_prompt_asks_for_a_colour_and_its_reason_test() {
-  let p = roster.naming_prompt("P1", roster.region_description("P1"))
+  let p = roster.naming_prompt("P1", roster.region_description("P1"), [])
   assert string.contains(p, "\"color\"")
   assert string.contains(p, "\"color_reason\"")
   assert string.contains(p, "#rrggbb")
+}
+
+pub fn naming_prompt_names_the_siblings_when_the_region_has_them_test() {
+  let alone = roster.naming_prompt("P2", roster.region_description("P2"), [])
+  assert !string.contains(alone, "already")
+  let joined =
+    roster.naming_prompt("P2", roster.region_description("P2"), [
+      "Emmy",
+      "Ravel",
+    ])
+  assert string.contains(
+    joined,
+    "This region already has provers named Emmy and Ravel.",
+  )
+  assert string.contains(joined, "a name none of them has")
+  assert string.contains(joined, "- \"name\": the name you choose")
 }
 
 pub fn region_descriptions_are_the_spec_wording_test() {

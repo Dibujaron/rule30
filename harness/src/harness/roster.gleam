@@ -257,13 +257,50 @@ pub fn region_description(region: String) -> String {
 
 /// The single message the naming ceremony sends. Names are self-chosen: the
 /// first instance of an identity is told its region and asked to name
-/// itself, and both the name and its stated reason go in the log.
-pub fn naming_prompt(region: String, region_description: String) -> String {
-  "You are about to join a small team of provers formalizing Wolfram's Rule 30 in Lean 4. You will be the specialist for the region \""
+/// itself, and both the name and its stated reason go in the log. When the
+/// region already has provers, the newcomer is told their names, so it can
+/// place itself beside them and cannot pick one of them.
+pub fn naming_prompt(
+  region: String,
+  region_description: String,
+  siblings: List(String),
+) -> String {
+  "You are about to join a small team of provers formalizing Wolfram's Rule 30 in Lean 4. You will be "
+  <> case siblings {
+    [] -> "the specialist"
+    _ -> "a specialist"
+  }
+  <> " for the region \""
   <> region
   <> "\": "
   <> region_description
-  <> ". Your work on this region will persist across many sessions through a notebook that only you write. Choose a name for yourself. It must be a name, not a job title, and not the name of a living person. Then write the opening paragraph of your notebook: who you are, in your own words. Reply with a JSON object with exactly these five fields, all required:\n- \"name\": the name you choose (a single capitalised word, letters only)\n- \"reason\": one paragraph on why\n- \"opening\": the opening paragraph of your notebook — who you are, in your own words, three to six sentences\n- \"color\": a hex colour that is yours, written #rrggbb\n- \"color_reason\": one sentence on why"
+  <> ". "
+  <> sibling_sentence(siblings)
+  <> "Your work on this region will persist across many sessions through a notebook that only you write. Choose a name for yourself. It must be a name, not a job title, and not the name of a living person"
+  <> case siblings {
+    [] -> ""
+    _ -> ", and a name none of them has"
+  }
+  <> ". Then write the opening paragraph of your notebook: who you are, in your own words. Reply with a JSON object with exactly these five fields, all required:\n- \"name\": the name you choose (a single capitalised word, letters only)\n- \"reason\": one paragraph on why\n- \"opening\": the opening paragraph of your notebook — who you are, in your own words, three to six sentences\n- \"color\": a hex colour that is yours, written #rrggbb\n- \"color_reason\": one sentence on why"
+}
+
+fn sibling_sentence(siblings: List(String)) -> String {
+  case siblings {
+    [] -> ""
+    [one] ->
+      "This region already has a prover named "
+      <> one
+      <> ". They keep a notebook of their own, as you will; you are joining them, not replacing them. "
+    many -> {
+      let assert Ok(last) = list.last(many)
+      let init = list.take(many, list.length(many) - 1)
+      "This region already has provers named "
+      <> string.join(init, ", ")
+      <> " and "
+      <> last
+      <> ". Each keeps a notebook of their own, as you will; you are joining them, not replacing them. "
+    }
+  }
 }
 
 /// The `--json-schema` the naming ceremony asks for.

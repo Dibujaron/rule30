@@ -141,7 +141,10 @@ pub fn name_identity(
       env: [],
     )
   let session = claude.start(launch)
-  let prompt = roster.naming_prompt(region, roster.region_description(region))
+  let siblings =
+    roster.for_region(roster_, region) |> list.map(fn(i) { i.name })
+  let prompt =
+    roster.naming_prompt(region, roster.region_description(region), siblings)
   let ceremony =
     ask_name(session, roster_, prompt, cfg.turn_timeout_ms, l, True)
   shutdown(session, l, ceremony.gone)
