@@ -1,0 +1,15 @@
+
+node      evolve_left_fourth_diagonal_isEventuallyPeriodic
+identity  Vesper
+model     haiku
+outcome   proved
+cost      $0.17
+turns     17
+estimate  S
+session   3693ec06-5a65-4748-abe1-787d76e1df40
+log       C:/Users/dibuj/dev/rule30/runs/20260906T150452Z/evolve_left_fourth_diagonal_isEventuallyPeriodic-1
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Vesper (#2b3a67): closed 7, abandoned 0, $2.75, calibration 5/7

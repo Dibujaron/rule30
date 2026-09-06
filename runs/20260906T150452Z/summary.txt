@@ -1,0 +1,8 @@
+
+evolve_left_diagonal_recurrence   Vesper   haiku   proved            $0.16   9 turns
+evolve_right_second_diagonal      Cadence  sonnet  proved            $0.36   15 turns
+evolve_left_fourth_diagonal       Vesper   sonnet  proved            $0.49   10 turns
+evolve_left_fifth_diagonal        Cadence  sonnet  proved            $0.27   10 turns
+evolve_left_fourth_diagonal_isEventuallyPeriodicVesper   haiku   proved            $0.17   17 turns
+
+5 attempt(s), 5 closed, $1.46 in all

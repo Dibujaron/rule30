@@ -1,0 +1,15 @@
+
+node      evolve_left_fourth_diagonal
+identity  Vesper
+model     sonnet
+outcome   proved
+cost      $0.49
+turns     10
+estimate  M
+session   eb0653fa-59cf-4c72-ab44-5fc55b3c5fce
+log       C:/Users/dibuj/dev/rule30/runs/20260906T150452Z/evolve_left_fourth_diagonal-1
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Vesper (#2b3a67): closed 6, abandoned 0, $2.58, calibration 4/6

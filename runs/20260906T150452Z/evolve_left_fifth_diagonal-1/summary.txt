@@ -1,0 +1,15 @@
+
+node      evolve_left_fifth_diagonal
+identity  Cadence
+model     sonnet
+outcome   proved
+cost      $0.27
+turns     10
+estimate  M
+session   bb187f03-9ebe-4d24-b72c-fe2054e3fbae
+log       C:/Users/dibuj/dev/rule30/runs/20260906T150452Z/evolve_left_fifth_diagonal-1
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Cadence (#2a6f77): closed 3, abandoned 0, $0.82, calibration 3/3

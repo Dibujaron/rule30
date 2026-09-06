@@ -11,3 +11,28 @@ Colour: #2a6f77 — A steady blue-teal, the color of a horizon line — fitting 
 ## 2026-09-06T14:49:37Z — evolve_right_edge (sonnet, proved)
 
 evolve_right_edge mirrors evolve_left_edge almost exactly — swap which neighbor plays the "just-outside-the-cone" role. At i = n+1: the left neighbor evolve n n is the previous edge (true, from ih), while both evolve n (n+1) and evolve n (n+2) are outside the cone (false, via evolve_eq_false_of_outside_cone) — note it's *two* outside-cone facts here (both the center and right neighbor of the new cell), versus evolve_left_edge which only needed one (its right neighbor was the previous edge, only its left needed outside-cone). Result: xor true (false || false) = true, closed by simp. Order-of-operations note: compute the outside-cone `have`s before `push_cast` — they don't depend on the goal's cast form — then push_cast, then rw [evolve_succ, rule30_eq, e1, e2, hfalse1, hfalse2, ih]; simp. `abs_of_nonneg` (not `abs_of_nonpos`) is the right lemma here since t and t+1, t+2 are all nonneg, unlike the left edge's negative offsets.
+
+## 2026-09-06T15:18:23Z — evolve_right_second_diagonal (sonnet, proved)
+
+evolve_right_second_diagonal (t+1 steps, position t, alternates by parity of t) follows the same induction shape as evolve_right_edge, but the IH itself carries a decide(...) value instead of `true`, so the succ case ends in a Bool-parity goal rather than a pure `simp`.
+
+Key structure (succ case): rw [evolve_succ, rule30_eq, e1, e2, hright, hout, ih] leaves `xor (decide (n%2=0)) (true || false) = decide ((n+1)%2=0)`. Do NOT try to discharge this with a single `simp [hparity]` where `hparity : (n+1)%2=0 ↔ ¬(n%2=0)` — simp rewrites the RHS decide into a *different* residual (`!decide(n%2=1)` in my case) that doesn't obviously match the LHS, leaving an unsolved goal. Cheapest fix: `rcases Nat.mod_two_eq_zero_or_one n with h | h`, derive `(n+1)%2 = 1` (resp. `0`) with `omega` in each branch, then `simp [h, h']` closes it directly by computation — no cross-decide congruence needed.
+
+Gotcha: `import Mathlib.Tactic.Omega` does NOT exist as a file in this Mathlib pin (build error "no such file or directory" on Mathlib/Tactic/Omega.lean) — yet the `omega` tactic itself works fine with zero extra import, since it's already pulled in transitively (Basic.lean's chain, or core/Batteries). evolve_eq_false_of_outside_cone.lean uses bare `omega` with no Omega import as proof. Just don't add that import line at all.
+
+Also: `apply evolve_eq_false_of_outside_cone` on a goal like `evolve (n+1) ((n:ℤ)+2) = false` leaves a hypothesis goal `(↑(n+1) : ℤ) < |(n:ℤ)+2|` — the cast is on `n+1 : ℕ`, not pre-simplified to `(n:ℤ)+1`. `linarith` alone won't bridge `↑(n+1)` vs `↑n+1`; run `push_cast` first inside that `have` block before `linarith`/`abs_of_nonneg`.
+
+## 2026-09-06T15:35:09Z — evolve_left_fifth_diagonal (sonnet, proved)
+
+evolve_left_fifth_diagonal (t+4 steps, position -t, constant true) — induction on t.
+
+Key shortcut: instantiate evolve_left_diagonal_recurrence with m=2, i=n (not m=1 as fourth-diagonal used with m=1... actually fourth used m unspecified via hn rewrites; the key generalizable fact is: to prove evolve (i+m+3) (-(i+1)) from data at depth i+m+2, pick m so i+m+2 lands on cells you already know). Here m=2 makes the three RHS terms:
+  evolve (n+4) (-(n+2)) — third diagonal, = false (evolve_left_third_diagonal (n+2))
+  evolve (n+4) (-(n+1)) — fourth diagonal, unknown/unneeded
+  evolve (n+4) (-n)     — exactly the IH, = true
+
+Because the recurrence's RHS is `xor A (B || C)`, and C = true (via ih), the middle disjunct B is irrelevant: `B || true = true` regardless of B's value, so you never need to invoke evolve_left_fourth_diagonal at all — one fewer served-lemma dependency than I expected going in. This is the "stays true once true" mentioned in the node description: once the OR'd branch is anchored to true, the whole family is true forever after, independent of what the alternating diagonal is doing.
+
+Gotcha (cost me one build cycle): do NOT close `xor false (X || true) = true` with a bare `simp at hrec`. Generic simp also normalizes the *position* term in the same hypothesis (e.g. turns `-(↑n + 1)` into `-1 + -↑n`), which then no longer syntactically matches the goal's position after your own `push_cast; ring` rewrite, producing a "type mismatch" error even though both sides are mathematically the same integer. Fix: use targeted `rw [Bool.or_true, Bool.false_xor] at hrec` instead of `simp` — these are plain rewrite lemmas that only touch the Bool subterm and leave the ℤ position argument untouched. General lesson for this whole diagonal family: prefer `rw` with named Bool lemmas over `simp` whenever a hypothesis mixes a Bool equation with an ℤ-valued index you still need to pattern-match later.
+
+`Bool.or_true : b || true = true` and `Bool.false_xor : xor false b = b` both exist in this Lean4/Mathlib pin and work directly with `rw`.

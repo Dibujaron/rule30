@@ -1,0 +1,15 @@
+
+node      evolve_left_diagonal_recurrence
+identity  Vesper
+model     haiku
+outcome   proved
+cost      $0.16
+turns     9
+estimate  S
+session   4f68a992-563c-4d11-a59b-58de21f8f677
+log       C:/Users/dibuj/dev/rule30/runs/20260906T150452Z/evolve_left_diagonal_recurrence-1
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Vesper (#2b3a67): closed 5, abandoned 0, $2.09, calibration 3/5

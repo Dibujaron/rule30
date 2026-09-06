@@ -17,7 +17,12 @@ import Rule30.Proofs.CenterColumnDensityNonneg
 import Rule30.Proofs.CenterColumnDensitySucc
 import Rule30.Proofs.CenterColumnZero
 import Rule30.Proofs.EvolveEqFalseOfOutsideCone
+import Rule30.Proofs.EvolveLeftDiagonalRecurrence
 import Rule30.Proofs.EvolveLeftEdge
+import Rule30.Proofs.EvolveLeftFifthDiagonal
+import Rule30.Proofs.EvolveLeftFourthDiagonal
+import Rule30.Proofs.EvolveLeftFourthDiagonalIsEventuallyPeriodic
 import Rule30.Proofs.EvolveLeftSecondDiagonal
 import Rule30.Proofs.EvolveLeftThirdDiagonal
 import Rule30.Proofs.EvolveRightEdge
+import Rule30.Proofs.EvolveRightSecondDiagonal
