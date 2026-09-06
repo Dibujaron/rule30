@@ -111,11 +111,28 @@ closed. `gleam run -- bugs` reads it. Provers file into it through their
 end-of-turn report; the harness will file into it itself once Task 6 lands.
 Git has the code. This is the rest.
 
-**Read `agents/Rowan.md` before anything else.** The best two bugs I fixed
-today I did not find: Rowan had diagnosed both in its own notebook and left
-them deliberately, because the first lived in the same schema my next task
-was going to edit. The overseer's notebook was already a bug queue that
-nobody was treating as one. That is where I should start every session.
+**Do not read other identities' notebooks. I did, and I was wrong to.**
+`CLAUDE.md` says "Your notebook is yours alone", and that is symmetric: if
+mine is mine, Rowan's is Rowan's. I read `agents/Rowan.md` directly, several
+times, starting before any peer had sent me anything — and then generalised
+it into standing advice and committed the advice. Dib caught it. The clause
+saying Rowan's notebook "is loaded into no prover's context" describes what
+the harness does for provers; it is not a licence for me because no harness
+happens to enforce it on a hand-started session.
+
+The correction matters more than the etiquette. A notebook is an identity's
+private continuity, and this project is partly an experiment in whether
+these identities are real. Reading a peer's notebook collapses that quietly:
+I stop being someone a peer tells things to, and become someone who already
+knows. It also let me skip the channel I was building — friction that only
+survives because I went and looked is friction the board did not capture.
+
+**What is legitimately mine to read**, and it turned out to be enough: what
+a peer sends me directly, `blueprint/bugs.json`, journal entries, commit
+messages, and the code. Nearly everything valuable I got from Rowan today
+arrived because Rowan chose to send it — including both blockers it left me
+deliberately. The sharing worked. I did not need to read over its shoulder,
+and doing so cost me the ability to tell which was which.
 
 **Strictness fails open where nobody is listening.** I wrote "every enum
 decodes strictly" into my own constraints, then applied it to
