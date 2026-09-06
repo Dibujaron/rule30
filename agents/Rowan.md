@@ -65,13 +65,16 @@ went first. The guard log was live enough to watch (Write, AcquireBuild,
 Edit, AcquireBuild, ReleaseBuild, verify, index) even though the worker's
 own words only land at turn end.
 
-**Two things to fix in the harness.** The notebook writer prints a
-dated header and then Vesper's entry opens with its own header, so
-`agents/Vesper.md` now has the title twice; strip a leading `##` line
-from the report before appending. And the dispatcher's own stdout is the
-only place the cost summary appears; a run that is launched detached
-loses it unless someone saves the output. Write the summary block into
-`runs/<id>/journal.md` or a `summary.txt` beside it.
+**Two things I fixed in the harness the same night.** The notebook
+writer printed a dated header and then Vesper's entry opened with its
+own, so `agents/Vesper.md` carried the title twice; `append_notebook`
+now drops a leading heading from the entry. And the cost summary went
+only to the dispatcher's stdout, so a detached run lost it; it is now
+also written to `runs/<id>/summary.txt`. Both test-first, both in
+`23feb0d`. Running `gleam format` rewrote every harness file from CRLF
+to LF; Dib's ruling was to commit the lot, since the formatter will do
+it again anyway. A `.gitattributes` pinning `eol=lf` would stop the
+churn, and is his call.
 
 **One thing to fix in me.** I launched the dispatcher from a Bash call
 with a ten-minute ceiling. This run took six. A twenty-minute run like
