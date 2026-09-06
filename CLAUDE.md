@@ -72,6 +72,26 @@ harness requests (outcome, your size estimate, notebook entry, journal
 entry, posts for peers) — the dispatcher writes files from that report, so
 a harness worker never edits `agents/` or `runs/` directly.
 
+**Your proof file must open with a note that explains it in English.** Put a
+`/-! ... -/` block after the imports and before the theorem, with exactly
+these three headings and nothing else:
+
+```
+/-!
+**What this says.** One sentence, about the automaton or the numbers, with
+no Lean in it.
+**Why it is true.** The one idea the proof rests on, in a sentence or two.
+**Where the work is.** The single step that was actually hard, and why.
+-/
+```
+
+Six lines is the ceiling and shorter is better. The reader is Dib: he writes
+TypeScript, is learning Lean, and will not read your tactic script — so do
+not narrate it ("we then `simp`"), do not re-state the theorem in symbols,
+and do not explain Lean syntax he can look up. If the honest answer to
+"where the work is" is "nowhere, it was three rewrites", write that. A short
+true note is the goal; an essay is a failure of the same task.
+
 ## If you are Keel
 
 You maintain the framework, not a region of the theorem DAG: your region
@@ -120,8 +140,11 @@ on Keel's behalf.
 
 ## Teaching contract
 
-Dib writes functional programming (TypeScript, Kotlin) and is learning
-Lean; fluency is a project goal. Two anchors are load-bearing:
+Dib writes functional programming, mostly TypeScript, and is learning
+Lean; fluency is a project goal. **Anchor to TypeScript.** Where TypeScript
+genuinely cannot express the idea, reach for Java. Do not reach for Kotlin —
+older writing in this repo does and is not worth rewriting, but nothing new
+should. Two anchors are load-bearing:
 
 - A theorem statement is a **type**; a proof is a **value of that type**.
 - The theorem DAG is a **build graph** — nodes are tasks, an open leaf is a
@@ -131,8 +154,12 @@ Two habits follow, and apply to anything you write for Dib to read (journal
 entries, notebook entries, commit messages, board posts):
 
 - **Name the Lean thing, then anchor it.** "`sorry` — a hole that still
-  typechecks, like Kotlin's `TODO()`" teaches a word; "a placeholder"
-  teaches nothing.
+  typechecks, like `x as unknown as T`: the checker is satisfied and there
+  is nothing behind it" teaches a word; "a placeholder" teaches nothing.
+  (That cast is the closer analogy of the two, because both are silent — the
+  seam is that the cast still yields some wrong value at runtime, while
+  `sorry` yields a theorem that was never proved and a build that says
+  success.)
 - **Say where the analogy breaks.** An analogy whose seams are invisible
   becomes a misconception, and misconceptions about `sorry` or `∀` here are
   expensive.
@@ -154,6 +181,12 @@ entries, notebook entries, commit messages, board posts):
   what Lean elaboration may then do: verifying a proof means elaborating it,
   so the trust boundary is the model plus the command allowlist, not a
   sandbox.
+- Where state must survive a session that dies without warning, either
+  derive it from outside the process or make the stale value inert rather
+  than dangerous. A cleanup step at the end of a session is fiction:
+  sessions are killed, time out, and exhaust context far more often than
+  they exit cleanly. Rowan and Keel each shipped a design that ignored this
+  within one hour of each other, from opposite directions.
 
 ## Running the harness
 
