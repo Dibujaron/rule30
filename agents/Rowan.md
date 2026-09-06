@@ -127,3 +127,69 @@ ten-minute Bash call. Root `lake build` was warm when I left it.
 
 Cairn's naming and glossary rows were sitting uncommitted; I committed
 them as `c1f4b87` so the run would read a roster that matched git.
+
+## 2026-09-06T02:05:00Z — first concurrent run
+
+`run --max-attempts 4 --concurrency 3`, launched detached with
+`Start-Process` as my last entry told me to. Run `20260906T013237Z`:
+three workers up inside twenty seconds on ports 4130 to 4132, Emmy's
+colour ceremony inline first ($0.04, deep blue #3d5a80). Four attempts,
+three closed, $1.18. Then one `prove-one` to finish what the run
+mislabelled, $0.18. Board now: P2 fully closed, P1 down to the third
+diagonal and the right edge.
+
+**The machinery held.** One BEAM, one lock, one DAG writer: three
+`lake build`s queued on the lock instead of racing, the freed slot
+refilled with `centerColumnDensity_succ` 51 seconds in, and every close
+survived. The stale-copy hazard I built `run` to avoid did not appear,
+and I checked the roster and DAG against `HEAD` before committing
+because Keel committed twice in the same checkout while the run was
+going; Keel touched only docs, so nothing was lost.
+
+**What went wrong: one attempt parked as `rate_limited` that was not.**
+Vesper proved the second diagonal in one shot, 85 seconds in. Her
+report left out `posts`. The JSON schema handed to the CLI
+(`harness/src/harness/worker/brief.gleam:80`) lists `posts` as required,
+while the Gleam decoder (`worker.gleam:60`) defaults it to `[]`: the two
+disagree, and the CLI's side wins because it rejects the tool call
+before the decoder ever sees it. That made the turn an error. Meanwhile
+`hit_ceiling` had seen a `rate_limit_event` at 0.94 against a 0.9
+ceiling, whose API status was `allowed_warning`, not a refusal. Error
+turn plus ceiling seen equals "park as rate limited", and the `proved`
+claim the parking code is meant to adjudicate first was inside the
+rejected tool call, so it never counted. Her correct proof file was
+left on disk, untracked; the re-dispatch built it unchanged and the
+verifier passed it.
+
+Two rows for Keel's board, in order of cost: (1) drop `posts` from the
+schema's `required` list, or make the decoder and the schema agree
+either way; a report with no posts is the common case. (2)
+`hit_ceiling` should treat `allowed_warning` as a warning: only an
+`api_retry` with `rate_limit`, or a status that is not `allowed*`,
+means the window is actually closed. I did not fix either tonight
+because Keel's plan says its next task edits that same schema in this
+same checkout, and two hands on one file is how last night's fixture
+deleted a proof.
+
+**What the provers taught me.** Emmy's three density lemmas needed no
+automaton semantics at all: unfold `centerColumnDensity`, then it is
+`Finset.card` bookkeeping and real division, with `N = 0` split off
+because Lean's `x / 0 = 0`. She named the Mathlib-pin traps
+(`Finset.range_add_one` not `range_succ`; `notMem` not `not_mem`), which
+is the kind of entry that makes the next Sonnet attempt cheaper than
+this one. Vesper's second diagonal composed two served lemmas with no
+induction, and she predicted the third will need one. Her estimate was
+S against the DAG's M; calibration 2/3, and the DAG was the one that
+was wrong.
+
+Workers cannot see siblings close mid-run: Emmy's nonneg journal
+recommends attacking `le_one` next, which had already closed twelve
+minutes earlier in the slot beside her. Harmless, but Dib should read
+those "next" lines as written from inside one attempt.
+
+**Frontier now.** `evolve_left_third_diagonal` (Vesper, needs the
+induction she predicted) and `evolve_right_edge` (the mirror of the
+left edge; a good Haiku test of whether her notebook transfers). Both
+are leaves, so one more run at concurrency 2 empties the board, and
+then the DAG needs new seed lemmas from the captain before there is
+anything left to dispatch.

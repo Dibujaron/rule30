@@ -12,6 +12,10 @@ appends one `import` line here when a node closes, keeping the list sorted
 and skipping a line that is already present. Edit it by hand only to remove a
 module whose node has been retired.
 -/
+import Rule30.Proofs.CenterColumnDensityLeOne
+import Rule30.Proofs.CenterColumnDensityNonneg
+import Rule30.Proofs.CenterColumnDensitySucc
 import Rule30.Proofs.CenterColumnZero
 import Rule30.Proofs.EvolveEqFalseOfOutsideCone
 import Rule30.Proofs.EvolveLeftEdge
+import Rule30.Proofs.EvolveLeftSecondDiagonal

@@ -32,3 +32,14 @@ Straightforward induction on `t`, mirroring `evolve_eq_false_of_outside_cone`'s 
 **Gotcha for anyone in P1**: `Mathlib.Algebra.Order.Ring.Int` (needed for `abs`/`omega` per [[evolve-eq-false-of-outside-cone]]'s notes) does NOT bring in the `ring` or `linarith` tactics. Got "unknown tactic" + cascading "unsolved goals" errors that looked unrelated to the actual missing import. Fix: explicitly `import Mathlib.Tactic.Ring` and `import Mathlib.Tactic.Linarith` alongside it. Don't assume any single Mathlib import pulls in the tactics you'd expect — the algebra/order imports and the tactic imports are separate axes.
 
 Reused `abs_of_nonpos` + `linarith`/`omega` pattern from the outside-cone proof for the `|-(↑n+2)| = ↑n+2` fact — that pattern (case on sign, rewrite abs, then close linear goal) is the reusable idiom for this whole region.
+
+## 2026-09-06T01:53:41Z — evolve_left_second_diagonal (sonnet, proved)
+
+This one was already fully written by attempt 1 before it hit the 5-hour rate limit; I just re-ran `lake build Rule30.Proofs.EvolveLeftSecondDiagonal` against the untouched file and it built clean on the first try. No changes needed. Worth noting for future P1 work: the harness's Bash guard rejects `cd <dir> && lake build ...` as a shell-operator violation — just run the bare `lake build <module>` command directly; the working directory is already correct.
+
+Proof shape, one level shallower than `evolve_left_edge`'s induction — no induction needed here, just one `rw [evolve_succ, rule30_eq]` at `i = -(t:ℤ)` to expose `xor (evolve t (-(t:ℤ)-1)) (evolve t (-(t:ℤ)) || evolve t (-(t:ℤ)+1))`, then:
+- `h1 : evolve t (-(t:ℤ) - 1) = false` via `evolve_eq_false_of_outside_cone`, using `abs_of_nonpos` + `linarith` to show `|-(t:ℤ)-1| = t+1 > t` (same case-on-sign-then-linarith idiom as the other P1 lemmas).
+- `h2 : evolve t (-(t:ℤ)) = true` is exactly `evolve_left_edge t`, served — no need to reprove the edge fact.
+- `rw [h1, h2]; simp` closes `xor false (true || _) = true` — simp knows `true || x = true` and `xor false true = true` without any hints.
+
+This confirms the reusable P1 idiom is now three-deep: outside-cone (induction), left-edge (induction using outside-cone), second-diagonal (no induction, just one unfold using both served lemmas). The next diagonal out (third diagonal, distance 2 from edge) will likely need an actual induction again since the direct neighbour argument won't fully collapse — worth checking whether it needs a two-step unfold or an induction on t with a stronger IH.
