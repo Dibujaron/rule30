@@ -32,6 +32,15 @@ import harness/verify
 import harness/worker/brief
 import simplifile
 
+/// One bug as a worker described it. Four fields only: the harness stamps
+/// everything else, so a worker cannot file under another identity.
+/// `area` and `severity` stay strings here because they are the worker's
+/// claim; `dispatch` parses them, and an unparseable area becomes `other`
+/// rather than losing the report.
+pub type ReportedBug {
+  ReportedBug(title: String, area: String, severity: String, body: String)
+}
+
 /// What a worker reports at the end of every turn. `outcome` is the worker's
 /// claim, not the harness's finding.
 pub type Report {
@@ -41,6 +50,7 @@ pub type Report {
     notebook: String,
     journal: String,
     posts: List(String),
+    bugs: List(ReportedBug),
     summary: String,
   )
 }
@@ -58,14 +68,28 @@ fn report_decoder() -> decode.Decoder(Report) {
   use notebook <- decode.optional_field("notebook", "", decode.string)
   use journal <- decode.optional_field("journal", "", decode.string)
   use posts <- decode.optional_field("posts", [], decode.list(decode.string))
+  use bugs <- decode.optional_field(
+    "bugs",
+    [],
+    decode.list(reported_bug_decoder()),
+  )
   decode.success(Report(
     outcome:,
     estimate:,
     notebook:,
     journal:,
     posts:,
+    bugs:,
     summary:,
   ))
+}
+
+fn reported_bug_decoder() -> decode.Decoder(ReportedBug) {
+  use title <- decode.field("title", decode.string)
+  use area <- decode.optional_field("area", "other", decode.string)
+  use severity <- decode.optional_field("severity", "friction", decode.string)
+  use body <- decode.optional_field("body", "", decode.string)
+  decode.success(ReportedBug(title:, area:, severity:, body:))
 }
 
 fn size_decoder() -> decode.Decoder(dag.Size) {

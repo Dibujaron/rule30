@@ -14,6 +14,7 @@ import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
+import harness/bugs
 import harness/config
 import harness/dag
 import harness/guard
@@ -933,7 +934,67 @@ fn write_channels(
           #("text", json.string(post)),
         ])
       })
+      file_reported_bugs(cfg, l, identity, node_id, attempt, r.bugs)
     }
+  }
+}
+
+/// A worker's reported bugs, appended to the board with the provenance the
+/// dispatcher already holds. Never deduped: two workers describing the same
+/// friction in their own words are two pieces of evidence.
+fn file_reported_bugs(
+  cfg: config.Config,
+  l: log.Log,
+  identity: roster.Identity,
+  node_id: String,
+  attempt: dag.Attempt,
+  reported: List(worker.ReportedBug),
+) -> Nil {
+  case reported {
+    [] -> Nil
+    _ ->
+      case bugs.load(cfg.bugs_path) {
+        Error(reason) -> io.println_error("harness/dispatch: " <> reason)
+        Ok(board) -> {
+          let board =
+            list.fold(reported, board, fn(board, rb) {
+              bugs.append(
+                board,
+                bugs.Bug(
+                  id: "",
+                  title: rb.title,
+                  area: bugs.area_from_string(rb.area)
+                    |> result.unwrap(bugs.Other),
+                  severity: bugs.severity_from_string(rb.severity)
+                    |> result.unwrap(bugs.Friction),
+                  body: rb.body,
+                  reported_by: identity.name,
+                  source: bugs.Worker,
+                  node: Some(node_id),
+                  run: Some(l.dir),
+                  session_id: Some(attempt.session_id),
+                  signature: None,
+                  filed: log.now_iso(),
+                  occurrences: 1,
+                  status: bugs.Open,
+                  resolution: None,
+                  fixed: None,
+                ),
+              )
+            })
+          case bugs.save(board, cfg.bugs_path) {
+            Ok(Nil) ->
+              list.each(reported, fn(rb) {
+                log.event(l, "bug", [
+                  #("from", json.string(identity.name)),
+                  #("node", json.string(node_id)),
+                  #("title", json.string(rb.title)),
+                ])
+              })
+            Error(reason) -> io.println_error("harness/dispatch: " <> reason)
+          }
+        }
+      }
   }
 }
 

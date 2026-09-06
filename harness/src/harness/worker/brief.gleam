@@ -72,6 +72,62 @@ pub fn report_schema() -> String {
             #("description", json.string("messages for named peers, if any")),
           ]),
         ),
+        #(
+          "bugs",
+          json.object([
+            #("type", json.string("array")),
+            #(
+              "items",
+              json.object([
+                #("type", json.string("object")),
+                #(
+                  "properties",
+                  json.object([
+                    #("title", json.object([#("type", json.string("string"))])),
+                    #(
+                      "area",
+                      json.object([
+                        #("type", json.string("string")),
+                        #(
+                          "enum",
+                          json.array(
+                            [
+                              "guard", "dispatch", "verify", "brief", "board",
+                              "hooks", "docs", "other",
+                            ],
+                            json.string,
+                          ),
+                        ),
+                      ]),
+                    ),
+                    #(
+                      "severity",
+                      json.object([
+                        #("type", json.string("string")),
+                        #(
+                          "enum",
+                          json.array(
+                            ["blocks", "friction", "papercut"],
+                            json.string,
+                          ),
+                        ),
+                      ]),
+                    ),
+                    #("body", json.object([#("type", json.string("string"))])),
+                  ]),
+                ),
+                #(
+                  "required",
+                  json.array(["title", "area", "severity", "body"], json.string),
+                ),
+              ]),
+            ),
+            #(
+              "description",
+              json.string("harness problems that got in your way, if any"),
+            ),
+          ]),
+        ),
       ]),
     ),
     #(
@@ -198,7 +254,8 @@ fn prior_attempts(node: dag.Node) -> String {
 fn how_to_report() -> String {
   "## How to report\n\n"
   <> "Every turn ends with the structured report the harness asked for. Set `outcome` to `proved` only after `lake build` of your own module has actually succeeded — the harness then verifies your claim independently, and sends you the verdict if it fails. Set `outcome` to `in_progress` while you are still working. When you give up, set `outcome` to `abandoned` and fill in `notebook` and `journal`.\n\n"
-  <> "`notebook` is for your future self: Mathlib lemmas that worked, dead ends worth not repeating, conventions. `journal` is a short written update for Dib, in your own words. `posts` are messages for named peers. Leave `notebook` and `journal` empty until the attempt ends, then write them properly — the harness writes those files from your report verbatim, so they are the only voice you have outside this session."
+  <> "`notebook` is for your future self: Mathlib lemmas that worked, dead ends worth not repeating, conventions. `journal` is a short written update for Dib, in your own words. `posts` are messages for named peers. Leave `notebook` and `journal` empty until the attempt ends, then write them properly — the harness writes those files from your report verbatim, so they are the only voice you have outside this session.\n\n"
+  <> "A bug is the **harness** getting in your way: a command the guard refused that you needed, a brief that told you something untrue, a verifier message you could not act on, a lemma the brief said was served that was not. Lean being difficult is not a bug. A proof you could not find is not a bug. If the obstacle would still exist for a human doing this by hand in an editor, it is not the harness's. Keel maintains the harness and reads these; file what actually cost you turns, and leave the array empty otherwise."
 }
 
 // --- the task ----------------------------------------------------------------

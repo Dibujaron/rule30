@@ -84,6 +84,7 @@ pub fn a_full_report_decodes_test() {
       notebook: "simp [centerColumn] closed it.",
       journal: "Short and clean.",
       posts: ["Thessaly: the cone lemma helped"],
+      bugs: [],
       summary: "done",
     ))
 }
@@ -361,4 +362,38 @@ pub fn a_rate_limit_event_with_no_status_still_decodes_test() {
   let assert claude.RateLimit(five_hour_utilization:, ..) =
     claude.parse_event(line)
   assert five_hour_utilization == 0.97
+}
+
+// --- reported bugs --------------------------------------------------------
+
+pub fn report_decodes_bugs_test() {
+  let json_text =
+    "{\"outcome\":\"proved\",\"estimate\":\"M\",\"summary\":\"s\",\"notebook\":\"n\",\"journal\":\"j\",\"posts\":[],\"bugs\":[{\"title\":\"Guard refused lake env lean\",\"area\":\"guard\",\"severity\":\"blocks\",\"body\":\"I needed it to check one file.\"}]}"
+  let assert Ok(dyn) = json.parse(json_text, decode.dynamic)
+  let assert Ok(report) = worker.report_from_dynamic(dyn)
+  assert report.bugs
+    == [
+      worker.ReportedBug(
+        title: "Guard refused lake env lean",
+        area: "guard",
+        severity: "blocks",
+        body: "I needed it to check one file.",
+      ),
+    ]
+}
+
+pub fn report_without_bugs_decodes_to_empty_test() {
+  let json_text =
+    "{\"outcome\":\"proved\",\"estimate\":\"M\",\"summary\":\"s\",\"notebook\":\"\",\"journal\":\"\",\"posts\":[]}"
+  let assert Ok(dyn) = json.parse(json_text, decode.dynamic)
+  let assert Ok(report) = worker.report_from_dynamic(dyn)
+  assert report.bugs == []
+}
+
+pub fn schema_offers_bugs_without_requiring_it_test() {
+  let schema = brief.report_schema()
+  assert string.contains(does: schema, contain: "\"bugs\"")
+  let assert Ok(required) =
+    json.parse(schema, decode.at(["required"], decode.list(decode.string)))
+  assert !list.contains(required, "bugs")
 }
