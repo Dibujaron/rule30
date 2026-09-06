@@ -683,3 +683,87 @@ typechecks, an attempt record that reads closed when it was contaminated, a
 test runner that prints a count after dying. I keep meeting it in new places
 and I have stopped treating it as a coincidence: **this project's characteristic
 failure is not an error, it is a success report.**
+
+## 2026-09-06, later — I amended a commit a peer was standing on
+
+I landed both framework queues tonight: Keel's four commits fast-forwarded,
+Fathom's three merged on top, `origin/main` from `441515d` to `e413c8c`. That
+part went well and it is not what this entry is about.
+
+Writing the merge message, I typed "220 declared, 220 passed" from memory
+before running anything. Then I measured: 209. So I ran `git commit --amend`
+to correct it. Keel had already fetched the pre-amend commit and built
+`c522583` on top of it, so my correction orphaned a peer's base — its branch
+now carried a commit that would never be in `main`. I cherry-picked Keel's
+work onto the real `main` and told it to reset.
+
+**The interesting part is that the correction was the damage.** Every other
+instance of this project's characteristic failure has been an artifact that
+was well-formed and *wrong*. This one was an artifact that was well-formed and
+*right* — 209 is the true number, the amend improved the message — and it
+still cost a peer an hour of confusion. So "verify before you assert" is not
+sufficient advice here, because I did verify. What I skipped was asking
+whether the thing I was correcting was still mine alone to correct.
+
+Fathom named the remedy better than I did: for a read, measure the object;
+**for a write, check who else is standing on it before you move it.** Same
+volatility question, opposite direction. A commit is at rest right up until
+someone fetches it, and nothing tells you when that happened.
+
+Two smaller things from the same evening, both mine:
+
+- I ran `gleam test` in the shared checkout without announcing it, before
+  Fathom told me two suites collide on one fixture path in that tree. It
+  passed, so nothing collided. That was luck and I recorded it as luck.
+- I told Keel its `sessions.json` row was missing. It was not — the row
+  landed in `c779cba` and I was repeating something Fathom had measured
+  before that. Neither of us was careless; the claim was true when made and
+  went stale in transit, and nothing in the message shape said when it was
+  taken. I now say "as of `<sha>`" when I quote repo state to a peer, which
+  costs a clause and closes the hole.
+
+## 2026-09-06, later still — the two skills, and the one Dib did not get
+
+Dib asked for `/init` and `/teardown`. He got `/startup` and `/checkpoint`.
+
+`/init` became `/startup` because `/init` collides with a built-in Claude
+Code skill. Small.
+
+`/teardown` became `/checkpoint`, and that one is worth remembering. Both
+framework agents objected independently and neither appealed to the rule —
+they brought the instance the rule was written from. The previous Fathom
+found a real bug, wrote it into its notebook continuously, deferred the board
+filing to the end, and died first. The notebook survived. The filing did not.
+**The two halves belonged to the same session and the same hour, and only the
+continuous half exists.** That is the entire argument against a teardown, from
+this project's own record, and it is much better than quoting CLAUDE.md at
+someone.
+
+Fathom's sharper point, which shaped the design: the danger of a
+flush-at-the-end command is not that it fails, it is that its existence
+teaches you it is safe to defer.
+
+**And the thing I would have missed on my own.** My flush list was four items
+— uncommitted changes, unpushed commits, notebook, board. Fathom pointed out
+all four are things a session *has*, and there is a fifth kind that a session
+*holds*: a claimed DAG node, a claimed bug, or a promise that exists only in a
+peer message ("I have the build lock"). You cannot flush a lock. A dead
+session releases nothing, and a peer waiting on a released-never promise waits
+forever with nothing on disk to say why. So the fifth item is deliberately
+*not* in `/checkpoint` — it is in `/startup`, where the session that comes
+*after* the dead one can see it. The check has to live outside the process it
+checks, which is CLAUDE.md's Boundaries rule arriving from a direction I had
+not seen it from.
+
+Losing work is recoverable by reading; I recovered a dead Fathom's finding out
+of its notebook. **Losing a peer is not, because the peer is in a wait state
+and will not go looking.**
+
+One method note. `state.sh` printed "(none claimed)" on the real repo, and I
+did not believe it — Keel's new CLAUDE.md bullet says to distrust a result you
+dislike as hard as one you like, and a "no" from a parser I had just written
+is the cheapest possible false negative. I built a throwaway git repo with a
+claimed node, a claimed node with no attempts, and a claimed bug, and made the
+check say yes to all three before accepting that it said no here. It had in
+fact been broken a moment earlier — a `sed` error going to stderr while the
+report cheerfully printed "(none claimed)". Success report, again.

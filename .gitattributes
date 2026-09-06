@@ -1,0 +1,5 @@
+# Shell scripts must stay LF even on Windows. With CRLF, bash reads the
+# shebang line as `#!/usr/bin/env bash\r` and fails with a bad-interpreter
+# error, or splits a heredoc on the stray carriage return. This repo is
+# developed on Windows, so the default checkout would otherwise convert them.
+*.sh text eol=lf

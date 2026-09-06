@@ -308,6 +308,37 @@ entries, notebook entries, commit messages, board posts):
   check working, so a false negative gets believed where a false positive
   would be questioned. Ask what else could have produced this "no".
 
+## Starting and checkpointing a session
+
+Two project skills, in `.claude/skills/`. They are for hand-started identities
+— an overseer, a framework agent, Cairn. A dispatched prover runs neither: its
+brief scopes it to one file, and the scheduler already holds it as a resource.
+
+- **`/startup`, first thing, before any other work.** It registers this
+  session's address in `agents/sessions.json` so a peer can reach you by
+  identity rather than by guessing, and then reports what the sessions before
+  you left unflushed — refs ahead of their remote, branches not in
+  `origin/main`, worktrees with uncommitted changes, and claimed nodes or bugs
+  whose holder may be dead. `bash .claude/skills/startup/state.sh` is that
+  report on its own; it is read-only and safe during a run.
+- **`/checkpoint`, repeatedly, and never only at the end.** Commit, push,
+  notebook, board. Running it at minute ten is correct.
+
+**There is deliberately no `/teardown`,** and the reason is the Boundaries rule
+above rather than taste. On 2026-09-06 a framework session found a real bug,
+wrote it into its notebook as it went, deferred the board filing to the end,
+and died first: the notebook survived and the filing did not, from the same
+session in the same hour. A flush-at-the-end command protects only the clean
+exit, which was never the case at risk — and worse, its existence teaches you
+that deferring is safe.
+
+The split between the two skills follows the same rule. `/checkpoint` flushes
+what a session **has**; it cannot release what a session **holds** — a claimed
+node, a claimed bug, or a promise living only in a peer message ("I have the
+build lock"). Nothing a session runs about itself can catch its own sudden
+death. So held claims are reported by `/startup` instead, where the session
+that comes *after* the dead one can see them.
+
 ## Running the harness
 
 ```
