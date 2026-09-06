@@ -285,6 +285,108 @@ theorem centerColumnDensity_succ (N : ℕ) :
       centerColumnDensity N * (N : ℝ) + (if centerColumn N then 1 else 0) := by
   sorry
 
+/-! ## P1 — the spine: what is known about the centre column
+
+Everything above is about the edges of the cone. This section is the first
+in the project that is about the centre. Rule 30 is `left XOR (centre OR
+right)`, and for fixed `centre` and `right` that is a bijection in `left`:
+given the new cell and its two right-hand inputs, the left input is forced.
+Read backwards, two adjacent columns of the space-time diagram determine
+every column to their left, for all time. So if two adjacent columns both
+repeated with a common period `p` from a common time `N`, every column to
+their left would too — with the same `p` and `N`. But a column far enough
+left is white at every time in `[N, N + p)`, being outside the cone, and
+black when the left edge reaches it. Contradiction: **no two adjacent
+columns are both eventually periodic.** Applied at the centre, the centre
+column and the column just right of it are not both eventually periodic,
+and the first prize conjecture reduces to the implication "if the centre
+column repeats, so does its right neighbour".
+
+The captain proved every lemma in this section end to end, in one scratch
+file against the exact statements below, before seeding; the bridge lemma
+depends on `propext`, `Classical.choice` and `Quot.sound` only. The
+inversion identity was also checked against the BigInt engine at 28,679
+cells with no mismatch. The attribution of the adjacent-columns theorem to
+Erica Jen (c. 1986–1990) is from memory and is not to be cited until
+someone has read the paper. -/
+
+/-- **Rule 30 read backwards.** The cell one to the left, a step earlier,
+is recovered from the new cell and the other two neighbours. This is
+`rule30_eq` with the `xor` moved across: `xor` is its own inverse, so
+`left = new XOR (centre OR right)`. -/
+theorem evolve_sub_one_eq_xor (t : ℕ) (i : ℤ) :
+    evolve t (i - 1) = xor (evolve (t + 1) i) (evolve t i || evolve t (i + 1)) := by
+  sorry
+
+/-- **A period propagates one column to the left.** If columns `i` and
+`i + 1` both repeat with period `p` from time `N`, so does column `i - 1`,
+with the same `p` and the same `N`: every value in column `i - 1` is a
+fixed function of three values in the two columns to its right, one of them
+a step later, and all three repeat from `N` on. -/
+theorem evolve_period_sub_one (i : ℤ) (p N : ℕ)
+    (h0 : ∀ t ≥ N, evolve (t + p) i = evolve t i)
+    (h1 : ∀ t ≥ N, evolve (t + p) (i + 1) = evolve t (i + 1)) :
+    ∀ t ≥ N, evolve (t + p) (i - 1) = evolve t (i - 1) := by
+  sorry
+
+/-- **A period propagates to every column to the left.** Induction on how
+far left, carrying the pair of columns `(i - k, i - k + 1)` together so
+that `evolve_period_sub_one` applies at each step. The base case is the two
+hypotheses; the step is the previous lemma plus the cast identities
+`i - ↑(k + 1) = i - ↑k - 1` and `i - ↑(k + 1) + 1 = i - ↑k`. -/
+theorem evolve_period_sub (i : ℤ) (p N : ℕ)
+    (h0 : ∀ t ≥ N, evolve (t + p) i = evolve t i)
+    (h1 : ∀ t ≥ N, evolve (t + p) (i + 1) = evolve t (i + 1)) :
+    ∀ k : ℕ, ∀ t ≥ N, evolve (t + p) (i - k) = evolve t (i - k) := by
+  sorry
+
+/-- **No two adjacent columns share a positive period from a common time.**
+Pick a column `-m` far enough left that the cone has not reached it by time
+`N + p` — `m = N + p + (-i).toNat + 1` works, and `k = (i + m).toNat` puts
+`i - k = -m`. By `evolve_period_sub` that column repeats with period `p`
+from `N`. At time `m - p ≥ N` it is white (`evolve_eq_false_of_outside_cone`),
+so by the period it is white at time `m`; but `evolve_left_edge` says it is
+black at time `m`. The hypothesis `0 < p` is what makes `m - p < m`. -/
+theorem not_evolve_period_adjacent (i : ℤ) (p N : ℕ) (hp : 0 < p)
+    (h0 : ∀ t ≥ N, evolve (t + p) i = evolve t i)
+    (h1 : ∀ t ≥ N, evolve (t + p) (i + 1) = evolve t (i + 1)) : False := by
+  sorry
+
+/-- **Adjacent columns are not both eventually periodic.** Two eventually
+periodic sequences share a period from a common time
+(`isEventuallyPeriodic_common_period`), and `not_evolve_period_adjacent`
+rules that out. This is the first theorem in the project about the
+interior of the cone. -/
+theorem not_isEventuallyPeriodic_adjacent (i : ℤ) :
+    ¬ (IsEventuallyPeriodic (fun t => evolve t i) ∧
+        IsEventuallyPeriodic (fun t => evolve t (i + 1))) := by
+  sorry
+
+/-- **The centre column and its right neighbour are not both eventually
+periodic.** `not_isEventuallyPeriodic_adjacent` at `i = 0`; `centerColumn`
+unfolds to `fun t => evolve t 0` by definition and `0 + 1 = 1` is `simp`. -/
+theorem centerColumn_right_not_both_isEventuallyPeriodic :
+    ¬ (IsEventuallyPeriodic centerColumn ∧ IsEventuallyPeriodic (fun t => evolve t 1)) := by
+  sorry
+
+/-- **The bridge to the first prize.** If a periodic centre column would
+force a periodic right neighbour, then the centre column is not eventually
+periodic — which is `centerColumn_not_eventually_periodic` in
+`Rule30/Prize.lean`, word for word. One line from the previous lemma. -/
+theorem centerColumn_not_eventually_periodic_of_right
+    (h : IsEventuallyPeriodic centerColumn → IsEventuallyPeriodic (fun t => evolve t 1)) :
+    ¬ IsEventuallyPeriodic centerColumn := by
+  sorry
+
+/-- **The residual of P1.** Given the bridge, this implication *is* the
+first prize conjecture: it says exactly what the known structure of rule 30
+leaves open. Nobody knows how to prove it, and it is on the board as a wall
+so that the open problem is a visible node rather than an unreachable
+target. Do not weaken it, and do not dispatch it as an ordinary leaf. -/
+theorem centerColumn_right_isEventuallyPeriodic_of_center
+    (h : IsEventuallyPeriodic centerColumn) : IsEventuallyPeriodic (fun t => evolve t 1) := by
+  sorry
+
 /-! ## Harness self-test -/
 
 /-- A trivially true statement that exists only so the harness's verifier

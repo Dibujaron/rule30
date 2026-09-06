@@ -35,6 +35,7 @@ finite prefix.
 | `verify.mjs` | self-check; exits non-zero on failure |
 | `centercolumn.mjs` | center column + running density of 1s (prize question 2) |
 | `periodscan.mjs` | search for eventual periodicity (prize question 1) |
+| `spinecheck.mjs` | engine check of the inversion identity behind the adjacent-columns theorem (prize question 1) |
 
 ### verify.mjs
 
