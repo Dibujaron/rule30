@@ -46,13 +46,20 @@ echo "== BRANCHES NOT MERGED INTO origin/main (unlanded findings) =="
 found=0
 while read -r branch; do
   [ "$branch" = "main" ] && continue
-  git merge-base --is-ancestor "$branch" origin/main 2>/dev/null && continue
-  ahead=$(git rev-list --count origin/main.."$branch" 2>/dev/null || echo '?')
+  # `git cherry` and not `merge-base --is-ancestor`. A commit that was
+  # cherry-picked onto main is landed, and its content is safe, but it is not
+  # an ancestor of anything — so an ancestry test reports every cherry-picked
+  # branch as unlanded forever. `git cherry` compares patch ids: `+` is a
+  # commit whose change is genuinely not upstream, `-` is one already applied
+  # under a different sha.
+  unlanded=$(git cherry origin/main "$branch" 2>/dev/null | grep -c '^+')
+  [ "$unlanded" -eq 0 ] && continue
   last=$(git log -1 --format='%cr' "$branch")
-  printf '  %-34s %s commit(s), last %s\n' "$branch" "$ahead" "$last"
+  printf '  %-34s %s commit(s) not upstream, last %s
+' "$branch" "$unlanded" "$last"
   found=1
 done < <(git for-each-ref --format='%(refname:short)' refs/heads)
-[ "$found" -eq 0 ] && echo "  (none — every branch is in origin/main)"
+[ "$found" -eq 0 ] && echo "  (none — every branch's changes are in origin/main)"
 echo
 
 # --- 3. Work that is not even a commit ---------------------------------------
