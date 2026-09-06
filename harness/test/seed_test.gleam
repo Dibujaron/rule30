@@ -9,7 +9,9 @@
 //// 2026-09-06 and one of them by a live run that cost $0.97 to learn it.
 
 import envoy
+import gleam/option
 import gleam/string
+import harness/dag
 import harness/seed.{Claimed, NoClaim, Route}
 import harness/shell
 import simplifile
@@ -395,4 +397,118 @@ pub fn the_report_summarises_what_needs_attention_test() {
   // evidence about the range it searched.
   assert string.contains(out, "t < 12")
   assert string.contains(does: string.lowercase(out), contain: "1 falsified")
+}
+
+// --- the seeder's brief -------------------------------------------------------
+//
+// The ticket's own words: "the brief is where the quality lives, and it is the
+// part worth spending on." The morning pass that produced a good tier worked
+// because the captain had read every proof and knew which shapes close cheaply.
+// A fresh session has none of that unless the brief carries it.
+//
+// So these tests are mostly about what the brief must NOT leave out. A missing
+// section does not fail anything — it produces a worse tier a day later, which
+// is the least checkable failure this project has.
+
+fn closed_node(id: String, size: dag.Size, model: String, cost: Float) -> dag.Node {
+  dag.Node(
+    id:,
+    region: "P1",
+    lean_name: id,
+    description: "the reason this node was worth proving",
+    deps: [],
+    status: dag.Proved,
+    size:,
+    proof_file: option.Some("Rule30/Proofs/X.lean"),
+    attempts: [
+      dag.Attempt(
+        identity: "Vesper",
+        session_id: "s",
+        model:,
+        started: "t0",
+        ended: "t1",
+        outcome: dag.Closed,
+        estimate: size,
+        reported: True,
+        cost_usd: cost,
+        turns: 9,
+        notes: "VERIFIED",
+      ),
+    ],
+    verified: option.None,
+  )
+}
+
+fn brief() -> String {
+  seed.brief(
+    closed: [
+      closed_node("evolve_left_edge", dag.M, "sonnet", 0.36),
+      closed_node("centerColumn_zero", dag.S, "haiku", 0.10),
+    ],
+    notes: [#("EvolveLeftEdge.lean", "**What this says.** The left edge is 1.")],
+    explorer_readme: "the BigInt engine",
+    proposal_path: "C:/r/blueprint/proposals/next.json",
+  )
+}
+
+/// **What closed cheaply, and on which model.** The captain who seeded well had
+/// read every proof; a fresh session has only this table. Cost and model are
+/// the part that says which SHAPES are cheap, which is the actual transferable
+/// knowledge — not which nodes exist.
+pub fn the_brief_carries_what_closed_and_what_it_cost_test() {
+  let b = brief()
+  assert string.contains(b, "evolve_left_edge")
+  assert string.contains(b, "haiku")
+  assert string.contains(b, "sonnet")
+  assert string.contains(b, "0.36")
+}
+
+/// The `/-!` notes are the only place the *reason* a proof worked is written in
+/// English. Carrying the file list without them would hand over the index of a
+/// book instead of the book.
+pub fn the_brief_carries_the_proof_notes_test() {
+  assert string.contains(brief(), "The left edge is 1.")
+}
+
+/// **The measured wall.** Without it a seeder proposes witnesses over ranges
+/// that cannot finish, every one comes back `unchecked`, and the check it was
+/// given looks broken rather than out of budget.
+pub fn the_brief_states_the_witness_range_limit_test() {
+  let b = brief()
+  assert string.contains(b, "3^t")
+  assert string.contains(b, "18")
+}
+
+/// The reason is required and the route is optional, with the measurement that
+/// settled it — a seeder told only the rule will supply a route to look
+/// diligent.
+pub fn the_brief_says_the_reason_is_required_and_the_route_is_not_test() {
+  let b = string.lowercase(brief())
+  assert string.contains(b, "reason")
+  assert string.contains(b, "required")
+  assert string.contains(b, "optional")
+}
+
+/// **The load-bearing negative.** A brief that did not say this would produce a
+/// seeder that spends its turns discovering the fence by being denied — and
+/// each denial is a bug auto-filed against the guard rather than against the
+/// brief that omitted it.
+pub fn the_brief_states_the_fence_it_runs_behind_test() {
+  let b = brief()
+  assert string.contains(b, "explorer/")
+  assert string.contains(b, "C:/r/blueprint/proposals/next.json")
+  // It must say plainly that it cannot write the two files the fleet reads,
+  // and WHY — a rule without its reason reads as an obstacle to route around.
+  assert string.contains(b, "Statements.lean")
+  assert string.contains(b, "dag.json")
+  assert string.contains(string.lowercase(b), "propose")
+}
+
+/// It must never suggest the seeder can seed. Dib's ruling is that a seeder
+/// proposes and Rowan lands, because direction should not change while nobody
+/// is watching.
+pub fn the_brief_never_tells_the_seeder_to_edit_the_board_test() {
+  let b = string.lowercase(brief())
+  assert !string.contains(b, "edit rule30/statements.lean")
+  assert !string.contains(b, "add the node to blueprint/dag.json")
 }

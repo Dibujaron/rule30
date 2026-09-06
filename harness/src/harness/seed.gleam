@@ -36,11 +36,13 @@
 
 import gleam/dynamic.{type Dynamic}
 import gleam/dynamic/decode
+import gleam/float
 import gleam/int
 import gleam/json
 import gleam/list
 import gleam/result
 import gleam/string
+import harness/dag
 import harness/shell
 import simplifile
 
@@ -543,4 +545,128 @@ fn is_holding(v: WitnessVerdict) -> Bool {
     WitnessHolds(_) -> True
     _ -> False
   }
+}
+
+// --- the brief ----------------------------------------------------------------
+
+/// What a seeder is told, assembled. The pure half, so it can be tested
+/// without a working directory.
+///
+/// **This is where the quality lives.** The pass that produced a good tier on
+/// 2026-09-06 worked because the captain had read every proof and knew which
+/// shapes close cheaply. A fresh session has none of that, and nothing in a
+/// seeding attempt's own outcome will ever tell it — a seeded node is good only
+/// in retrospect, when it closes cheaply and later proofs cite it. So the brief
+/// is the only place that knowledge can enter, and every section below is here
+/// because leaving it out costs a worse tier a day later rather than an error
+/// today. That is the least checkable failure this project has.
+pub fn brief(
+  closed closed: List(dag.Node),
+  notes notes: List(#(String, String)),
+  explorer_readme explorer_readme: String,
+  proposal_path proposal_path: String,
+) -> String {
+  string.join(
+    [
+      "## What you are doing",
+      "You are proposing the next tier of theorem statements for a Lean 4",
+      "formalisation of Rule 30. You PROPOSE; a captain reviews and lands.",
+      "",
+      "Aim at what a proof of a prize conjecture's residual would NEED, not at",
+      "what is merely true and provable. The board has closed twenty nodes and",
+      "not one of them had an edge into a prize — a tier of true, cheap,",
+      "unconnected lemmas is the failure mode here, and it looks like progress",
+      "while it happens.",
+      "",
+      "## What you may write and run",
+      "  write   anything under explorer/",
+      "  write   your proposal, at " <> proposal_path,
+      "  run     node <one path under explorer/>",
+      "  run     lake build [modules], lake env lean <file>",
+      "",
+      "You may NOT write Rule30/Statements.lean or blueprint/dag.json. That is",
+      "not a formality to route around: seeding sets direction, and direction",
+      "should not change while nobody is watching. Your output is a proposal",
+      "and a captain lands it. Nothing else you do is checked by anything.",
+      "",
+      "## The proposal format",
+      "Each proposal carries an id, a lean_name, the statement text, and a",
+      "`reason`. The reason is REQUIRED and the route is OPTIONAL, and that is",
+      "the opposite of what it looks like it should be. Measured on the tier",
+      "seeded 2026-09-06: description quality dominated node difficulty as a",
+      "cost driver and it was not close. One node was seeded with a route its",
+      "captain had confirmed against a DIFFERENT form of the statement; haiku",
+      "spent 41 turns and died on it, and sonnet then closed it by implementing",
+      "the English reason and ignoring the route entirely.",
+      "",
+      "An unverified route misdirects in a captain's voice to a model with no",
+      "standing to doubt it, and forecloses a search a stronger model would win.",
+      "A correct reason costs nothing and leaves the search open. **If you",
+      "cannot state the reason, you have not finished thinking about the node.**",
+      "If you cannot supply a route, you have merely left it open, which is",
+      "fine and is recorded as claiming nothing.",
+      "",
+      "## Falsification witnesses, and the wall you will hit",
+      "Every proposal may carry a witness: a Bool-valued Lean expression over an",
+      "explicit finite range, run with `lake env lean` and `#eval`.",
+      "",
+      "**The range is not free.** `evolve t` is `rule30^[t]` over `Int -> Bool`,",
+      "so one cell at depth t costs 3^t neighbour evaluations. Measured against",
+      "the real definitions: t=14 is 3.8s, t=16 is 12s, t=18 is 84s, t=20 times",
+      "out at 120s. Usable depth is about t < 18 and the wall is sheer — two",
+      "steps costs a factor of seven.",
+      "",
+      "`List.all` short-circuits, so a FALSE witness returns almost instantly",
+      "and a TRUE one pays the full exponential. A witness that times out is",
+      "therefore preferentially a true one, and it is recorded as `unchecked`,",
+      "never as a pass. A statement whose claim only becomes interesting past",
+      "t=18 cannot carry a naive witness at all — say so rather than inventing",
+      "one, because `unchecked` stated plainly is worth more than coverage",
+      "pretended.",
+      "",
+      "## What has closed, and what it cost",
+      "Cost and model are the transferable part: they say which SHAPES are",
+      "cheap, which is what you are choosing between.",
+      "",
+      closed_table(closed),
+      "",
+      "## Why those proofs worked, in the provers' own words",
+      notes_section(notes),
+      "",
+      "## The engine",
+      explorer_readme,
+    ],
+    "\n",
+  )
+}
+
+fn closed_table(closed: List(dag.Node)) -> String {
+  closed
+  |> list.map(fn(n) {
+    let #(model, cost) = case n.attempts {
+      [] -> #("-", "-")
+      attempts -> {
+        let last = list.last(attempts)
+        case last {
+          Ok(a) -> #(a.model, float.to_string(a.cost_usd))
+          Error(_) -> #("-", "-")
+        }
+      }
+    }
+    "  "
+    <> n.id
+    <> "  size="
+    <> dag.size_to_string(n.size)
+    <> "  "
+    <> model
+    <> "  $"
+    <> cost
+  })
+  |> string.join("\n")
+}
+
+fn notes_section(notes: List(#(String, String))) -> String {
+  notes
+  |> list.map(fn(pair) { "### " <> pair.0 <> "\n" <> pair.1 })
+  |> string.join("\n\n")
 }
