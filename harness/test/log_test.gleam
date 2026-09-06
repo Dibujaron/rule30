@@ -19,6 +19,19 @@ pub fn event_and_journal_append_test() {
   let assert Ok(_) = simplifile.delete(root)
 }
 
+pub fn summary_is_written_beside_the_journal_test() {
+  let root = "build/test-runs"
+  let assert Ok(l) = log.open(root, "t2")
+  log.summary(
+    l,
+    "node      a
+outcome   proved",
+  )
+  let assert Ok(text) = simplifile.read(l.dir <> "/summary.txt")
+  assert string.contains(text, "outcome   proved")
+  let assert Ok(_) = simplifile.delete(root)
+}
+
 pub fn now_iso_shape_test() {
   let s = log.now_iso()
   assert string.length(s) == 20

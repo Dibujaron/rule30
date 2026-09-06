@@ -107,9 +107,12 @@ pub fn read_notebook(agents_dir: String, identity: Identity) -> String {
   |> result.unwrap("")
 }
 
-/// Append one dated section to the notebook, verbatim. The first write
-/// creates the file with the identity's own opening paragraph as its
-/// header, so a notebook always starts in its owner's voice.
+/// Append one dated section to the notebook. The first write creates the
+/// file with the identity's own opening paragraph as its header, so a
+/// notebook always starts in its owner's voice. The entry is kept verbatim
+/// except for a title line it may open with — the dated heading is the
+/// section's title, and a prover that supplies its own would otherwise
+/// leave the notebook saying the same thing twice.
 pub fn append_notebook(
   agents_dir: String,
   identity: Identity,
@@ -121,9 +124,23 @@ pub fn append_notebook(
     Ok(True) -> ""
     _ -> "# " <> identity.name <> "\n\n" <> identity.opening <> "\n"
   }
-  let section = "\n## " <> heading <> "\n\n" <> entry <> "\n"
+  let section = "\n## " <> heading <> "\n\n" <> drop_own_heading(entry) <> "\n"
   simplifile.append(to: path, contents: preamble <> section)
   |> result.map_error(simplifile.describe_error)
+}
+
+/// An entry minus any Markdown heading it opens with, and the blank lines
+/// after it.
+fn drop_own_heading(entry: String) -> String {
+  let trimmed = string.trim_start(entry)
+  case string.starts_with(trimmed, "#") {
+    False -> entry
+    True ->
+      case string.split_once(trimmed, "\n") {
+        Ok(#(_, rest)) -> string.trim_start(rest)
+        Error(Nil) -> ""
+      }
+  }
 }
 
 /// What an identity's record actually shows, computed from the DAG rather

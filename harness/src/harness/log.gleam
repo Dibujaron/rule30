@@ -2,7 +2,8 @@
 ////
 //// `open` creates `<runs_root>/<run_id>/` and touches `events.jsonl` and
 //// `journal.md`. `event` and `raw` append one JSON line each to
-//// `events.jsonl`; `journal` appends one Markdown section to `journal.md`.
+//// `events.jsonl`; `journal` appends one Markdown section to `journal.md`;
+//// `summary` writes the attempt's closing summary to `summary.txt`.
 //// Append failures are not fatal — they are printed to stderr and
 //// swallowed, since a broken log should not take down a run.
 
@@ -104,6 +105,20 @@ pub fn journal(
     <> text
     <> "\n\n"
   case simplifile.append(to: log.dir <> "/journal.md", contents: section) {
+    Ok(_) -> Nil
+    Error(err) -> {
+      io.println_error("harness/log: " <> simplifile.describe_error(err))
+      Nil
+    }
+  }
+}
+
+/// Write the attempt's closing summary to `summary.txt` beside the journal,
+/// so a run launched detached keeps its cost and verdict even when nobody
+/// captured the dispatcher's stdout.
+pub fn summary(log: Log, text: String) -> Nil {
+  case simplifile.write(to: log.dir <> "/summary.txt", contents: text <> "
+") {
     Ok(_) -> Nil
     Error(err) -> {
       io.println_error("harness/log: " <> simplifile.describe_error(err))

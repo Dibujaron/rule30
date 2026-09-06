@@ -131,7 +131,9 @@ pub fn prove_one(
   })
 
   write_channels(cfg, l, identity, node_id, model, attempt, report)
-  io.println(summary(d, l, identity, attempt, node_id))
+  let text = summary(d, l, identity, attempt, node_id)
+  log.summary(l, text)
+  io.println(text)
   Ok(attempt.outcome)
 }
 

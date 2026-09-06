@@ -186,6 +186,31 @@ pub fn append_notebook_writes_the_opening_on_the_first_write_test() {
   let _ = simplifile.delete(dir)
 }
 
+pub fn append_notebook_drops_a_heading_the_entry_brought_of_its_own_test() {
+  let dir = "./test/tmp/notebooks_heading"
+  let _ = simplifile.delete(dir)
+  let assert Ok(_) = simplifile.create_directory_all(dir)
+  let who = thessaly()
+
+  // A prover that opens its report with a title of its own would otherwise
+  // leave the notebook with the section heading twice.
+  let assert Ok(Nil) =
+    roster.append_notebook(
+      dir,
+      who,
+      "2026-09-06T01:07:18Z — a (sonnet, proved)",
+      "## a (sonnet, proved)
+
+Induction on t.",
+    )
+  let text = roster.read_notebook(dir, who)
+  assert count_occurrences(text, "(sonnet, proved)") == 1
+  assert string.contains(text, "## 2026-09-06T01:07:18Z — a (sonnet, proved)")
+  assert string.contains(text, "Induction on t.")
+
+  let _ = simplifile.delete(dir)
+}
+
 pub fn notebook_path_is_agents_slash_name_md_test() {
   assert roster.notebook_path("agents", thessaly()) == "agents/Thessaly.md"
 }
