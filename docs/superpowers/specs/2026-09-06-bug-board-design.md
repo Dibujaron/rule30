@@ -147,7 +147,13 @@ The two share a file format and nothing else.
 
 **One writer.** Only the dispatcher process writes `bugs.json` during a run —
 the same single-writer discipline `dag.json` already has. Under
-`--concurrency 3` all attempts share one BEAM, so this holds without a lock.
+`--concurrency 3` this holds without a lock, but *not* for the reason first
+written here. Sharing one BEAM serializes nothing: each attempt is its own
+spawned process. What serializes the board is that a spawned attempt only runs
+`worker.attempt` and then sends its result back, and `write_channels` — which
+files the bugs — is called from the dispatcher's own receive loop handling that
+message. The loop handles one result at a time. Verified after a reviewer
+correctly refused to take the original claim on trust.
 Keel writes it only from a hand-started session, and the *no editing during a
 live run* rule under *Boundaries* keeps those two writers apart.
 
@@ -285,3 +291,95 @@ Found while designing this, and they go on the board as its first rows:
   `2026-09-05-messageboard-design.md` is blocked on `harness/dispatch.ts`,
   which was superseded by the Gleam harness. The spec's status line is now
   wrong. Filed rather than fixed, since `docs/` needs asking.
+
+---
+
+## As built — where the design drifted, and why
+
+Written after implementation, from the plan's ledger. The sections above are
+the design as approved; this section is what actually shipped. Where they
+disagree, this section is the truth.
+
+**`area` gained an eighth value, `other`.** The design fixed a closed set of
+seven. A prover's reported area is a string typed by a model, and dropping a
+real bug report because it wrote something outside the enum is worse than one
+loosely-filed row. `other` is the ingest escape hatch only: the harness always
+knows its own area, so nothing auto-filed ever uses it.
+
+**The report's `bugs` field is NOT in the schema's `required` array**, though
+the design said "required, empty allowed". That phrasing was written before
+Rowan diagnosed the `posts` incident. A field in `required` that a worker may
+reasonably omit gets the whole structured-output tool call rejected by the CLI
+before the decoder's default can apply — which turned a finished proof into an
+error turn and halted a run. An empty `bugs` array is the common case, so
+requiring it would fire constantly. The intent that a worker *consider*
+whether it hit friction is carried by the field's description and the
+`how_to_report` paragraph, not by the schema.
+
+The general rule, which is the durable part: **any field in a `required` list
+that a worker may reasonably omit is that same bug.**
+
+**The single-writer justification was wrong.** The design said attempts share
+one BEAM "so this holds without a lock". Sharing a BEAM serializes nothing —
+each attempt is its own spawned process. What actually serializes board writes
+is that a spawned attempt only runs `worker.attempt` and sends its result
+back, and `write_channels` runs in the dispatcher's own receive loop handling
+that message, one result at a time. Right conclusion, wrong reason; corrected
+in place above after a reviewer refused to take the claim on trust.
+
+**Task 4 did not need the field it was designed around.** The plan added a
+`node` to `guard.Rules` and threaded it through both construction sites.
+Unnecessary: `Rules.holder` is already the node id, because the dispatcher
+passes `node_id` into it. The guard always knew which node it guarded and
+merely failed to log it. What hid this was the field's own doc comment, which
+claimed `holder` was an identity. A wrong comment cost more than a missing one
+would have.
+
+**The decoder's isolation took three rounds and is not finished.** The design
+said nothing about what happens when a worker's `bugs` entry is malformed. It
+matters more than it looks: a failing element threads its error up through
+`decode.list` and fails the *whole* `Report`, discarding that turn's
+`outcome`, `notebook` and `journal` — the same blast radius as the incident
+this channel exists to prevent, by a different route. The shipped decoder
+reads the array as `decode.dynamic` and runs the item decoder per element,
+keeping successes. One route remains open and is on the board as
+`a-non-array-bugs-field-still-poisons-the-report`: a `bugs` field that is not
+an array at all fails `decode.list` itself, which is not per-element.
+
+The promise to hold the design to, more precisely than the design stated it:
+**nothing a worker puts in `bugs` may ever cost the turn's proof outcome.**
+
+**`claimed` should not have been borrowed.** The design took `dag.json`'s
+status vocabulary deliberately, `claimed` included, "so the one board idiom
+transfers". It transferred the hazard too. The DAG answers a crashed attempt
+with an explicit `reopen`; the board has no equivalent, so a session that
+claims a bug and then dies leaves it claimed forever. Filed as
+`a-claimed-bug-has-no-reopen`, and the intended fix is to remove `claimed`
+rather than build a `reopen` for it — with one maintainer it conveys nothing
+that `open` plus git history does not, and deleting the state removes the
+hazard instead of managing it.
+
+Rowan's statement of the class, arrived at independently while fixing the same
+shape in `agents/sessions.json`: **where state must survive a session that
+dies without warning, either derive it from outside the process, or make the
+stale value inert rather than dangerous.** Trusting a cleanup step at the end
+of an agent session is fiction — sessions are killed, time out, and exhaust
+their context far more often than they exit gracefully.
+
+**One file per bug is the intended storage, not one JSON array.** The design
+put the whole board in `blueprint/bugs.json` and justified single-writer
+access during a run. That is true during a run and false the rest of the time:
+the real writers are the dispatcher, the overseer between runs, Keel, and task
+implementers, all doing read-modify-write on one file. It clobbered twice in
+one hour. The repo had already solved this shape — proofs live at
+`Rule30/Proofs/<Node>.lean`, one per node, *so nodes are independently
+attackable* — and the board reintroduced the coupling the project had already
+rejected.
+
+Target is `blueprint/bugs/<id>.json`. Dib's ruling on method: do not cut over.
+Phase 1, the reader unions both stores and the writer writes only new-style
+files, leaving the legacy file readable because other agents still write to
+it. Phase 2, wait until those writers have moved — a coordination step, not a
+code step. Phase 3, migrate the remainder and delete the legacy file. During
+the overlap the directory wins on an id collision, and dedupe must scan both
+stores.
