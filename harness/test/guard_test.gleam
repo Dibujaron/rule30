@@ -18,7 +18,7 @@ const rules = Rules(
 pub fn denies_edit_outside_proof_file_test() {
   let input =
     "{\"hook_event_name\":\"PreToolUse\",\"tool_name\":\"Edit\",\"tool_input\":{\"file_path\":\"C:\\\\r\\\\Rule30\\\\Prize.lean\"}}"
-  let assert guard.Deny(reason) = guard.decide(rules, input)
+  let assert guard.Deny(reason:, ..) = guard.decide(rules, input)
   assert string.contains(reason, "Proofs")
 }
 
@@ -34,7 +34,7 @@ pub fn lake_build_acquires_and_other_bash_denied_test() {
   assert guard.decide(rules, build) == guard.AcquireBuild
   let rm =
     "{\"hook_event_name\":\"PreToolUse\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"curl http://x\"}}"
-  let assert guard.Deny(_) = guard.decide(rules, rm)
+  let assert guard.Deny(..) = guard.decide(rules, rm)
   let post =
     "{\"hook_event_name\":\"PostToolUse\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"lake build\"},\"tool_response\":\"ok\"}"
   assert guard.decide(rules, post) == guard.ReleaseBuild
@@ -96,7 +96,7 @@ fn list_each_is_denied(commands: List(String), rules: guard.Rules) -> Nil {
         "{\"hook_event_name\":\"PreToolUse\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\""
         <> escaped
         <> "\"}}"
-      let assert guard.Deny(reason) = guard.decide(rules, input)
+      let assert guard.Deny(reason:, ..) = guard.decide(rules, input)
       assert string.contains(reason, "lake build")
       list_each_is_denied(rest, rules)
     }
@@ -104,7 +104,7 @@ fn list_each_is_denied(commands: List(String), rules: guard.Rules) -> Nil {
 }
 
 pub fn decide_denies_unparseable_json_test() {
-  let assert guard.Deny(reason) = guard.decide(rules, "not json")
+  let assert guard.Deny(reason:, ..) = guard.decide(rules, "not json")
   assert string.contains(reason, "parse")
 }
 
@@ -114,7 +114,8 @@ pub fn non_tool_events_are_allowed_test() {
 }
 
 pub fn deny_json_shape_test() {
-  let j = guard.decision_json(guard.Deny("no"), "PreToolUse")
+  let j =
+    guard.decision_json(guard.Deny(guard.NotPermitted, "no"), "PreToolUse")
   assert string.contains(j, "\"permissionDecision\":\"deny\"")
   assert string.contains(j, "\"hookEventName\":\"PreToolUse\"")
 }
@@ -211,17 +212,79 @@ pub fn guard_events_name_the_node_test() {
       holder: "evolve_left_edge",
     )
   let fields =
-    guard.event_fields(at_node, "PreToolUse", "Bash", guard.Deny("nope"))
+    guard.event_fields(
+      at_node,
+      "PreToolUse",
+      "Bash",
+      "lake clean",
+      guard.Deny(guard.NotPermitted, "nope"),
+    )
   let assert Ok(#(_, node)) = list.find(fields, fn(f) { f.0 == "node" })
   assert json.to_string(node) == "\"evolve_left_edge\""
 }
 
 pub fn guard_events_still_carry_event_tool_and_decision_test() {
-  let fields = guard.event_fields(rules, "PreToolUse", "Bash", guard.Allow)
+  let fields = guard.event_fields(rules, "PreToolUse", "Bash", "", guard.Allow)
   let keys = list.map(fields, fn(f) { f.0 })
   assert list.contains(keys, "event")
   assert list.contains(keys, "tool")
   assert list.contains(keys, "decision")
+}
+
+/// A denial row must say what was refused, not merely that something was.
+/// Before this, a row read `tool: Bash, decision: Deny(...)` and the command
+/// appeared nowhere, so a bug filed from it could not be acted on without the
+/// transcript — which the board does not have.
+pub fn a_denial_row_carries_the_command_and_the_kind_test() {
+  let fields =
+    guard.event_fields(
+      rules,
+      "PreToolUse",
+      "Bash",
+      "rm -rf /",
+      guard.Deny(guard.NotPermitted, "nope"),
+    )
+  let assert Ok(#(_, attempted)) =
+    list.find(fields, fn(f) { f.0 == "attempted" })
+  let assert Ok(#(_, denial)) = list.find(fields, fn(f) { f.0 == "denial" })
+  assert json.to_string(attempted) == "\"rm -rf /\""
+  assert json.to_string(denial) == "\"not_permitted\""
+}
+
+/// The field is empty for anything that was not a denial, which is what
+/// `dispatch.guard_denials` keys on. If this ever became the slug of some
+/// non-denial, every allowed call in a run would be filed as a bug.
+pub fn a_non_denial_row_carries_an_empty_denial_test() {
+  let fields =
+    guard.event_fields(rules, "PreToolUse", "Bash", "lake build", guard.Allow)
+  let assert Ok(#(_, denial)) = list.find(fields, fn(f) { f.0 == "denial" })
+  assert json.to_string(denial) == "\"\""
+}
+
+/// The two denials that a worker cannot tell apart from the outside, and
+/// that the board most needs to: one is permanent, one is a transient
+/// contention with a sibling worker, and they used to share a signature.
+pub fn a_lock_timeout_and_a_grammar_refusal_have_different_slugs_test() {
+  assert guard.denial_slug(guard.BuildLockTimeout)
+    != guard.denial_slug(guard.NotPermitted)
+  assert guard.denial_slug(guard.BuildLockTimeout) == "build_lock_timeout"
+}
+
+/// A command longer than the cap is cut, and says so. A silently shortened
+/// command is a well-formed log row that is wrong.
+pub fn a_very_long_command_is_truncated_and_says_so_test() {
+  let long = string.repeat("lake build Rule30.Proofs.X ", 100)
+  let fields =
+    guard.event_fields(
+      rules,
+      "PreToolUse",
+      "Bash",
+      long,
+      guard.Deny(guard.NotPermitted, "nope"),
+    )
+  let assert Ok(#(_, attempted)) =
+    list.find(fields, fn(f) { f.0 == "attempted" })
+  assert string.contains(json.to_string(attempted), "truncated")
 }
 
 /// Start a guard on a port the OS says is free, retrying on a bind collision.
