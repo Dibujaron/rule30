@@ -36,3 +36,17 @@ Because the recurrence's RHS is `xor A (B || C)`, and C = true (via ih), the mid
 Gotcha (cost me one build cycle): do NOT close `xor false (X || true) = true` with a bare `simp at hrec`. Generic simp also normalizes the *position* term in the same hypothesis (e.g. turns `-(↑n + 1)` into `-1 + -↑n`), which then no longer syntactically matches the goal's position after your own `push_cast; ring` rewrite, producing a "type mismatch" error even though both sides are mathematically the same integer. Fix: use targeted `rw [Bool.or_true, Bool.false_xor] at hrec` instead of `simp` — these are plain rewrite lemmas that only touch the Bool subterm and leave the ℤ position argument untouched. General lesson for this whole diagonal family: prefer `rw` with named Bool lemmas over `simp` whenever a hypothesis mixes a Bool equation with an ℤ-valued index you still need to pattern-match later.
 
 `Bool.or_true : b || true = true` and `Bool.false_xor : xor false b = b` both exist in this Lean4/Mathlib pin and work directly with `rw`.
+
+## 2026-09-06T16:56:39Z — isEventuallyPeriodic_shift (haiku, proved)
+
+**Proof strategy:** Unfold IsEventuallyPeriodic definition, obtain witnesses p, N from hypothesis, construct the same witnesses for the shifted function. For n ≥ N, we have n + s ≥ N, so the original hypothesis f(n + s + p) = f(n + s) applies by rewriting n + p + s as (n + s) + p via omega. No induction required; the proof is pure witness construction and arithmetic.
+
+**Lean techniques used:** Pattern matching with `obtain` on the existential, `simp only` to reduce lambda applications, `rw [show ... by omega]` to normalize arithmetic, and `exact` for direct term construction. The key insight is that omega can prove `n + p + s = (n + s) + p` (needed for rewriting), even when it cannot directly solve the equality goal.
+
+## 2026-09-06T16:57:55Z — isEventuallyPeriodic_common_period (sonnet, proved)
+
+isEventuallyPeriodic_common_period (haiku-tier size, went sonnet, proved first try): the only non-trivial fact is that a period survives repetition — `h(n+p)=h(n)` for `n≥N` gives `h(n+k*p)=h(n)` for all `k`, by induction on `k`. Proved this as a `private lemma iterate_period` in the same file (not exported, not in Statements, so this is fine — a proof file can carry local helpers alongside its one public theorem). Induction step: `rw [show n + (k+1)*p = n + k*p + p by ring, hp (n+k*p) hnk, ih n hn]` closes it in one line — `ring` handles the Nat arithmetic reshaping, then two rewrites chain `h(n+k*p+p) = h(n+k*p) = h(n)`, and `rw` closes the resulting `h n = h n` by rfl automatically.
+
+Then `p*q` works for both sequences: for `g` take `k=p` directly (`iterate_period g q N2 hN2 p n hnN2 : g(n+p*q)=g(n)` — order matches goal as-is). For `f` take `k=q`, which gives `f(n+q*p)=f(n)`, so the goal needs `rw [show p*q = q*p from mul_comm p q]` first to align the multiplication order before `exact`.
+
+Bookkeeping notes: `omega` proves `n ≥ N1`/`n ≥ N2` directly from `n ≥ max N1 N2` — no need for `le_max_left`/`le_max_right` lemma names, omega already understands `max` on ℕ. Also confirmed (again) that `obtain` cannot destructure `IsEventuallyPeriodic f` directly — it's a `def`, not literally `Exists`, so `unfold IsEventuallyPeriodic at hf hg` is needed first, same pattern as isEventuallyPeriodic_shift used.

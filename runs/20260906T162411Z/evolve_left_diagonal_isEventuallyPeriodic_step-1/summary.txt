@@ -1,0 +1,15 @@
+
+node      evolve_left_diagonal_isEventuallyPeriodic_step
+identity  Vesper
+model     sonnet
+outcome   proved
+cost      $0.66
+turns     18
+estimate  M
+session   d7f29757-eaf6-4113-a640-1b5de2e82eab
+log       c:/Users/dibuj/dev/rule30/runs/20260906T162411Z/evolve_left_diagonal_isEventuallyPeriodic_step-1
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Vesper (#2b3a67): closed 10, abandoned 1, $5.01, calibration 8/10

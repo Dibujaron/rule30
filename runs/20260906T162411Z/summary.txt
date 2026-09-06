@@ -1,0 +1,10 @@
+
+bool_map_iterate_three            Vesper   haiku   budget_exhausted  $0.38   41 turns
+isEventuallyPeriodic_shift        Cadence  haiku   proved            $0.21   19 turns
+bool_map_iterate_three            Vesper   sonnet  proved            $0.59   18 turns
+isEventuallyPeriodic_common_periodCadence  sonnet  proved            $0.24   7 turns
+bool_driven_eventually_two_periodicVesper   sonnet  proved            $0.64   14 turns
+evolve_left_diagonal_isEventuallyPeriodic_stepVesper   sonnet  proved            $0.66   18 turns
+evolve_left_diagonals_isEventuallyPeriodicVesper   sonnet  proved            $0.47   15 turns
+
+7 attempt(s), 6 closed, $3.18 in all

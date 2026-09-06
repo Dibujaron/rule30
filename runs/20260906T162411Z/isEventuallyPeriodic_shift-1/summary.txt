@@ -1,0 +1,15 @@
+
+node      isEventuallyPeriodic_shift
+identity  Cadence
+model     haiku
+outcome   proved
+cost      $0.21
+turns     19
+estimate  S
+session   ee51da1b-21f9-4384-82b1-967eadb539c9
+log       c:/Users/dibuj/dev/rule30/runs/20260906T162411Z/isEventuallyPeriodic_shift-1
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Cadence (#2a6f77): closed 4, abandoned 0, $1.03, calibration 4/4

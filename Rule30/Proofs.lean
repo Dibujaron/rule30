@@ -12,12 +12,16 @@ appends one `import` line here when a node closes, keeping the list sorted
 and skipping a line that is already present. Edit it by hand only to remove a
 module whose node has been retired.
 -/
+import Rule30.Proofs.BoolDrivenEventuallyTwoPeriodic
+import Rule30.Proofs.BoolMapIterateThree
 import Rule30.Proofs.CenterColumnDensityLeOne
 import Rule30.Proofs.CenterColumnDensityNonneg
 import Rule30.Proofs.CenterColumnDensitySucc
 import Rule30.Proofs.CenterColumnZero
 import Rule30.Proofs.EvolveEqFalseOfOutsideCone
+import Rule30.Proofs.EvolveLeftDiagonalIsEventuallyPeriodicStep
 import Rule30.Proofs.EvolveLeftDiagonalRecurrence
+import Rule30.Proofs.EvolveLeftDiagonalsIsEventuallyPeriodic
 import Rule30.Proofs.EvolveLeftEdge
 import Rule30.Proofs.EvolveLeftFifthDiagonal
 import Rule30.Proofs.EvolveLeftFourthDiagonal
@@ -26,3 +30,5 @@ import Rule30.Proofs.EvolveLeftSecondDiagonal
 import Rule30.Proofs.EvolveLeftThirdDiagonal
 import Rule30.Proofs.EvolveRightEdge
 import Rule30.Proofs.EvolveRightSecondDiagonal
+import Rule30.Proofs.IsEventuallyPeriodicCommonPeriod
+import Rule30.Proofs.IsEventuallyPeriodicShift

@@ -1,0 +1,15 @@
+
+node      isEventuallyPeriodic_common_period
+identity  Cadence
+model     sonnet
+outcome   proved
+cost      $0.24
+turns     7
+estimate  M
+session   7bf5322a-5db0-4059-9d39-beb0e469155c
+log       c:/Users/dibuj/dev/rule30/runs/20260906T162411Z/isEventuallyPeriodic_common_period-1
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Cadence (#2a6f77): closed 5, abandoned 0, $1.27, calibration 5/5

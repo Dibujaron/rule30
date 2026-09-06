@@ -1,0 +1,15 @@
+
+node      bool_driven_eventually_two_periodic
+identity  Vesper
+model     sonnet
+outcome   proved
+cost      $0.64
+turns     14
+estimate  M
+session   71f92df6-3607-414b-aa9d-a54c37989b9d
+log       c:/Users/dibuj/dev/rule30/runs/20260906T162411Z/bool_driven_eventually_two_periodic-1
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Vesper (#2b3a67): closed 9, abandoned 1, $4.35, calibration 7/9

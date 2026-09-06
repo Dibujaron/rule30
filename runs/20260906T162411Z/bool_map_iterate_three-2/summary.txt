@@ -1,0 +1,15 @@
+
+node      bool_map_iterate_three
+identity  Vesper
+model     sonnet
+outcome   proved
+cost      $0.59
+turns     18
+estimate  S
+session   dfb260f7-09de-4f11-b30c-767d3aad3299
+log       c:/Users/dibuj/dev/rule30/runs/20260906T162411Z/bool_map_iterate_three-2
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Vesper (#2b3a67): closed 8, abandoned 1, $3.72, calibration 6/8
