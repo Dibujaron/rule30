@@ -34,6 +34,10 @@
 //// which already does it for proofs. First the shape the worker will meet,
 //// then the identity with the seeded text.
 
+import gleam/dynamic.{type Dynamic}
+import gleam/dynamic/decode
+import gleam/int
+import gleam/json
 import gleam/list
 import gleam/result
 import gleam/string
@@ -310,3 +314,113 @@ pub fn check_witness(
 /// uses for its auth token and `verify_test` for its fixture id.
 @external(erlang, "harness_ffi", "token")
 fn token() -> String
+
+// --- proposals ----------------------------------------------------------------
+
+/// One proposed node, as a seeder writes it and before anyone believes it.
+///
+/// This is deliberately NOT a `dag.Node`. A node is on the board; a proposal
+/// is a claim about one, and the two must not be the same type or a proposal
+/// becomes seedable by being parsed. Rowan reviews and lands; the seeder never
+/// writes `Rule30/Statements.lean` or `blueprint/dag.json`.
+///
+/// `reason` is REQUIRED and `route` is OPTIONAL, which is the opposite of what
+/// the first design assumed and was settled by measurement: across the tier
+/// seeded on 2026-09-06, description quality dominated node difficulty as a
+/// cost driver and it was not close. `bool_map_iterate_three` closed on sonnet
+/// by implementing the English reason and ignoring both the captain's route
+/// and the captain's correction to it. An unverified route misdirects in the
+/// captain's voice to a model with no standing to doubt it; a correct reason
+/// costs nothing and leaves the search open. A captain who cannot state the
+/// reason has not finished thinking about the node. A captain who cannot
+/// supply a route has merely left it open.
+pub type Proposal {
+  Proposal(
+    id: String,
+    lean_name: String,
+    statement: String,
+    reason: String,
+    route: Claim,
+    witness: WitnessClaim,
+  )
+}
+
+/// A proposal with both checks run over it. Neither verdict makes a node good
+/// — a node is good only in retrospect, when it closes cheaply and later
+/// proofs cite it — so this type carries verdicts and never a recommendation.
+pub type Checked {
+  Checked(proposal: Proposal, route: RouteVerdict, witness: WitnessVerdict)
+}
+
+/// Decode a proposal file.
+///
+/// Loud and located on a bad entry, never lenient, for the reason the board
+/// decoder is: a silently dropped proposal is a node that quietly does not get
+/// seeded, and "fewer proposals than the seeder wrote" is indistinguishable
+/// from "the seeder wrote fewer proposals".
+pub fn decode_proposals(text: String) -> Result(List(Proposal), String) {
+  use rows <- result.try(
+    json.parse(text, decode.at(["proposals"], decode.list(decode.dynamic)))
+    |> result.map_error(fn(e) {
+      "harness/seed: not a {\"proposals\": [...]} document: " <> string.inspect(e)
+    }),
+  )
+  rows
+  |> list.index_map(fn(row, i) { #(i, row) })
+  |> list.try_map(fn(pair) {
+    let #(i, row) = pair
+    decode.run(row, proposal_decoder())
+    |> result.map_error(fn(errors) {
+      // Index AND id, because the index alone means counting entries by hand
+      // and the id alone is absent from exactly the rows most likely to be
+      // wrong. `UnableToDecode` naming nine missing fields and no entry is
+      // what this exists not to be — see the board,
+      // `a-malformed-board-row-silently-disables-auto-filing`.
+      "harness/seed: proposal "
+      <> int.to_string(i)
+      <> " ("
+      <> id_or_unnamed(row)
+      <> "): "
+      <> string.inspect(errors)
+    })
+  })
+}
+
+/// The `id` of a row that failed to decode, for the error message. A row too
+/// malformed to have one still has to be locatable, so this falls back to a
+/// marker rather than to the empty string.
+fn id_or_unnamed(row: Dynamic) -> String {
+  case decode.run(row, decode.at(["id"], decode.string)) {
+    Ok(id) -> id
+    Error(_) -> "<no id>"
+  }
+}
+
+fn proposal_decoder() -> decode.Decoder(Proposal) {
+  use id <- decode.field("id", decode.string)
+  use lean_name <- decode.field("lean_name", decode.string)
+  use statement <- decode.field("statement", decode.string)
+  // `reason` is `field`, not `optional_field`, and that is the design rather
+  // than an oversight: a proposal without one is not a proposal.
+  use reason <- decode.field("reason", decode.string)
+  use route <- decode.optional_field("route", NoClaim, route_claim_decoder())
+  use witness <- decode.optional_field(
+    "witness",
+    NoWitness,
+    witness_claim_decoder(),
+  )
+  decode.success(Proposal(id:, lean_name:, statement:, reason:, route:, witness:))
+}
+
+fn route_claim_decoder() -> decode.Decoder(Claim) {
+  use tactics <- decode.field("tactics", decode.string)
+  use imports <- decode.optional_field("imports", [], decode.list(decode.string))
+  decode.success(Claimed(Route(tactics:, imports:)))
+}
+
+fn witness_claim_decoder() -> decode.Decoder(WitnessClaim) {
+  use expression <- decode.field("expression", decode.string)
+  use imports <- decode.optional_field("imports", [], decode.list(decode.string))
+  use range <- decode.field("range", decode.string)
+  decode.success(Claims(Witness(expression:, imports:, range:)))
+}

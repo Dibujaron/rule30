@@ -54,7 +54,7 @@ pub fn lifts_a_multi_line_declaration_test() {
 
 pub fn does_not_match_a_longer_name_test() {
   let source =
-    "theorem evolve_left_edge_two (t : ℕ) : True := by\n  sorry\n"
+    "theorem evolve_left_edge_two (t : ℕ) : True := by\\n  sorry\n"
   assert seed.declaration_without_proof(source, "evolve_left_edge")
     == Error(Nil)
 }
@@ -257,4 +257,54 @@ pub fn a_timed_out_witness_is_unchecked_not_falsified_test() {
     )
   let assert seed.Unchecked(reason) = verdict
   assert string.contains(does: reason, contain: "timeout")
+}
+
+// --- proposals ----------------------------------------------------------------
+
+fn proposal_json(fields: String) -> String {
+  "{\"proposals\":[{" <> fields <> "}]}"
+}
+
+const full_proposal = "\"id\":\"foo_bar\",\"lean_name\":\"foo_bar\",\"statement\":\"theorem foo_bar : True := by\\n  sorry\",\"reason\":\"True is true.\",\"route\":{\"tactics\":\"trivial\",\"imports\":[]},\"witness\":{\"expression\":\"true\",\"imports\":[],\"range\":\"n/a\"}"
+
+pub fn a_full_proposal_decodes_test() {
+  let assert Ok([p]) = seed.decode_proposals(proposal_json(full_proposal))
+  assert p.id == "foo_bar"
+  let assert seed.Claimed(route) = p.route
+  assert route.tactics == "trivial"
+  let assert seed.Claims(w) = p.witness
+  assert w.range == "n/a"
+}
+
+/// **The reason is required.** Settled by measurement rather than taste: across
+/// the tier seeded on 2026-09-06, description quality dominated node difficulty
+/// as a cost driver. A proposal without one is not a proposal.
+pub fn a_proposal_without_a_reason_does_not_decode_test() {
+  let assert Error(reason) =
+    seed.decode_proposals(proposal_json(
+      "\"id\":\"a\",\"lean_name\":\"a\",\"statement\":\"theorem a : True := by\\n  sorry\"",
+    ))
+  assert string.contains(does: reason, contain: "reason")
+}
+
+/// **The route is optional, and absent is a success rather than a gap.**
+/// Claiming nothing is strictly better than claiming something unchecked.
+pub fn a_proposal_without_a_route_or_witness_decodes_test() {
+  let assert Ok([p]) =
+    seed.decode_proposals(proposal_json(
+      "\"id\":\"a\",\"lean_name\":\"a\",\"statement\":\"theorem a : True := by\\n  sorry\",\"reason\":\"Trivially.\"",
+    ))
+  let assert seed.NoClaim = p.route
+  let assert seed.NoWitness = p.witness
+}
+
+/// Loud and located, not lenient — the board lesson applied one file over. A
+/// dropped proposal is a node that quietly does not get seeded, and that is
+/// indistinguishable from a seeder that wrote fewer proposals.
+pub fn a_malformed_proposal_names_its_index_and_does_not_drop_test() {
+  let text =
+    "{\"proposals\":[{" <> full_proposal <> "},{\"id\":\"bad\"}]}"
+  let assert Error(reason) = seed.decode_proposals(text)
+  assert string.contains(does: reason, contain: "1")
+  assert string.contains(does: reason, contain: "bad")
 }
