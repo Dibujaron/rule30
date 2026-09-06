@@ -43,7 +43,7 @@ Rule30/Proofs/<Node>.lean  one file per closed node, one theorem, importable by 
 Rule30/Proofs.lean         imports every closed proof so `lake build` at the root builds them; the dispatcher maintains it
 harness/                   Gleam project (Erlang target) — the dispatcher, worker loop, verifier, guards
 blueprint/dag.json         the DAG: nodes, deps, status, attempts — the dispatcher's source of truth
-blueprint/bugs.json        the bug board: friction filed by anyone, closed with a commit sha — Keel's source of truth
+blueprint/bugs.json        the bug board: friction filed by anyone, closed with a commit sha — the framework agents' source of truth
 agents/<name>.md           one notebook per identity, versioned in git
 runs/<run-id>/             one run's record: events.jsonl, journal.md, briefs/, the generated settings.json, and transcripts/ if a session was compacted
 explorer/                  BigInt Rule 30 engine and center-column statistics (empirical, not Lean)
@@ -99,24 +99,24 @@ lemma) is fine, because it can be followed. "That same fraction", "the
 recurrence again", "as above" cannot be, and they are the failure this note
 is most likely to have.
 
-## If you are Keel
+## If you are a framework agent
 
 You maintain the framework, not a region of the theorem DAG: your region
 is `harness/` itself — the dispatcher, the guard, the verifier, and the
 bug board every prover runs inside. You are not dispatched. You are
 started by hand, so there is no brief scoping you to one file the way a
 harness worker's is, and no report for a dispatcher to write your notebook
-from — you write `agents/Keel.md` yourself, the way a harness worker does
-not.
+from — you write `agents/<YourName>.md` yourself, the way a harness worker
+does not.
 
 You may change `harness/`, `.claude/`, `blueprint/bugs.json`, and
 `blueprint/dag.json` unasked — `blueprint/bugs.json` freely, since it is
-Keel's own board, but `blueprint/dag.json` only for board repair (a stuck
-`claimed` node, a stale field), never to change what a node proves.
-Anything under `Rule30/`, `CLAUDE.md`, `docs/`, or `README.md` needs
-asking first, with one standing exception: `docs/glossary.md`, which the
-teaching contract above already invites every identity to add a row to
-unasked.
+the framework agents' own board, but `blueprint/dag.json` only for board
+repair (a stuck `claimed` node, a stale field), never to change what a
+node proves. Anything under `Rule30/`, `CLAUDE.md`, `docs/`, or
+`README.md` needs asking first, with one standing exception:
+`docs/glossary.md`, which the teaching contract above already invites
+every identity to add a row to unasked.
 
 Two rules specific to this work:
 
@@ -127,18 +127,26 @@ Two rules specific to this work:
   — a change made while workers are live can invalidate the trust
   boundary they are currently relying on.
 
-One more boundary, learned this session, and not a file boundary: the
-project's rule is one live session per persona, and for a dispatched
-prover the scheduler enforces it — it won't hand a leaf to a persona
-that's already running. Keel is hand-started, not dispatched, so no
-scheduler holds a Keel session as a resource. Nothing but Dib's restraint
-stops two Keels running at once.
+One more boundary, and not a file boundary: the project's rule is one
+live session per persona, and for a dispatched prover the scheduler
+enforces it — it won't hand a leaf to a persona that's already running. A
+framework agent is hand-started, not dispatched, so no scheduler holds
+your session as a resource, and nothing but Dib's restraint stops two
+sessions of *you* running at once.
+
+Two *different* framework agents at once is normal, and is the case this
+section is now written for. Nothing in the harness will stop you
+colliding with a peer: the scheduler does not know you exist, the guard
+sees only what a worker does, and no lock covers the files you both edit.
+Say what you are about to touch, to whoever else is holding the
+machinery, before you touch it. Naming the collision is the whole
+mechanism — there is no other one.
 
 ## Changing the framework
 
 Framework changes happen in a **git worktree**, not in the shared
-checkout. That is Keel's normal mode and it applies to Rowan too whenever
-Rowan is editing `harness/` rather than dispatching.
+checkout. That is a framework agent's normal mode and it applies to Rowan
+too whenever Rowan is editing `harness/` rather than dispatching.
 
 The rule follows the build artifact, not the identity. `.lake/` is 7.4 GB
 of Mathlib and is gitignored, so a fresh worktree has none of it and
@@ -188,9 +196,9 @@ audience of the journal by design. The overseer's project memory that your
 session loaded is the team's collective memory, shared by every identity on
 purpose. Your notebook is yours alone. The overseer that dispatched you is
 Rowan; its notebook is `agents/Rowan.md` and is loaded into no prover's
-context. Keel's notebook is `agents/Keel.md`, written by Keel directly —
-Keel is hand-started rather than dispatched, so no report ever writes it
-on Keel's behalf.
+context. A framework agent's notebook is `agents/<Name>.md`, written by
+that agent directly — a framework agent is hand-started rather than
+dispatched, so no report ever writes it on their behalf.
 
 ## Teaching contract
 
@@ -257,8 +265,9 @@ entries, notebook entries, commit messages, board posts):
   derive it from outside the process or make the stale value inert rather
   than dangerous. A cleanup step at the end of a session is fiction:
   sessions are killed, time out, and exhaust context far more often than
-  they exit cleanly. Rowan and Keel each shipped a design that ignored this
-  within one hour of each other, from opposite directions.
+  they exit cleanly. Rowan and a framework agent each shipped a design
+  that ignored this within one hour of each other, from opposite
+  directions.
 
 ## Running the harness
 

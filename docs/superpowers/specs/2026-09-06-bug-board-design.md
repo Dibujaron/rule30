@@ -43,14 +43,14 @@ it is clear of Rowan's `#c8502e`: browner, duller, no alarm in it.
 
 **Region.** `framework`. `roster.region_blurb` gains a case for it.
 
-**Started by hand.** Keel is not dispatched. There is no `fix-one` command,
+**Started by hand.** A framework agent is not dispatched. There is no `fix-one` command,
 no second guard profile, no bug-attempt loop — those were considered and cut
 as roughly the size of the original harness build, for a role that runs a
 handful of times a week from Dib's own terminal. The harness gains the
 ability to *file* bugs; it gains no ability to dispatch against them.
 
-Consequence: no dispatcher writes Keel's files from a structured report. Keel
-writes `agents/Keel.md` and the journal itself. `CLAUDE.md`'s "the dispatcher
+Consequence: no dispatcher writes a framework agent's files from a structured
+report. They write `agents/<Name>.md` and the journal themselves. `CLAUDE.md`'s "the dispatcher
 writes files from that report, you don't edit `agents/` or `runs/` yourself"
 is scoped to harness workers, which is what it always meant.
 
@@ -99,7 +99,7 @@ fails the decode rather than being coerced.
 **`severity`** is `blocks | friction | papercut`. *Blocks* — a worker could
 not finish. *Friction* — it cost turns or produced a wrong belief.
 *Papercut* — merely ugly. Severity is the reporter's claim, not a verdict;
-Keel may correct it when working the bug.
+A framework agent may correct it when working the bug.
 
 **`body`** is verbatim and never summarised, following the messageboard
 spec's rule for the same reason: the words an agent chose for its own
@@ -116,7 +116,7 @@ because it is never asked.
 **`source`** is `worker | harness | hand`, which is the provenance that
 matters when reading the board: a bug a prover noticed under the guard, a bug
 the machine detected, and a bug someone wrote directly are three different
-kinds of evidence. `hand` covers Dib, Rowan and Keel alike — `reported_by`
+kinds of evidence. `hand` covers Dib, Rowan and the framework agents alike — `reported_by`
 is what says which, and `source` says only that no dispatcher stamped it.
 
 **`id`** is a kebab-case slug derived from the title, uniquified with a
@@ -127,7 +127,7 @@ referred to in a commit message and stay legible.
 
 `2026-09-05-messageboard-design.md` rules that posts are per-run, not
 persisted, and never browsed by agents. The bug board is the opposite on both
-counts: it persists across runs and is read at the start of every Keel
+counts: it persists across runs and is read at the start of every framework
 session. This is not an inconsistency. A post is communication, valuable
 mostly at the moment it is routed; a bug is a work item, and a work item that
 evaporates when the run ends is the exact failure the board exists to fix.
@@ -143,7 +143,7 @@ The two share a file format and nothing else.
    leaving a node `claimed`; a rate-limited stop; a verifier failure whose
    cause was a name or type mismatch rather than a proof that did not close.
 3. **Rowan**, from the dispatcher's seat.
-4. **Dib**, by hand or by telling Keel in a session.
+4. **Dib**, by hand or by telling a framework agent in a session.
 
 **One writer.** Only the dispatcher process writes `bugs.json` during a run —
 the same single-writer discipline `dag.json` already has. Under
@@ -154,7 +154,7 @@ spawned process. What serializes the board is that a spawned attempt only runs
 files the bugs — is called from the dispatcher's own receive loop handling that
 message. The loop handles one result at a time. Verified after a reviewer
 correctly refused to take the original claim on trust.
-Keel writes it only from a hand-started session, and the *no editing during a
+A framework agent writes it only from a hand-started session, and the *no editing during a
 live run* rule under *Boundaries* keeps those two writers apart.
 
 ### Dedupe
@@ -216,11 +216,12 @@ text.
 
 ## Boundaries
 
-A new `CLAUDE.md` section, needed because Keel is the first identity with no
-guard around it. Writing that section is part of implementing this design, and
-is the one `CLAUDE.md` edit Keel makes without asking again afterwards.
+A new `CLAUDE.md` section, needed because the framework role is the first
+with no guard around it. Writing that section is part of implementing this
+design, and is the one `CLAUDE.md` edit a framework agent makes without
+asking again afterwards.
 
-**Keel may change, unasked:**
+**A framework agent may change, unasked:**
 
 - `harness/` — Gleam source and tests
 - `.claude/` — hooks, generated settings, permission config
@@ -228,13 +229,13 @@ is the one `CLAUDE.md` edit Keel makes without asking again afterwards.
   what `reopen` will touch, a half-written attempt record. Never a node's
   statement, deps, size, or `lean_name`.
 
-**Keel may not change without asking:**
+**A framework agent may not change without asking:**
 
 - `Rule30/` — any of it. Not `Basic.lean`, not `Statements.lean`, and above
   all not `Prize.lean`. The three prize conjectures stay `sorry`.
 - `CLAUDE.md`, `docs/`, `README.md` — the written contract is Rowan's and
   Dib's. One standing exception, which `CLAUDE.md` already imposes on
-  everyone: a term Keel introduces gets a `docs/glossary.md` row. This design
+  everyone: a term a framework agent introduces gets a `docs/glossary.md` row. This design
   introduces *bug board*, *severity*, and *signature*; Cairn may rewrite those
   rows.
 
@@ -272,7 +273,10 @@ harness, so none of it costs a subscription turn.
   *Keel*.
 - **No priority field.** Severity plus filed order is enough for a board one
   agent works. A priority nobody sorts by is a field that lies.
-- **No assignee.** There is one maintainer.
+- **No assignee.** Severity plus filed order is how the framework agents
+  pick work; who is on which item is settled between them in session, not
+  in a field. (Written when the framework had one agent; with two it is a
+  choice rather than a tautology.)
 - **No agent-visible board.** Provers file into it and never read it. A prover
   reading the bug list is a prover spending context on someone else's job, and
   it invites the failure where an agent excuses its own abandoned node by
@@ -369,7 +373,8 @@ their context far more often than they exit gracefully.
 **One file per bug is the intended storage, not one JSON array.** The design
 put the whole board in `blueprint/bugs.json` and justified single-writer
 access during a run. That is true during a run and false the rest of the time:
-the real writers are the dispatcher, the overseer between runs, Keel, and task
+the real writers are the dispatcher, the overseer between runs, the
+framework agents, and task
 implementers, all doing read-modify-write on one file. It clobbered twice in
 one hour. The repo had already solved this shape — proofs live at
 `Rule30/Proofs/<Node>.lean`, one per node, *so nodes are independently

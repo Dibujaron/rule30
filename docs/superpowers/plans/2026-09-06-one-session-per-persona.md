@@ -18,7 +18,7 @@
 - Commit messages are prefixed `Rowan: ...` and end with the two attribution trailers this session uses.
 - Every test is a `pub fn ..._test()` in gleeunit style with bare `assert` and `let assert`, matching the existing files.
 - Guard ports in `run_test.gleam` fixtures are never reused between tests and are spaced by more than the attempt count, because a guard is never stopped once started.
-- Do not touch `guard.gleam`, `worker/brief.gleam`, `claude.gleam`, or `harness.gleam` — Keel's territory this week.
+- Do not touch `guard.gleam`, `worker/brief.gleam`, `claude.gleam`, or `harness.gleam` — the framework agents' territory this week.
 
 **One deviation from the spec, deliberate:** the spec's `Mint(region)` carries only the region. Here `Mint` also carries the busy names the scheduler saw, so the dispatcher can write the `because` field on the `naming` event without recomputing what the scheduler already knew. Same behaviour, one fewer place to be wrong.
 
