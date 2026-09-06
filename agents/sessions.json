@@ -68,6 +68,13 @@
       "ref": "2196dc",
       "role": "overseer",
       "started": "2026-09-06T17:55:00Z"
+    },
+    {
+      "identity": "Fathom",
+      "session_name": "rule30-ea",
+      "ref": "7c4f90",
+      "role": "framework",
+      "started": "2026-09-06T20:30:00Z"
     }
   ]
 }
