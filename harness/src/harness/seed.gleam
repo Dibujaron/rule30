@@ -342,6 +342,22 @@ pub type Proposal {
     lean_name: String,
     statement: String,
     reason: String,
+    /// What this statement does NOT prove, in the captain's voice. Empty for
+    /// most nodes; load-bearing for any node shaped like a prize.
+    ///
+    /// Added after run 20260906T210938Z, where a worker's proof note and
+    /// journal entry claimed P1 was proved. The Lean was exactly the
+    /// conditional statement that had been seeded and the harness checked its
+    /// type — everything the verifier adjudicates was correct. The false claim
+    /// was in the prose, which nothing checks, and which is the artifact a
+    /// human actually reads.
+    ///
+    /// This does not fix that: nothing here can make a note true. What it does
+    /// is put the disclaimer where a HUMAN wrote it, before the attempt, so a
+    /// worker is told what its note must not contradict rather than being
+    /// asked to derive the boundary itself — which is the derivation that
+    /// failed. See `nothing-checks-what-a-proof-note-claims`.
+    disclaims: String,
     route: Claim,
     witness: WitnessClaim,
   )
@@ -405,13 +421,24 @@ fn proposal_decoder() -> decode.Decoder(Proposal) {
   // `reason` is `field`, not `optional_field`, and that is the design rather
   // than an oversight: a proposal without one is not a proposal.
   use reason <- decode.field("reason", decode.string)
+  // Optional, unlike `reason`: most nodes disclaim nothing, and a required
+  // field that is usually empty gets filled with noise to satisfy it.
+  use disclaims <- decode.optional_field("disclaims", "", decode.string)
   use route <- decode.optional_field("route", NoClaim, route_claim_decoder())
   use witness <- decode.optional_field(
     "witness",
     NoWitness,
     witness_claim_decoder(),
   )
-  decode.success(Proposal(id:, lean_name:, statement:, reason:, route:, witness:))
+  decode.success(Proposal(
+    id:,
+    lean_name:,
+    statement:,
+    reason:,
+    disclaims:,
+    route:,
+    witness:,
+  ))
 }
 
 fn route_claim_decoder() -> decode.Decoder(Claim) {
@@ -485,7 +512,15 @@ pub fn report(checked: List(Checked)) -> String {
 }
 
 fn report_line(c: Checked) -> String {
-  c.proposal.id <> "
+  // The disclaimer is printed FIRST among the proposal's own lines and in the
+  // captain's own words. Nothing checks it — that is the point of it — so its
+  // only value is being read, and a disclaimer placed below two verdicts is a
+  // disclaimer read after the reader has decided.
+  let disclaimer = case c.proposal.disclaims {
+    "" -> ""
+    text -> "\n  DOES NOT PROVE: " <> text
+  }
+  c.proposal.id <> disclaimer <> "
   route:   " <> route_line(c.route) <> "
   witness: " <> witness_line(c.witness)
 }

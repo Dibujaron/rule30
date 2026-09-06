@@ -319,6 +319,7 @@ fn a_proposal(id: String) -> seed.Proposal {
     lean_name: id,
     statement: "theorem " <> id <> " : True := by\n  sorry",
     reason: "Because.",
+    disclaims: "",
     route: seed.NoClaim,
     witness: seed.NoWitness,
   )
@@ -511,4 +512,49 @@ pub fn the_brief_never_tells_the_seeder_to_edit_the_board_test() {
   let b = string.lowercase(brief())
   assert !string.contains(b, "edit rule30/statements.lean")
   assert !string.contains(b, "add the node to blueprint/dag.json")
+}
+
+/// **What a proposal does NOT prove, in the captain's voice.**
+///
+/// Rowan's proposal, from run 20260906T210938Z, where a worker's proof note
+/// claimed P1 was proved while the Lean was exactly the conditional statement
+/// that had been seeded. The verifier was right about everything it checks;
+/// the false claim was in the prose, which nothing checks. See the board:
+/// `nothing-checks-what-a-proof-note-claims`.
+///
+/// Optional, because most nodes disclaim nothing. Present, because a
+/// conditional whose hypothesis is the hard part looks exactly like the thing
+/// it is conditional on — especially to a session that has just spent twenty
+/// turns inside it.
+pub fn a_proposal_can_say_what_it_does_not_prove_test() {
+  let assert Ok([p]) =
+    seed.decode_proposals(proposal_json(
+      "\"id\":\"a\",\"lean_name\":\"a\",\"statement\":\"theorem a : True := by\\n  sorry\",\"reason\":\"r\",\"disclaims\":\"This does NOT prove P1: the hypothesis is the whole difficulty.\"",
+    ))
+  assert p.disclaims == "This does NOT prove P1: the hypothesis is the whole difficulty."
+}
+
+pub fn a_proposal_without_a_disclaimer_decodes_to_empty_test() {
+  let assert Ok([p]) =
+    seed.decode_proposals(proposal_json(
+      "\"id\":\"a\",\"lean_name\":\"a\",\"statement\":\"theorem a : True := by\\n  sorry\",\"reason\":\"r\"",
+    ))
+  assert p.disclaims == ""
+}
+
+/// A disclaimer nobody reads is worse than none, because it looks like a
+/// safeguard. It must reach the report the captain reads.
+pub fn the_report_shows_what_a_proposal_disclaims_test() {
+  let out =
+    seed.report([
+      seed.Checked(
+        proposal: seed.Proposal(
+          ..a_proposal("zeta"),
+          disclaims: "does NOT prove P1",
+        ),
+        route: seed.NoRoute,
+        witness: seed.WitnessHolds("t < 12"),
+      ),
+    ])
+  assert string.contains(out, "does NOT prove P1")
 }
