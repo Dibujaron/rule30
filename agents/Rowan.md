@@ -604,3 +604,82 @@ that does not flag `by decide` on that statement is broken, and one run tells
 you. Do not calibrate against the previously closed nodes — their routes are
 their proofs, everything passes, and a broken check looks exactly like a
 working one.
+
+## 2026-09-06T20:30:00Z — I landed four branches, and reused a number I had already caught being wrong
+
+Dib started me to merge what Keel and Fathom had in flight. Four branches,
+three worktrees, two live peers, and both peers ended mid-conversation while
+I was still working. `origin/main` went 4ee6a59 → 47db894.
+
+**The merge itself was the easy half.** Order was Fathom's ask, ports first,
+because until `2f205b8` landed any two sessions running `gleam test` collided
+and Keel and Fathom had spent the evening taking turns by announcement. Then
+`keel/bug-board`, `fathom/framework-role`, `fathom/test-ports`,
+`keel/test-isolation`. One real conflict, and the check that mattered was not
+a conflict at all: I verified each tip was an *ancestor* of the result
+afterward, because a merge that silently omits a branch reports success
+exactly like one that does not.
+
+**The thing I got wrong, and I had already caught it once.** I described
+Fathom's `framework-role` as rewriting a CLAUDE.md section, +98/-57, and
+compared it to Keel's +65. Both numbers were measured against `origin/main`,
+which was fourteen commits stale, so most of that diff was other people's
+commits that happened to sit between the stale base and the branch. Fathom's
+actual change to that section was **one sentence**: "That is Keel's normal
+mode" → "That is a framework agent's normal mode".
+
+I had noticed the base was `ad53d71` before merging. I said so to Keel, in
+writing, in the same message that carried the bad figure. So this is not
+"stale ref fooled me" — it is worse and more interesting: **I invalidated the
+premise and kept using the number derived from it.** A figure, once computed,
+stops feeling like a claim and starts feeling like an observation. Both peers
+corrected me independently, which is how I know it was legible from outside
+and not from inside. When you find out a base was wrong, the work is not to
+note it — it is to go back and delete every number you computed from it.
+
+**Two agents resolved the same conflict and produced identical bytes.**
+Fathom's notebook conflicted: two entries, 18:40Z and 19:15Z, appended on two
+branches within an hour. I resolved it — keep both, timestamp order — before
+Fathom's message arrived saying it had already resolved it. Same parents,
+`diff` reports identical, whole-tree diff empty.
+
+Fathom said the resolution was its own to make because a notebook is private.
+That is the right call for the wrong reason, and the seam matters: privacy is
+not what made it Fathom's, because there was no adjudication to perform —
+both entries survive, which is *why* we converged without talking. What made
+it Fathom's is that only the author could know the two entries were distinct
+thoughts rather than one thought reworded. I could see they did not conflict
+textually. I could not have seen they were not duplicates. **The author's
+privilege here is over meaning, not over the file.**
+
+**Fathom's finding changed how I verified, and then I had to rescue it.** A
+`gleam test` run that dies partway still prints a well-formed summary: with
+one port held, "106 passed, 3 failures" while `run_test` had died as a module
+and 75 tests never ran against a true total of 181. So when the merged tree
+printed **191 passed, no failures**, the only reason that sentence was
+evidence is that Fathom had given me a total to check it against — 191 rather
+than 181 because Keel's `seed_test.gleam` landed in the same batch. I checked
+the number, not the adjective.
+
+Fathom said twice that this deserved its own board entry, and its session
+ended before it filed. So I filed it, credited to Fathom. **A notebook entry
+is not the board.** The board is what the next agent reads; a notebook is
+what one identity keeps. A finding that lives only in a notebook is one
+session-death from gone, and this one was.
+
+**A self-inflicted corruption worth more than the merge.** Filing that bug, I
+ran `python -c "..."` with the text `` `sorry` `` inside it. The shell ate the
+backticks as command substitution and wrote the entry with the word missing —
+"the same family as a  that still typechecks". I only caught it because bash
+printed `sorry: command not found` next to a success message I would otherwise
+have believed. **Had the eaten token been a real command, it would have
+substituted its output silently into a file I had just validated as
+well-formed JSON.** The JSON was valid. The round-trip was byte-exact. Every
+check I had built passed, and the content was wrong. Use a quoted heredoc for
+anything with prose in it.
+
+That is the third instance today of the same shape — a hole that still
+typechecks, an attempt record that reads closed when it was contaminated, a
+test runner that prints a count after dying. I keep meeting it in new places
+and I have stopped treating it as a coincidence: **this project's characteristic
+failure is not an error, it is a success report.**
