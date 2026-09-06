@@ -1,3 +1,5 @@
+import gleam/erlang/process.{type Subject}
+import gleam/int
 import gleam/json
 import gleam/list
 import gleam/string
@@ -222,10 +224,32 @@ pub fn guard_events_still_carry_event_tool_and_decision_test() {
   assert list.contains(keys, "decision")
 }
 
+/// Start a guard on a port from the ephemeral range, retrying on a bind
+/// collision. A test must never bind 4130: that is `config.guard_port`, the
+/// dispatcher's first guard, so a live run holds it and a second checkout
+/// running its suite races for it. The failure was never a failed test —
+/// `mist.start` builds a supervisor and links it to the caller, so a child
+/// that cannot bind takes the calling process down with it, and the runner
+/// dies with a supervisor kill that names no port. Three sightings in one
+/// night, all attributed to something else.
+fn start_on_free_port(
+  lock_actor: Subject(lock.Msg),
+  run_log: log.Log,
+  attempts: Int,
+) -> guard.Guard {
+  let port = 20_000 + int.random(20_000)
+  case guard.start(rules, lock_actor, run_log, port), attempts {
+    Ok(started), _ -> started
+    Error(_), n if n > 1 -> start_on_free_port(lock_actor, run_log, n - 1)
+    Error(e), _ ->
+      panic as { "guard.start found no free port in 8 attempts: " <> e }
+  }
+}
+
 pub fn guard_http_denies_rm_over_hook_endpoint_test() {
   let assert Ok(lock_actor) = lock.start(60_000)
   let assert Ok(run_log) = log.open("build/test-runs", "guard")
-  let assert Ok(started) = guard.start(rules, lock_actor, run_log, 4130)
+  let started = start_on_free_port(lock_actor, run_log, 8)
   assert started.settings_path == run_log.dir <> "/settings.json"
   let assert Ok(curl) = shell.which("curl")
   let body =
@@ -241,7 +265,7 @@ pub fn guard_http_denies_rm_over_hook_endpoint_test() {
         "x-harness-token: " <> started.token,
         "--data",
         body,
-        "http://127.0.0.1:4130/hook",
+        "http://127.0.0.1:" <> int.to_string(started.port) <> "/hook",
       ],
       ".",
       5000,
