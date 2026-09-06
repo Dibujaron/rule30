@@ -103,3 +103,112 @@ functions we would collide in. Naming the collision was the whole trick.
 evidence on before touching: whether a refusing rate-limit status ever arrives
 *below* the utilization ceiling, because if it does, `hit_ceiling` has the
 mirror image of the bug I just fixed sitting in the same predicate.
+
+## 2026-09-06T16:05:00Z — first working session: the board, and what it taught
+
+The bug board exists, `blueprint/bugs.json`, seventeen entries and five
+closed. `gleam run -- bugs` reads it. Provers file into it through their
+end-of-turn report; the harness will file into it itself once Task 6 lands.
+Git has the code. This is the rest.
+
+**Read `agents/Rowan.md` before anything else.** The best two bugs I fixed
+today I did not find: Rowan had diagnosed both in its own notebook and left
+them deliberately, because the first lived in the same schema my next task
+was going to edit. The overseer's notebook was already a bug queue that
+nobody was treating as one. That is where I should start every session.
+
+**Strictness fails open where nobody is listening.** I wrote "every enum
+decodes strictly" into my own constraints, then applied it to
+`rate_limit_info.status` — in front of `parse_event`, which swallows every
+decode failure into `Other(line)`. So a strict decoder there does not fail
+loudly, it makes the event *vanish*, and the harness drives a closed
+rate-limit window until it times out. The rule is not "be strict", it is
+**be strict where a failure stops something**. Loud in the board's decoder,
+lenient in front of a silent fallback.
+
+**Twice I wrote a fix instruction narrower than the bug I was describing.**
+On the report decoder I said, correctly, that `optional_field` defaults only
+on an absent key and not on a failing inner decoder — then prescribed a fix
+that only handled the absent case, and cited "a non-string body" as the
+example it did not cover. The implementer did exactly what I asked. A
+reviewer caught it. Round two I described the *promise* instead — nothing a
+worker puts in `bugs` may ever cost the turn's proof outcome — and the fix
+came back right. **State the property, not the mechanism.** The mechanism is
+the part I get wrong.
+
+**I proposed a signal that was blind exactly where it mattered.** To catch
+harness-caused abandonments I suggested correlating "attempt abandoned" with
+"worker filed a blocks bug". Rowan pointed out that the worker in the
+motivating case — one that reads a transient lock denial as a permanent rule
+— files nothing, because it has no complaint. The agents who file are the
+ones who *noticed*, and that failure is defined by not noticing. I had
+reached for the newest data source I had built rather than asking who would
+actually produce the signal. Ask that first.
+
+**Delete the state; do not manage it.** Three times today the right answer
+was removal. `claimed` on the board comes out rather than gaining a
+`reopen`. `status: live` came out of the session registry rather than
+gaining a cleanup step. And the guard's single `Deny` should split, so a
+transient refusal cannot be worded like a permanent one — because one
+variant carrying both meanings is *why* no wording separates them for long.
+Managing a hazard leaves it there.
+
+**Derive state from outside the process that is dying.** Rowan and I reached
+this from opposite directions within an hour — it from a registry whose
+contract needed a graceful exit, me from inheriting `claimed` along with the
+DAG's vocabulary I was deliberately copying. Sessions are killed, time out,
+and exhaust their context far more often than they exit cleanly. Any
+protocol step that runs at the *end* of an agent session is close to
+fiction.
+
+**I inherited a trap by copying the vocabulary it lives in.** That is the
+one I would not have predicted. Borrowing `dag.json`'s statuses was a good
+decision for a real reason — one board idiom transfers — and it carried
+`claimed`'s hazard across intact. Reuse imports problems, not just
+solutions.
+
+**Boundaries: I enumerated Keel's and omitted the file Keel touches most.**
+`blueprint/bugs.json` was in neither the may-change list nor the needs-asking
+list in `CLAUDE.md`. For a section whose entire purpose is to bind an agent
+with no technical restraint on it, an unstated case is the failure.
+
+**On working in a shared checkout with three other agents.** The discipline
+that actually protected things: every implementer told to stage explicit
+paths, never `git add -A`, never `checkout` or `restore`. That is what kept
+Rowan's 192 lines of uncommitted proof docs alive while three of us worked
+around them. Also: `git diff --numstat` before believing `git status` — CRLF
+churn makes seven untouched files look modified, and it once made me think
+another session had written into my tree.
+
+**Verify peers, then adopt their framing when it is better.** I checked
+Rowan's wall-node diagnosis myself before acting on a `blocks` bug, and
+checked its board reconciliation before trusting it. Both held. But its
+root-cause framing beat mine twice — the fixture bug is one defect
+(fixtures point at the live checkout), not two symptoms, and the calibration
+blind spot was invisible to me. Verify the claim; take the better idea.
+
+**The board earned itself on its first day.** Two of the seventeen entries
+came out of my own review loop rather than from a run, and the sharpest one
+— that a harness-broken attempt is scored as node difficulty, corrupting the
+calibration used to price every future node — appeared because Rowan's
+observation and my pushback collided on the board. Neither of us was looking
+for it. That is a better argument for the thing than anything I wrote in its
+spec.
+
+**Where the fleet stands.** `Open leaves: (none)`. Fourteen of fifteen nodes
+proved; the last is walled and needs decomposing, which is a captain
+judgement. The harness is not what is blocking proofs any more.
+
+**Queue, in order:** the two throttling bugs (free-range test ports;
+offline fixtures off the live checkout — one fix covers the deleted-proof
+class); the `Decision` split, which three separate entries now depend on;
+calibration (`Attempt`, `failed_attempts`, `roster` — Rowan reviews the
+semantics, I own the code); the one-file-per-bug storage migration, phased
+per Dib, legacy file kept readable until every writer has moved; and
+`a-non-array-bugs-field-still-poisons-the-report`, the last open route to a
+promise I have already declared load-bearing.
+
+**One thing to watch in myself.** I wrote at naming that the first time I am
+tempted to fix something by loosening the guard, it will not feel like
+widening — it will feel like being reasonable. That did not come up today.
+It will.
