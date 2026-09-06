@@ -6,6 +6,7 @@
 //// A worker writes only its one proof file; the notebook, the journal and
 //// the DAG are written here, from the worker's report, verbatim.
 
+import gleam/dynamic/decode
 import gleam/erlang/process.{type Pid, type Subject}
 import gleam/int
 import gleam/io
@@ -1093,34 +1094,66 @@ fn auto_file(
 /// attributable: `run` gives every attempt its own
 /// `runs/<run-id>/<node>-<n>/events.jsonl` and hands that same log to that
 /// attempt's guard, so the directory already says whose denial it was. The
-/// filter costs one substring and keeps this correct if a guard is ever
-/// pointed at a log it shares.
+/// filter keeps this correct if a guard is ever pointed at a log it shares.
 ///
-/// Matched line-wise rather than decoded: the log is one JSON object per
-/// line and may hold thousands of rows by the end of a run, and a missed
-/// match costs a bug that gets filed next time, not a wrong one. The
-/// literals are `guard`'s to change, which is what
-/// `denied_tools_reads_the_rows_the_guard_actually_writes_test` pins.
-pub fn denied_tools(l: log.Log, node_id: String) -> List(String) {
+/// Candidate lines are found by substring and then **decoded**, rather than
+/// scraped. The cheap filter is what keeps this affordable over a log that
+/// may hold thousands of rows; the decode is not optional, because
+/// `attempted` is a string the *worker* chose. Pulling it out with
+/// `split_once` on a quote would truncate any command containing an escaped
+/// quote, and a command containing the text `","denial":"` would forge a
+/// field. A scrape is safe for values the guard controls and unsafe the
+/// moment one of them is someone else's.
+pub fn guard_denials(l: log.Log, node_id: String) -> List(GuardDenial) {
   case simplifile.read(l.dir <> "/events.jsonl") {
     Error(_) -> []
     Ok(text) ->
       text
-      |> string.split("\n")
+      |> string.split(
+        "
+",
+      )
       |> list.filter(fn(line) {
         string.contains(line, "\"kind\":\"guard\"")
-        && string.contains(line, "Deny(")
         && string.contains(line, "\"node\":\"" <> node_id <> "\"")
       })
-      |> list.filter_map(tool_of)
+      |> list.filter_map(fn(line) {
+        json.parse(line, guard_denial_decoder()) |> result.replace_error(Nil)
+      })
+      |> list.filter(fn(d) { d.denial != "" })
       |> list.unique
   }
 }
 
-fn tool_of(line: String) -> Result(String, Nil) {
-  use #(_, rest) <- result.try(string.split_once(line, "\"tool\":\""))
-  use #(tool, _) <- result.try(string.split_once(rest, "\""))
-  Ok(tool)
+/// One denial as the board needs to read it: which tool, why it was refused,
+/// and what was actually asked for.
+///
+/// `denial` is the whole point. Before it, every refusal of one tool shared
+/// the signature `guard:Bash`, so a permanent grammar refusal and a transient
+/// build-lock timeout were one bug that could not be acted on in either of
+/// its two meanings.
+pub type GuardDenial {
+  GuardDenial(tool: String, denial: String, attempted: String)
+}
+
+/// Reads the row `guard.event_fields` writes.
+///
+/// `denial` and `attempted` are optional so that a log written by an older
+/// guard still yields bugs rather than silently yielding none — a run whose
+/// denials stop reaching the board without anything failing is the shape of
+/// defect this change exists to remove, and it would be perverse to
+/// introduce it here. Such a row falls back to `"unknown"`, which is a worse
+/// signature than the real slug and a much better one than no bug at all.
+fn guard_denial_decoder() -> decode.Decoder(GuardDenial) {
+  use tool <- decode.field("tool", decode.string)
+  use decision <- decode.field("decision", decode.string)
+  use denial <- decode.optional_field("denial", "", decode.string)
+  use attempted <- decode.optional_field("attempted", "", decode.string)
+  let denial = case denial, string.starts_with(decision, "Deny(") {
+    "", True -> "unknown"
+    other, _ -> other
+  }
+  decode.success(GuardDenial(tool:, denial:, attempted:))
 }
 
 /// The two auto-filed signals in scope this round: a rate-limited outcome,
@@ -1154,22 +1187,29 @@ fn auto_file_signals(
       )
     _ -> Nil
   }
-  list.each(denied_tools(l, node_id), fn(tool) {
+  list.each(guard_denials(l, node_id), fn(d) {
     auto_file(
       cfg,
       l,
       node_id,
       identity,
-      "Guard denied " <> tool,
+      "Guard denied " <> d.tool <> " (" <> d.denial <> ")",
       "The guard refused a "
-        <> tool
+        <> d.tool
         <> " call during the attempt at "
         <> node_id
+        <> ", as "
+        <> d.denial
+        <> ". It tried: "
+        <> case d.attempted {
+        "" -> "(not recorded)"
+        a -> a
+      }
         <> ". If the worker needed it, the allowlist is wrong; if it did "
         <> "not, the brief is.",
       bugs.Guard,
       bugs.Friction,
-      "guard:" <> tool,
+      "guard:" <> d.tool <> ":" <> d.denial,
     )
   })
 }

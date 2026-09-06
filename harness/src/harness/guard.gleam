@@ -44,14 +44,59 @@ pub type Guard {
   Guard(port: Int, token: String, settings_path: String)
 }
 
+/// Why a call was refused.
+///
+/// `Deny` used to carry only a sentence. A sentence is for the worker, who
+/// reads it once and changes what it does; it is useless to everything
+/// downstream, which has to *group* denials — and `dispatch.auto_file_signals`
+/// therefore filed one bug per tool, merging a permanent grammar refusal and a
+/// transient lock timeout under the single signature `guard:Bash`. The split
+/// that matters is not what to tell the worker, it is whether retrying the
+/// same call could ever succeed.
+pub type Denial {
+  /// The command is not in the `lake` grammar. Retrying is pointless: the
+  /// worker asked for something it is never allowed to have.
+  NotPermitted
+  /// The path is not the one file this worker may edit. Also permanent.
+  NotWritable
+  /// The build lock did not come free in time. Nothing was wrong with the
+  /// call, and the identical call would very likely succeed later — this is
+  /// the one denial that says nothing about the worker.
+  BuildLockTimeout
+  /// The hook body could not be read or parsed. Neither the worker's fault
+  /// nor a policy refusal: something upstream sent us something we could not
+  /// read, and failing closed is the safe response to that.
+  Malformed
+  /// A bad token, or a request to an endpoint that is not the hook. Should
+  /// never come from a briefed worker at all.
+  Unauthorized
+}
+
+/// A short stable key for one denial, for log rows and bug signatures.
+/// Deliberately not `string.inspect`: an inspect of a constructor is a
+/// rendering that changes when the constructor is renamed, and a signature
+/// that changes silently is how a board stops receiving a class of bug
+/// without anyone noticing.
+pub fn denial_slug(d: Denial) -> String {
+  case d {
+    NotPermitted -> "not_permitted"
+    NotWritable -> "not_writable"
+    BuildLockTimeout -> "build_lock_timeout"
+    Malformed -> "malformed"
+    Unauthorized -> "unauthorized"
+  }
+}
+
 /// What to do with one hook call.
 pub type Decision {
   /// Let the tool call through unchanged.
   Allow
   /// A `lake build` is starting: take the build lock before replying.
   AcquireBuild
-  /// Block the tool call, and tell Claude Code why.
-  Deny(reason: String)
+  /// Block the tool call, and tell Claude Code why. `kind` is for the
+  /// record and `reason` is for the worker; they are different audiences and
+  /// collapsing them was the defect.
+  Deny(kind: Denial, reason: String)
   /// A `lake build` just finished: give the build lock back.
   ReleaseBuild
   /// The session is about to compact: copy its transcript aside first.
@@ -108,7 +153,7 @@ fn parse_hook_input(hook_input: String) -> Result(HookInput, json.DecodeError) {
 /// actual lock acquire/release and logging happen in the HTTP handler.
 pub fn decide(rules: Rules, hook_input: String) -> Decision {
   case parse_hook_input(hook_input) {
-    Error(_) -> Deny("harness guard: could not parse hook input")
+    Error(_) -> Deny(Malformed, "harness guard: could not parse hook input")
     Ok(hi) -> decide_input(rules, hi)
   }
 }
@@ -145,7 +190,11 @@ fn decide_pre(rules: Rules, hi: HookInput) -> Decision {
 fn decide_write(rules: Rules, file_path: String) -> Decision {
   case normalise_path(file_path) == normalise_path(rules.allowed_write) {
     True -> Allow
-    False -> Deny("harness guard: you may only edit " <> rules.allowed_write)
+    False ->
+      Deny(
+        NotWritable,
+        "harness guard: you may only edit " <> rules.allowed_write,
+      )
   }
 }
 
@@ -157,6 +206,7 @@ const forbidden_bash_chars = [";", "&", "|", "`", "$", ">", "<", "\n", "\r"]
 
 fn bash_deny() -> Decision {
   Deny(
+    NotPermitted,
     "harness guard: only 'lake build [modules]' and 'lake env lean <file>' are permitted, with no shell operators",
   )
 }
@@ -254,7 +304,7 @@ fn normalise_path(path: String) -> String {
 /// `{}`. Only `Deny` carries a `hookSpecificOutput`.
 pub fn decision_json(d: Decision, event_name: String) -> String {
   case d {
-    Deny(reason) ->
+    Deny(reason:, ..) ->
       json.object([
         #(
           "hookSpecificOutput",
@@ -337,7 +387,7 @@ fn handle_request(
 ) -> Response(mist.ResponseData) {
   case req.method, req.path {
     Post, "/hook" -> authorize(req, rules, lock, log, token)
-    _, _ -> deny_response(404, "harness guard: not found")
+    _, _ -> deny_response(404, Unauthorized, "harness guard: not found")
   }
 }
 
@@ -350,7 +400,12 @@ fn authorize(
 ) -> Response(mist.ResponseData) {
   case request.get_header(req, "x-harness-token") {
     Ok(t) if t == token -> handle_hook(req, rules, lock, log)
-    _ -> deny_response(403, "harness guard: invalid or missing token")
+    _ ->
+      deny_response(
+        403,
+        Unauthorized,
+        "harness guard: invalid or missing token",
+      )
   }
 }
 
@@ -368,11 +423,16 @@ fn handle_hook(
   log: log.Log,
 ) -> Response(mist.ResponseData) {
   case mist.read_body(req, max_hook_body_bytes) {
-    Error(_) -> deny_response(400, "harness guard: could not read hook input")
+    Error(_) ->
+      deny_response(400, Malformed, "harness guard: could not read hook input")
     Ok(with_body) ->
       case bit_array.to_string(with_body.body) {
         Error(_) ->
-          deny_response(400, "harness guard: could not read hook input")
+          deny_response(
+            400,
+            Malformed,
+            "harness guard: could not read hook input",
+          )
         Ok(body) -> respond_to_hook(body, rules, lock, log)
       }
   }
@@ -384,31 +444,83 @@ fn respond_to_hook(
   lock: Subject(lock.Msg),
   log: log.Log,
 ) -> Response(mist.ResponseData) {
-  let #(event_name, tool_name) = case parse_hook_input(body) {
-    Ok(hi) -> #(hi.event, hi.tool_name)
-    Error(_) -> #("", "")
+  let #(event_name, tool_name, attempted) = case parse_hook_input(body) {
+    Ok(hi) -> #(hi.event, hi.tool_name, attempted_of(hi))
+    Error(_) -> #("", "", "")
   }
   let decision = apply_side_effects(decide(rules, body), rules, lock, log)
-  log.event(log, "guard", event_fields(rules, event_name, tool_name, decision))
+  log.event(
+    log,
+    "guard",
+    event_fields(rules, event_name, tool_name, attempted, decision),
+  )
   json_response(200, decision_json(decision, event_name))
 }
 
+/// What the worker actually asked for: the command for a `Bash` call, the
+/// path for a write, and nothing for anything else. This is the field a
+/// denial row was missing — `tool: Bash, decision: Deny(...)` says a call was
+/// refused and never says which call, so a filed guard bug could not be acted
+/// on without the transcript, which the board does not have.
+fn attempted_of(hi: HookInput) -> String {
+  case hi.tool_name {
+    "Bash" -> hi.command
+    "Edit" | "Write" | "MultiEdit" | "NotebookEdit" -> hi.file_path
+    _ -> ""
+  }
+}
+
+/// A hook body may be up to `max_hook_body_bytes`, and a log line is not the
+/// place for it. Long values are cut rather than dropped, and say that they
+/// were: a silently shortened command is a well-formed row that is wrong.
+///
+/// Applied in `event_fields` rather than where the value is produced. The cap
+/// is a property of the *row*, and enforcing it at one call site left it true
+/// only along the path that call site takes — which a test calling
+/// `event_fields` directly then broke, correctly.
+const max_attempted_chars = 400
+
+fn truncate(value: String) -> String {
+  case string.length(value) > max_attempted_chars {
+    False -> value
+    True -> string.slice(value, 0, max_attempted_chars) <> "... (truncated)"
+  }
+}
+
 /// The fields logged for one guard decision. Pulled out of `respond_to_hook`
-/// so it can be tested without standing up the HTTP server. `dispatch`
-/// reads these rows back by literal substring to auto-file guard bugs, so
-/// these key names are a contract with another module, not just a format.
+/// so it can be tested without standing up the HTTP server.
+///
+/// `dispatch.denied_tools` reads these rows back to auto-file guard bugs, so
+/// the key names are a contract with another module, not just a format. Two
+/// of them are load-bearing beyond being present. `denial` is the stable slug
+/// rather than an inspect of the constructor, so a rename cannot silently
+/// change a bug signature; it is `""` for anything that was not a denial,
+/// which is what `dispatch` keys on instead of matching the substring
+/// `"Deny("` inside `decision`. `attempted` is what the worker asked for, so
+/// a filed bug can be read without the transcript.
 pub fn event_fields(
   rules: Rules,
   event_name: String,
   tool_name: String,
+  attempted: String,
   decision: Decision,
 ) -> List(#(String, json.Json)) {
   [
     #("node", json.string(rules.holder)),
     #("event", json.string(event_name)),
     #("tool", json.string(tool_name)),
+    #("attempted", json.string(truncate(attempted))),
+    #("denial", json.string(denial_of(decision))),
     #("decision", json.string(string.inspect(decision))),
   ]
+}
+
+/// The slug for a decision that was a denial, and `""` for one that was not.
+fn denial_of(decision: Decision) -> String {
+  case decision {
+    Deny(kind:, ..) -> denial_slug(kind)
+    Allow | AcquireBuild | ReleaseBuild | Archive(..) -> ""
+  }
 }
 
 /// Turn `AcquireBuild`/`ReleaseBuild` into actual lock operations, and
@@ -426,7 +538,7 @@ fn apply_side_effects(
     AcquireBuild ->
       case lock.acquire(lock, rules.holder, 240_000) {
         True -> AcquireBuild
-        False -> Deny("build lock timeout")
+        False -> Deny(BuildLockTimeout, "build lock timeout")
       }
     ReleaseBuild -> {
       lock.release(lock, rules.holder)
@@ -459,8 +571,12 @@ fn json_response(status: Int, body: String) -> Response(mist.ResponseData) {
 /// A deny reply for an HTTP-layer failure (bad token, bad path, unreadable
 /// body) — never the `"{}"` that a real `Allow` produces, so a hook script
 /// that ignores curl's exit status still sees a deny.
-fn deny_response(status: Int, reason: String) -> Response(mist.ResponseData) {
-  json_response(status, decision_json(Deny(reason), "PreToolUse"))
+fn deny_response(
+  status: Int,
+  kind: Denial,
+  reason: String,
+) -> Response(mist.ResponseData) {
+  json_response(status, decision_json(Deny(kind, reason), "PreToolUse"))
 }
 
 /// Write the generated `settings.json` a worker's Claude Code session
@@ -500,7 +616,7 @@ pub fn hook_command(
   <> "\" --data-binary @- "
   <> url
   <> " || { printf '%s' '"
-  <> decision_json(Deny("harness guard unreachable"), event_name)
+  <> decision_json(Deny(Unauthorized, "harness guard unreachable"), event_name)
   <> "'; exit 2; }"
 }
 

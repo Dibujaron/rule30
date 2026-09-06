@@ -1,8 +1,14 @@
 import gleeunit
 import harness
 import harness/bugs
+import suite_size
 
+/// `gleeunit.main` reports how many tests passed and never how many there
+/// were, so a runner that dies partway prints a well-formed summary that
+/// reads like a smaller suite passing. `announce` puts the on-disk total in
+/// the same output, immediately above it. See `suite_size`.
 pub fn main() -> Nil {
+  suite_size.announce("test")
   gleeunit.main()
 }
 

@@ -3,6 +3,8 @@
 //// proved, and a test that reads it is a test that breaks when the project
 //// makes progress.
 
+import gleam/json
+import gleam/list
 import gleam/option.{None}
 import gleam/string
 import harness/config
@@ -28,11 +30,11 @@ fn cfg_for(d: dag.Dag) -> config.Config {
     ..c,
     dag_path: path,
     // Overridden even though nothing in this file reaches an attempt end:
-    // every `prove_one` below asserts `Error`, so `auto_file_signals` never
-    // runs. That is a property of these assertions rather than of the code,
-    // and the first test here that completes an attempt would file a bug
-    // onto the real `blueprint/bugs.json`.
-    bugs_path: dir <> "/bugs.json",
+      // every `prove_one` below asserts `Error`, so `auto_file_signals` never
+      // runs. That is a property of these assertions rather than of the code,
+      // and the first test here that completes an attempt would file a bug
+      // onto the real `blueprint/bugs.json`.
+      bugs_path: dir <> "/bugs.json",
     runs_root: dir <> "/runs",
     roster_path: dir <> "/agents/roster.json",
     agents_dir: dir <> "/agents",
@@ -268,12 +270,11 @@ pub fn worth_filing_drops_a_bug_that_lost_its_title_test() {
 
 // --- reading the guard's rows back -------------------------------------------------
 
-/// `denied_tools` finds guard denials by literal substring in JSON that
-/// `guard` and `log` write, two modules away. Build the rows with the real
-/// producer rather than by hand, so a rename on either side fails here — a
-/// hand-written fixture would keep passing while the harness quietly filed
-/// nothing for the rest of the project's life.
-pub fn denied_tools_reads_the_rows_the_guard_actually_writes_test() {
+/// `guard_denials` reads JSON that `guard` and `log` write, two modules away.
+/// Build the rows with the real producer rather than by hand, so a rename on
+/// either side fails here — a hand-written fixture would keep passing while
+/// the harness quietly filed nothing for the rest of the project's life.
+pub fn guard_denials_reads_the_rows_the_guard_actually_writes_test() {
   let dir = "build/test-runs/denied-tools"
   let _ = simplifile.delete(dir)
   let assert Ok(l) = log.open(dir, "run")
@@ -284,28 +285,133 @@ pub fn denied_tools_reads_the_rows_the_guard_actually_writes_test() {
       holder: node_id,
     )
   }
-  let write = fn(node_id, tool, decision) {
+  let write = fn(node_id, tool, attempted, decision) {
     log.event(
       l,
       "guard",
-      guard.event_fields(at(node_id), "PreToolUse", tool, decision),
+      guard.event_fields(at(node_id), "PreToolUse", tool, attempted, decision),
     )
   }
-  write("probe_one", "Bash", guard.Deny("shell operators are not allowed"))
-  write("probe_one", "Bash", guard.Deny("shell operators are not allowed"))
-  write("probe_one", "Edit", guard.Allow)
-  write("probe_two", "Write", guard.Deny("outside the proof file"))
+  let grammar = guard.Deny(guard.NotPermitted, "shell operators")
+  write("probe_one", "Bash", "lake build ; rm -rf /", grammar)
+  write("probe_one", "Bash", "lake build ; rm -rf /", grammar)
+  write("probe_one", "Edit", "X.lean", guard.Allow)
+  write(
+    "probe_two",
+    "Write",
+    "C:/r/other.lean",
+    guard.Deny(guard.NotWritable, "outside the proof file"),
+  )
 
-  // Denials only, one row per tool however often it was refused, and
-  // nothing belonging to the node next door.
-  assert dispatch.denied_tools(l, "probe_one") == ["Bash"]
-  assert dispatch.denied_tools(l, "probe_two") == ["Write"]
-  assert dispatch.denied_tools(l, "probe_three") == []
+  // Denials only, deduplicated, and nothing belonging to the node next door.
+  assert dispatch.guard_denials(l, "probe_one")
+    == [
+      dispatch.GuardDenial(
+        tool: "Bash",
+        denial: "not_permitted",
+        attempted: "lake build ; rm -rf /",
+      ),
+    ]
+  assert dispatch.guard_denials(l, "probe_two")
+    == [
+      dispatch.GuardDenial(
+        tool: "Write",
+        denial: "not_writable",
+        attempted: "C:/r/other.lean",
+      ),
+    ]
+  assert dispatch.guard_denials(l, "probe_three") == []
+}
+
+/// The whole point of the split: two refusals of the same tool that mean
+/// opposite things must not collapse into one row, because the signature
+/// `dispatch` files them under is built from both fields. A permanent
+/// grammar refusal is the worker's problem; a build-lock timeout is a
+/// sibling worker holding the lock and says nothing about this call at all.
+pub fn two_denials_of_one_tool_stay_apart_test() {
+  let dir = "build/test-runs/denial-kinds"
+  let _ = simplifile.delete(dir)
+  let assert Ok(l) = log.open(dir, "run")
+  let at =
+    guard.Rules(
+      repo_root: "C:\\r",
+      allowed_write: "C:\\r\\Rule30\\Proofs\\X.lean",
+      holder: "probe_one",
+    )
+  let write = fn(attempted, decision) {
+    log.event(
+      l,
+      "guard",
+      guard.event_fields(at, "PreToolUse", "Bash", attempted, decision),
+    )
+  }
+  write("lake build ; rm -rf /", guard.Deny(guard.NotPermitted, "grammar"))
+  write("lake build Rule30", guard.Deny(guard.BuildLockTimeout, "timeout"))
+
+  let found = dispatch.guard_denials(l, "probe_one")
+  assert list.length(found) == 2
+  let kinds = list.map(found, fn(d) { d.denial }) |> list.sort(string.compare)
+  assert kinds == ["build_lock_timeout", "not_permitted"]
+}
+
+/// A command carrying the characters a scrape would choke on. `attempted` is
+/// the one field in the row that the *worker* chose, so it can contain an
+/// escaped quote — which truncates a `split_once` on `"` — or the literal
+/// text of another field's key, which would let a command forge a field.
+/// Decoding the line is what makes this safe, and this is the test that
+/// would notice if it went back to a scrape.
+pub fn a_denial_survives_a_command_full_of_json_test() {
+  let dir = "build/test-runs/denial-quoting"
+  let _ = simplifile.delete(dir)
+  let assert Ok(l) = log.open(dir, "run")
+  let at =
+    guard.Rules(
+      repo_root: "C:\\r",
+      allowed_write: "C:\\r\\Rule30\\Proofs\\X.lean",
+      holder: "probe_one",
+    )
+  let nasty = "lake build \"x\",\"denial\":\"build_lock_timeout\""
+  log.event(
+    l,
+    "guard",
+    guard.event_fields(
+      at,
+      "PreToolUse",
+      "Bash",
+      nasty,
+      guard.Deny(guard.NotPermitted, "grammar"),
+    ),
+  )
+  assert dispatch.guard_denials(l, "probe_one")
+    == [
+      dispatch.GuardDenial(
+        tool: "Bash",
+        denial: "not_permitted",
+        attempted: nasty,
+      ),
+    ]
+}
+
+/// A row written by an older guard has no `denial` field. It must still
+/// reach the board — a change that made denials silently stop being filed
+/// would be the very defect this one removes.
+pub fn a_row_without_a_denial_field_still_files_test() {
+  let dir = "build/test-runs/denial-legacy"
+  let _ = simplifile.delete(dir)
+  let assert Ok(l) = log.open(dir, "run")
+  log.event(l, "guard", [
+    #("node", json.string("probe_one")),
+    #("event", json.string("PreToolUse")),
+    #("tool", json.string("Bash")),
+    #("decision", json.string("Deny(\"only lake build is permitted\")")),
+  ])
+  assert dispatch.guard_denials(l, "probe_one")
+    == [dispatch.GuardDenial(tool: "Bash", denial: "unknown", attempted: "")]
 }
 
 /// An attempt that died before its log existed files nothing rather than
 /// crashing the dispatcher on the way out of a failed run.
-pub fn denied_tools_is_empty_without_a_log_test() {
+pub fn guard_denials_is_empty_without_a_log_test() {
   let missing = log.Log(dir: "build/test-runs/no-such-attempt", run_id: "run")
-  assert dispatch.denied_tools(missing, "probe_one") == []
+  assert dispatch.guard_denials(missing, "probe_one") == []
 }

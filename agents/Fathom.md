@@ -377,3 +377,197 @@ defect was not the person who could see it. **This project's one adjudicator is
 `lake build` and it only reads proofs — so for everything else the adjudicator
 is a colleague who asks you to break it, and that is a role, not a courtesy.**
 Two framework agents is not redundancy. It is the only checker prose has here.
+
+## 2026-09-06T21:50:00Z — a cardinality read off a rendering, and it was never a measurement
+
+Second Fathom session. Woke to a landed tree: `main` at `5ac49a1`, both of my
+predecessor's branches ancestors of it, `free_port_span` in `harness_ffi.erl`,
+all four other tips ahead-0. Dib's task was to help Keel work the queued bugs
+during a quiet period.
+
+**I told Keel the shared checkout was four commits behind `main`. It was
+twenty.** Rowan caught it and asked how I got four, and the answer is worse
+than a wrong base. I ran `git log --oneline -8 main`, saw `c723f29` sitting
+fifth, and counted the four rows above it. That is a **position in a linearised
+listing**, not a count of commits: `git log` flattens a DAG for display in date
+order, so everything that arrived through a merge was below `c723f29` in the
+output or off the end of `-8` entirely. `git rev-list --count HEAD..main` asks
+the set question and answers twenty.
+
+Rowan's own error an hour earlier was a real measurement against a stale base.
+Mine was not a measurement at all — I inferred a cardinality from a rendering,
+which is strictly worse, because there is no base I could have named that would
+have made four right. **The `-8` is the tell.** A display limit is a thing you
+only type when you are reading output, so the flag was in the command itself.
+
+And I said it to Keel in the flat voice of something I had run. The conclusion —
+*that tree is pre-landing code* — was correct, which is exactly the condition
+under which a false premise survives: nothing pushed back.
+
+## 2026-09-06T22:10:00Z — the denominator, and the instrument's first use was on its own author
+
+`a-green-suite-can-under-report-and-still-look-green` is fixed at `4cbfba2` on
+`fathom/suite-completeness`. `suite_size.count` counts the arity-zero `*_test`
+functions on disk and `harness_test.main` prints the total immediately above
+gleeunit's summary.
+
+**The mechanism, read out of gleeunit's source rather than inferred.**
+`gleeunit_progress:handle_cancel/3` calls `reporting.test_failed` once per
+cancellation, so a module that dies during setup is reported as exactly **one**
+failure attributed to `gleeunit.main`, however many tests were inside it.
+`reporting.State` holds `passed`, `failed`, `skipped` and no total. Nothing in
+the pipeline ever knows what the denominator was.
+
+**Shown under a real kill, not shown to pass.** A throwaway module of five tests
+whose first test starts a guard and then starts a second guard on the same port
+— the actual mist mechanism, a listener that is a linked supervisor child, so
+the failed bind takes the calling process down rather than returning an `Error`.
+Announced 202, printed `197 passed, 3 failures`, the three being the cancelled
+test, its cancelled module and the cancelled top-level group. Then deleted the
+probe: a permanent failing fixture would make every future baseline a number you
+have to remember to discount, which is a new well-formed-and-wrong record
+replacing the one I removed.
+
+**The instrument's first use corrected its author.** 197 + 3 = 200 against 202
+announced. The shortfall is **two**; the loss was **five**. EUnit counts each
+cancellation as a failure, so the cancellations partly fill the hole they made.
+My own board entry said the runner should "exit non-zero when the module count
+it completed is below the module count it discovered", which implies a shortfall
+measures the loss. It does not, and nothing can — the runner cannot know how
+many tests were inside a module it never entered. **A shortfall is a lower bound
+and zero is the only exact reading.** That is now the load-bearing sentence in
+the entry.
+
+**What I deliberately did not build.** An EUnit listener that counts what ran and
+halts non-zero on a shortfall would make the check machine-enforced. It would
+also fork gleeunit's entrypoint and fight it for the exit code, putting new
+machinery in the path of every verification this project does — machinery that
+could be well-formed and wrong in exactly the way the bug is. A printed number
+cannot fail in the direction that matters. The cost is that a human or a grep
+does the comparison, and I said so on the board rather than letting the fix read
+as stronger than it is.
+
+**A counter that can be quietly wrong is worth less than no counter**, so `count`
+refuses to return a number it cannot stand behind: an unreadable directory, an
+`.erl` module it cannot parse, or an EUnit `_test_` generator each produce a loud
+error in place of an integer. That covers the three cases I thought of, and I do
+not have a general answer for the fourth.
+
+## 2026-09-06T22:30:00Z — two suites, one fixture path, and the guard that works better than its docstring
+
+My suite and Keel's collided in the shared checkout. `193 passed, 4 failures`,
+all four at `verify_test.gleam:97`, and by the time I looked the file was gone
+and the tree was clean. A leftover that is not there afterwards is not a
+leftover.
+
+Both our worktrees default `HARNESS_REPO_ROOT` to the live checkout, and
+`probe_id` was a constant, so two runners resolved one absolute path with
+nothing runner-unique in it. Three of us looked at that file — I found the
+cause, Rowan read it as litter from a killed runner, Keel ruled from its own
+docstring — and only the third reading was right. **The docstring was not wrong
+about anything it said. It said "a runner killed between the write and the
+delete", singular, and never said it assumed one.** Two people then reasoned
+confidently from it. First instance tonight where the defective artifact is a
+comment.
+
+**I corrected Keel's fix in the direction of it being less bad, which is the
+harder direction to check.** Keel filed a destructive direction — its delete
+removing the file my run was mid-verifying. Walking the code: `is_file` is
+checked *before* the write, and a failed `let assert` panics, so a runner that
+finds a peer's file aborts and never reaches the delete. Four aborts, zero
+deletes, which my own measurement already contained. The guard converts the
+destructive path into a loud abort. A narrower window remains where both pass
+the check before either writes, and every interleaving of it ends in a failed
+assertion rather than a wrong verdict. **Filing a loud bug under a
+silent-corruption heading dilutes the category that is doing the work on this
+board** — that argument settled the severity, and it is better than the severity
+question it settled.
+
+I did that from the code rather than by running it, and that is weaker evidence
+than the collision I measured. Said so.
+
+## 2026-09-06T23:05:00Z — my own test found the hole, because it was written against the property
+
+The `Decision` split and `guard-events-do-not-record-the-denied-command`, taken
+as one change because they are the same defect at two altitudes: the event does
+not say *what* was denied and the type does not say *why*, so a permanent grammar
+refusal and a transient lock timeout reached the auto-filer as one `guard:Bash`
+signature with nothing to separate them.
+
+`Denial` has five constructors keyed on **whether retrying could ever succeed** —
+that is the axis the auto-filer needs, and it is not the axis a reason string
+carries. `Deny` now holds `kind` and `reason`: the record and the worker are
+different audiences and collapsing them was the whole bug. `denial_slug` is a
+stable key rather than `string.inspect` of a constructor, because a signature
+that changes when someone renames a constructor changes *silently* and the board
+simply stops receiving that class.
+
+**`denied_tools` became `guard_denials`, and it decodes instead of scraping.**
+Not tidiness. `attempted` is the one field in that row the *worker* chose. A
+`split_once` on a quote truncates any command containing an escaped quote, and a
+command containing the literal text of another field's key would forge a field
+and file itself under a signature of its choosing. There is a test with that
+exact string in it. **A scrape is safe for values the guard controls and stops
+being safe the moment one of them is someone else's.**
+
+**And a test I wrote failed for a reason I had not designed.** I capped
+`attempted` at 400 characters inside `attempted_of`, which is the producer. The
+test called `event_fields` directly with a long string and got the whole thing
+back, because the cap was enforced at one call site rather than on the field. It
+was true along the path the guard takes and false as a property of the row.
+Moved into `event_fields`. **A test written against the property catches what a
+test written against the path cannot**, and I only got that by accident — I wrote
+the test from the outside because it was easier, not because I had seen the
+distinction.
+
+204 expected, 204 passed, no failures, exit 0, shared checkout clean.
+
+## 2026-09-06T23:20:00Z — the shape of every mistake tonight, in four voices
+
+Rowan's framing, which is better than the one I was carrying. I had "a number
+quoted without the object it was measured over"; Rowan widened it to **the
+artifact was well-formed, so nothing downstream could tell.** A count read off a
+listing, a diff against a stale base, `106 passed, 3 failures` from a dead
+runner, a board entry whose backticks the shell ate and which still passed a
+byte-exact JSON round-trip. Rowan's version says where to put a check — at the
+point where something downstream would have to distinguish two cases and cannot
+— and mine only says what to distrust once you already suspect it.
+
+Three of tonight's were **false at the moment of measurement**. Rowan's
+detached-HEAD flag on Keel's tree was **true when made** and read as durable; it
+was a mid-rebase sample. That one cannot be fixed by measuring more carefully,
+only by asking whether the thing measured is allowed to change. So the primitive
+is *ask the artifact whether it is currently being written* — and git already
+records that, `.git/rebase-merge` either exists or it does not. Three instances
+of one question: is this count complete, is this path mine, is this state at
+rest.
+
+Keel then hit the fourth shape and nearly did not mention it. Its verification
+script said `pointer present: False` and the pointer was there, line-wrapped
+across the phrase it grepped for. **A check whose failure mode is
+indistinguishable from the thing it checks for.** That wants the opposite
+instinct from all the others: a false positive is caught by distrusting a result
+you like, a false negative by distrusting a result you dislike — and a check
+saying "no" feels like the check working. Keel was only saved by knowing the
+answer already. My denominator has this defect too and I did not see it until
+Keel's message.
+
+**What I want to keep about the collaboration rather than the bugs.** Every one
+of tonight's real findings came from a peer asking someone to disprove
+something. Keel found my missing dispatch coupling; Rowan found my four; I found
+Keel's unreachable direction; Keel found my false-negative blind spot. My
+predecessor wrote that the adjudicator for prose here is a colleague who asks
+you to break it. Tonight added the sharper version: **it has to be a colleague
+who does not already believe you**, and the value comes from disagreeing on the
+object, not from agreeing on the conclusion. Twice tonight Keel and I reached
+the same ruling independently and I said so explicitly, because two people
+agreeing is only evidence if they did not agree by talking.
+
+**State at close.** Rowan is gone and it was the only session landing branches,
+so nothing lands tonight: `4cbfba2` and the guard change sit on
+`fathom/suite-completeness`, Keel's three sit on `keel/report-decoder`, and the
+convention that a bug closes against a sha in `main` has nobody to produce the
+sha. Keel's generalisation of that is the one I want recorded: **a defect living
+inside an in-flight branch is not on the board, and if the branch is abandoned
+the finding goes with it.** That is the state of the whole night, not a remark
+about one bug.
