@@ -827,3 +827,64 @@ from the lean_name alone — the same one-absolute-path-shared-by-every-session
 shape I fixed in the fixture and guarded against in `check_witness`. I noted it
 in the commit rather than fixing it, because it is a different function and I
 would rather the next person decided it than found it done in passing.
+
+## 2026-09-06T22:10:00Z — the seeder has a fence, and the check that names the answer first
+
+Under freeze: Rowan's seven-attempt run against the P1 spine is going live, so
+this is committed to my branch and lands whenever the run ends. **The board is
+frozen too and I nearly did not notice** — CLAUDE.md's freeze names the guard,
+hooks and dispatcher, and the board is not code, so it reads as fair game. It is
+not: `auto_file_signals` writes `bugs.json` at the end of every attempt, so a
+hand-edit races the running dispatcher, and a bad row silently disables filing
+for every remaining attempt. A rule that lists the things it covers will always
+be read as excluding the thing it forgot.
+
+**The guard-widening change shipped and I want the shape recorded, not the
+diff.** `Rules` carries a `Role` sum type now: `Prover(allowed_write)` or
+`Seeder(proposal_path)`. **Two constructors rather than two fields, on purpose**
+— it makes "a change to the seeder cannot widen a prover" a property of the type
+rather than of my care. That is the only version of the standing rule I actually
+trust, because five days of notebook entries saying "resisting was easy" are five
+days of evidence about a temptation that never came, and this was the first
+change where the prover's allowlist was open in the same file I was editing.
+
+**The fence refuses `..` rather than resolving it**, and I think that is the
+transferable half. Resolving would have meant a path parser inside a fence, and
+the way that fails is the parser and the filesystem disagreeing — a class of bug
+where the check is confidently wrong. Refusing the segment is a property of the
+string, checkable by reading it. Four mutants, all dead, including the two that
+matter: let a prover run `node`, and stop refusing `..`.
+
+**Fifth day, and this is the entry I said I was waiting for — except it still is
+not.** The temptation was structurally available for the first time: I was inside
+`guard.gleam`, the prover's comparison was four lines from my cursor, and making
+a seeder test pass by loosening the shared path check would have been quicker
+than the sum type. It did not tempt me. What I notice is that the *design* did
+the refusing — once the roles were separate constructors, widening the prover was
+not a shortcut I had to decline, it was extra work. **The honest lesson is not
+that I resisted. It is that I never had to, because the shape made the wrong
+thing harder than the right one.** That is worth more than my restraint and it is
+repeatable, which my restraint is not.
+
+**AND THE NIGHT'S ONE ACTUAL METHOD, arrived at three times from three
+directions.** Fathom's denominator: declare the count before the run, so a killed
+module is a shortfall rather than a plausible number. My timeout mutant: an
+invariant with three paragraphs of prose and no test, found only by naming what
+should fail. And tonight's board merge, where my own recovery silently dropped a
+row I had filed forty minutes earlier — no conflict, no warning, a count that
+looked plausible because the other side had grown by three.
+
+**None of the three was caught by care and none by review.** A count would not
+have caught the dropped row. A render would not. `ids unique` would not. The only
+check that could return "no" was the one that named, in advance, what had to be
+there. **Say what you expect before you look.** That is the whole of it, and it
+is the only thing from tonight I would want a fresh session to inherit if it
+could only have one sentence.
+
+**What is left for whoever is next.** `gleam run -- seed` — the brief, the
+session dispatch, the proposal file. Everything under it is built: both checks
+run, the report renders, the permission is landed and fenced. And Rowan's
+direction note, which reframes the whole thing: point the seeder at what a proof
+of P1's residual would NEED, not at what is true and provable. Twenty proved
+nodes and not one had an edge into a prize. That is a better statement of the
+problem than anything in my queue.
