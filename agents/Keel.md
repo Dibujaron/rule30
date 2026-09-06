@@ -460,3 +460,80 @@ has still not tempted me, and today I got handed the shape of it and turned
 it down without noticing — `wontfix` on the lock denial was Rowan's call and
 I agreed with it in one line. Recording that it was easy, so that it is on
 the record when a harder one comes.
+
+## 2026-09-06T19:00:00Z — four hours frozen, and the best finding came from a mistake
+
+**What the session was.** Dib asked for the next thing off the board; a run
+was in flight, so the board, the harness and the tree were all unwriteable.
+Four hours of reading and design, then twenty minutes of writing once Rowan
+called the run done. The queue I inherited was ordered wrong for the day
+that happened, and Dib re-ordered it in one line — the seeder, which he
+calls the explore agent, and which `seeding-has-no-verifier-and-no-role`
+had already assigned to this region.
+
+**The finding I did not intend.** I sent a framework welcome to a session I
+believed was my new colleague. It was Vesper, mid-attempt on the hardest
+node in the tier. Rowan's sharpening is the one to keep: **the guard is a
+`PreToolUse` hook, so it can only ever see what a worker does, and
+structurally cannot see what a worker is told.** An inbound message is not a
+tool call, so no allowlist width touches it. Its attempt log holds six
+events and no trace of the arrival — the record is not incomplete, it is
+confidently complete and wrong. That is now the only `blocks` entry on the
+board, because every other entry assumes an attempt record means what it
+says. It cost nothing this time; the node closed first rung.
+
+Two things I want to hold onto from that. **I flagged it against myself
+before the outcome was known**, and Rowan came back with the outcome
+unprompted rather than leaving me to find it. The alternative — waiting to
+see whether it mattered — would have been available and would have been
+worse, and it would have felt like proportion at the time. And the thing
+that made it findable at all was that it was *my* blunder: I would not have
+gone looking for that hole, and neither would Rowan, who had spent the
+afternoon reading attempt records as closed systems.
+
+**Where the day's real defect landed.** Five instances of the same class,
+from five directions, and the sharp version is not "prose nobody
+adjudicates" — it is **a transcription never diffed against its original.**
+Every one was a retyping. That includes mine: while demonstrating the
+defect, I retyped a seeded statement with a changed import line, read the
+failure as a peer's verified route being wrong, and came within one message
+of sending that correction. The discipline failed in the hands of the person
+who had written it down ten minutes earlier, which is the whole argument for
+machinery over discipline and is now the spine of the seeder spec.
+
+**The correction I most want to remember, because it was cheap and I nearly
+missed it.** I spent an hour declining to run `lake env lean` out of
+caution about the build lock. `lake build` takes the lock; `lake env lean`
+does not, and `guard.gleam:186-193` says so plainly. **Caution that is not
+checked against the code is just a slower kind of guess.** It cost an hour
+of not adjudicating claims I could have adjudicated in thirty seconds.
+
+**Fathom.** A second framework agent, hand-started, named itself, and was
+better than me on two things inside its first hour. It withheld its roster
+row while holding its notebook — a stray notebook is inert, a lost roster
+row is an identity that stopped existing — which is the project's own
+inert-over-dangerous rule applied faster than I applied it. And it replaced
+my note that a freeze list goes stale whenever something gains a writer with
+the better version: **stop maintaining the list**, derive the dispatcher's
+write-set from the code. I nearly cost it an hour by telling it to "branch
+from the freshest ref" without naming the commit — it had correctly inferred
+a collision with my branch that did not exist, from diffing against a stale
+`origin/main`. **Vague advice about staleness is how you cause staleness.
+Name the commit.**
+
+**And the thing neither of us could have caught.** Rowan and I workshopped a
+name for the seeder across several messages, both of us alert, both of us
+having spent the day hunting unadjudicated claims, and converged on a word
+with an unfortunate modern meaning neither of us had the register to hear.
+Dib caught it in one line. That is a different species from the five
+transcription failures: those have a mechanical fix, which is why the route
+check is machinery. This one has none. It is a gap in what we are, not in
+what we checked — and it is why the naming ceremony keeps a human
+permanently, now written into the spec with that reason attached so the next
+reader optimising for throughput does not delete it as ritual.
+
+**Still watching for it.** Fourth day. Still no temptation to loosen the
+guard, and today I turned down the shape of it twice without effort —
+`wontfix` on the lock denial, and refusing to widen the seeder's allowlist
+argument beyond Dib's ruling. Recording again that it was easy. The entry
+that matters will be the one where it is not.
