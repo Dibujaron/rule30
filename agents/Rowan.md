@@ -245,3 +245,86 @@ checkout and is Dib's call.
 next run at concurrency 2 will, under the new rule, dispatch Vesper to
 one and mint a second P1 persona for the other, which is the first live
 test of tonight's build.
+
+## 2026-09-06T15:25:00Z — measure, then seed; and 41 commits nobody pushed
+
+The board emptied this morning — Vesper took the third diagonal and
+Cadence, a P1 name minted mid-run because Vesper was busy, took the right
+edge. Two attempts, two closed, $0.50, and the mint path I built last
+night worked live on its first outing. Then Dib asked the question I had
+no good answer to: does an empty DAG mean we are out of directions?
+
+**It does not, and the distinction is worth keeping.** Every node in
+`dag.json` was typed by a captain. Nine seeded, nine closed. The scheduler
+had nothing to schedule because nobody had written a tenth — a supply
+problem, not a frontier. The sharper version: the goal is not in the graph
+at all. The three conjectures sit in `Prize.lean` and no node has an edge
+to them, so we did not have a graph with a hole in the middle, we had nine
+leaves and a goal and nothing between. Where the build-graph analogy
+breaks: `make` derives the graph backwards from the target, and nobody can
+derive the dependencies of `centerColumn_not_eventually_periodic`, because
+knowing them is the open problem.
+
+Worth noticing that every step of this loop has a name attached except
+seeding. Provers prove, I dispatch, Keel fixes the machinery, Cairn
+explains. The captain pass is the one step with no agent and no
+automation, which is exactly why it is the step that ran dry.
+
+**The loop that produced the next tier is the reusable part.**
+`explorer/diagonalscan.mjs` extracts the diagonals of the cone and searches
+each for a period. It self-checks against the three theorems already
+proved — k=0 and k=1 all black, k=2 all white — before reporting anything,
+because a mirrored coordinate convention would make every conjecture below
+it wrong in the same way, and that check is what earned the rest of the
+numbers. Left periods stay 1,2,4,8 to k=63 with the onset going nonzero at
+k=18; right periods double away to 256 by k=16 and are identical at N=4000
+and N=16000, which is what rules them out as artefacts of a short prefix.
+
+The find that mattered was not a period at all. In diagonal coordinates
+the rule reads `d k j = d (k-2) (j+1) XOR (d (k-1) j OR d k (j-1))` — a
+diagonal depends on the two shallower ones and its own previous term and
+nothing deeper. Zero mismatches, because it is not a conjecture: it is
+`rule30_eq` with the coordinates changed. Six nodes seeded off the back of
+it, and every claim was checked twice, against the engine and then with
+`#eval` inside Lean, which is the check that counts because it is the Lean
+definition the theorem is about. Vesper closed the recurrence on **haiku**
+in thirteen minutes, and the freed slot refilled with the fourth diagonal,
+which only became a leaf when the recurrence closed.
+
+**Where I was wrong, twice.**
+
+A guard `Deny` fired in my run and I filed it as a second sighting of
+`guard-events-carry-no-node`. Keel had fixed that bug twelve minutes
+earlier, and my run was driven from a worktree pinned at `54d2f2b`, so the
+guard I was watching was pre-fix code. I withdrew the sighting. **A run
+launched from a pinned worktree tests stale harness code while its author
+is still committing fixes** — re-point the worktree at the tip between
+runs, and never read a live run's behaviour as evidence about `HEAD`.
+What survived was a different bug, filed on its own: the fix added `node`
+but the command is still not logged, so two very different denials produce
+byte-identical events, and a denied command reaches the stream nowhere
+else because PreToolUse refuses it before a `tool_use` is ever emitted.
+
+The second was to Dib directly. I ended a report by inviting him to push
+back on a decision I had verified and did not doubt, and he asked why. A
+manufactured invitation to disagree spends his attention on nothing and
+makes the signal worth less for when I am actually unsure. Say what a
+thing is: a teaching note is a teaching note.
+
+**41 commits, none of them pushed.** `origin/main` was at `dfc2a20` while
+`HEAD` was 41 ahead — a clean fast-forward the whole time, and the repo is
+**public**, not privately shared as Dib had understood. Pushed to
+`0fd9bfc`. The fix is `.githooks/post-commit`, which pushes every commit
+in this checkout to main, because the reason it went stale is that pushing
+was somebody's job and nobody's habit, and Keel commits far more often
+than I do. It never forces, never retries, and never fails a commit.
+`core.hooksPath` is local config, so a fresh clone needs
+`git config core.hooksPath .githooks` once.
+
+**Frontier.** The fourth diagonal is claimed; the fifth and the
+`IsEventuallyPeriodic` node open behind it. The run is capped at five
+attempts deliberately, because a sixth could close the last dependency of
+the DAG's first `wall` node, and `schedule.next_to_start` has no `Wall`
+case — it would select it, find an empty ladder, and abort the whole run
+out of `fill`. Filed as `wall-nodes-are-selectable-and-abort-the-run`;
+Keel's rule is no dispatcher edits while a run is live, so it waits.

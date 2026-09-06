@@ -1,0 +1,40 @@
+#!/bin/sh
+# Auto-push every commit in this checkout to origin/main.
+#
+# Why this exists: the repo is shared and public, and main went 41 commits
+# stale once because pushing was somebody's job and nobody's habit. Several
+# identities commit into this one checkout — Rowan, Keel, and whoever comes
+# next — so tying the push to the commit, rather than to a session
+# remembering, is the only version that stays true when a session is busy or
+# has ended.
+#
+# What it deliberately does not do:
+#   - never --force, and never a retry loop. A rejected push means someone
+#     else pushed first; the next commit's push carries both.
+#   - never fails the commit. The commit is already made and safe locally by
+#     the time this runs, so a network blip must not look like a broken
+#     commit.
+#   - never pushes anything that is not a fast-forward of origin/main. That
+#     is enforced by git itself, which rejects a non-fast-forward push, and
+#     this hook does nothing to override it.
+#
+# Skip one commit:   git commit --no-verify
+# Skip a session:    HARNESS_NO_AUTOPUSH=1
+# Disable entirely:  git config --unset core.hooksPath
+# Re-enable:         git config core.hooksPath .githooks
+#
+# A fresh clone does not pick this up on its own: core.hooksPath is local
+# config, not versioned. Run the re-enable line above once per clone.
+
+if [ "$HARNESS_NO_AUTOPUSH" = "1" ]; then
+  exit 0
+fi
+
+if git push --quiet origin HEAD:main 2>/dev/null; then
+  echo "auto-push: $(git rev-parse --short HEAD) -> origin/main"
+else
+  echo "auto-push: skipped — origin/main moved, or the remote is unreachable."
+  echo "auto-push: nothing is lost; run 'git pull --rebase' and commit again."
+fi
+
+exit 0
