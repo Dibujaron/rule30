@@ -31,9 +31,9 @@ import simplifile
 ///
 /// `holder` is the **node id**, not an identity: the dispatcher passes
 /// `node_id`, and one attempt sits at one node, so the node id is already a
-/// unique lock name. It is therefore also what says which worker a decision
-/// belongs to when three guards share one `events.jsonl` — which is why
-/// `event_fields` logs it as `node`.
+/// unique lock name. `event_fields` logs it as `node` so a decision row says
+/// which node it came from without the reader having to know which attempt
+/// directory it was found in.
 pub type Rules {
   Rules(repo_root: String, allowed_write: String, holder: String)
 }
@@ -394,8 +394,9 @@ fn respond_to_hook(
 }
 
 /// The fields logged for one guard decision. Pulled out of `respond_to_hook`
-/// so it can be tested without standing up the HTTP server, and because the
-/// `node` key is what makes a denial attributable under `--concurrency 3`.
+/// so it can be tested without standing up the HTTP server. `dispatch`
+/// reads these rows back by literal substring to auto-file guard bugs, so
+/// these key names are a contract with another module, not just a format.
 pub fn event_fields(
   rules: Rules,
   event_name: String,

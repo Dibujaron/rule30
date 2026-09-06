@@ -8,6 +8,8 @@ import gleam/string
 import harness/config
 import harness/dag.{Attempt, Dag, Node}
 import harness/dispatch
+import harness/guard
+import harness/log
 import harness/worker
 import simplifile
 
@@ -256,4 +258,48 @@ pub fn worth_filing_drops_a_bug_that_lost_its_title_test() {
   let titleless =
     worker.ReportedBug(title: "", area: "guard", severity: "friction", body: "")
   assert dispatch.worth_filing([good, titleless]) == [good]
+}
+
+// --- reading the guard's rows back -------------------------------------------------
+
+/// `denied_tools` finds guard denials by literal substring in JSON that
+/// `guard` and `log` write, two modules away. Build the rows with the real
+/// producer rather than by hand, so a rename on either side fails here — a
+/// hand-written fixture would keep passing while the harness quietly filed
+/// nothing for the rest of the project's life.
+pub fn denied_tools_reads_the_rows_the_guard_actually_writes_test() {
+  let dir = "build/test-runs/denied-tools"
+  let _ = simplifile.delete(dir)
+  let assert Ok(l) = log.open(dir, "run")
+  let at = fn(node_id) {
+    guard.Rules(
+      repo_root: "C:\\r",
+      allowed_write: "C:\\r\\Rule30\\Proofs\\X.lean",
+      holder: node_id,
+    )
+  }
+  let write = fn(node_id, tool, decision) {
+    log.event(
+      l,
+      "guard",
+      guard.event_fields(at(node_id), "PreToolUse", tool, decision),
+    )
+  }
+  write("probe_one", "Bash", guard.Deny("shell operators are not allowed"))
+  write("probe_one", "Bash", guard.Deny("shell operators are not allowed"))
+  write("probe_one", "Edit", guard.Allow)
+  write("probe_two", "Write", guard.Deny("outside the proof file"))
+
+  // Denials only, one row per tool however often it was refused, and
+  // nothing belonging to the node next door.
+  assert dispatch.denied_tools(l, "probe_one") == ["Bash"]
+  assert dispatch.denied_tools(l, "probe_two") == ["Write"]
+  assert dispatch.denied_tools(l, "probe_three") == []
+}
+
+/// An attempt that died before its log existed files nothing rather than
+/// crashing the dispatcher on the way out of a failed run.
+pub fn denied_tools_is_empty_without_a_log_test() {
+  let missing = log.Log(dir: "build/test-runs/no-such-attempt", run_id: "run")
+  assert dispatch.denied_tools(missing, "probe_one") == []
 }

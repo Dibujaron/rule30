@@ -1086,14 +1086,22 @@ fn auto_file(
   }
 }
 
-/// The distinct tools this attempt was denied, read back from the run's
-/// event log. Task 4 put the node on every guard row, which is the only
-/// reason this is attributable when three guards share one `events.jsonl`.
+/// The distinct tools this attempt was denied, read back from the guard's
+/// own rows in the attempt's event log.
+///
+/// The `node` filter is belt and braces rather than what makes a denial
+/// attributable: `run` gives every attempt its own
+/// `runs/<run-id>/<node>-<n>/events.jsonl` and hands that same log to that
+/// attempt's guard, so the directory already says whose denial it was. The
+/// filter costs one substring and keeps this correct if a guard is ever
+/// pointed at a log it shares.
 ///
 /// Matched line-wise rather than decoded: the log is one JSON object per
 /// line and may hold thousands of rows by the end of a run, and a missed
-/// match costs a bug that gets filed next time, not a wrong one.
-fn denied_tools(l: log.Log, node_id: String) -> List(String) {
+/// match costs a bug that gets filed next time, not a wrong one. The
+/// literals are `guard`'s to change, which is what
+/// `denied_tools_reads_the_rows_the_guard_actually_writes_test` pins.
+pub fn denied_tools(l: log.Log, node_id: String) -> List(String) {
   case simplifile.read(l.dir <> "/events.jsonl") {
     Error(_) -> []
     Ok(text) ->
