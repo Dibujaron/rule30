@@ -107,7 +107,7 @@ fn pad(text: String, width: Int) -> String {
 /// Read `--flag value` out of the argument list, parsing it with `parse`. An
 /// absent flag is `None`; a present flag with an unparseable value is an
 /// error, because silently ignoring a typo'd filter shows the wrong board.
-fn flag_value(
+pub fn flag_value(
   flags: List(String),
   name: String,
   parse: fn(String) -> Result(a, Nil),
@@ -118,6 +118,7 @@ fn flag_value(
       parse(value)
       |> result.map(Some)
       |> result.replace_error("unknown " <> label <> " `" <> value <> "`")
+    [flag] if flag == name -> Error(name <> " needs a value")
     [_, ..rest] -> flag_value(rest, name, parse, label)
     [] -> Ok(None)
   }
