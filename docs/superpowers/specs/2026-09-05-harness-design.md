@@ -276,8 +276,10 @@ The identity system the messageboard spec refers to, now written down.
   few and stable (P1, P2; P3 gets no identity because it must not be
   dispatched). Nodes come and go; the notebook accumulates Mathlib
   navigation, dead ends, and conventions for its region.
-- **Instances are ephemeral.** Several concurrent workers can run as one
-  identity if they share its notebook. The identity is the notebook.
+- **Instances are ephemeral.** The identity is the notebook. Since
+  2026-09-06 only one session runs as an identity at a time; a region whose
+  identities are all busy gets a new one minted for it (see
+  `2026-09-06-one-session-per-persona-design.md`).
 - **The scorecard is computed, never written.** Nodes closed, abandoned,
   verification pass rate, cost per close, and **calibration**: the
   identity's size estimates against actual turns. A name then carries

@@ -110,10 +110,14 @@ Read the theorem DAG as a Gradle task graph. This one holds up well:
 | the **frontier** | the current set of ready tasks |
 | closing a leaf | a task completing, freeing its dependents |
 | dispatcher | the scheduler picking ready tasks |
+| persona | a worker that can hold one task at a time — a named lock with capacity one |
+| **mint** | the scheduler creating a new worker because every worker for that region is busy |
 
 Where it breaks: build tasks are cached by input hash, whereas a proof is
 either there or not — and a proof can be *wrong* in ways a build artifact can't
-(see below).
+(see below). And a build system's worker pool is fixed and interchangeable;
+here the pool grows on demand, and a minted persona starts with an empty
+notebook, so it is not a copy of the one beside it.
 
 ## The `sorry` hazard
 
