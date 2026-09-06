@@ -133,18 +133,129 @@ theorem evolve_left_fourth_diagonal_isEventuallyPeriodic :
     IsEventuallyPeriodic (fun j => evolve (j + 3) (-(j : ℤ))) := by
   sorry
 
+/-! ### The induction that closes the left side
+
+Read `evolve_left_diagonal_recurrence` in the coordinates it is about — write
+`d k j` for `evolve (j + k) (-j)`, the cell `j` steps along the `k`-th
+diagonal — and it says
+
+```
+d (m+2) (i+1) = d m (i+2) XOR (d (m+1) (i+1) OR d (m+2) i)
+```
+
+so diagonal `m+2` is **a one-bit machine driven by the two diagonals below
+it**: its next value is a fixed function of its own current value and two
+inputs read off shallower diagonals. Writing `a i = d m (i+2)` for one input,
+`b i = d (m+1) (i+1)` for the other and `x i = d (m+2) i` for the state,
+
+```
+x (i+1) = a i XOR (b i OR x i)
+```
+
+Now suppose the two inputs have both settled into repeating with period `p`.
+For each `i` the update is one of the four functions from `Bool` to `Bool`,
+so the whole cycle of `p` updates composes to one of those four functions,
+and *every* function on a two-element set satisfies `f (f (f x)) = f x` —
+there is nothing else it could do, since the only self-maps of a two-element
+set are the identity, the swap, and the two constants. Applying the cycle
+three times therefore does what applying it once does, which says exactly
+that `x` repeats with period `2p` once one cycle has gone by.
+
+Periodicity of two neighbouring diagonals thus carries to the next one, and
+since the first two are constant, induction settles the whole left side.
+
+The four lemmas below are that argument in order: the fact about two-element
+sets, two pieces of bookkeeping about eventual periods, and the driven
+sequence itself. Only the last of them contains any difficulty.
+
+`explorer/diagonalinduction.mjs` checks the rearranged recurrence against the
+engine at 95,408 index pairs, brute-forces the driven claim over every driver
+window, and confirms the measured onsets obey the bound this argument
+predicts — which is where the growing onsets come from: each diagonal needs a
+full cycle of its inputs before its own state is forced, so the onset
+accumulates about one period per step down the family. -/
+
+/-- **A map from `Bool` to `Bool` is its own cube.** Applying any such
+function three times is the same as applying it once, because the only four
+candidates are the identity, negation, and the two constants, and each is
+unchanged after three applications.
+
+The whole engine of the diagonal induction, and small enough that Lean can
+check all four cases by brute force. -/
+theorem bool_map_iterate_three (f : Bool → Bool) : f^[3] = f := by
+  sorry
+
+/-- **Reading a sequence from further along does not disturb its period.** If
+a sequence eventually repeats, so does the sequence that starts `s` places
+into it. Needed because the two inputs driving a diagonal are the shallower
+diagonals read at a small offset, not read from the beginning. -/
+theorem isEventuallyPeriodic_shift (f : ℕ → Bool) (s : ℕ)
+    (h : IsEventuallyPeriodic f) :
+    IsEventuallyPeriodic fun j => f (j + s) := by
+  sorry
+
+/-- **Two eventually periodic sequences share a period.** Given one repeating
+with period `p` and another with period `q`, both repeat with period `p * q`,
+from the later of their two starting points.
+
+Bookkeeping, but load-bearing: the driven-sequence lemma needs a *single*
+period governing both of its inputs, and the two diagonals feeding a third
+have no reason to arrive with the same one. -/
+theorem isEventuallyPeriodic_common_period (f g : ℕ → Bool)
+    (hf : IsEventuallyPeriodic f) (hg : IsEventuallyPeriodic g) :
+    ∃ p > 0, ∃ N, (∀ n ≥ N, f (n + p) = f n) ∧ (∀ n ≥ N, g (n + p) = g n) := by
+  sorry
+
+/-- **A one-bit machine driven by repeating inputs ends up repeating.** If
+`x` steps by `x (i+1) = a i XOR (b i OR x i)`, and both inputs `a` and `b`
+repeat with period `p` from `N` on, then `x` repeats with period `2 p` from
+`N + p` on.
+
+Both numbers in that conclusion are as small as they can be, and neither is
+slack. The period really can need doubling — inputs of period `p` exist for
+which `x` has period exactly `2 p` — and the delay really is needed, because
+`x` may start on any value at all and needs one full cycle before the inputs
+have overwritten it. Checked exhaustively over every driver window up to
+`p = 5`, including both of those failures.
+
+This is the one lemma in the tier with work in it. The argument is the
+composition of one cycle of updates, which is a function from `Bool` to
+`Bool`; `bool_map_iterate_three` then says three cycles do what one cycle
+does. Building that composite wants an auxiliary definition, which a proof
+file is free to carry — nothing in the harness requires a file to hold only
+its theorem. -/
+theorem bool_driven_eventually_two_periodic (a b x : ℕ → Bool) (p N : ℕ)
+    (hp : 0 < p) (hrec : ∀ i, x (i + 1) = xor (a i) (b i || x i))
+    (ha : ∀ i ≥ N, a (i + p) = a i) (hb : ∀ i ≥ N, b (i + p) = b i) :
+    ∀ i ≥ N + p, x (i + 2 * p) = x i := by
+  sorry
+
+/-- **Periodicity carries one diagonal further in.** If the `m`-th and
+`(m+1)`-th left diagonals are both eventually periodic, so is the `(m+2)`-th.
+
+The induction step, and the only place the automaton meets the four lemmas
+above: rewrite `evolve_left_diagonal_recurrence` into the driven form, shift
+the two shallower diagonals into position, put them on a common period, and
+apply the driven-sequence lemma. -/
+theorem evolve_left_diagonal_isEventuallyPeriodic_step (m : ℕ)
+    (h0 : IsEventuallyPeriodic fun j => evolve (j + m) (-(j : ℤ)))
+    (h1 : IsEventuallyPeriodic fun j => evolve (j + (m + 1)) (-(j : ℤ))) :
+    IsEventuallyPeriodic fun j => evolve (j + (m + 2)) (-(j : ℤ)) := by
+  sorry
+
 /-- **Every left diagonal is eventually periodic.** The target the lemmas
 above are steps towards, and the first node in this project that is a goal
 rather than a step.
 
 This is *not* a prize conjecture and must not be filed as one: it is a claim
-about the edge of the cone, where periodicity is already proved for the first
-three diagonals, not about the centre. But it is not a small statement
-either. The measurement supports it to `k = 63` and no further, the onset
-grows with `k`, and a proof needs an argument about all `k` at once — the
-recurrence above says diagonal `k` is a function of finitely many shallower
-ones, which is the shape such an argument would take, and is not itself
-such an argument. Do not dispatch this; decompose it. -/
+about the edge of the cone, where periodicity is provable, not about the
+centre column, where the whole content of Wolfram's first question is that it
+fails.
+
+Given the step lemma this is short: strong induction on `k`, with the two
+base cases handed over by `evolve_left_edge` and
+`evolve_left_second_diagonal`, both of which are constant and so repeat with
+period 1 from the start. -/
 theorem evolve_left_diagonals_isEventuallyPeriodic :
     ∀ k : ℕ, IsEventuallyPeriodic (fun j => evolve (j + k) (-(j : ℤ))) := by
   sorry
