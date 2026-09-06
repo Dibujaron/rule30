@@ -251,6 +251,8 @@ pub fn region_description(region: String) -> String {
       "the geometry of the light cone and its edges, where periodicity provably holds"
     "P2" ->
       "the density bookkeeping behind the balance conjecture: counting black cells and bounding ratios in ℝ"
+    "framework" ->
+      "the harness itself: the dispatcher, the guard, the verifier and the board every prover runs inside"
     other -> other
   }
 }

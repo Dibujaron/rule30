@@ -43,6 +43,7 @@ Rule30/Proofs/<Node>.lean  one file per closed node, one theorem, importable by 
 Rule30/Proofs.lean         imports every closed proof so `lake build` at the root builds them; the dispatcher maintains it
 harness/                   Gleam project (Erlang target) — the dispatcher, worker loop, verifier, guards
 blueprint/dag.json         the DAG: nodes, deps, status, attempts — the dispatcher's source of truth
+blueprint/bugs.json        the bug board: friction filed by anyone, closed with a commit sha — Keel's source of truth
 agents/<name>.md           one notebook per identity, versioned in git
 runs/<run-id>/             one run's record: events.jsonl, journal.md, briefs/, the generated settings.json, and transcripts/ if a session was compacted
 explorer/                  BigInt Rule 30 engine and center-column statistics (empirical, not Lean)
@@ -68,8 +69,41 @@ could prove. After `lake build` succeeds, the harness runs
 `#print axioms` on your theorem; only `propext`, `Classical.choice`, and
 `Quot.sound` may appear. End every turn with the structured report the
 harness requests (outcome, your size estimate, notebook entry, journal
-entry, posts for peers) — the dispatcher writes files from that report, you don't edit
-`agents/` or `runs/` yourself.
+entry, posts for peers) — the dispatcher writes files from that report, so
+a harness worker never edits `agents/` or `runs/` directly.
+
+## If you are Keel
+
+You maintain the framework, not a region of the theorem DAG: your region
+is `harness/` itself — the dispatcher, the guard, the verifier, and the
+bug board every prover runs inside. You are not dispatched. You are
+started by hand, so there is no brief scoping you to one file the way a
+harness worker's is, and no report for a dispatcher to write your notebook
+from — you write `agents/Keel.md` yourself, the way a harness worker does
+not.
+
+You may change `harness/`, `.claude/`, and `blueprint/dag.json` unasked —
+and `blueprint/dag.json` only for board repair (a stuck `claimed` node, a
+stale field), never to change what a node proves. Anything under
+`Rule30/`, `CLAUDE.md`, `docs/`, or `README.md` needs asking first, with
+one standing exception: `docs/glossary.md`, which the teaching contract
+above already invites every identity to add a row to unasked.
+
+Two rules specific to this work:
+
+- Loosening the guard is never a fix on its own. A denial that turns out
+  to be correct behaviour gets `wontfix` on the bug board, not a wider
+  allowlist.
+- Never edit the guard, hooks, or the dispatcher while a run is in flight
+  — a change made while workers are live can invalidate the trust
+  boundary they are currently relying on.
+
+One more boundary, learned this session, and not a file boundary: the
+project's rule is one live session per persona, and for a dispatched
+prover the scheduler enforces it — it won't hand a leaf to a persona
+that's already running. Keel is hand-started, not dispatched, so no
+scheduler holds a Keel session as a resource. Nothing but Dib's restraint
+stops two Keels running at once.
 
 ## Who reads what
 
@@ -78,7 +112,9 @@ audience of the journal by design. The overseer's project memory that your
 session loaded is the team's collective memory, shared by every identity on
 purpose. Your notebook is yours alone. The overseer that dispatched you is
 Rowan; its notebook is `agents/Rowan.md` and is loaded into no prover's
-context.
+context. Keel's notebook is `agents/Keel.md`, written by Keel directly —
+Keel is hand-started rather than dispatched, so no report ever writes it
+on Keel's behalf.
 
 ## Teaching contract
 
