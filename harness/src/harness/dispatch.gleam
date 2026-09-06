@@ -1002,7 +1002,7 @@ fn file_reported_bugs(
         ])
       })
       case bugs.load(cfg.bugs_path) {
-        Error(reason) -> io.println_error("harness/dispatch: " <> reason)
+        Error(reason) -> filing_disabled(l, reason)
         Ok(board) -> {
           let board =
             list.fold(reported, board, fn(board, rb) {
@@ -1040,6 +1040,24 @@ fn file_reported_bugs(
   }
 }
 
+/// A board that will not decode means nothing gets filed for the rest of the
+/// run, and "nothing filed" is exactly what a clean run looks like. So this
+/// goes in the attempt's own event log as well as to stderr: a run whose
+/// filing channel was off must say so in the record a reader actually has,
+/// not only in a console line nobody kept.
+fn filing_disabled(l: log.Log, reason: String) -> Nil {
+  io.println_error("harness/dispatch: " <> reason)
+  log.event(l, "filing_disabled", [
+    #("reason", json.string(reason)),
+    #(
+      "effect",
+      json.string(
+        "no bug was filed for this attempt; the board must be repaired before the next run",
+      ),
+    ),
+  ])
+}
+
 /// Bugs the harness files about itself, from signals it already has. Every
 /// one carries a signature, so a run that trips the same fault forty times
 /// leaves one row with `occurrences: 40` rather than forty rows.
@@ -1055,7 +1073,7 @@ fn auto_file(
   signature: String,
 ) -> Nil {
   case bugs.load(cfg.bugs_path) {
-    Error(reason) -> io.println_error("harness/dispatch: " <> reason)
+    Error(reason) -> filing_disabled(l, reason)
     Ok(board) -> {
       let board =
         bugs.append(

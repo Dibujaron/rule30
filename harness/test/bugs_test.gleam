@@ -1,6 +1,7 @@
 import gleam/int
 import gleam/list
 import gleam/option.{None, Some}
+import gleam/result
 import gleam/string
 import harness/bugs.{type Bug, Board, Bug}
 
@@ -239,4 +240,92 @@ pub fn a_run_of_identical_denials_files_one_bug_test() {
 
 fn pad2(n: Int) -> String {
   string.pad_start(int.to_string(n), 2, "0")
+}
+
+// --- a board that will not decode ------------------------------------------
+
+/// One row missing a field must be named, by index and by id.
+///
+/// The failure this replaces reported the nine fields it wanted and not the
+/// row that lacked them, which on a board of thirty entries is a bisect.
+pub fn a_malformed_row_is_named_by_index_and_id_test() {
+  let text =
+    "{\"bugs\":["
+    <> good_row("first")
+    <> ",{\"id\":\"broken\",\"title\":\"t\"},"
+    <> good_row("third")
+    <> "]}"
+  let assert Error(reason) = bugs.decode(text)
+  assert string.contains(reason, "entry 1")
+  assert string.contains(reason, "\"broken\"")
+  // The rows that are fine are not named, or the message is a haystack too.
+  assert !string.contains(reason, "\"first\"")
+  assert !string.contains(reason, "\"third\"")
+}
+
+/// A row so broken it has no readable id still gets located by index.
+pub fn a_row_without_an_id_is_still_located_test() {
+  let text = "{\"bugs\":[" <> good_row("first") <> ",{\"title\":42}]}"
+  let assert Error(reason) = bugs.decode(text)
+  assert string.contains(reason, "entry 1")
+  assert string.contains(reason, "no readable id")
+}
+
+/// The count is stated so a reader knows whether they are fixing one row or
+/// a board somebody generated wrong.
+pub fn the_message_counts_the_malformed_entries_test() {
+  let text =
+    "{\"bugs\":[{\"id\":\"a\"},{\"id\":\"b\"}," <> good_row("ok") <> "]}"
+  let assert Error(reason) = bugs.decode(text)
+  assert string.contains(reason, "2 of 3 entries are malformed")
+}
+
+/// **The load must not silently drop the bad row.** `save` re-encodes the
+/// whole file from whatever `load` returned, so a lenient decode would delete
+/// a filed bug at the next save.
+///
+/// A DOCUMENTED DUPLICATE, and worth keeping for one reason. This was written
+/// as the test that pinned the strictness, and it is not:
+/// `unknown_area_fails_the_decode_test` and `unknown_status_fails_the_decode_
+/// test` above already did, and both predate it — a mutation to the lenient
+/// decode kills all three. What this one adds is the *reason*, which the
+/// other two do not state: they pin that a bad value is refused, this pins
+/// why refusing rather than dropping is the safe direction here. Found by
+/// mutating the decode and being surprised at the body count, which is the
+/// only way anyone was going to notice.
+pub fn a_board_with_one_bad_row_does_not_decode_to_the_good_ones_test() {
+  let text =
+    "{\"bugs\":["
+    <> good_row("first")
+    <> ",{\"id\":\"broken\"},"
+    <> good_row("third")
+    <> "]}"
+  assert result.is_error(bugs.decode(text))
+}
+
+/// A board that is not a `{"bugs": [...]}` object at all has no rows to
+/// blame, so the raw parse error is the most specific thing available and is
+/// what the reader gets.
+pub fn a_board_that_is_not_a_board_reports_the_parse_error_test() {
+  let assert Error(reason) = bugs.decode("[]")
+  assert !string.contains(reason, "entries are malformed")
+}
+
+/// A whole, valid board still decodes — the check above must not have been
+/// bought by making everything fail.
+pub fn a_valid_board_still_decodes_test() {
+  let text =
+    "{\"bugs\":[" <> good_row("first") <> "," <> good_row("second") <> "]}"
+  let assert Ok(board) = bugs.decode(text)
+  assert list.map(board.bugs, fn(b: Bug) { b.id }) == ["first", "second"]
+}
+
+fn good_row(id: String) -> String {
+  "{\"id\":\""
+  <> id
+  <> "\",\"title\":\"t\",\"area\":\"guard\",\"severity\":\"friction\","
+  <> "\"body\":\"b\",\"reported_by\":\"Fathom\",\"source\":\"hand\","
+  <> "\"node\":null,\"run\":null,\"session_id\":null,\"signature\":null,"
+  <> "\"filed\":\"2026-09-07T00:00:00Z\",\"occurrences\":1,\"status\":\"open\","
+  <> "\"resolution\":null,\"fixed\":null}"
 }

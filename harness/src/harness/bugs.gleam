@@ -94,9 +94,98 @@ pub type Board {
 }
 
 /// Parse a `Board` from its JSON text representation.
+///
+/// On failure this says **which entry** is bad, by index and by id, and then
+/// still fails. Both halves are deliberate.
+///
+/// *Located*, because `decode.list(bug_decoder())` fails as a unit: it
+/// reports the fields it wanted and not the row that lacked them, so finding
+/// the offender on a board of thirty is a bisect. A hand-written entry that
+/// omits a field is the ordinary way this happens — the schema is wider than
+/// any single entry displays, so reading the file to learn the shape teaches
+/// you a subset with nothing to say it is one.
+///
+/// *Still fails*, and this is the part where the obvious fix is wrong. The
+/// same defect in a worker's report was fixed by decoding elements
+/// independently and dropping the bad ones, because there the dropped thing
+/// is an optional extra and nothing rewrites the file from it. Neither holds
+/// here. A row on this board **is** a filed bug, and `save` re-encodes the
+/// whole file from whatever `load` returned — so a silent drop at load
+/// becomes a permanent deletion at the next save. Leniency here would delete
+/// bug reports to avoid an error message.
 pub fn decode(text: String) -> Result(Board, String) {
-  json.parse(from: text, using: board_decoder())
-  |> result.map_error(fn(e) { string.inspect(e) })
+  case json.parse(from: text, using: board_decoder()) {
+    Ok(board) -> Ok(board)
+    Error(whole) ->
+      case json.parse(from: text, using: rows_decoder()) {
+        // The board is not even a `{"bugs": [...]}` shape, so there are no
+        // rows to blame and the original error is the most specific thing
+        // there is.
+        Error(_) -> Error(string.inspect(whole))
+        Ok(rows) ->
+          case list.filter_map(list.index_map(rows, bad_row), fn(r) { r }) {
+            // Every row decodes on its own but the board does not. Nothing
+            // here can localise that, so say so rather than implying the
+            // rows were not checked.
+            [] ->
+              Error(
+                "the bug board did not decode, and every entry decodes on its "
+                <> "own, so the fault is in the surrounding object: "
+                <> string.inspect(whole),
+              )
+            faults ->
+              Error(
+                "the bug board did not decode. "
+                <> int.to_string(list.length(faults))
+                <> " of "
+                <> int.to_string(list.length(rows))
+                <> " entries are malformed, and the whole board is refused "
+                <> "rather than the entries dropped, because dropping one "
+                <> "here deletes a filed bug at the next save:
+"
+                <> string.join(
+                  faults,
+                  "
+",
+                ),
+              )
+          }
+      }
+  }
+}
+
+/// The board as untyped rows, so each can be judged on its own.
+fn rows_decoder() -> decode.Decoder(List(decode.Dynamic)) {
+  use rows <- decode.field("bugs", decode.list(decode.dynamic))
+  decode.success(rows)
+}
+
+/// `Ok(description)` when row `index` does not decode, `Error(Nil)` when it
+/// does. Named by id where the row has one, because an index alone sends the
+/// reader counting braces.
+fn bad_row(row: decode.Dynamic, index: Int) -> Result(String, Nil) {
+  case decode.run(row, bug_decoder()) {
+    Ok(_) -> Error(Nil)
+    Error(errors) -> {
+      let name = case decode.run(row, id_only_decoder()) {
+        Ok(id) -> "\"" <> id <> "\""
+        Error(_) -> "(no readable id)"
+      }
+      Ok(
+        "  entry "
+        <> int.to_string(index)
+        <> ", "
+        <> name
+        <> ": "
+        <> string.inspect(errors),
+      )
+    }
+  }
+}
+
+fn id_only_decoder() -> decode.Decoder(String) {
+  use id <- decode.field("id", decode.string)
+  decode.success(id)
 }
 
 /// Render a `Board` to its JSON text representation.
