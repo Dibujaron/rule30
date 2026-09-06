@@ -253,3 +253,72 @@ reads identically whether it is true or false.
 tip — checked with `git merge-tree`, no conflicts — but I am not merging it. The
 shared checkout has live sessions in it and `main` is Rowan's to move; a docs
 change is not worth being the first agent to break that rule.
+
+## 2026-09-06T18:40:00Z — I said "the only real bind" and then proved myself wrong
+
+Keel challenged me to make the ports fix fail on purpose before calling it
+done — Rowan's calibration argument applied to a fix rather than a checker: a
+guard that never fires has not been shown to work. I did, and the experiment
+refuted my own premise rather than confirming the fix.
+
+**The claim I got wrong.** I told Keel, told Dib, and wrote into `8de1ec3`'s
+commit message that `guard_test.gleam:228` was the suite's only real bind. It
+is not. `dispatch.run_with` reaches `guard.start` at `dispatch.gleam:390` with
+`state.next_port` seeded from `cfg.guard_port` at `:243`, and `run_test` hands
+five fixtures the fixed ports 4231, 4241, 4251, 4252 and 4261. Every one of
+those binds, and each counts *up* per attempt. So the suite has one bind in
+`guard_test` and a whole range in `run_test`, and the larger exposure is the
+one I did not fix.
+
+Keel handed me the fact without knowing it was a refutation — it mentioned the
+4231-4262 range as a *precedent to match rather than invent*, which was a note
+about style. The tension was visible in that sentence and I nearly filed it as
+style advice. **A correction can arrive disguised as a compliment about your
+approach.**
+
+**What I should have asked.** Those five ports are hand-assigned and disjoint.
+Nobody spaces five constants ten apart for fun — the spacing *is* evidence that
+someone already hit this and worked around it. I read the numbers and did not
+read what their arrangement was telling me.
+
+**The experiment, and it is worse than the bug body says.** Baseline: 181
+passed, no failures. Then I held `127.0.0.1:4231` from outside and re-ran:
+**106 passed, 3 failures**, with `Exit(Shutdown(FailedToStartChild(0,
+InitFailed)))` and `Desc("module 'run_test'")`. So the whole module died and
+**75 tests never ran at all** — and the summary line still reads "106 passed, 3
+failures", which looks like a suite that ran and mostly passed. The board says
+the failure is confusingly attributed. It is worse than that: it *under-
+reports*, and a green-ish number is more dangerous than a red one. A suite that
+silently stops counting is the same family as a `sorry` that still typechecks.
+
+**The mechanism I inferred from mist's source is confirmed.** `mist.start`
+builds a `OneForOne` supervisor and adds the glisten listener as a child, so
+the bind happens inside child start and the supervisor is linked to the caller.
+`FailedToStartChild` therefore takes the calling process down instead of
+returning through `guard.start`'s `result.map_error`. I wrote that in `8de1ec3`
+as read-not-observed; it is now observed. Which also means **the eight-attempt
+retry I wrote is decorative on the path that actually occurs** — the process
+dies inside `guard.start` and never sees an `Error`. I said that at the time
+and the experiment confirms it.
+
+**So my fix is real but partial, and I would rather say that than let a green
+suite say otherwise.** `guard_test` no longer binds 4130. `run_test` still
+binds five fixed ports, and a second checkout running the suite still kills the
+runner. Nothing I have written closes this bug.
+
+**Twice in one day now.** The commit message that described a diff I had not
+run `git show --stat` on, and this. Both are the same defect and it is the one
+Keel named: a claim about the system that nobody adjudicates, made confidently,
+propagated to peers, and acted on. The difference is that this time the check
+existed and I ran it, because Keel asked me to. **The discipline is not "verify
+your claims" — I believe that and it did not save me. It is that somebody else
+asks you to make it fail.** Keel asked. Rowan asked Keel this afternoon. That
+is the only adjudicator this project has for prose, and it is a person, not a
+process.
+
+**On the remaining fix, which I am not doing unasked.** Spacing random port
+bases only lowers a probability; the correct answer is to ask the OS for a free
+port — bind 0, read the assigned port, close, use it — which needs an FFI, and
+`harness_ffi.erl` is production source being changed for a test-only need. That
+is a design call with a scope question in it, so it goes to Dib rather than
+into a commit.
