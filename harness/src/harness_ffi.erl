@@ -6,7 +6,7 @@
 -module(harness_ffi).
 -export([spawn_port/3, port_send/2, port_recv/2, port_close/1,
          run_cmd/4, to_utf8/1, find_executable/1, now_iso/0, run_id/0,
-         mono_ms/0, token/0, set_cwd/1]).
+         mono_ms/0, token/0, set_cwd/1, free_port_span/1]).
 
 %% ---- Deadlines -------------------------------------------------------------
 
@@ -141,3 +141,48 @@ port_close(Port) ->
     catch _:_ -> false
     end,
     nil.
+
+%% ---- Free port allocation (tests) ------------------------------------------
+
+%% free_port_span(N) -> integer()
+%%   The base of N consecutive ports on 127.0.0.1 that were all free a moment
+%%   ago. Tests need this because the harness itself binds fixed ports: the
+%%   dispatcher's guard starts at config.guard_port and counts up one per
+%%   attempt, so a test that hardcodes a port races the live run and every
+%%   other checkout running the same suite.
+%%
+%%   Why a *span* and not one port: dispatch advances next_port by one per
+%%   attempt, so a run fixture needs a contiguous range, and an OS-assigned
+%%   ephemeral port says nothing about its neighbours.
+%%
+%%   The OS picks the starting hint, so this drifts with whatever is actually
+%%   in use rather than trusting a range someone chose once. The span is then
+%%   checked by binding every port in it and closing them again. That leaves a
+%%   race — free a moment ago is not free now — which is inherent to allocating
+%%   a port you do not hold, and is why the caller should still handle a bind
+%%   failure rather than assume this succeeded.
+free_port_span(N) -> free_port_span(N, 200).
+
+free_port_span(N, 0) ->
+    erlang:error({no_free_port_span, N});
+free_port_span(N, Tries) ->
+    {ok, Hint} = gen_tcp:listen(0, [{ip, {127,0,0,1}}]),
+    {ok, Base} = inet:port(Hint),
+    gen_tcp:close(Hint),
+    case hold_span(Base, N, []) of
+        {ok, Socks} ->
+            [gen_tcp:close(S) || S <- Socks],
+            Base;
+        error ->
+            free_port_span(N, Tries - 1)
+    end.
+
+hold_span(_Base, 0, Held) ->
+    {ok, Held};
+hold_span(Base, N, Held) ->
+    case gen_tcp:listen(Base + N - 1, [{ip, {127,0,0,1}}]) of
+        {ok, S} -> hold_span(Base, N - 1, [S | Held]);
+        {error, _} ->
+            [gen_tcp:close(S) || S <- Held],
+            error
+    end.

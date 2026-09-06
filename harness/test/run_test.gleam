@@ -21,6 +21,7 @@ import harness/dispatch
 import harness/roster
 import harness/schedule.{Plan}
 import harness/verify
+import ports
 import simplifile
 
 // --- fixtures -------------------------------------------------------------------
@@ -223,7 +224,11 @@ pub fn two_slots_take_both_leaves_and_a_close_opens_the_next_test() {
   // Every session claims proved and the verifier agrees: three attempts,
   // three closes, and `probe_three` — behind `probe_one` — is the third.
   let f =
-    fixture("two-slots", [[init_line("s"), result_line("s", "proved")]], 4231)
+    fixture(
+      "two-slots",
+      [[init_line("s"), result_line("s", "proved")]],
+      ports.span(16),
+    )
   let assert Ok(text) =
     dispatch.run_with(
       f.cfg,
@@ -264,7 +269,7 @@ pub fn the_attempt_budget_bounds_what_starts_test() {
     fixture(
       "attempt-budget",
       [[init_line("s"), result_line("s", "abandoned")]],
-      4241,
+      ports.span(16),
     )
   let assert Ok(_) =
     dispatch.run_with(
@@ -296,7 +301,7 @@ pub fn a_rate_limit_stops_the_run_from_starting_more_test() {
           result_line("s", "in_progress"),
         ],
       ],
-      4251,
+      ports.span(16),
     )
   let assert Ok(text) =
     dispatch.run_with(
@@ -328,7 +333,7 @@ pub fn a_rate_limited_run_files_one_bug_test() {
           result_line("s", "in_progress"),
         ],
       ],
-      4252,
+      ports.span(16),
     )
   let assert Ok(_) =
     dispatch.run_with(
@@ -392,7 +397,7 @@ pub fn a_second_persona_is_minted_when_the_only_one_is_busy_test() {
     fixture_with_roster(
       "mint-on-demand",
       [[init_line("s"), naming_and_report_line("s")]],
-      4261,
+      ports.span(16),
       roster.Roster([scripted_identity()]),
     )
   let assert Ok(text) =

@@ -1,5 +1,4 @@
 import gleam/erlang/process.{type Subject}
-import gleam/int
 import gleam/json
 import gleam/list
 import gleam/string
@@ -7,6 +6,7 @@ import harness/guard.{Rules}
 import harness/lock
 import harness/log
 import harness/shell
+import ports
 import simplifile
 
 const rules = Rules(
@@ -224,21 +224,26 @@ pub fn guard_events_still_carry_event_tool_and_decision_test() {
   assert list.contains(keys, "decision")
 }
 
-/// Start a guard on a port from the ephemeral range, retrying on a bind
-/// collision. A test must never bind 4130: that is `config.guard_port`, the
-/// dispatcher's first guard, so a live run holds it and a second checkout
-/// running its suite races for it. The failure was never a failed test —
-/// `mist.start` builds a supervisor and links it to the caller, so a child
-/// that cannot bind takes the calling process down with it, and the runner
-/// dies with a supervisor kill that names no port. Three sightings in one
-/// night, all attributed to something else.
+/// Start a guard on a port the OS says is free, retrying on a bind collision.
+/// A test must never bind 4130: that is `config.guard_port`, the dispatcher's
+/// first guard, so a live run holds it and a second checkout running this
+/// suite races for it.
+///
+/// The failure was never a failed test. `mist.start` builds a `OneForOne`
+/// supervisor and adds the listener as a child, so the bind happens inside
+/// child start and the supervisor is linked to the caller: a child that cannot
+/// bind takes this process down with it. Observed 2026-09-06 by holding 4231
+/// from outside — the runner died, `run_test` stopped counting, and the
+/// summary still read "106 passed, 3 failures" against a true total of 181.
+///
+/// Which is why the retry below is thin cover, not the fix: on that path there
+/// is no `Error` to retry. Not colliding is the fix.
 fn start_on_free_port(
   lock_actor: Subject(lock.Msg),
   run_log: log.Log,
   attempts: Int,
 ) -> guard.Guard {
-  let port = 20_000 + int.random(20_000)
-  case guard.start(rules, lock_actor, run_log, port), attempts {
+  case guard.start(rules, lock_actor, run_log, ports.span(1)), attempts {
     Ok(started), _ -> started
     Error(_), n if n > 1 -> start_on_free_port(lock_actor, run_log, n - 1)
     Error(e), _ ->
@@ -265,7 +270,7 @@ pub fn guard_http_denies_rm_over_hook_endpoint_test() {
         "x-harness-token: " <> started.token,
         "--data",
         body,
-        "http://127.0.0.1:" <> int.to_string(started.port) <> "/hook",
+        "http://127.0.0.1:" <> string.inspect(started.port) <> "/hook",
       ],
       ".",
       5000,
