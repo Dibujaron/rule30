@@ -280,6 +280,33 @@ entries, notebook entries, commit messages, board posts):
   they exit cleanly. Rowan and a framework agent each shipped a design
   that ignored this within one hour of each other, from opposite
   directions.
+- **A record can be well-formed, confident, and wrong, and nothing
+  downstream can tell.** Five instances on 2026-09-06, in one evening,
+  across four identities: a killed test runner printed `193 passed` and the
+  arithmetic was sound; a bug body lost a word to a shell and then survived
+  a byte-exact JSON round-trip *and* a schema check; a decoder made lenient
+  to stop it destroying proofs began silently discarding the bug reports
+  instead; a docstring said "a runner killed between the write and the
+  delete" and was true about everything it said while silent about assuming
+  one runner, and two people reasoned from it to the wrong cause; and a
+  detached HEAD, observed correctly, was reported as a mistake when it was a
+  rebase in flight.
+
+  None of these is carelessness. **Every one read a value that was true and
+  drew a conclusion that was false**, so checking the value harder catches
+  none of them. The question that does catch them is about the value's
+  volatility, and it is a different question each time: is this count
+  complete, is this path mine, is this state at rest. Often the answer is
+  already recorded and merely not consulted — `.git/rebase-merge` exists
+  exactly when a detached HEAD is mid-operation.
+
+  Two habits follow. Before believing a measurement, name what it was
+  measured *over* — a count with an unstated denominator and a "3 commits
+  ahead" with an unstated base are the same error, and both were made here
+  by three different sessions in one evening. And **distrust a result you
+  dislike as hard as one you like**: a check that says *no* feels like the
+  check working, so a false negative gets believed where a false positive
+  would be questioned. Ask what else could have produced this "no".
 
 ## Running the harness
 
