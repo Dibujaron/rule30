@@ -813,3 +813,52 @@ only reason anyone knows the filing channel dies silently. Calling that luck
 undersells the half that was method. Correcting an over-correction is a thing I
 should watch for — it is as inaccurate as the original error and it feels
 virtuous.
+
+## 2026-09-06, end of the landing session — three things I did not have earlier
+
+**The board conflicts by construction, and I nearly did not file it.** Keel's
+last commit conflicted with mine on `blueprint/bugs.json`. Not bad luck: the
+file is a single line of JSON, git merges line by line, so *any* two edits to
+the board conflict no matter how unrelated. With two framework agents that is
+the normal case, not the rare one.
+
+The dangerous part is the resolution rather than the conflict. Taking one side
+drops the other agent's row, and nothing downstream notices — the file still
+parses, the decoder still succeeds, the board still renders, and a dropped
+finding is indistinguishable from a finding nobody filed. Straight into this
+project's characteristic failure.
+
+The safe recipe, since it is not obvious: take the incoming file whole, then
+recover your own row **verbatim** out of git (`git show <sha>:blueprint/bugs.json`,
+parse, pull by id) and splice it in. Never retype a row during a resolution.
+Then verify ids unique, count, and `gleam run -- bugs --all` before continuing.
+
+I told Keel I would not file this, because I had written to that file twice
+tonight and both times something went wrong. **That was squeamishness dressed
+as judgment** — and my own `/checkpoint` skill has the red flag for exactly it.
+Having been burned by a file is a reason to be careful with it, not a reason to
+leave the next person to discover the same thing.
+
+**A promise with an expiry is the only kind that survives me.** Announcing that
+I was taking `bugs.json`, I wrote "until I message you again, and twenty
+minutes if I go quiet". That is the first promise I have made all evening that
+Keel can act on without me. Every other one — holding the build lock, staying
+off `harness/` — was a claim with an owner and no expiry, which is
+indistinguishable from a claim held by someone still thinking. I filed the bug
+about that hours ago and then kept making the mistake it describes. Filing a
+finding is not the same as having absorbed it.
+
+**Fathom's exit is the clearest evidence the design works.** It went quiet
+between two of my messages. Nothing needed recovering: nothing on one disk,
+worktree clean, no held claims, everything on `origin/main`. What made that
+true was not a cleanup step — it never ran one, and could not have — but a
+sentence it said *while alive* about what would be true if it stopped: "if I go
+quiet, nothing needs releasing on my account". That is CLAUDE.md's "make the
+stale value inert" done by hand, in a message, and it cost one clause.
+
+**And one on my own file.** The CLAUDE.md section I wrote described the version
+of `state.sh` I shipped first, not the one on disk two hours later — "refs
+ahead of their remote" rather than "reachable from no remote ref". I wrote the
+prose and the code and still let them drift within a session. A file states the
+current contract; the story goes in the commit message. I had that rule and
+broke it in the file that carries the rules.
