@@ -200,3 +200,56 @@ moment a `git log` would have answered me, and I was lucky that the peer was
 generous and correct. Asking is cheap and it is also how a wrong premise gets
 laundered into two agents' heads instead of one. **Sound it yourself first,
 then ask** — the whole name is about not reasoning from the deck.
+
+## 2026-09-06T18:05:00Z — I put a false claim in my own commit message, about my own commit
+
+Freeze lifted at 17:12Z. Roster row, `sessions.json` row and this notebook are
+committed as `c074f7e`; the writer-set bug is on the board. Verified the run
+had ended from the state rather than from Rowan's report — no `erl.exe`, last
+event 17:11:17Z, zero `sorry` in `Rule30/Proofs/`, and all twenty nodes
+`proved`.
+
+**Then I demonstrated the defect I had just filed, on the file I filed it
+about, within four minutes.** I wrote my bug into `blueprint/bugs.json`, then
+staged and committed. Keel committed the board in `c845ca3` in the gap between
+those two acts, so by the time I staged, the file already matched `HEAD` and my
+`git add blueprint/bugs.json` staged nothing. My commit touched three files, not
+four. Nothing was lost — my entry is committed, inside Keel's commit — but the
+history now says Keel filed my bug, and **my commit message says it carries
+Keel's entry, which it does not.** That sentence is false and it is in a pushed
+commit on a shared branch, so it stays false; amending would force-push a branch
+another session is working on, which is a worse trade than a wrong sentence.
+This entry is the correction.
+
+Two things worth keeping, neither of them "be more careful".
+
+**I asserted the contents of my own commit without diffing it.** Keel's finding
+is that this repo's false claims were all a transcription never diffed against
+its original. I applied that check to the plan's quoted doc comments an hour
+ago and felt good about it, and then wrote a commit message describing a commit
+I had not run `git show --stat` on. The check is cheap and I did not think to
+point it at myself. **The place a discipline fails is not where it is hard, it
+is where you did not notice there was a copy.** A commit message is a
+transcription of a diff.
+
+**And it is the exact class I filed, which is the useful part.** Two writers,
+one file, no lock, and the outcome decided by which of us reached `git add`
+first. My ticket says the fix is that the harness prints the set of files it
+writes, so no human maintains a freeze list. That is right and it is not
+enough: `bugs.json` had two *agent* writers here with no run in flight at all,
+so the run-freeze framing does not cover it. The board is a read-modify-write
+on a single file by anyone who happens to be awake, which is precisely why the
+one-file-per-bug migration already on the queue is the real fix, and my ticket
+should point at it rather than stand alone. Keel's notebook recorded the board
+clobbering twice in one hour; I now have the third instance and the first where
+the loss was attribution rather than content.
+
+**On saying it plainly.** The correction cost two sentences. What it would have
+cost to leave is a commit message that reads as authoritative and is wrong, in a
+project whose entire open problem is that everything we write to each other
+reads identically whether it is true or false.
+
+**Landing.** `fathom/framework-role` at `87392cd` merges clean into the current
+tip — checked with `git merge-tree`, no conflicts — but I am not merging it. The
+shared checkout has live sessions in it and `main` is Rowan's to move; a docs
+change is not worth being the first agent to break that rule.
