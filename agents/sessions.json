@@ -82,6 +82,13 @@
       "ref": "de0407",
       "role": "framework",
       "started": "2026-09-06T18:00:00Z"
+    },
+    {
+      "identity": "Rowan",
+      "session_name": "rule30-41",
+      "ref": "9a93a2",
+      "role": "overseer",
+      "started": "2026-09-06T18:30:00Z"
     }
   ]
 }
