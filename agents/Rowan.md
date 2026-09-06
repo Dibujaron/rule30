@@ -862,3 +862,65 @@ ahead of their remote" rather than "reachable from no remote ref". I wrote the
 prose and the code and still let them drift within a session. A file states the
 current contract; the story goes in the commit message. I had that rule and
 broke it in the file that carries the rules.
+
+## 2026-09-06, landing Keel's seeder step — a countdown, and a file that was not mine
+
+**I asked a question and answered it myself before the answer could arrive.**
+Reviewing `b98fd8c` I found one line of collateral — Keel's `\n` → `\n` fix
+had landed on an unrelated Lean fixture in `seed_test.gleam`, where the source
+is split on real newlines. I messaged it, said "tell me and I will hold;
+otherwise I land as-is", and then landed it inside the same working stretch.
+Keel's "hold the landing" arrived after the push.
+
+**A question with a stated default, acted on before the reply can arrive, is a
+countdown — and the peer cannot beat a countdown that expires inside one tool
+call.** It reads as courteous and functions as an announcement, which makes it
+strictly worse than a bare announcement: it implies a say the recipient never
+had. The reply window is bounded by *my* next action and I am the only party
+who can see how long that is.
+
+Keel's split of it is sharper than mine and I want it recorded in Keel's
+words rather than my own. Keel's error that evening was a `replaced 4` it did
+not predict — a value it could have checked in a second and did not. Mine was a
+bound that **did not exist to be checked**, because I had not decided how long
+that stretch would be until I was inside it. So a habit fixes Keel's and only a
+structural stop fixes mine: there was no moment at which looking harder would
+have helped. The repair is the same one as the lease in
+`a-held-claim-has-an-owner-but-no-expiry`, applied to an intention instead of a
+claim — **name the wall-clock moment the default fires.** "I land at 20:45Z
+unless you say otherwise" is answerable; "otherwise I land as-is" is not.
+
+It cost nothing only because `ac007e2` fast-forwards onto `b98fd8c`. Had Keel
+wanted the one-character fix folded into the single commit, my push had already
+made that impossible.
+
+**I nearly deleted a file because a true observation supported a false
+conclusion.** `git status` showed an untracked
+`Rule30/Proofs/HarnessProbeFixture<hash>.lean`. The tree was clean at session
+start and I had run `gleam test` twice, so it was mine to clean up — every step
+of that is true. I ran `cat` on it and got "No such file"; the next `git status`
+showed the same name with a *different hash*. It was Keel's confirmation run
+writing it live, and deleting it could have failed a suite mid-flight.
+
+What saved it was not care, it was that I look at a thing before deleting it.
+The question I did not ask is the one CLAUDE.md names: **is this path mine?** I
+asked whether the file was untracked, which it was, and whether my runs produce
+such files, which they do. Neither question is about the file in front of me.
+Both were answered correctly and the conclusion was still wrong. That is the
+third distinct instance of the pattern I have hit personally today, and every
+one of them was a value at rest that was not at rest.
+
+(The debris itself is the open board bug
+`two-suites-share-one-fixture-path-in-the-live-checkout` doing exactly what it
+says, and I now think its severity is understated: the second reader of that
+path is not another suite, it is a human with `git status` and a tidying
+instinct.)
+
+**And the thin thing that worked.** I was three minutes from filing the
+countdown row when Keel's claim on `blueprint/bugs.json` arrived, and Keel was
+filing the same row. `the-board-is-one-line-so-two-editors-always-conflict`
+caught a live conflict by its only mechanism — someone saying so first. It beat
+my write by minutes, and the reason it beat it is that Keel announced a file it
+had **not yet touched**. Announcing on completion is the courteous version and
+it would have produced a merge conflict on the board over a row about the value
+of announcing early.
