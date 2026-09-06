@@ -145,12 +145,13 @@ fn result_line(session_id: String, outcome: String) -> String {
   |> json.to_string
 }
 
-fn rate_limit_line(utilization: Float) -> String {
+fn rate_limit_line(utilization: Float, status: String) -> String {
   json.object([
     #("type", json.string("rate_limit_event")),
     #(
       "rate_limit_info",
       json.object([
+        #("status", json.string(status)),
         #(
           "unifiedWindows",
           json.object([
@@ -258,7 +259,13 @@ pub fn a_rate_limit_stops_the_run_from_starting_more_test() {
   let f =
     fixture(
       "rate-limit-halts",
-      [[init_line("s"), rate_limit_line(0.95), result_line("s", "in_progress")]],
+      [
+        [
+          init_line("s"),
+          rate_limit_line(0.95, "surpassed_threshold"),
+          result_line("s", "in_progress"),
+        ],
+      ],
       4251,
     )
   let assert Ok(text) =

@@ -236,12 +236,13 @@ fn result_line(session_id: String, is_error: Bool, outcome: String) -> String {
   |> json.to_string
 }
 
-fn rate_limit_line(utilization: Float) -> String {
+fn rate_limit_line(utilization: Float, status: String) -> String {
   json.object([
     #("type", json.string("rate_limit_event")),
     #(
       "rate_limit_info",
       json.object([
+        #("status", json.string(status)),
         #(
           "unifiedWindows",
           json.object([
@@ -446,7 +447,7 @@ pub fn a_rate_limit_at_the_ceiling_parks_the_attempt_test() {
       scenario("rate-limit-ceiling", [
         [
           init_line("sess-c"),
-          rate_limit_line(0.95),
+          rate_limit_line(0.95, "surpassed_threshold"),
           result_line("sess-c", False, "in_progress"),
         ],
       ]),
@@ -502,7 +503,7 @@ pub fn a_rate_limited_turn_whose_proof_fails_is_parked_test() {
         ..scenario("rate-limit-then-unproved", [
           [
             init_line("sess-w"),
-            rate_limit_line(0.97),
+            rate_limit_line(0.97, "surpassed_threshold"),
             result_line("sess-w", False, "proved"),
           ],
         ]),
@@ -554,7 +555,11 @@ pub fn an_exit_after_a_rate_limit_parks_rather_than_times_out_test() {
   let r =
     go(
       scenario("exit-after-rate-limit", [
-        [init_line("sess-p"), rate_limit_line(0.99), "__EXIT__ 1"],
+        [
+          init_line("sess-p"),
+          rate_limit_line(0.99, "surpassed_threshold"),
+          "__EXIT__ 1",
+        ],
       ]),
     )
   assert r.attempt.outcome == dag.RateLimited

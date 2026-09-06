@@ -119,7 +119,7 @@ fn report(label: String, result: claude.Event, seen: List(claude.Event)) {
     case e {
       claude.Assistant(raw) ->
         io.println("assistant: " <> claude.assistant_text(raw))
-      claude.RateLimit(u, _, _) ->
+      claude.RateLimit(u, _, _, _) ->
         io.println("rate limit five_hour utilization " <> float_to_string(u))
       claude.Init(id, _) -> io.println("init " <> id)
       claude.ApiRetry(err, n, _) ->

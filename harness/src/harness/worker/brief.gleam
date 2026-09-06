@@ -77,7 +77,7 @@ pub fn report_schema() -> String {
     #(
       "required",
       json.array(
-        ["outcome", "estimate", "summary", "notebook", "journal", "posts"],
+        ["outcome", "estimate", "summary", "notebook", "journal"],
         json.string,
       ),
     ),

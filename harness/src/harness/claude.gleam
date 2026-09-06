@@ -44,7 +44,12 @@ pub type Event {
   /// `{"type":"user",...}` — tool results echoed back into the transcript.
   User(raw: String)
   /// `{"type":"rate_limit_event",...}` — five-hour and seven-day windows.
-  RateLimit(five_hour_utilization: Float, resets_at: Int, raw: String)
+  RateLimit(
+    five_hour_utilization: Float,
+    resets_at: Int,
+    status: String,
+    raw: String,
+  )
   /// `{"type":"system","subtype":"api_retry",...}`
   ApiRetry(error: String, attempt: Int, raw: String)
   /// The end of one turn. `structured_output` is present only when the
@@ -205,9 +210,14 @@ fn event_decoder(raw: String) -> decode.Decoder(Event) {
         ["rate_limit_info", "unifiedWindows", "five_hour", "resetsAt"],
         decode.int,
       )
+      use status <- decode.subfield(
+        ["rate_limit_info", "status"],
+        decode.string,
+      )
       decode.success(RateLimit(
         five_hour_utilization: utilization,
         resets_at:,
+        status:,
         raw:,
       ))
     }

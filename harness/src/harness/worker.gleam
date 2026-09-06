@@ -865,14 +865,26 @@ fn note(tally: Tally, text: String) -> String {
   }
 }
 
-/// The two signals that mean the subscription window is throttling us: a
-/// `rate_limit_event` at or above the ceiling, and a `system/api_retry`
-/// whose error is `rate_limit`.
-fn hit_ceiling(events: List(claude.Event), ceiling: Float) -> Bool {
+/// The two signals that mean the subscription window is actually closed: a
+/// `rate_limit_event` at or above the ceiling whose status is *not* one of
+/// the `allowed*` ones, and a `system/api_retry` whose error is
+/// `rate_limit`.
+///
+/// The status is what makes this correct. A `rate_limit_event` at 0.94
+/// against a 0.9 ceiling carrying `allowed_warning` is the API saying we
+/// are close, not refusing us. Reading that as a refusal parks a finished
+/// attempt as `rate_limited`, and a rate-limited attempt stops the run from
+/// starting any more — so one misread warning can halt a whole run. It did,
+/// on 2026-09-06, to a proof that was already correct.
+///
+/// Public for its tests: a pure predicate over events, with no state to set
+/// up, is worth testing directly rather than through the turn loop.
+pub fn hit_ceiling(events: List(claude.Event), ceiling: Float) -> Bool {
   list.any(events, fn(e) {
     case e {
-      claude.RateLimit(five_hour_utilization:, ..) ->
+      claude.RateLimit(five_hour_utilization:, status:, ..) ->
         five_hour_utilization >=. ceiling
+        && !string.starts_with(status, "allowed")
       claude.ApiRetry(error:, ..) -> error == "rate_limit"
       _ -> False
     }
