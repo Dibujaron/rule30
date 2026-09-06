@@ -173,10 +173,22 @@ Four things that follow, each learned the hard way:
   author has already fixed. Both worktree failures this project has had
   were staleness, not collision — one of them nearly re-filed a closed
   bug.
-- **The shared checkout has live sessions in it.** Never `git checkout` a
-  different branch there to do framework work; move a ref instead
-  (`git branch -f main <commit>` touches no files) and leave the branch
-  switch to whoever is working in the tree.
+- **The shared checkout sits on `main`, always.** It is where `main` is
+  checked out and nothing else; branch work lives in a worktree. It also
+  has live sessions in it, so never `git checkout` a different branch
+  there — move a ref instead (`git branch -f main <commit>` touches no
+  files) and leave any branch switch to whoever is working in the tree.
+  Putting it *back* on `main` after a landing is the one exception, and
+  it is an obligation rather than a liberty: check that the tree is
+  clean, that `git worktree list` and `ListAgents` agree no other session
+  is standing in it, and that the current branch is an ancestor of `main`
+  (`git merge-base --is-ancestor <branch> main`), which makes the move a
+  fast-forward with no possible conflict. `.lake/` is gitignored and
+  survives a branch switch untouched. A rule that only forbids switching
+  is a ratchet — it stops anyone from moving the tree and never says
+  where it should rest, which is how this checkout once sat on a feature
+  branch until it was twenty commits behind `main` and three sessions
+  were reading pre-landing harness code out of it.
 - **Running the suite from a worktree currently reaches back into the
   live checkout.** `verify_test` needs a built `.lake`, so tests run with
   `HARNESS_REPO_ROOT` pointed at the main checkout — which also points
