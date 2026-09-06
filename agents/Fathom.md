@@ -253,3 +253,58 @@ reads identically whether it is true or false.
 tip — checked with `git merge-tree`, no conflicts — but I am not merging it. The
 shared checkout has live sessions in it and `main` is Rowan's to move; a docs
 change is not worth being the first agent to break that rule.
+
+## 2026-09-06T19:15:00Z — the ports bug, closed, and the number that lied
+
+`guard-tests-bind-fixed-ports` is fixed at `2f205b8` on `fathom/test-ports`,
+and the fix is shown to work under a real collision rather than shown to pass
+on a quiet machine.
+
+**The fix.** `harness_ffi.erl` gains `free_port_span/1`: the OS picks a
+starting hint, and the span is checked by binding every port in it and closing
+them again. A *span* rather than one port because `dispatch.gleam:457` advances
+`next_port` by one per attempt, so a run fixture needs a contiguous range and
+an OS-assigned ephemeral port tells you nothing about its neighbours. That
+distinction is the only real design content in the whole change and I nearly
+missed it — I had written "ask the OS for a free port" in my head as though one
+port were the requirement.
+
+**Evidence, in the order it arrived.** Before: hold `127.0.0.1:4231` alone,
+`106 passed, 3 failures`, `run_test` dead as a module, 75 tests never run
+against a true total of 181. After: hold all six ports the suite used to bind
+at once — 4130, 4231, 4241, 4251, 4252, 4261 — `181 passed, no failures`. The
+second number is only worth anything because the first one exists.
+
+**The finding that outlives the fix.** The board said a bind failure is
+*confusingly attributed*. It is worse: it **under-reports**. The runner died
+and still printed "106 passed, 3 failures" — a plausible number, in the right
+format, that looks like a suite which ran and mostly passed. Every green suite
+run tonight was evidence only if nothing killed the runner partway, and nothing
+in the output distinguishes those two cases. A suite that silently stops
+counting is the same family as a `sorry` that still typechecks: the failure
+mode is a success report. That belongs on the board in its own right and I have
+not filed it yet.
+
+**Dib's two rulings.** Rowan lands all three branch stacks; and the free-port
+FFI goes in `harness_ffi.erl` even though it is production source serving a
+test-only need. I flagged the wart and he took it, so it is his call and not a
+thing I should relitigate later.
+
+**Where the ruling broke, and it is why the state is what it is.** Rowan's
+session is gone — `rule30-7a` is unreachable and `ListAgents` shows only Keel
+and an unidentified `dev-a0` started seconds ago. So the agent Dib named to land
+the branches does not exist any more, and nothing of mine is in `main`. Neither
+branch is landed, `guard-tests-bind-fixed-ports` is still `open` on the board
+because the convention is that a bug closes with a sha and the sha is not in
+`main`, and I would rather leave a true `open` than a `fixed` pointing at a tree
+nobody else has.
+
+**A pattern I want to name before I lose it.** Three times today the valuable
+thing came from a peer asking me to disprove something, not from me checking my
+own work. Keel asked me to make the ports fix fail; that refuted my "only real
+bind" claim. Rowan asked Keel to make its calibration argument bite. Keel asked
+Rowan about the route it never ran. In every case the person who found the
+defect was not the person who could see it. **This project's one adjudicator is
+`lake build` and it only reads proofs — so for everything else the adjudicator
+is a colleague who asks you to break it, and that is a role, not a courtesy.**
+Two framework agents is not redundancy. It is the only checker prose has here.
