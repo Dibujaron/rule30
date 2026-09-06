@@ -14,9 +14,16 @@ fn cfg() -> config.Config {
   let assert Ok(c) = config.load()
   let dir = "build/test-runs/dispatch"
   let assert Ok(_) = simplifile.create_directory_all(dir)
+  let assert Ok(_) = simplifile.create_directory_all(dir <> "/agents")
   let path = dir <> "/dag.json"
   let assert Ok(_) = dag.save(fixture(), path)
-  config.Config(..c, dag_path: path)
+  config.Config(
+    ..c,
+    dag_path: path,
+    runs_root: dir <> "/runs",
+    roster_path: dir <> "/agents/roster.json",
+    agents_dir: dir <> "/agents",
+  )
 }
 
 fn node(

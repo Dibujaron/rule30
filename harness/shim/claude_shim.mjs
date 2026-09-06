@@ -45,10 +45,13 @@ function killTree() {
   if (process.platform === "win32" && child.pid) {
     // `child.kill()` on Windows reaches the launcher only: claude spawns its
     // own children, so the tree is what has to go.
-    spawnSync("taskkill", ["/T", "/F", "/PID", String(child.pid)], {
+    const r = spawnSync("taskkill", ["/T", "/F", "/PID", String(child.pid)], {
       stdio: "ignore",
       windowsHide: true,
     });
+    if (r.error) {
+      process.stderr.write(`claude_shim: taskkill unavailable (${r.error.code}); falling back to child.kill()\n`);
+    }
   }
   child.kill();
 }
