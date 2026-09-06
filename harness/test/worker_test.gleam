@@ -1,7 +1,9 @@
 import gleam/dynamic/decode
 import gleam/json
+import gleam/list
 import gleam/option.{None, Some}
 import gleam/string
+import harness/claude
 import harness/config
 import harness/dag.{Attempt, Dag, Node}
 import harness/roster.{type Identity, Identity}
@@ -60,7 +62,7 @@ pub fn report_schema_is_valid_json_with_the_agreed_shape_test() {
   assert string.contains(schema, "\"enum\":[\"S\",\"M\",\"L\",\"wall\"]")
   assert string.contains(
     schema,
-    "\"required\":[\"outcome\",\"estimate\",\"summary\",\"notebook\",\"journal\",\"posts\"]",
+    "\"required\":[\"outcome\",\"estimate\",\"summary\",\"notebook\",\"journal\"]",
   )
   // The two channels an agent writes in its own words are both described.
   assert string.contains(schema, "what your future self should know")
@@ -298,4 +300,43 @@ pub fn brief_explains_the_report_test() {
     "set `outcome` to `abandoned` and fill in `notebook` and `journal`",
   )
   assert string.contains(text, "verbatim")
+}
+
+// --- the two blockers ---------------------------------------------------------
+
+pub fn schema_does_not_require_posts_test() {
+  let assert Ok(required) =
+    json.parse(
+      brief.report_schema(),
+      decode.at(["required"], decode.list(decode.string)),
+    )
+  assert !list.contains(required, "posts")
+  assert list.contains(required, "outcome")
+}
+
+pub fn an_allowed_warning_is_not_a_closed_window_test() {
+  let warning =
+    claude.RateLimit(
+      five_hour_utilization: 0.94,
+      resets_at: 1_788_659_400,
+      status: "allowed_warning",
+      raw: "",
+    )
+  assert worker.hit_ceiling([warning], 0.9) == False
+}
+
+pub fn a_refusal_above_the_ceiling_is_a_closed_window_test() {
+  let refused =
+    claude.RateLimit(
+      five_hour_utilization: 0.94,
+      resets_at: 1_788_659_400,
+      status: "rejected",
+      raw: "",
+    )
+  assert worker.hit_ceiling([refused], 0.9) == True
+}
+
+pub fn a_rate_limit_api_retry_is_a_closed_window_test() {
+  let retry = claude.ApiRetry(error: "rate_limit", attempt: 1, raw: "")
+  assert worker.hit_ceiling([retry], 0.9) == True
 }
