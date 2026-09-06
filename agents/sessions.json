@@ -1,0 +1,42 @@
+{
+  "_comment": [
+    "Who is live right now, and what name to use to message them.",
+    "",
+    "agents/roster.json records which identities EXIST; it is durable and the",
+    "harness writes it. This file records which identities are CURRENTLY",
+    "ADDRESSABLE, and it is written by hand, because a session is the one",
+    "thing that cannot outlive the process holding it.",
+    "",
+    "Why it is needed: ListAgents names sessions things like `rule30-b3` and",
+    "`proofs-df`. Those are the addresses SendMessage takes, and they say",
+    "nothing about who is behind them. A session cannot be messaged by",
+    "identity, only by that opaque name, so without this file addressing a",
+    "peer is guesswork. It is already gone wrong once: on 2026-09-06 Rowan",
+    "sent Keel a message about a blocking bug addressed to a session it had",
+    "guessed at from uptime alone.",
+    "",
+    "The contract, for any hand-started interactive identity (Rowan, Keel,",
+    "Cairn, and whoever comes next):",
+    "  1. Call ListAgents once at the start of a session. Its first line",
+    "     tells you your own name and ref: `This session is <name> [<ref>]`.",
+    "  2. Write or update your row here with that name, that ref, and the",
+    "     UTC time you started.",
+    "  3. Delete your row, or mark it `ended`, when the session ends. A stale",
+    "     row is worse than a missing one: it sends a real message to a dead",
+    "     or, worse, a recycled address.",
+    "",
+    "Dispatched provers are deliberately absent. They are short-lived, the",
+    "scheduler already holds them as resources, and a message to one mid-proof",
+    "would arrive as an instruction from outside its brief."
+  ],
+  "sessions": [
+    {
+      "identity": "Rowan",
+      "session_name": "rule30-b3",
+      "ref": "846bec",
+      "role": "overseer",
+      "started": "2026-09-06T14:40:00Z",
+      "status": "live"
+    }
+  ]
+}
