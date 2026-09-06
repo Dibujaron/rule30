@@ -424,3 +424,123 @@ fn witness_claim_decoder() -> decode.Decoder(WitnessClaim) {
   use range <- decode.field("range", decode.string)
   decode.success(Claims(Witness(expression:, imports:, range:)))
 }
+
+/// Run both checks over one proposal.
+///
+/// The route is checked against the proposal's OWN statement text, not against
+/// `Rule30/Statements.lean` — the statement is not seeded yet, and checking it
+/// anywhere else would be the bug this module exists to catch, one step
+/// earlier: a route verified against a paraphrase of the thing that ships.
+pub fn check_proposal(
+  repo_root: String,
+  lake: String,
+  proposal: Proposal,
+  timeout_ms: Int,
+) -> Checked {
+  Checked(
+    proposal:,
+    route: check_route(
+      repo_root,
+      lake,
+      proposal.statement,
+      proposal.lean_name,
+      proposal.route,
+    ),
+    witness: check_witness(
+      repo_root,
+      lake,
+      proposal.lean_name,
+      proposal.witness,
+      timeout_ms,
+    ),
+  )
+}
+
+/// Render checked proposals for the human who decides.
+///
+/// **Says what was checked, never what to do.** Neither verdict makes a node
+/// good — a node is good only in retrospect, when it closes cheaply and later
+/// proofs cite it — so a report that ranked or recommended would be inventing
+/// a signal that does not exist. It reports, Rowan decides, and the two are
+/// kept apart on purpose.
+pub fn report(checked: List(Checked)) -> String {
+  let lines = list.map(checked, report_line)
+  let counts =
+    [
+      #("falsified", list.count(checked, fn(c) { is_falsified(c.witness) })),
+      #("broken check", list.count(checked, fn(c) { is_broken(c.witness) })),
+      #("unchecked", list.count(checked, fn(c) { is_unchecked(c.witness) })),
+      #("holds", list.count(checked, fn(c) { is_holding(c.witness) })),
+    ]
+    |> list.filter(fn(pair) { pair.1 > 0 })
+    |> list.map(fn(pair) { int.to_string(pair.1) <> " " <> pair.0 })
+    |> string.join(", ")
+  string.join(lines, "
+") <> "
+
+" <> counts <> "
+"
+}
+
+fn report_line(c: Checked) -> String {
+  c.proposal.id <> "
+  route:   " <> route_line(c.route) <> "
+  witness: " <> witness_line(c.witness)
+}
+
+fn route_line(v: RouteVerdict) -> String {
+  case v {
+    NoRoute -> "none claimed"
+    RouteClosed -> "closes the statement"
+    RouteFailed(output) -> "DOES NOT CLOSE — " <> first_line(output)
+    StatementNotFound(name) -> "BROKEN CHECK — no declaration named " <> name
+  }
+}
+
+/// The four witness verdicts, worded so no two of them can be skimmed as the
+/// same thing. `Falsified` is about the statement; `WitnessBroken` is about the
+/// check; `Unchecked` is about neither and is the expected common case.
+fn witness_line(v: WitnessVerdict) -> String {
+  case v {
+    WitnessHolds(range) -> "holds over " <> range
+    Falsified(output) -> "FALSIFIED — the statement is false: " <> first_line(output)
+    WitnessBroken(output) -> "BROKEN CHECK, says nothing about the statement — " <> first_line(output)
+    Unchecked(why) -> "unchecked — " <> why
+  }
+}
+
+fn first_line(output: String) -> String {
+  case string.split(string.trim(output), "
+") {
+    [line, ..] -> line
+    [] -> ""
+  }
+}
+
+fn is_falsified(v: WitnessVerdict) -> Bool {
+  case v {
+    Falsified(_) -> True
+    _ -> False
+  }
+}
+
+fn is_broken(v: WitnessVerdict) -> Bool {
+  case v {
+    WitnessBroken(_) -> True
+    _ -> False
+  }
+}
+
+fn is_unchecked(v: WitnessVerdict) -> Bool {
+  case v {
+    Unchecked(_) -> True
+    _ -> False
+  }
+}
+
+fn is_holding(v: WitnessVerdict) -> Bool {
+  case v {
+    WitnessHolds(_) -> True
+    _ -> False
+  }
+}

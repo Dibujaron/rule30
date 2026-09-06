@@ -308,3 +308,91 @@ pub fn a_malformed_proposal_names_its_index_and_does_not_drop_test() {
   assert string.contains(does: reason, contain: "1")
   assert string.contains(does: reason, contain: "bad")
 }
+
+// --- the proposal report ------------------------------------------------------
+
+fn a_proposal(id: String) -> seed.Proposal {
+  seed.Proposal(
+    id:,
+    lean_name: id,
+    statement: "theorem " <> id <> " : True := by\n  sorry",
+    reason: "Because.",
+    route: seed.NoClaim,
+    witness: seed.NoWitness,
+  )
+}
+
+/// **An unchecked proposal must be visible as unchecked**, not absent from the
+/// report and not indistinguishable from a checked one. The whole value of the
+/// witness is that its coverage is partial and stated; a report that quietly
+/// omitted what it could not check would restore exactly the false confidence
+/// the check was built to remove.
+pub fn the_report_names_an_unchecked_proposal_test() {
+  let out =
+    seed.report([
+      seed.Checked(
+        proposal: a_proposal("alpha"),
+        route: seed.NoRoute,
+        witness: seed.Unchecked("no witness supplied"),
+      ),
+    ])
+  assert string.contains(out, "alpha")
+  // The specific rendering, not merely the word: the SUMMARY line also says
+  // "1 unchecked", so asserting on the word alone passes even when the
+  // proposal's own line reads "ok". That is how this test was written first
+  // and a mutation caught it — the assertion has to name text that only the
+  // per-proposal line can produce.
+  assert string.contains(out, "unchecked — no witness supplied")
+}
+
+/// `Falsified` and `WitnessBroken` must not read the same in the report
+/// either. One says the statement is false; the other says the check is, and
+/// says nothing about the statement.
+pub fn the_report_distinguishes_falsified_from_broken_test() {
+  let broken =
+    seed.report([
+      seed.Checked(
+        proposal: a_proposal("gamma"),
+        route: seed.NoRoute,
+        witness: seed.WitnessBroken("unknown identifier"),
+      ),
+    ])
+  assert string.contains(broken, "says nothing about the statement")
+  // The load-bearing negative. A broken check must never render as a claim
+  // about the subject — collapsing these is what would retract a true lemma
+  // on a typo, and the report is the last place a reader could catch it.
+  assert !string.contains(broken, "the statement is false")
+
+  let falsified =
+    seed.report([
+      seed.Checked(
+        proposal: a_proposal("beta"),
+        route: seed.NoRoute,
+        witness: seed.Falsified("false"),
+      ),
+    ])
+  assert string.contains(falsified, "the statement is false")
+  assert !string.contains(falsified, "says nothing about the statement")
+}
+
+/// A falsified statement is the one result that must be impossible to skim
+/// past: it means a captain proposed something untrue.
+pub fn the_report_summarises_what_needs_attention_test() {
+  let out =
+    seed.report([
+      seed.Checked(
+        proposal: a_proposal("delta"),
+        route: seed.NoRoute,
+        witness: seed.WitnessHolds("t < 12"),
+      ),
+      seed.Checked(
+        proposal: a_proposal("epsilon"),
+        route: seed.NoRoute,
+        witness: seed.Falsified("false"),
+      ),
+    ])
+  // The range a passing witness covered travels with it — a pass is only ever
+  // evidence about the range it searched.
+  assert string.contains(out, "t < 12")
+  assert string.contains(does: string.lowercase(out), contain: "1 falsified")
+}
