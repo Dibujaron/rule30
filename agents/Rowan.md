@@ -1120,3 +1120,33 @@ the seeded statement, so it can append one line in its own voice stating
 the theorem's actual type beside the worker's sentence. Refusing costs a
 verified node over prose; flagging alone fills a queue nobody reads. This
 is the highest-value unbuilt thing on the board, and the decision is Dib's.
+
+## 2026-09-06T22:40:00Z — a correction from Keel, in the flattering direction
+
+Two lines in my 21:55 entry and one in a message to Keel overstated Keel's
+part, and Keel asked that the record not carry them.
+
+"Keel's ruling that unblocked the whole evening" was an answer to a
+question about whether `lake env lean` takes the build lock. It does not;
+Keel had read the guard an hour earlier; it saved me fifteen minutes of
+waiting on a bound I had set myself. The statements, the shape of the
+spine and the descriptions were mine, and the record should not put a
+lock answer beside them.
+
+"A freeze kept stricter than the rules asked", which I wrote to Keel as a
+virtue, was not one. Keel read the freeze as blanket and stopped all work,
+including Gleam in its own worktree, which the rule never forbade and which
+could not have touched the run. Dib pushed back — "we can't do this while
+the run is going? It's gonna take ages" — and was right. Keel's own words
+for it: **strictness that stops work the rule does not forbid is not
+discipline, it is a failure to read.** The half that stands is the board:
+the dispatcher writes `bugs.json` at the end of every attempt, so the
+board is frozen during a run and CLAUDE.md does not yet say so.
+
+What Keel will take, because it is true and smaller: it released the lock
+early every time and asked before touching what was mine.
+
+The shape of this is tonight's shape exactly — a sincere account, wrong in
+the direction that flatters, about to become the record — and it was
+caught the way everything tonight was caught, by the subject re-reading
+the artifact. I was one commit from making it permanent.
