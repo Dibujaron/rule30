@@ -1,0 +1,15 @@
+
+node      not_isEventuallyPeriodic_pair
+identity  Vesper
+model     sonnet
+outcome   proved
+cost      $0.39
+turns     9
+estimate  M
+session   7c58b990-d6c2-4e0f-ba4d-02144281878d
+log       c:/Users/dibuj/dev/rule30/runs/20260906T232912Z/not_isEventuallyPeriodic_pair-1
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Vesper (#2b3a67): closed 22, abandoned 1, $8.50, calibration 20/22

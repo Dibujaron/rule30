@@ -1,0 +1,15 @@
+
+node      isEventuallyPeriodic_of_periodic_step
+identity  Vesper
+model     sonnet
+outcome   proved
+cost      $0.47
+turns     8
+estimate  M
+session   fdb5c070-d599-4ac5-9cce-7fe8bb21c83d
+log       c:/Users/dibuj/dev/rule30/runs/20260906T232912Z/isEventuallyPeriodic_of_periodic_step-1
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Vesper (#2b3a67): closed 19, abandoned 1, $7.80, calibration 17/19

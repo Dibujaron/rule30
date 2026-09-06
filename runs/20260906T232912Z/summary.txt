@@ -1,0 +1,9 @@
+
+isEventuallyPeriodic_of_periodic_stepVesper   sonnet  proved            $0.47   8 turns
+strip_eventuallyPeriodic          Vesper   haiku   proved            $0.15   5 turns
+evolve_isEventuallyPeriodic_of_betweenVesper   haiku   proved            $0.16   9 turns
+not_isEventuallyPeriodic_pair     Vesper   sonnet  proved            $0.39   9 turns
+isEventuallyPeriodic_column_uniqueVesper   haiku   proved            $0.14   7 turns
+centerColumn_not_eventually_periodic_of_any_otherVesper   haiku   proved            $0.14   7 turns
+
+6 attempt(s), 6 closed, $1.45 in all

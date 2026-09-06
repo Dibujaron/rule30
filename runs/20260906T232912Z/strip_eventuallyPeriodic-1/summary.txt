@@ -1,0 +1,15 @@
+
+node      strip_eventuallyPeriodic
+identity  Vesper
+model     haiku
+outcome   proved
+cost      $0.15
+turns     5
+estimate  S
+session   a1e49427-654d-457f-8dec-f9cc948c4998
+log       c:/Users/dibuj/dev/rule30/runs/20260906T232912Z/strip_eventuallyPeriodic-1
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Vesper (#2b3a67): closed 20, abandoned 1, $7.96, calibration 18/20

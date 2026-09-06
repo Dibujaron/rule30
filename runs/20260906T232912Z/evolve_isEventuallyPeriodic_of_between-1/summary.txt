@@ -1,0 +1,15 @@
+
+node      evolve_isEventuallyPeriodic_of_between
+identity  Vesper
+model     haiku
+outcome   proved
+cost      $0.16
+turns     9
+estimate  S
+session   02667b7c-9160-444f-99dc-b59e5020e7d3
+log       c:/Users/dibuj/dev/rule30/runs/20260906T232912Z/evolve_isEventuallyPeriodic_of_between-1
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Vesper (#2b3a67): closed 21, abandoned 1, $8.11, calibration 19/21

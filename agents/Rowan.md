@@ -1150,3 +1150,68 @@ The shape of this is tonight's shape exactly — a sincere account, wrong in
 the direction that flatters, about to become the record — and it was
 caught the way everything tonight was caught, by the subject re-reading
 the artifact. I was one commit from making it permanent.
+
+## 2026-09-06T23:55:00Z — Jen's theorem is proved, and the second bridge note was wrong the other way
+
+Two runs on the Jen tier. `20260906T230339Z`: three attempts, one closed,
+$3.97, killed by a verifier bug — `type_of% Statements.X := X` cannot
+elaborate a statement with implicit binders, and the finite-machine lemma
+was the board's first. `20260906T232912Z`, after Keel's `@` fix landed at
+`5a9e3ae`: six attempts, six closed, $1.45, fifteen minutes, every node on
+its first rung. Verified from outside: root build green, no `sorry` under
+`Proofs/`, three permitted axioms.
+
+**What the project now has.** Erica Jen's 1986 theorem, formalised: no two
+distinct columns of rule 30 are both eventually periodic. Its uniqueness
+form. And the bridge whose conclusion is P1 under the hypothesis that a
+repeating centre column forces *any* other column to repeat. Two walls on
+the board, the weaker one the frontier. `docs/prize.md` says what is known
+and cites the paper.
+
+**Three harness findings, in order of cost.**
+
+1. *The verifier could not check an implicit binder.* Vesper diagnosed it
+   in three turns, reproduced it inside its own file on the second attempt,
+   and filed it. Keel verified the `@` fix and the regression case on an
+   explicit-binder node independently. The fix is one character on each
+   side and it was never exercised because every earlier statement had
+   only explicit binders. A statement shape the board has never seen is a
+   test the verifier has never run.
+2. *The ladder scored the harness's defect as difficulty and would then
+   have refused the node.* `failed_attempts` counts `GaveUp` and
+   `BudgetExhausted`; the bug produced one of each; the M ladder was
+   exhausted for a theorem proved twice, and the next run would have
+   aborted out of `fill`. No outcome in the schema means "the harness
+   failed, not the model", so the only inert repair was to delete the two
+   attempt records from the DAG entry. I did, with the loss named in the
+   description and the records kept in the run directory. Keel's row now
+   sizes the fix correctly: an outcome the ladder does not escalate on,
+   because prose cannot stop `dispatch.start` refusing a node.
+3. *A run cannot be stopped.* The permission classifier refused my process
+   kill, and the harness has no stop of its own, so the only lever was to
+   let the opus rung burn $2.04 failing the same check. A stop file the
+   scheduler reads before each dispatch is the fix; Keel builds it next.
+
+**The bridge note, again, and the mirror image.** Last run's worker wrote
+that P1 was proved. This run's worker was told in the brief, first line,
+what the theorem does not prove — and wrote that the theorem "shows the
+hypothesis is impossible". It does not: the hypothesis is equivalent to P1
+and believed true; the theorem says P1 follows from it. A disclaimer
+bounds the claim; it does not make the worker understand a conditional.
+Two bridge theorems, two wrong first sentences in opposite directions,
+both beside a correct, checked proof. Dib's ruling is annotate — the
+harness prints the type beside the note — and tonight is the second piece
+of evidence that nothing weaker will do. I rewrote the note and left the
+journal.
+
+**On Keel.** Its branch, rebuilt as one commit after I refused a merge that
+carried a rebase-duplicate of landed work and a 105k-line crash dump,
+lands next. Its fifth step for the board recipe — a row present in the
+output is not evidence that both sides' content inside it survived — came
+from checking a thing nobody asked it to check.
+
+**Frontier.** Two walls, nothing dispatchable. What would move the
+frontier now is not another provable tier but the sub-lemma channel and
+the stop file, so that attempts against the residual can grow the DAG and
+be ended when they are not. Then a research-mode dispatch of the weaker
+wall at the top rung.

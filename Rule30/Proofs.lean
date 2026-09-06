@@ -17,10 +17,12 @@ import Rule30.Proofs.BoolMapIterateThree
 import Rule30.Proofs.CenterColumnDensityLeOne
 import Rule30.Proofs.CenterColumnDensityNonneg
 import Rule30.Proofs.CenterColumnDensitySucc
+import Rule30.Proofs.CenterColumnNotEventuallyPeriodicOfAnyOther
 import Rule30.Proofs.CenterColumnNotEventuallyPeriodicOfRight
 import Rule30.Proofs.CenterColumnRightNotBothIsEventuallyPeriodic
 import Rule30.Proofs.CenterColumnZero
 import Rule30.Proofs.EvolveEqFalseOfOutsideCone
+import Rule30.Proofs.EvolveIsEventuallyPeriodicOfBetween
 import Rule30.Proofs.EvolveLeftDiagonalIsEventuallyPeriodicStep
 import Rule30.Proofs.EvolveLeftDiagonalRecurrence
 import Rule30.Proofs.EvolveLeftDiagonalsIsEventuallyPeriodic
@@ -35,8 +37,12 @@ import Rule30.Proofs.EvolvePeriodSubOne
 import Rule30.Proofs.EvolveRightEdge
 import Rule30.Proofs.EvolveRightSecondDiagonal
 import Rule30.Proofs.EvolveSubOneEqXor
+import Rule30.Proofs.IsEventuallyPeriodicColumnUnique
 import Rule30.Proofs.IsEventuallyPeriodicCommonPeriod
+import Rule30.Proofs.IsEventuallyPeriodicOfPeriodicStep
 import Rule30.Proofs.IsEventuallyPeriodicShift
 import Rule30.Proofs.NotEvolvePeriodAdjacent
 import Rule30.Proofs.NotIsEventuallyPeriodicAdjacent
+import Rule30.Proofs.NotIsEventuallyPeriodicPair
+import Rule30.Proofs.StripEventuallyPeriodic
 import Rule30.Proofs.StripSucc
