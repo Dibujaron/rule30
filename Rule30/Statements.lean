@@ -12,6 +12,7 @@ balance conjecture. P3 gets nothing here on purpose (see `Rule30/Prize.lean`).
 -/
 import Rule30.Basic
 import Rule30.Prize
+import Rule30.Strip
 
 namespace Statements
 
@@ -386,6 +387,114 @@ so that the open problem is a visible node rather than an unreachable
 target. Do not weaken it, and do not dispatch it as an ordinary leaf. -/
 theorem centerColumn_right_isEventuallyPeriodic_of_center
     (h : IsEventuallyPeriodic centerColumn) : IsEventuallyPeriodic (fun t => evolve t 1) := by
+  sorry
+
+/-! ## P1 — Jen's theorem: at most one column is ever periodic
+
+Erica Jen, "Global properties of cellular automata", J. Stat. Phys. 43
+(1986) 219–242: **no two columns of the rule 30 diagram can both become
+periodic.** The section above handles adjacent columns. Any two columns
+reduce to that case through the block of columns strictly between them,
+which `Rule30/Strip.lean` makes a definition: a strip is a finite-state
+machine whose next state depends only on its current state and the two
+cells just outside it. A finite machine fed an eventually repeating input
+must eventually repeat — read its state once per period and pigeonhole —
+so if two columns both repeat, so does every column between them, and in
+particular the one next to the left boundary, which is the adjacent case.
+
+For P1 this weakens the residual: the centre column is not eventually
+periodic as soon as a repeating centre column would force *any* other
+column to repeat, not specifically its right neighbour. The wall node at
+the end of this section is that weaker residual; the earlier wall stays,
+since it implies this one.
+
+Every lemma here was proved end to end against the exact statements below
+before seeding. -/
+
+/-- **A finite machine on a repeating schedule repeats.** `s` steps by a
+map `step t` that depends on the time, and the schedule of maps repeats
+with period `p` from `N` on. Read the state once per period, at times
+`N + k * p`: there are only finitely many states, so two reads agree
+(`Fintype.exists_ne_map_eq_of_card_lt`), and from two equal states at
+schedule-aligned times the orbits agree forever after. The period found is
+a multiple of `p`; the statement asks only for some positive period. -/
+theorem isEventuallyPeriodic_of_periodic_step {S : Type} [Fintype S]
+    (step : ℕ → S → S) (s : ℕ → S) (p N : ℕ) (hp : 0 < p)
+    (hstep : ∀ t ≥ N, step (t + p) = step t)
+    (hs : ∀ t, s (t + 1) = step t (s t)) :
+    ∃ q > 0, ∃ M, ∀ t ≥ M, s (t + q) = s t := by
+  sorry
+
+/-- **A strip advances by one rule-30 step, fed the two cells just outside
+it.** This is `rule30_eq` at each index of the strip, with the end indices
+reading one neighbour from outside. Casework on whether the index is `0`
+or `w`, then integer-cast bookkeeping to match `i + k - 1` and `i + k + 1`
+against the strip's own indexing. -/
+theorem strip_succ (i : ℤ) (w t : ℕ) :
+    strip i w (t + 1) = stripStep w (evolve t (i - 1)) (evolve t (i + w + 1)) (strip i w t) := by
+  sorry
+
+/-- **A strip between two repeating columns repeats.** The schedule of maps
+is `stripStep w` fed the two boundary cells at time `t`; both repeat from
+`N` with period `p`, so the schedule does, and
+`isEventuallyPeriodic_of_periodic_step` applies with `strip_succ` as the
+step equation. -/
+theorem strip_eventuallyPeriodic (i : ℤ) (w p N : ℕ) (hp : 0 < p)
+    (ha : ∀ t ≥ N, evolve (t + p) (i - 1) = evolve t (i - 1))
+    (hc : ∀ t ≥ N, evolve (t + p) (i + w + 1) = evolve t (i + w + 1)) :
+    ∃ q > 0, ∃ M, ∀ t ≥ M, strip i w (t + q) = strip i w t := by
+  sorry
+
+/-- **A column strictly between two eventually periodic columns is
+eventually periodic.** Put the two boundary columns on a common period
+(`isEventuallyPeriodic_common_period`), apply `strip_eventuallyPeriodic`,
+and read the strip at index `0`, which is column `i` itself. -/
+theorem evolve_isEventuallyPeriodic_of_between (i : ℤ) (w : ℕ)
+    (ha : IsEventuallyPeriodic fun t => evolve t (i - 1))
+    (hc : IsEventuallyPeriodic fun t => evolve t (i + w + 1)) :
+    IsEventuallyPeriodic fun t => evolve t i := by
+  sorry
+
+/-- **Jen's theorem.** No two distinct columns are both eventually
+periodic. If `j = i + 1` this is `not_isEventuallyPeriodic_adjacent`.
+Otherwise the strip of columns `i + 1 .. j - 1` sits strictly between
+them, so column `i + 1` is eventually periodic by
+`evolve_isEventuallyPeriodic_of_between`, and columns `i`, `i + 1` are
+then the adjacent case. The width is `(j - i - 2).toNat`. -/
+theorem not_isEventuallyPeriodic_pair (i j : ℤ) (hij : i < j) :
+    ¬ (IsEventuallyPeriodic (fun t => evolve t i) ∧
+        IsEventuallyPeriodic (fun t => evolve t j)) := by
+  sorry
+
+/-- **Jen's theorem as uniqueness:** two eventually periodic columns are the
+same column. Trichotomy on `i`, `j` and `not_isEventuallyPeriodic_pair`
+in each direction. -/
+theorem isEventuallyPeriodic_column_unique (i j : ℤ)
+    (hi : IsEventuallyPeriodic fun t => evolve t i)
+    (hj : IsEventuallyPeriodic fun t => evolve t j) : i = j := by
+  sorry
+
+/-- **The bridge to the first prize, weakened.** If a repeating centre
+column would force *any* other column to repeat, the centre column never
+repeats: the other column and column `0` would be two distinct eventually
+periodic columns. The conclusion is `centerColumn_not_eventually_periodic`
+from `Rule30/Prize.lean`, word for word, and this file does not prove the
+hypothesis. -/
+theorem centerColumn_not_eventually_periodic_of_any_other
+    (h : IsEventuallyPeriodic centerColumn →
+      ∃ j : ℤ, j ≠ 0 ∧ IsEventuallyPeriodic (fun t => evolve t j)) :
+    ¬ IsEventuallyPeriodic centerColumn := by
+  sorry
+
+/-- **The residual of P1, weakened.** Given the bridge above, this is the
+first prize conjecture: it is what Jen's theorem leaves open. It is weaker
+than `centerColumn_right_isEventuallyPeriodic_of_center`, which implies it
+by taking `j = 1`. Nobody knows how to prove it; it is on the board as a
+wall so the open problem is a visible node. Do not weaken it further, and
+do not dispatch it as an ordinary leaf. -/
+theorem centerColumn_other_isEventuallyPeriodic_of_center
+    (h : IsEventuallyPeriodic centerColumn) :
+    ∃ j : ℤ, j ≠ 0 ∧ IsEventuallyPeriodic (fun t => evolve t j) := by
   sorry
 
 /-! ## Harness self-test -/
