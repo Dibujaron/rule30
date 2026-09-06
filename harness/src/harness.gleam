@@ -19,6 +19,7 @@ import harness/config
 import harness/dag
 import harness/dispatch
 import harness/schedule
+import harness/writes
 
 pub fn main() {
   case config.load() {
@@ -49,9 +50,10 @@ fn run(cfg: config.Config, arguments: List(String)) -> Nil {
         |> result.map(fn(_) { "run ended" }),
       )
     ["bugs", ..flags] -> print_outcome(bug_board(cfg, flags))
+    ["writes"] -> print_outcome(writes.report(cfg))
     _ ->
       io.println(
-        "usage: gleam run -- status | prove-one <node-id> | run [--max-attempts N] [--concurrency K] | reopen <node-id> | bugs [--area A] [--severity S] [--all] | spike",
+        "usage: gleam run -- status | prove-one <node-id> | run [--max-attempts N] [--concurrency K] | reopen <node-id> | bugs [--area A] [--severity S] [--all] | writes | spike",
       )
   }
 }
