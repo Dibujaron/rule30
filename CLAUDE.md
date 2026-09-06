@@ -317,9 +317,12 @@ brief scopes it to one file, and the scheduler already holds it as a resource.
 - **`/startup`, first thing, before any other work.** It registers this
   session's address in `agents/sessions.json` so a peer can reach you by
   identity rather than by guessing, and then reports what the sessions before
-  you left unflushed — refs ahead of their remote, branches not in
-  `origin/main`, worktrees with uncommitted changes, and claimed nodes or bugs
-  whose holder may be dead. `bash .claude/skills/startup/state.sh` is that
+  you left unflushed — commits reachable from no remote ref, branches pushed
+  but not yet in `origin/main`, worktrees with uncommitted changes, and
+  claimed nodes or bugs whose holder may be dead. The first of those is work
+  at risk and a session can clear it alone; the second is a handoff only
+  whoever holds `main` can clear, and the report says so, because a section
+  its reader can never empty stops being read. `bash .claude/skills/startup/state.sh` is that
   report on its own; it is read-only and safe during a run.
 - **`/checkpoint`, repeatedly, and never only at the end.** Commit, push,
   notebook, board. Running it at minute ten is correct.
