@@ -14,3 +14,4 @@ module whose node has been retired.
 -/
 import Rule30.Proofs.CenterColumnZero
 import Rule30.Proofs.EvolveEqFalseOfOutsideCone
+import Rule30.Proofs.EvolveLeftEdge

@@ -44,6 +44,7 @@ correspondence, and it is exact rather than metaphorical.
 | `Fin n` | A branded/refined int, `0..n-1` | Carries a *proof* of the bound, not just a tag. |
 | `∀ n, P n` | A generic function `(n) => Proof<P<n>>` | The return **type depends on the argument's value**. TS and Kotlin can't express that; this is the genuinely new idea. |
 | `∃ n, P n` | A pair of `(witness, evidence)` | In `Prop` you generally *cannot* extract the witness as runtime data. It's a pair you can't always destructure. |
+| `induction n` | A recursive function on `n`: a base case for `0` and a step case that calls itself on `n - 1` | The recursive call is the induction hypothesis `ih`, and it is a *proof*, not a value that gets computed. Lean checks the shape terminates; nothing ever runs. |
 | `theorem` / `lemma` | Same thing | Pure convention: `lemma` signals a smaller helper. |
 | currying | `(a) => (b) => c` in TS | Not opt-in — *every* Lean function takes one argument. `f a` with `f : A → B → C` is a value of type `B → C`, so there is no such thing as arity, and no "missing argument" error. You get a type mismatch instead. |
 | `elan` | `rustup` / `sdkman` | — |

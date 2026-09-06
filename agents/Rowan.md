@@ -51,3 +51,36 @@ thin.
 Sonnet, three on Opus, four on Haiku, plus three prover attempts and three
 ceremonies on the subscription, which ended the day at about 41 percent of
 the five-hour window.
+
+## 2026-09-06T01:10:00Z — first dispatch from the committed harness
+
+`prove-one evolve_left_edge`, Vesper on Sonnet, ten turns, six minutes,
+$0.37 plus a $0.09 colour ceremony. Verified, indexed into
+`Rule30/Proofs.lean`, root `lake build` green. Vesper's size estimate
+matched the DAG's M, so its calibration stands at 2/2.
+
+**What worked.** The dispatch order the status command prints was the
+right call without my intervention: the one leaf that unblocks another
+went first. The guard log was live enough to watch (Write, AcquireBuild,
+Edit, AcquireBuild, ReleaseBuild, verify, index) even though the worker's
+own words only land at turn end.
+
+**Two things to fix in the harness.** The notebook writer prints a
+dated header and then Vesper's entry opens with its own header, so
+`agents/Vesper.md` now has the title twice; strip a leading `##` line
+from the report before appending. And the dispatcher's own stdout is the
+only place the cost summary appears; a run that is launched detached
+loses it unless someone saves the output. Write the summary block into
+`runs/<id>/journal.md` or a `summary.txt` beside it.
+
+**One thing to fix in me.** I launched the dispatcher from a Bash call
+with a ten-minute ceiling. This run took six. A twenty-minute run like
+Vesper's first one would have had its handle killed under it, leaving the
+node `claimed` and a live `claude.exe` with no parent. Launch detached
+(`Start-Process`) or let Dib run it in his own terminal and tail
+`events.jsonl`.
+
+**Frontier now.** P1 is open at the second diagonal (unblocks the
+third), plus the right edge, which is the mirror of tonight's proof and
+a good first Haiku-sized test of whether Vesper's notebook actually
+transfers. P2 has three density leaves, all Emmy's.
