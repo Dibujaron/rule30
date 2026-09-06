@@ -63,21 +63,48 @@ fn scripted_identity() -> roster.Identity {
   )
 }
 
+/// A second coloured P2 identity, younger than `Scripted`, so two P2 leaves
+/// can run at once without a ceremony.
+fn understudy() -> roster.Identity {
+  roster.Identity(
+    name: "Understudy",
+    region: "P2",
+    created: "2026-09-05T00:00:01Z",
+    naming_reason: "a test never names itself either",
+    opening: "",
+    color: Some("#654321"),
+  )
+}
+
 type Fixture {
   Fixture(cfg: config.Config, dir: String, index_path: String)
 }
 
-/// A fresh test directory holding the DAG, the roster and the runs root,
-/// with the fake shim scripted to play `script` at every session it is
-/// asked for. `port` keeps this test's guards off the port the guard tests
-/// and the live default use.
+/// A fresh test directory holding the DAG, two P2 personas and the runs
+/// root, with the fake shim scripted to play `script` at every session it
+/// is asked for. `port` keeps this test's guards off the port the guard
+/// tests and the live default use.
 fn fixture(name: String, script: List(List(String)), port: Int) -> Fixture {
+  fixture_with_roster(
+    name,
+    script,
+    port,
+    roster.Roster([scripted_identity(), understudy()]),
+  )
+}
+
+/// `fixture` with the roster chosen by the test.
+fn fixture_with_roster(
+  name: String,
+  script: List(List(String)),
+  port: Int,
+  roster_: roster.Roster,
+) -> Fixture {
   let dir = "build/test-runs/run/" <> name
   let _ = simplifile.delete(dir)
   let assert Ok(_) = simplifile.create_directory_all(dir <> "/agents")
   let assert Ok(_) = dag.save(board(), dir <> "/dag.json")
-  let assert Ok(_) =
-    roster.save(roster.Roster([scripted_identity()]), dir <> "/roster.json")
+  let assert Ok(_) = roster.save(roster_, dir <> "/roster.json")
   let script_path = dir <> "/script.json"
   let assert Ok(_) =
     simplifile.write(
@@ -220,7 +247,8 @@ pub fn two_slots_take_both_leaves_and_a_close_opens_the_next_test() {
   let assert [run] = runs
   let journal = read(f.cfg.runs_root <> "/" <> run <> "/journal.md")
   assert string.contains(journal, "Scripted on probe_one")
-  assert string.contains(journal, "Scripted on probe_three")
+  assert string.contains(journal, "Understudy on probe_two")
+  assert string.contains(journal, " on probe_three")
   assert string.contains(text, "3 attempt(s)")
   assert string.contains(
     read(f.cfg.agents_dir <> "/Scripted.md"),

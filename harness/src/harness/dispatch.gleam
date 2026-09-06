@@ -98,7 +98,8 @@ pub fn prove_one(
   ))
   use _ <- result.try(guard.write_settings(g, g.settings_path))
 
-  use identity <- result.try(ensure_identity(cfg, roster_, node, model, g, l))
+  let who = schedule.who_for(roster_, node.region, busy: [])
+  use identity <- result.try(ensure_identity(cfg, roster_, who, model, g, l))
   log.event(l, "dispatch", [
     #("node", json.string(node_id)),
     #("identity", json.string(identity.name)),
@@ -322,29 +323,32 @@ fn fill(run_: Run, state: RunState) -> Result(RunState, String) {
     None ->
       schedule.next_to_start(
         state.d,
+        state.roster_,
         run_.plan,
         running: list.length(state.running),
+        busy: list.map(state.running, fn(r) { r.identity.name }),
         dispatched: state.dispatched,
         skip: state.skip,
       )
   }
   case candidate {
     None -> Ok(state)
-    Some(node) -> {
-      use state <- result.try(start(run_, state, node))
+    Some(schedule.Assignment(node:, who:)) -> {
+      use state <- result.try(start(run_, state, node, who))
       fill(run_, state)
     }
   }
 }
 
 /// Stand up one attempt at `node` in its own process: its own guard on the
-/// next port, its own log directory under the run's, the identity for its
-/// region (named or coloured first, inline, if it has to be), and the node
-/// claimed in the DAG before the worker is launched.
+/// next port, its own log directory under the run's, the identity the
+/// scheduler assigned (named or coloured first, inline, if it has to be),
+/// and the node claimed in the DAG before the worker is launched.
 fn start(
   run_: Run,
   state: RunState,
   node: dag.Node,
+  who: schedule.Who,
 ) -> Result(RunState, String) {
   let cfg = run_.cfg
   let failed = failed_attempts(node)
@@ -388,7 +392,7 @@ fn start(
       use identity <- result.try(ensure_identity(
         cfg,
         state.roster_,
-        node,
+        who,
         model,
         g,
         attempt_log,
@@ -758,30 +762,32 @@ pub fn status(cfg: config.Config) -> Result(String, String) {
   )
 }
 
-/// The identity for this node's region, naming one if the region has none
-/// yet. A newly named identity is saved to the roster and its notebook is
-/// opened with the paragraph it wrote about itself. An identity that already
-/// exists but never chose a colour — the roster predates the ceremony
-/// asking for one — gets a short backfill ceremony before dispatch.
+/// The identity an attempt runs as, given the scheduler's decision. An
+/// existing identity that never chose a colour — the roster predates the
+/// ceremony asking for one — gets a short backfill ceremony first. A mint
+/// runs the naming ceremony: the newcomer is saved to the roster, its
+/// notebook is opened with the paragraph it wrote about itself, and the
+/// `naming` event says whether it was named because the region was empty
+/// or because every persona there was busy.
 fn ensure_identity(
   cfg: config.Config,
   roster_: roster.Roster,
-  node: dag.Node,
+  who: schedule.Who,
   model: String,
   g: guard.Guard,
   l: log.Log,
 ) -> Result(roster.Identity, String) {
-  case roster.for_region(roster_, node.region) {
-    Some(identity) ->
+  case who {
+    schedule.Existing(identity) ->
       case identity.color {
         Some(_) -> Ok(identity)
         None -> Ok(backfill_color(cfg, roster_, identity, model, g, l))
       }
-    None -> {
+    schedule.Mint(region:, busy:) -> {
       use #(identity, color_reason) <- result.try(worker.name_identity(
         cfg,
         roster_,
-        node.region,
+        region,
         model,
         g.settings_path,
         l,
@@ -791,13 +797,18 @@ fn ensure_identity(
       use _ <- result.try(roster.append_notebook(
         cfg.agents_dir,
         identity,
-        identity.created <> " — named for " <> node.region,
+        identity.created <> " — named for " <> region,
         naming_entry(identity, color_reason),
       ))
+      let because = case busy {
+        [] -> "region empty"
+        names -> "all busy: " <> string.join(names, ", ")
+      }
       log.event(l, "naming", [
         #("name", json.string(identity.name)),
         #("region", json.string(identity.region)),
         #("reason", json.string(identity.naming_reason)),
+        #("because", json.string(because)),
       ])
       Ok(identity)
     }

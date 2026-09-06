@@ -3,7 +3,7 @@
 
 import gleam/option.{None, Some}
 import harness/dag.{Dag, Node}
-import harness/roster.{Identity, Roster}
+import harness/roster.{type Identity, type Roster, Identity, Roster}
 import harness/schedule.{Assignment, Existing, Mint, Plan}
 
 fn node(id: String, status: dag.Status, deps: List(String)) -> dag.Node {
