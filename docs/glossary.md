@@ -167,3 +167,62 @@ Where it breaks, twice:
   from**. Nothing in the dev-server picture behaves this way, and it is how both
   of this project's worktree failures happened: code that had already been
   fixed, still running, with nothing on screen to say so.
+
+## Adjudication, and the third outcome
+
+An **adjudicator** here is anything that decides a claim from outside the
+session that made it. The project has five, and they are the whole design:
+
+| Adjudicator | Decides | Claim made by |
+|---|---|---|
+| `lake build` | is this a proof? | a prover |
+| the route check | does this tactic close that statement? | a captain |
+| the falsification witness | is this statement false on a finite range? | a captain |
+| the guard | may this command run? | a prover |
+| the board decoder | is this a well-formed bug? | anyone hand-editing |
+
+**Every one of them has three outcomes, not two**, and the third is the one
+that keeps getting collapsed:
+
+```ts
+type Verdict<T> =
+  | { ok: true; value: T }
+  | { ok: false; reason: string }   // the claim is wrong
+  | { unknown: true; why: string }  // I could not tell
+```
+
+The middle case says something about *the subject*. The third says something
+about *the check*. They are both "not a pass", which is exactly why the
+temptation is to merge them — and merging them is the bug, every time:
+
+- A witness that fails to compile is not a false statement. Collapse them and
+  a typo **retracts a true lemma**.
+- A build-lock timeout is not a forbidden command. Collapse them and a
+  scheduler problem is filed as a policy problem.
+- A board that fails to parse is not a board with no bugs on it. Collapse them
+  and auto-filing goes silently dead while the run record looks clean.
+
+**`sorry` is the original instance**, and it is why this vocabulary matters
+here rather than being general software hygiene. `sorry` is a hole that still
+typechecks — like `x as unknown as T`, where the checker is satisfied and there
+is nothing behind it. Both are silent. The seam is that the cast still yields
+*some* wrong value at runtime, while `sorry` yields a theorem that was never
+proved and **a build that reports success**. That is a third outcome ("I could
+not tell") wearing the costume of the first ("pass"), and refusing that one
+collapse — no agent declares a proof done by assertion — is the rule the whole
+harness is built around.
+
+Where the TypeScript anchor breaks. In application code the third case is
+usually an infrastructure detail you retry and forget: the network was down,
+try again. Here it is **evidence, and it must be recorded as such**. A witness
+that timed out has to reach the board as `unchecked`, because the timeout is
+not random — `List.all` short-circuits, so a false witness returns instantly
+and a true one pays the full exponential, which means **timing out correlates
+with the statement being true**. Silently retrying until something answers
+would select for exactly the claims you most needed checked. The third outcome
+is a finding about what you do not know, not a failure to get an answer.
+
+Reached independently in two unrelated modules within a few hours on
+2026-09-06 — `Denial` in the guard and `WitnessVerdict` in the seeder — which
+is the reason it is written down here as the project's shape rather than as
+one author's taste.
