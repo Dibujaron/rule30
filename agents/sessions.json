@@ -75,6 +75,13 @@
       "ref": "7c4f90",
       "role": "framework",
       "started": "2026-09-06T20:30:00Z"
+    },
+    {
+      "identity": "Keel",
+      "session_name": "rule30-aa",
+      "ref": "de0407",
+      "role": "framework",
+      "started": "2026-09-06T18:00:00Z"
     }
   ]
 }
