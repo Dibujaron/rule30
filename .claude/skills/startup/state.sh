@@ -24,7 +24,7 @@ echo
 # --- 1. Work that exists on one disk -----------------------------------------
 # The highest-value line in this report. On 2026-09-06 `main` sat eight commits
 # ahead of its remote while three sessions cited shas that were on one disk.
-echo "== COMMITS ON THIS DISK ONLY (reachable from no remote ref) =="
+echo "== YOURS TO FIX: COMMITS ON THIS DISK ONLY (reachable from no remote ref) =="
 found=0
 while read -r branch; do
   # `--not --remotes` is the point: a branch can be far "ahead of its own
@@ -39,10 +39,12 @@ while read -r branch; do
   found=1
 done < <(git for-each-ref --format='%(refname:short)' refs/heads)
 [ "$found" -eq 0 ] && echo "  (none — every local commit is reachable from some remote ref)"
+echo "  This is the section a session can empty by itself, and the only one that"
+echo "  means work is at risk. If your branch is here, you are not checkpointed."
 echo
 
 # --- 2. Work that never landed -----------------------------------------------
-echo "== BRANCHES NOT MERGED INTO origin/main (unlanded findings) =="
+echo "== SOMEONE ELSE'S QUEUE: BRANCHES PUSHED BUT NOT IN origin/main =="
 found=0
 while read -r branch; do
   [ "$branch" = "main" ] && continue
@@ -60,6 +62,9 @@ while read -r branch; do
   found=1
 done < <(git for-each-ref --format='%(refname:short)' refs/heads)
 [ "$found" -eq 0 ] && echo "  (none — every branch's changes are in origin/main)"
+echo "  A handoff, not a failure. Only whoever holds main can empty this, so a"
+echo "  session running /checkpoint must NOT expect its own branch to be absent"
+echo "  here. Pushed-but-unlanded is waiting; on-one-disk is at risk."
 echo
 
 # --- 3. Work that is not even a commit ---------------------------------------

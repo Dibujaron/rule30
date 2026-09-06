@@ -56,8 +56,14 @@ Then verify rather than assume:
 bash .claude/skills/startup/state.sh
 ```
 
-Your own branch should be absent from the first three sections. If it is not,
-you are not checkpointed, whatever you just did.
+Your own branch must be absent from **section 1**, "yours to fix". If it is
+there, you are not checkpointed, whatever you just did.
+
+**Section 2 is not yours to empty.** A pushed-but-unlanded branch is a handoff
+— only whoever holds `main` can land it, and your branch will sit there until
+they do. If the two sections read as one severity, the item that actually
+strands work gets the same weight as the item that means "waiting for the
+overseer", and a section that is never empty stops being read.
 
 ## What checkpoint cannot do, and you must not expect it to
 
