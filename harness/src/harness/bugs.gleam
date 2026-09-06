@@ -8,8 +8,10 @@
 //// another identity or claim a node it was not dispatched to.
 
 import gleam/dynamic/decode
+import gleam/int
 import gleam/json
-import gleam/option.{type Option}
+import gleam/list
+import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
 import simplifile
@@ -119,6 +121,144 @@ pub fn save(board: Board, path: String) -> Result(Nil, String) {
   simplifile.write(path, encode(board) <> "\n")
   |> result.map_error(fn(e) { simplifile.describe_error(e) })
 }
+
+/// Put `bug` on the board, giving it an id slugged from its title.
+///
+/// When it carries a signature an **open or claimed** bug already carries,
+/// that bug's `occurrences` is bumped and its `filed` refreshed instead of a
+/// row being added — otherwise one bad guard rule files forty identical bugs
+/// in a single run. A signature matching a bug already `fixed` files a new
+/// row, so a regression is visibly a regression.
+pub fn append(board: Board, bug: Bug) -> Board {
+  case bug.signature {
+    None -> add(board, bug)
+    Some(sig) ->
+      case
+        list.find(board.bugs, fn(b) { b.signature == Some(sig) && is_live(b) })
+      {
+        Error(Nil) -> add(board, bug)
+        Ok(existing) ->
+          update(
+            board,
+            Bug(
+              ..existing,
+              occurrences: existing.occurrences + 1,
+              filed: bug.filed,
+            ),
+          )
+      }
+  }
+}
+
+fn add(board: Board, bug: Bug) -> Board {
+  Board(
+    list.append(board.bugs, [Bug(..bug, id: unique_id(board, slug(bug.title)))]),
+  )
+}
+
+fn is_live(bug: Bug) -> Bool {
+  bug.status == Open || bug.status == Claimed
+}
+
+/// Find the bug with the given id.
+pub fn get(board: Board, id: String) -> Result(Bug, Nil) {
+  list.find(board.bugs, fn(b) { b.id == id })
+}
+
+/// Replace the bug with the same id as `bug`, leaving the rest untouched.
+pub fn update(board: Board, bug: Bug) -> Board {
+  Board(
+    list.map(board.bugs, fn(b) {
+      case b.id == bug.id {
+        True -> bug
+        False -> b
+      }
+    }),
+  )
+}
+
+/// Every bug still wanting work — `open` or `claimed` — newest first.
+pub fn open_bugs(board: Board) -> List(Bug) {
+  board.bugs
+  |> list.filter(is_live)
+  |> newest_first
+}
+
+/// The board narrowed for display: by area, by severity, and by whether
+/// settled bugs are included. Newest first, like `open_bugs`.
+pub fn filtered(
+  board: Board,
+  area: Option(Area),
+  severity: Option(Severity),
+  all: Bool,
+) -> List(Bug) {
+  board.bugs
+  |> list.filter(fn(b) { all || is_live(b) })
+  |> list.filter(fn(b) {
+    case area {
+      None -> True
+      Some(a) -> b.area == a
+    }
+  })
+  |> list.filter(fn(b) {
+    case severity {
+      None -> True
+      Some(s) -> b.severity == s
+    }
+  })
+  |> newest_first
+}
+
+/// `filed` is ISO-8601 with a `Z`, so lexicographic order is chronological.
+fn newest_first(bugs: List(Bug)) -> List(Bug) {
+  list.sort(bugs, fn(a, b) { string.compare(b.filed, a.filed) })
+}
+
+fn unique_id(board: Board, base: String) -> String {
+  case taken(board, base) {
+    False -> base
+    True -> next_free(board, base, 2)
+  }
+}
+
+fn next_free(board: Board, base: String, n: Int) -> String {
+  let candidate = base <> "-" <> int.to_string(n)
+  case taken(board, candidate) {
+    False -> candidate
+    True -> next_free(board, base, n + 1)
+  }
+}
+
+fn taken(board: Board, id: String) -> Bool {
+  list.any(board.bugs, fn(b) { b.id == id })
+}
+
+/// A kebab-case id from a title: lowercased, everything but letters and
+/// digits treated as a word break, capped at eight words so an id stays
+/// quotable in a commit message. A title with nothing sluggable falls back
+/// to `bug`, which then collision-suffixes like anything else.
+fn slug(title: String) -> String {
+  let words =
+    title
+    |> string.lowercase
+    |> string.to_graphemes
+    |> list.map(fn(g) {
+      case string.contains(does: slug_chars, contain: g) {
+        True -> g
+        False -> " "
+      }
+    })
+    |> string.join("")
+    |> string.split(" ")
+    |> list.filter(fn(w) { w != "" })
+    |> list.take(8)
+  case words {
+    [] -> "bug"
+    _ -> string.join(words, "-")
+  }
+}
+
+const slug_chars = "abcdefghijklmnopqrstuvwxyz0123456789"
 
 /// Render a `Severity` to its JSON string form.
 pub fn severity_to_string(s: Severity) -> String {

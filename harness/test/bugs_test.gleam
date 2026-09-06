@@ -108,3 +108,90 @@ pub fn every_source_round_trips_test() {
     assert bugs.source_from_string(bugs.source_to_string(source)) == Ok(source)
   })
 }
+
+fn auto_bug(title: String, signature: String, filed: String) -> Bug {
+  Bug(
+    ..bug("", bugs.Open),
+    title:,
+    source: bugs.Harness,
+    signature: Some(signature),
+    filed:,
+  )
+}
+
+pub fn append_slugs_an_id_from_the_title_test() {
+  let board =
+    bugs.append(
+      Board([]),
+      Bug(..bug("", bugs.Open), title: "Guard denies lake env lean!"),
+    )
+  let assert [b] = board.bugs
+  assert b.id == "guard-denies-lake-env-lean"
+}
+
+pub fn append_suffixes_a_colliding_id_test() {
+  let board =
+    Board([])
+    |> bugs.append(Bug(..bug("", bugs.Open), title: "Same title"))
+    |> bugs.append(Bug(..bug("", bugs.Open), title: "Same title"))
+    |> bugs.append(Bug(..bug("", bugs.Open), title: "Same title"))
+  assert list.map(board.bugs, fn(b) { b.id })
+    == ["same-title", "same-title-2", "same-title-3"]
+}
+
+pub fn append_dedupes_a_signature_that_matches_an_open_bug_test() {
+  let board =
+    Board([])
+    |> bugs.append(auto_bug("Denied", "guard:Bash", "2026-09-06T02:00:00Z"))
+    |> bugs.append(auto_bug("Denied", "guard:Bash", "2026-09-06T02:05:00Z"))
+  let assert [b] = board.bugs
+  assert b.occurrences == 2
+  assert b.filed == "2026-09-06T02:05:00Z"
+}
+
+pub fn append_does_not_dedupe_against_a_fixed_bug_test() {
+  let board =
+    Board([])
+    |> bugs.append(auto_bug("Denied", "guard:Bash", "2026-09-06T02:00:00Z"))
+  let assert [first] = board.bugs
+  let board = bugs.update(board, Bug(..first, status: bugs.Fixed))
+  let board =
+    bugs.append(board, auto_bug("Denied", "guard:Bash", "2026-09-06T09:00:00Z"))
+  assert list.length(board.bugs) == 2
+}
+
+pub fn append_never_dedupes_an_unsigned_bug_test() {
+  let board =
+    Board([])
+    |> bugs.append(Bug(..bug("", bugs.Open), title: "Same friction"))
+    |> bugs.append(Bug(..bug("", bugs.Open), title: "Same friction"))
+  assert list.length(board.bugs) == 2
+}
+
+pub fn open_bugs_is_newest_first_and_excludes_settled_test() {
+  let board =
+    Board([
+      Bug(..bug("old", bugs.Open), filed: "2026-09-06T01:00:00Z"),
+      Bug(..bug("done", bugs.Fixed), filed: "2026-09-06T02:00:00Z"),
+      Bug(..bug("new", bugs.Claimed), filed: "2026-09-06T03:00:00Z"),
+      Bug(..bug("nope", bugs.Wontfix), filed: "2026-09-06T04:00:00Z"),
+    ])
+  assert list.map(bugs.open_bugs(board), fn(b) { b.id }) == ["new", "old"]
+}
+
+pub fn filtered_narrows_by_area_and_severity_test() {
+  let board =
+    Board([
+      Bug(..bug("g", bugs.Open), area: bugs.Guard, severity: bugs.Blocks),
+      Bug(..bug("d", bugs.Open), area: bugs.Dispatch, severity: bugs.Blocks),
+      Bug(..bug("g2", bugs.Open), area: bugs.Guard, severity: bugs.Papercut),
+    ])
+  assert list.map(bugs.filtered(board, Some(bugs.Guard), None, False), fn(b) {
+      b.id
+    })
+    == ["g", "g2"]
+  assert list.map(bugs.filtered(board, None, Some(bugs.Blocks), False), fn(b) {
+      b.id
+    })
+    == ["g", "d"]
+}
