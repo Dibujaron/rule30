@@ -235,6 +235,24 @@ entries, notebook entries, commit messages, board posts):
   what Lean elaboration may then do: verifying a proof means elaborating it,
   so the trust boundary is the model plus the command allowlist, not a
   sandbox.
+- **The guard is a `PreToolUse` hook, so it sees only what a worker *does*.**
+  It structurally cannot see what a worker is **told** — an inbound message
+  from another session is not a tool call — nor what a worker is **shown**,
+  when a file-watch pushes a file into a session's context unasked. Both were
+  demonstrated on 2026-09-06: a framework agent misaddressed a briefing into
+  a live prover mid-attempt, and that attempt's `events.jsonl` recorded the
+  arrival as nothing at all; separately, one agent's notebook was placed in
+  another's context by a file-changed notice, with no action taken by either.
+
+  Three consequences, and the third is the expensive one. A wider or
+  narrower allowlist addresses none of this, so *loosening the guard* and
+  *tightening the guard* are both the wrong lever. A rule phrased as "do not
+  read X" cannot bind a failure that contains no action. And **an attempt
+  record is not the closed system it looks like** — an outcome is read as
+  evidence about a *node*, and that inference holds only if the attempt was
+  isolated, which it is not. Treat a surprising attempt result as possibly
+  contaminated before treating it as a hard node. See the board:
+  `workers-are-addressable-and-it-is-not-recorded`.
 - Where state must survive a session that dies without warning, either
   derive it from outside the process or make the stale value inert rather
   than dangerous. A cleanup step at the end of a session is fiction:
