@@ -65,6 +65,10 @@ done < <(git for-each-ref --format='%(refname:short)' refs/heads)
 echo "  A handoff, not a failure. Only whoever holds main can empty this, so a"
 echo "  session running /checkpoint must NOT expect its own branch to be absent"
 echo "  here. Pushed-but-unlanded is waiting; on-one-disk is at risk."
+echo "  KNOWN LIMIT: a commit landed by a cherry-pick whose CONFLICT had to be"
+echo "  resolved keeps a different patch id and stays listed here forever, even"
+echo "  though its content is on main. Before chasing a row, compare content —"
+echo "  the commit may already be landed under a resolution that changed it."
 echo
 
 # --- 3. Work that is not even a commit ---------------------------------------
