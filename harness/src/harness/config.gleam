@@ -33,6 +33,7 @@ pub type Config {
     lake: String,
     runs_root: String,
     dag_path: String,
+    bugs_path: String,
     roster_path: String,
     agents_dir: String,
     guard_port: Int,
@@ -69,6 +70,8 @@ pub fn load() -> Result(Config, String) {
     lake:,
     runs_root: repo_root <> "/runs",
     dag_path: repo_root <> "/blueprint/dag.json",
+    bugs_path: env("HARNESS_BUGS_PATH")
+      |> result.unwrap(repo_root <> "/blueprint/bugs.json"),
     roster_path: repo_root <> "/agents/roster.json",
     agents_dir: repo_root <> "/agents",
     guard_port: env_int("HARNESS_GUARD_PORT", 4130),

@@ -10,8 +10,10 @@ import envoy
 import gleam/int
 import gleam/io
 import gleam/list
-import gleam/option.{None, Some}
+import gleam/option.{type Option, None, Some}
 import gleam/result
+import gleam/string
+import harness/bugs
 import harness/claude
 import harness/config
 import harness/dag
@@ -46,10 +48,78 @@ fn run(cfg: config.Config, arguments: List(String)) -> Nil {
         |> result.try(fn(plan) { dispatch.run(cfg, plan) })
         |> result.map(fn(_) { "run ended" }),
       )
+    ["bugs", ..flags] -> print_outcome(bug_board(cfg, flags))
     _ ->
       io.println(
-        "usage: gleam run -- status | prove-one <node-id> | run [--max-attempts N] [--concurrency K] | reopen <node-id> | spike",
+        "usage: gleam run -- status | prove-one <node-id> | run [--max-attempts N] [--concurrency K] | reopen <node-id> | bugs [--area A] [--severity S] [--all] | spike",
       )
+  }
+}
+
+/// The bug board, rendered. Open and claimed bugs newest first, unless
+/// `--all` also asks for the settled ones.
+fn bug_board(
+  cfg: config.Config,
+  flags: List(String),
+) -> Result(String, String) {
+  use area <- result.try(flag_value(
+    flags,
+    "--area",
+    bugs.area_from_string,
+    "area",
+  ))
+  use severity <- result.try(flag_value(
+    flags,
+    "--severity",
+    bugs.severity_from_string,
+    "severity",
+  ))
+  use board <- result.try(bugs.load(cfg.bugs_path))
+  let all = list.contains(flags, "--all")
+  case bugs.filtered(board, area, severity, all) {
+    [] -> Ok("no bugs match")
+    matched -> Ok(string.join(list.map(matched, bug_line), "\n"))
+  }
+}
+
+fn bug_line(bug: bugs.Bug) -> String {
+  string.join(
+    [
+      pad(bugs.severity_to_string(bug.severity), 9),
+      pad(bugs.area_to_string(bug.area), 9),
+      pad(bugs.status_to_string(bug.status), 8),
+      pad(bug.id, 40),
+      bug.title,
+      case bug.occurrences {
+        1 -> ""
+        n -> " (x" <> int.to_string(n) <> ")"
+      },
+      "  — " <> bug.reported_by,
+    ],
+    "",
+  )
+}
+
+fn pad(text: String, width: Int) -> String {
+  string.pad_end(text, width, " ") <> " "
+}
+
+/// Read `--flag value` out of the argument list, parsing it with `parse`. An
+/// absent flag is `None`; a present flag with an unparseable value is an
+/// error, because silently ignoring a typo'd filter shows the wrong board.
+fn flag_value(
+  flags: List(String),
+  name: String,
+  parse: fn(String) -> Result(a, Nil),
+  label: String,
+) -> Result(Option(a), String) {
+  case flags {
+    [flag, value, ..] if flag == name ->
+      parse(value)
+      |> result.map(Some)
+      |> result.replace_error("unknown " <> label <> " `" <> value <> "`")
+    [_, ..rest] -> flag_value(rest, name, parse, label)
+    [] -> Ok(None)
   }
 }
 

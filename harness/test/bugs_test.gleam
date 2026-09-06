@@ -195,3 +195,20 @@ pub fn filtered_narrows_by_area_and_severity_test() {
     })
     == ["g", "d"]
 }
+
+/// `--all` is the only thing that flips `filtered`'s `Bool`, so this is the
+/// test standing in for that flag: without it, a future inversion of the
+/// bool's sense would pass every other test here (none of which mixes a
+/// settled bug into a `filtered` call) and only show up against the real
+/// board.
+pub fn filtered_all_flag_includes_settled_bugs_test() {
+  let board =
+    Board([
+      Bug(..bug("live", bugs.Open), filed: "2026-09-06T01:00:00Z"),
+      Bug(..bug("settled", bugs.Fixed), filed: "2026-09-06T02:00:00Z"),
+    ])
+  assert list.map(bugs.filtered(board, None, None, False), fn(b) { b.id })
+    == ["live"]
+  assert list.map(bugs.filtered(board, None, None, True), fn(b) { b.id })
+    == ["settled", "live"]
+}

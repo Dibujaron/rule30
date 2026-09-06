@@ -41,3 +41,8 @@ pub fn load_derives_every_path_from_the_repo_root_test() {
   assert cfg.max_verify_rounds == 4
   assert cfg.lake != ""
 }
+
+pub fn bugs_path_sits_beside_the_dag_test() {
+  let assert Ok(cfg) = config.load()
+  assert cfg.bugs_path == cfg.repo_root <> "/blueprint/bugs.json"
+}
