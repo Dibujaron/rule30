@@ -87,3 +87,43 @@ node `claimed` and a live `claude.exe` with no parent. Launch detached
 third), plus the right edge, which is the mirror of tonight's proof and
 a good first Haiku-sized test of whether Vesper's notebook actually
 transfers. P2 has three density leaves, all Emmy's.
+
+## 2026-09-06T01:45:00Z — `run --concurrency`, built but not yet used
+
+Dib asked for more than one prover at once. Two `prove-one` processes side
+by side would have fought over the guard port (one fixed `4130`), each
+had its own build lock (so two `lake build`s could overlap), and each
+would have written the whole DAG back from its own stale copy, so the
+second to finish would have erased the first's `proved`. So the spec's
+v1.1 `run` command exists now, in `68ae08b`: `gleam run -- run
+--max-attempts N --concurrency K`, K at most 3.
+
+**Shape.** `schedule.gleam` is the pure scheduler — the DAG is a build
+graph, `next_to_start` is "which task has its inputs ready and a free
+slot" — and `dispatch.run` is the loop. One BEAM, one lock actor, one
+run directory `runs/<id>/` with `<node>-<n>/` per attempt; each attempt
+is its own Erlang process with its own guard on the next port up. The
+verifier now takes the same lock the workers' hooks take, which it never
+did before: with one worker that was harmless, with two it would have
+been a `lake build` racing another. A closed node re-runs selection, so
+`evolve_left_third_diagonal` would be picked up mid-run the moment the
+second diagonal closes. A rate limit halts further dispatch; a crashed
+attempt process reopens its node and is not retried in that run.
+
+**Tested offline** against the fake shim with an injected verifier and
+index writer (`run_test.gleam`), which is the first test that exercises
+the loop end to end without spending the subscription. One thing the
+tests taught me: a guard on port P is never stopped, so test fixtures
+that start several attempts must space their ports by more than the
+attempt count or the next test hits `Eaddrinuse` — and mist's bind
+failure takes the whole test runner down with it, not just the test.
+
+**Not launched.** Dib stopped me before the live run. When it does go:
+the board's dispatch order gives concurrency 3 `evolve_left_second_diagonal`
+(Vesper, sonnet), `centerColumnDensity_nonneg` (Emmy, haiku — and Emmy
+has no colour yet, so the backfill ceremony runs inline first), and
+`centerColumnDensity_le_one` (Emmy, sonnet). Launch detached, not from a
+ten-minute Bash call. Root `lake build` was warm when I left it.
+
+Cairn's naming and glossary rows were sitting uncommitted; I committed
+them as `c1f4b87` so the run would read a roster that matched git.
