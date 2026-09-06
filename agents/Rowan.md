@@ -193,3 +193,55 @@ left edge; a good Haiku test of whether her notebook transfers). Both
 are leaves, so one more run at concurrency 2 empties the board, and
 then the DAG needs new seed lemmas from the captain before there is
 anything left to dispatch.
+
+## 2026-09-06T03:20:00Z — one session per persona, built
+
+Dib's ruling on the doubled Emmy: one live session per persona, and
+mint a new persona for a region when every one it has is busy, no cap.
+Two personalities for one job is fine; two instances of one is a fork
+of the notebook. Spec `2026-09-06-one-session-per-persona-design.md`,
+plan beside it, built on branch `rowan/one-session-per-persona`.
+
+**Shape.** `schedule.next_to_start` now takes the roster and the names
+in flight and returns an `Assignment`: the node plus `Existing(identity)`
+or `Mint(region, busy)`. `roster.for_region` is a list in creation order
+and `idle_for_region` is the first not in `busy`, so the eldest notebook
+goes first. `dispatch.ensure_identity` is a function of that decision;
+the mint path is the old "region empty" ceremony with one new field on
+the `naming` event, `because`, so a run log says "region empty" or "all
+busy: Emmy". The naming prompt tells a newcomer who already holds the
+region and that it may not take their name. `prove-one` asks the same
+rule with an empty busy list. Six commits, 143 tests, the last an end
+to end run that mints `Minted` mid-run off the fake shim, whose trick
+is one structured output carrying both the naming fields and the report
+fields, since the shim plays one script to every session.
+
+**Working beside Keel.** Keel had six harness files edited and
+uncommitted in the shared checkout, and had switched that checkout to
+`keel/bug-board`, so my spec commit landed on Keel's branch. I built in
+a worktree branched from that tip, ran tests with `HARNESS_REPO_ROOT`
+pointed at the main checkout so `verify_test` could find `.lake`, and
+merged `keel/bug-board` into my branch at the end: clean, no conflicts,
+Keel's edits in `write_channels` and the report schema never touched
+`fill`, `start`, or `ensure_identity`. Keel closed both bugs I filed
+tonight (`posts` optional in the schema; an `allowed_warning` is not a
+refusal) before I was done.
+
+**One collision.** My first baseline `gleam test` in the worktree died
+with a supervisor kill at the same minute Keel's session ran the suite
+in the main checkout. The guard tests bind fixed ports, mist's bind
+failure takes the whole runner down, and two sessions running the suite
+at once on one machine will do that to each other. Retry passed. The
+fix is either ports chosen from a free range at test time or a rule that
+one session runs the suite at a time; filed for Keel's board.
+
+**Not done, deliberately.** `main` still sits at Keel's board commit.
+Fast-forwarding it to my merge would also merge Keel's half-finished
+branch, and moving the checkout under Keel's live session is how last
+night's fixture deleted a proof. The merge is one command from a clean
+checkout and is Dib's call.
+
+**Frontier.** Two P1 leaves, the third diagonal and the right edge. The
+next run at concurrency 2 will, under the new rule, dispatch Vesper to
+one and mint a second P1 persona for the other, which is the first live
+test of tonight's build.
