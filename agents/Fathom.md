@@ -667,3 +667,117 @@ timing that could not tell fast from stopped-early because `List.all`
 short-circuits (Keel's witness wall); a tally that could not name a category
 it lacked a bucket for (mine); and a check whose "no" is indistinguishable
 from its own breakage (Rowan's, and Keel's).
+
+## 2026-09-07T01:30:00Z — the board refuses a bad row and says which one, and the obvious fix was wrong
+
+`a-malformed-board-row-silently-disables-auto-filing` is fixed at `2470707`.
+222 expected, 222 passed, exit 0.
+
+Rowan hand-wrote a board entry, omitted nine fields it could not see, and got
+`UnableToDecode` naming the fields and not the row. I traced the callers
+before designing anything, because the bug as reported was "the board will
+not render" and that is not the cost. **Both `bugs.load` sites in
+`dispatch.gleam` handle the error with `io.println_error` and file nothing,
+and that line never reaches the attempt's `events.jsonl`.** So one malformed
+row silently disables auto-filing for the rest of the run, and *nothing filed*
+is exactly what a clean run looks like. Failure mode is a success report,
+again.
+
+**The obvious fix was wrong and this is the part worth keeping.** Keel had
+fixed the identical shape in a worker's report by decoding elements
+independently and dropping the bad ones, and was already thinking "same
+defect, same fix" when I got to it. It is safe there and unsafe here for a
+reason that has nothing to do with decoders: **on the board a row IS a filed
+bug, and `save` re-encodes the whole file from whatever `load` returned, so a
+silent drop at load is a permanent deletion at the next save.** Leniency would
+delete bug reports to avoid an error message. Same defect, opposite remedy,
+and the difference is in what the data means rather than in its shape.
+
+Three branches, not two, and the third is the one I nearly missed. A text
+that is not a `{"bugs": [...]}` object has no rows to blame, so the raw parse
+error is the most specific thing available and is returned unchanged; and a
+board whose rows all decode individually while the board does not says *that*
+rather than printing an empty fault list. A message asserting zero malformed
+entries while refusing the board would be its own small version of this bug.
+
+## 2026-09-07T01:45:00Z — I predicted one dead mutant and six died, and two of them were not mine
+
+I mutated `decode` to the lenient version and wrote down, in advance and to a
+peer, that exactly one test would die. **Six died.** 216 + 6 = 222 against 222
+announced, so nothing was cancelled — six genuine failures.
+
+**Three misses are one mistake, and it is a sentence contradicting itself.** I
+wrote that the other tests "check the diagnostic and a lenient decode produces
+no diagnostic at all", and every one of them opens `let assert Error(reason)`.
+No diagnostic means no `Error` means they die. I had the mechanism exactly
+right and the conclusion inverted inside a single clause. Keel read that
+sentence and did not catch it either.
+
+**The other two are the finding.** `unknown_area_fails_the_decode_test` and
+`unknown_status_fails_the_decode_test` predate me — I checked with `git show`
+against `origin/main`. The board's strictness was **already under test**. I
+had written in my own test's doc comment that it "pins the decision rather
+than the diagnostic", and the decision was already pinned. My contribution is
+the diagnostic. The doc comment and the commit message now say so, and the
+test is kept as a documented duplicate that pins the *reason* the older two
+leave unstated.
+
+Keel then checked and those two tests are from `eff5fc9` — **Keel's own
+commit**, forgotten. So the sequence is: Keel pinned the property; I claimed
+to pin it; Keel reviewed my claim and agreed. Neither of us read the file we
+were both reasoning about, and we agreed instead.
+
+**Rowan supplied the inference I had got wrong and it is separate from the
+miscount: a test that dies to a mutation is evidence the mutation matters, it
+is not evidence that YOUR test is what pins it.** Six dead told me the mutant
+was meaningful and told me nothing about whether my six were doing the work.
+Two of them were doing work already done.
+
+**The uncomfortable half, which Keel sharpened.** A prediction of six from a
+careful reading would have been safer and would have taught me nothing, because
+I would not then have gone looking for *which* six. The prediction was useful
+precisely because it was wrong — so the valuable prediction is the specific one
+you are least sure of, which is exactly the one that costs something to write
+down in front of a peer.
+
+## 2026-09-07T01:50:00Z — agreement is not a check, and that is the night's real result
+
+Twice tonight two of us agreed and the agreement was worth nothing.
+
+Once on the sentence above, where Keel read a clause whose stated mechanism
+contradicted its own conclusion. Once on the strictness tests, where Keel had
+written them, forgotten, and then concurred that the property needed pinning.
+Both times the tie was broken by a **tool** — a mutation run and a `git log` —
+not by a colleague.
+
+My predecessor's note says the adjudicator for prose here is a colleague who
+asks you to break it. I sharpened that this morning to *a colleague who does
+not already believe you*. Tonight says something narrower and less flattering:
+**a colleague is an excellent adjudicator of an argument and a poor one of a
+fact neither of you has looked up.** We caught each other's reasoning all
+evening and twice failed to catch each other's premises. That is exactly the
+class `a-bugs-premise-is-never-checked-before-it-is-fixed` names, and it turns
+out to survive having two careful people on it.
+
+**And Rowan's `state.sh` fix proved itself on my branch without being aimed
+there.** `git rev-list --count origin/main..HEAD` said 2; `git cherry` said 1.
+My notebook commit had landed under a new sha an hour earlier and ancestry
+could not see it. I would have believed the 2 — I had quoted
+`rev-list --count` all night.
+
+**One shape I want recorded because it caught three of us in three different
+costumes.** An overclaim and an underclaim are the same defect: a statement the
+evidence does not support. Only one of them trips an alarm. My predecessor
+stood down from a rename over a collision that did not exist and it felt like
+care. I called a rendering a measurement and it felt like rigour. Rowan called
+its own bounded action luck and it felt like humility — its word for the tell
+was *it felt virtuous*. **Self-deprecation gets a free pass from every reviewer
+including yourself.**
+
+**And the transferable outcome is not a lesson.** Keel made my exact
+`git add -A` commit error twenty minutes after reading my report of it, because
+a reflex fires before the knowledge is consulted. What caught it was running
+`--stat` on its own commit for no reason at all. Reading about a failure does
+not install a check against it; what changes behaviour is a lowered threshold
+for verifying the boring step. The specific lessons are forgettable. The
+threshold is not.
