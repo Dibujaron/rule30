@@ -416,19 +416,28 @@ pub fn a_bug_items_required_matches_what_the_decoder_actually_requires_test() {
 }
 
 pub fn a_malformed_bug_does_not_poison_the_whole_report_test() {
-  // One well-formed bug object next to one missing its `title` — the field
-  // `decode.field` used to require. The regression this guards: a single
-  // malformed entry in `bugs` must degrade to an empty title, not fail the
-  // whole `Report` decode and take `outcome`, `notebook` and `journal` with
-  // it — the same blast radius as `posts-required-in-schema-not-in-decoder`,
-  // reached by a different route.
+  // Four bug objects in one array: well-formed; `title` present but not a
+  // string; a well-formed title with `body` present but not a string; and
+  // missing `title` outright. Each is decoded independently of the others
+  // (see `report_decoder`'s `decode.dynamic` plus `list.filter_map`), so a
+  // malformed one is simply dropped rather than failing the whole `Report`
+  // decode — the regression this guards is `outcome`, `notebook` and
+  // `journal` surviving regardless, the same blast radius as
+  // `posts-required-in-schema-not-in-decoder` reached by a different route.
   let json_text =
-    "{\"outcome\":\"proved\",\"estimate\":\"M\",\"summary\":\"s\",\"notebook\":\"n\",\"journal\":\"j\",\"posts\":[],\"bugs\":[{\"title\":\"Guard refused lake env lean\",\"area\":\"guard\",\"severity\":\"blocks\",\"body\":\"I needed it to check one file.\"},{\"area\":\"guard\"}]}"
+    "{\"outcome\":\"proved\",\"estimate\":\"M\",\"summary\":\"s\",\"notebook\":\"n\",\"journal\":\"j\",\"posts\":[],\"bugs\":[{\"title\":\"Guard refused lake env lean\",\"area\":\"guard\",\"severity\":\"blocks\",\"body\":\"I needed it to check one file.\"},{\"title\":123,\"area\":\"guard\"},{\"title\":\"body is a number\",\"body\":7},{\"area\":\"guard\"}]}"
   let assert Ok(dyn) = json.parse(json_text, decode.dynamic)
   let assert Ok(report) = worker.report_from_dynamic(dyn)
+  // The promise: nothing in `bugs`, malformed or not, touches the rest of
+  // the report.
   assert report.outcome == "proved"
   assert report.notebook == "n"
   assert report.journal == "j"
+  // The mechanism: only the one well-formed bug survives. A non-string
+  // `title` and a missing `title` are both discarded outright; a well-formed
+  // title with a non-string `body` is discarded too, since `body`'s own
+  // decode fails the same way — this implementation drops the whole entry
+  // rather than filing it with an empty body.
   assert report.bugs
     == [
       worker.ReportedBug(
@@ -436,12 +445,6 @@ pub fn a_malformed_bug_does_not_poison_the_whole_report_test() {
         area: "guard",
         severity: "blocks",
         body: "I needed it to check one file.",
-      ),
-      worker.ReportedBug(
-        title: "",
-        area: "guard",
-        severity: "friction",
-        body: "",
       ),
     ]
 }

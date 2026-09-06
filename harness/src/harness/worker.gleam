@@ -68,11 +68,18 @@ fn report_decoder() -> decode.Decoder(Report) {
   use notebook <- decode.optional_field("notebook", "", decode.string)
   use journal <- decode.optional_field("journal", "", decode.string)
   use posts <- decode.optional_field("posts", [], decode.list(decode.string))
-  use bugs <- decode.optional_field(
-    "bugs",
-    [],
-    decode.list(reported_bug_decoder()),
-  )
+  // Decoded as raw `Dynamic` here, one `reported_bug_decoder()` run per
+  // element below, rather than `decode.list(reported_bug_decoder())`
+  // embedded directly: `decode.list` threads every element's errors into one
+  // pool, so one malformed bug object would fail this whole array, and that
+  // failure threads further still, up through `optional_field`, and fails
+  // the entire `Report` — discarding `outcome`, `notebook` and `journal` for
+  // a mistake in one `bugs` entry. Decoding each element on its own and
+  // keeping only the ones that succeed means a bad entry costs at most that
+  // entry.
+  use raw_bugs <- decode.optional_field("bugs", [], decode.list(decode.dynamic))
+  let bugs =
+    list.filter_map(raw_bugs, fn(d) { decode.run(d, reported_bug_decoder()) })
   decode.success(Report(
     outcome:,
     estimate:,
@@ -84,15 +91,14 @@ fn report_decoder() -> decode.Decoder(Report) {
   ))
 }
 
-/// `title` is `optional_field` rather than `field`, even though a titleless
-/// bug is not useful: a required field that a malformed entry can miss
-/// poisons the whole `Report` decode, taking `outcome`, `notebook` and
-/// `journal` down with it — the same blast radius as
-/// `posts-required-in-schema-not-in-decoder`. `dispatch.file_reported_bugs`
-/// drops the empty-titled result instead, so a bad entry costs at most that
-/// one bug.
+/// One bug object, decoded on its own by `report_decoder` — never as part of
+/// a `decode.list` over the whole array, so a failure here costs only this
+/// one entry. `title` is `decode.field`, a hard requirement, precisely
+/// because a failing decode is now safe: an entry with no title, or any
+/// field of the wrong type, simply does not survive `list.filter_map` rather
+/// than being patched over with a default.
 fn reported_bug_decoder() -> decode.Decoder(ReportedBug) {
-  use title <- decode.optional_field("title", "", decode.string)
+  use title <- decode.field("title", decode.string)
   use area <- decode.optional_field("area", "other", decode.string)
   use severity <- decode.optional_field("severity", "friction", decode.string)
   use body <- decode.optional_field("body", "", decode.string)
