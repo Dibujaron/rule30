@@ -356,7 +356,14 @@ fn start(
   use model <- result.try(
     config.model_for(node.size, failed)
     |> result.replace_error(
-      "ladder exhausted for `" <> node.id <> "` although it is an open leaf",
+      "no model for `"
+      <> node.id
+      <> "` (size "
+      <> dag.size_to_string(node.size)
+      <> ", "
+      <> int.to_string(failed)
+      <> " failed attempt(s)): its ladder is empty or exhausted, and the "
+      <> "scheduler should never have offered a node in this state",
     ),
   )
   case brief.task_message(cfg, node) {
@@ -731,35 +738,61 @@ pub fn reopen(cfg: config.Config, node_id: String) -> Result(String, String) {
 
 /// Every node, then the open leaves in the order the dispatcher would take
 /// them.
+///
+/// A wall node whose dependencies are all proved is an open leaf by the
+/// DAG's own definition — `dag.open_leaves` correctly lists it — but the
+/// scheduler (`schedule.next_to_start`) will never offer one: `wall` means
+/// "do not attempt without decomposing first", so `config.model_for` gives
+/// it no model to dispatch with. Listing it under "Open leaves, in dispatch
+/// order" would tell a human it is about to be picked up, which is false,
+/// so it gets its own section instead.
 pub fn status(cfg: config.Config) -> Result(String, String) {
   use d <- result.try(dag.load(cfg.dag_path))
+  // Pad to the longest id actually present (with a little gutter), not a
+  // constant: a constant narrower than some id fuses that id into the
+  // column that follows it.
+  let id_width =
+    int.max(
+      34,
+      2
+        + list.fold(d.nodes, 0, fn(acc, n) { int.max(acc, string.length(n.id)) }),
+    )
   let rows =
     d.nodes
     |> list.map(fn(n) {
-      string.pad_end(n.id, 34, " ")
+      string.pad_end(n.id, id_width, " ")
       <> string.pad_end(dag.status_to_string(n.status), 10, " ")
       <> string.pad_end(dag.size_to_string(n.size), 6, " ")
       <> string.pad_end(n.region, 5, " ")
       <> "attempts="
       <> int.to_string(list.length(n.attempts))
     })
-  let leaves = case dag.open_leaves(d) {
+  let leaf_line = fn(n: dag.Node) {
+    "  "
+    <> n.id
+    <> " — unblocks "
+    <> int.to_string(dag.unblocks(d, n.id))
+    <> ", size "
+    <> dag.size_to_string(n.size)
+  }
+  let #(walled, startable) =
+    dag.open_leaves(d) |> list.partition(fn(n) { n.size == dag.Wall })
+  let walled_lines = case walled {
     [] -> ["  (none)"]
-    open ->
-      open
-      |> list.map(fn(n) {
-        "  "
-        <> n.id
-        <> " — unblocks "
-        <> int.to_string(dag.unblocks(d, n.id))
-        <> ", size "
-        <> dag.size_to_string(n.size)
-      })
+    ws -> list.map(ws, leaf_line)
+  }
+  let startable_lines = case startable {
+    [] -> ["  (none)"]
+    ss -> list.map(ss, leaf_line)
   }
   Ok(
     string.join(rows, "\n")
+    <> "\n\nWalled leaves, ready but never dispatched (deps are proved, but "
+    <> "`wall` means decompose before attempting — the scheduler will not "
+    <> "offer these):\n"
+    <> string.join(walled_lines, "\n")
     <> "\n\nOpen leaves, in dispatch order:\n"
-    <> string.join(leaves, "\n"),
+    <> string.join(startable_lines, "\n"),
   )
 }
 

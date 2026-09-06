@@ -99,11 +99,20 @@ pub fn who_for(
 
 /// The assignment to start next, or `None` if nothing should start: every
 /// slot is busy, the attempt budget is spent, or no open leaf is left that
-/// is not in `skip`. Claimed nodes are never open leaves, so a node already
-/// in flight is excluded by the DAG itself; `skip` is for nodes this run has
-/// decided not to touch again, such as one whose attempt crashed. `busy`
-/// is the names in flight; persona availability never changes which node
-/// is chosen, only who runs it.
+/// is not in `skip` and not a `Wall`. Claimed nodes are never open leaves,
+/// so a node already in flight is excluded by the DAG itself; `skip` is for
+/// nodes this run has decided not to touch again, such as one whose attempt
+/// crashed. `busy` is the names in flight; persona availability never
+/// changes which node is chosen, only who runs it.
+///
+/// `dag.open_leaves` states a fact about the DAG — this node's dependencies
+/// are satisfied — and that is true of a wall node too. Whether it can be
+/// *started* is a scheduling decision, not a DAG fact, and a wall node's
+/// answer is always no: `wall` means "do not attempt without decomposing
+/// first", and `config.model_for` gives it an empty model ladder on
+/// purpose. So it is filtered here, not in `dag.open_leaves`, and a run
+/// with only a walled leaf left correctly finds nothing to start rather
+/// than erroring.
 pub fn next_to_start(
   d: dag.Dag,
   roster_: roster.Roster,
@@ -117,6 +126,7 @@ pub fn next_to_start(
     False -> None
     True ->
       dag.open_leaves(d)
+      |> list.filter(fn(n) { n.size != dag.Wall })
       |> list.find(fn(n) { !list.contains(skip, n.id) })
       |> option.from_result
       |> option.map(fn(node) {

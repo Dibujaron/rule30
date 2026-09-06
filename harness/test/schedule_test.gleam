@@ -211,3 +211,65 @@ pub fn who_for_is_the_same_rule_on_its_own_test() {
   assert schedule.who_for(two_personas(), "P1", busy: [])
     == Mint(region: "P1", busy: [])
 }
+
+// --- wall nodes ---------------------------------------------------------------
+
+fn wall_node(id: String, deps: List(String)) -> dag.Node {
+  Node(..node(id, dag.Open, deps), size: dag.Wall)
+}
+
+/// `w` is a wall node with two dependents, which gives it a higher
+/// `unblocks` count than `b` and so ranks it first in `dag.open_leaves` —
+/// exactly the case that must not be dispatched as-is.
+fn board_with_wall() -> dag.Dag {
+  Dag([
+    wall_node("w", []),
+    node("d1", dag.Open, ["w"]),
+    node("d2", dag.Open, ["w"]),
+    node("b", dag.Open, []),
+  ])
+}
+
+pub fn a_wall_leaf_is_skipped_and_the_next_candidate_starts_test() {
+  let assert Some(Assignment(node: n, ..)) =
+    schedule.next_to_start(
+      board_with_wall(),
+      one_persona(),
+      Plan(3, 2),
+      running: 0,
+      busy: [],
+      dispatched: 0,
+      skip: [],
+    )
+  // `w` ranks first by unblocks, but it is a wall: `b` is what actually starts.
+  assert n.id == "b"
+}
+
+pub fn a_wall_leaf_alone_yields_none_test() {
+  let d = Dag([wall_node("w", [])])
+  assert schedule.next_to_start(
+      d,
+      one_persona(),
+      Plan(3, 2),
+      running: 0,
+      busy: [],
+      dispatched: 0,
+      skip: [],
+    )
+    == None
+}
+
+pub fn a_non_wall_leaf_is_still_selected_normally_test() {
+  let assert Some(Assignment(node: n, ..)) =
+    schedule.next_to_start(
+      board(),
+      one_persona(),
+      Plan(3, 2),
+      running: 0,
+      busy: [],
+      dispatched: 0,
+      skip: [],
+    )
+  assert n.id == "a"
+  assert n.size == dag.S
+}

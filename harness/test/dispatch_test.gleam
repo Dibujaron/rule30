@@ -12,12 +12,16 @@ import harness/worker
 import simplifile
 
 fn cfg() -> config.Config {
+  cfg_for(fixture())
+}
+
+fn cfg_for(d: dag.Dag) -> config.Config {
   let assert Ok(c) = config.load()
   let dir = "build/test-runs/dispatch"
   let assert Ok(_) = simplifile.create_directory_all(dir)
   let assert Ok(_) = simplifile.create_directory_all(dir <> "/agents")
   let path = dir <> "/dag.json"
-  let assert Ok(_) = dag.save(fixture(), path)
+  let assert Ok(_) = dag.save(d, path)
   config.Config(
     ..c,
     dag_path: path,
@@ -86,6 +90,35 @@ pub fn status_lists_every_node_and_the_open_leaves_test() {
   // is not a leaf at all while its dependency is open.
   assert string.starts_with(string.trim(leaves), "harness_probe")
   assert !string.contains(leaves, "probe_corollary")
+}
+
+pub fn status_lists_a_walled_ready_node_separately_from_open_leaves_test() {
+  let d =
+    Dag([
+      node("harness_probe", "harness_probe", dag.S, []),
+      node("walled_probe", "walled_probe", dag.Wall, []),
+    ])
+  let assert Ok(text) = dispatch.status(cfg_for(d))
+  let assert Ok(#(_, leaves)) =
+    string.split_once(text, "Open leaves, in dispatch order:\n")
+  // A wall node whose deps are satisfied is ready by the DAG's own
+  // definition, but the scheduler will never start it, so it must not be
+  // listed as if it were dispatchable.
+  assert !string.contains(leaves, "walled_probe")
+  assert string.contains(text, "walled_probe")
+  assert string.contains(text, "decompos")
+}
+
+pub fn status_pads_the_id_column_to_the_longest_id_present_test() {
+  let long_id = "evolve_left_fourth_diagonal_isEventuallyPeriodic"
+  let d = Dag([node(long_id, "harness_probe", dag.S, [])])
+  let assert Ok(text) = dispatch.status(cfg_for(d))
+  // Padded to the longest id present means the id and the status word that
+  // follows it stay separated by whitespace, whatever the id's length —
+  // constant-width padding fuses them once the id outgrows the constant.
+  assert string.contains(text, long_id <> " ")
+  assert string.contains(text, "open")
+  assert !string.contains(text, long_id <> "open")
 }
 
 // --- refusals -----------------------------------------------------------------
