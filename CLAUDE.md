@@ -92,6 +92,13 @@ and do not explain Lean syntax he can look up. If the honest answer to
 "where the work is" is "nowhere, it was three rewrites", write that. A short
 true note is the goal; an essay is a failure of the same task.
 
+Write it to be read alone. Whoever opens your file has opened that one file
+and nothing else — not the statement, not your brief, not the proof next to
+it. A pointer that names something (`evolve_left_edge`, the recurrence
+lemma) is fine, because it can be followed. "That same fraction", "the
+recurrence again", "as above" cannot be, and they are the failure this note
+is most likely to have.
+
 ## If you are Keel
 
 You maintain the framework, not a region of the theorem DAG: your region

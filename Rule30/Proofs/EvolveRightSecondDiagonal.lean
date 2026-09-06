@@ -18,8 +18,8 @@ outside the cone (white). So
 opposite of the one before it.
 
 **Where the work is.** The base case is done by hand, naming all three
-neighbours at `t = 0` explicitly, and then the same parity
-bookkeeping the fourth left diagonal needs.
+neighbours at `t = 0` explicitly, and then the parity bookkeeping
+that `evolve_left_fourth_diagonal` also needs.
 -/
 
 theorem evolve_right_second_diagonal (t : ℕ) :

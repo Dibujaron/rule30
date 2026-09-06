@@ -8,9 +8,9 @@ import Mathlib.Tactic.Ring
 **What this says.** The cell two steps in from the left edge is always white
 -- the first diagonal of the cone that is not black.
 
-**Why it is true.** One unfolding again. Its left neighbour was the edge
-(black) and its own position held the second diagonal (black), and
-`true XOR (true OR _)` is `false`.
+**Why it is true.** One unfolding of the rule, with no induction. Its left
+neighbour was the edge (black) and its own position held the second diagonal
+(black), and `true XOR (true OR _)` is `false`.
 
 **Where the work is.** Nowhere. Rewriting `t + 2` as
 `t + 1 + 1` so that a single step is exposed, and one

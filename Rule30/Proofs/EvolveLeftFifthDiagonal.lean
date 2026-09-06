@@ -5,11 +5,12 @@ import Mathlib.Algebra.Order.Ring.Int
 import Mathlib.Tactic.Ring
 
 /-!
-**What this says.** Four steps in from the left edge, always black. Constant
-again, one step past the alternating diagonal -- the family does not settle
-into a pattern that can be extrapolated.
+**What this says.** Four steps in from the left edge, always black. It sits
+one step past `evolve_left_fourth_diagonal`, which alternates, so the family
+does not settle into a pattern that can be extrapolated.
 
-**Why it is true.** The recurrence again. Its shallower input is the third
+**Why it is true.** `evolve_left_diagonal_recurrence`, which expresses one
+step of rule 30 in diagonal coordinates. Its shallower input is the third
 diagonal, always white, and its own previous entry is black by induction:
 `false XOR (_ OR true)` is `true`, so the middle input
 never matters.

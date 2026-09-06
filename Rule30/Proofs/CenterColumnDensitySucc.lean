@@ -11,9 +11,10 @@ tally and disturbs nothing already counted.
 
 **Where the work is.** Two places. The counting step has to know the new
 index is genuinely new and not already inside the old range. And
-`N = 0` is split off again for the `x / 0 = 0`
-reason. The statement is deliberately multiplied through by `N` rather than
-left as a ratio, so the recurrence never has to divide.
+`N = 0` has to be handled separately, because in Lean
+`x / 0 = 0`, so at zero terms the density is 0 rather
+than a ratio. The statement is deliberately multiplied through by `N` rather
+than left as a ratio, so the recurrence never has to divide.
 -/
 
 theorem centerColumnDensity_succ (N : ℕ) :

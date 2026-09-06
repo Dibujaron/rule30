@@ -2,7 +2,8 @@ import Rule30.Basic
 import Rule30.Prize
 
 /-!
-**What this says.** That same fraction never exceeds one.
+**What this says.** The fraction of the first `N` centre-column cells that
+are black never exceeds one.
 
 **Why it is true.** The black cells among the first `N` are some of those
 `N` cells, so the count on top is at most the count underneath.
