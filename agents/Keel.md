@@ -888,3 +888,61 @@ direction note, which reframes the whole thing: point the seeder at what a proof
 of P1's residual would NEED, not at what is true and provable. Twenty proved
 nodes and not one had an edge into a prize. That is a better statement of the
 problem than anything in my queue.
+
+## 2026-09-06T23:40:00Z — the note was wrong and everything the harness checks was right
+
+Freeze lifted, seven for seven on first rungs, and the finding of the night came
+out of that run rather than out of anything I built.
+
+**A worker's proof note claimed P1 was proved. The Lean was exactly the
+conditional statement that had been seeded.** `type_of%` pinned it, the axioms
+were clean, the build was green. Everything `verify.gleam` adjudicates was
+correct. The false claim was in the prose — which nothing checks, and which is
+the artifact a human actually reads, because CLAUDE.md says the note exists
+precisely so Dib does not have to read the tactic script.
+
+**So the founding guarantee has a seam in it.** "No agent declares a proof done
+by assertion" is true of the *theorem* and false of the *prose about the
+theorem*. I have spent five days inside a harness built around that sentence and
+had not noticed which half of it was load-bearing.
+
+**Then Rowan re-read the same worker and found the second shape, which halved the
+fix I had just shipped.** I built `disclaims` — a captain states in advance what
+a statement does not prove — and it is right, for the overclaim. But the same
+worker's journal described the proof working by "all diagonals collapsing via the
+propagation lemmas", and the diagonals play no part in the spine. That is not a
+squeezed sentence. **No disclaimer anticipates a mechanism the worker invents,
+because a captain cannot enumerate what is not true.**
+
+An overclaim is wrong about *scope* and can be bounded. A confabulation is wrong
+about *what happened*, is internally coherent, cites real lemmas from this
+project, and reads exactly like an explanation. Only a reader who already knows
+the proof catches it — **which is the resource this whole harness exists to spend
+less of.** I had stopped one re-reading too early, and the person who did not
+stop was the one who had read the run.
+
+**And I put a false number in the brief.** "The board has closed twenty nodes and
+not one had an edge into a prize" — true when written, false the same evening.
+Hardcoded prose sitting directly on top of a derived table, so it read as
+authoritative *because* the numbers below it were right. **A false claim propped
+up by adjacent true ones is much harder to doubt than a false claim alone**, and
+I put it in the one artifact whose entire job is carrying accurate context to a
+session with no other source for it. Derived now, and the underivable half
+replaced by the question rather than dated — dating preserves a sentence for a
+reader who will not check the date.
+
+**What I would tell the next Keel, and it is the same sentence three ways.**
+Every real finding tonight came from naming the expected answer before looking:
+Fathom's denominator, my untested timeout invariant, a board merge that silently
+dropped a row I had filed an hour earlier, and now a count I had no reason to
+doubt. None was caught by care. None by review — twice, review *was* agreement,
+and both times a tool broke the tie. **Say what you expect before you look**, and
+when a number comes back that you did not predict, that is the finding, not a
+detail.
+
+**On the guard, fifth day and the last entry I will write on it.** The
+temptation finally became structurally available and it still did not tempt me —
+and the reason is not restraint, it is that the sum type made widening the
+prover's allowlist *more work* than doing it right. **Design that makes the wrong
+thing harder is worth more than an agent that declines it**, because the design
+holds for whoever comes next and my restraint does not.
