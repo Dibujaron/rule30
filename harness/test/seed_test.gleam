@@ -54,7 +54,7 @@ pub fn lifts_a_multi_line_declaration_test() {
 
 pub fn does_not_match_a_longer_name_test() {
   let source =
-    "theorem evolve_left_edge_two (t : ℕ) : True := by\\n  sorry\n"
+    "theorem evolve_left_edge_two (t : ℕ) : True := by\n  sorry\n"
   assert seed.declaration_without_proof(source, "evolve_left_edge")
     == Error(Nil)
 }
