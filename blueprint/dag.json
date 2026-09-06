@@ -1,1 +1,363 @@
-{"nodes":[{"id":"evolve_eq_false_of_outside_cone","region":"P1","lean_name":"evolve_eq_false_of_outside_cone","description":"Outside the light cone, nothing happens: after t steps every cell farther than t from the origin is still white.","deps":[],"status":"proved","size":"M","proof_file":"Rule30/Proofs/EvolveEqFalseOfOutsideCone.lean","attempts":[{"identity":"Vesper","session_id":"781795c6-7032-4460-af84-0d2ea53012d9","model":"sonnet","started":"2026-09-05T22:24:51Z","ended":"2026-09-05T22:46:24Z","outcome":"proved","estimate":"M","reported":true,"cost_usd":0.7975254000000002,"turns":27,"notes":"VERIFIED. Axioms: propext, Quot.sound"}],"verified":"2026-09-05T22:46:24Z"},{"id":"evolve_left_edge","region":"P1","lean_name":"evolve_left_edge","description":"The left edge is always black: the cell at -t after t steps is black for every t.","deps":["evolve_eq_false_of_outside_cone"],"status":"proved","size":"M","proof_file":"Rule30/Proofs/EvolveLeftEdge.lean","attempts":[{"identity":"Vesper","session_id":"e429d3ea-1f6a-407b-ba30-688470ae8285","model":"sonnet","started":"2026-09-06T01:01:42Z","ended":"2026-09-06T01:07:18Z","outcome":"proved","estimate":"M","reported":true,"cost_usd":0.36769779999999996,"turns":10,"notes":"VERIFIED. Axioms: propext, Classical.choice, Quot.sound"}],"verified":"2026-09-06T01:07:18Z"},{"id":"evolve_right_edge","region":"P1","lean_name":"evolve_right_edge","description":"The right edge is always black: the cell at t after t steps is black for every t.","deps":["evolve_eq_false_of_outside_cone"],"status":"proved","size":"M","proof_file":"Rule30/Proofs/EvolveRightEdge.lean","attempts":[{"identity":"Cadence","session_id":"232ab5d1-dd60-43c1-b32e-a755d7743f2c","model":"sonnet","started":"2026-09-06T14:48:01Z","ended":"2026-09-06T14:49:37Z","outcome":"proved","estimate":"M","reported":true,"cost_usd":0.18280379999999996,"turns":9,"notes":"VERIFIED. Axioms: propext, Classical.choice, Quot.sound"}],"verified":"2026-09-06T14:49:37Z"},{"id":"evolve_left_second_diagonal","region":"P1","lean_name":"evolve_left_second_diagonal","description":"The second diagonal from the left is all black: the cell at -t after t+1 steps is black.","deps":["evolve_eq_false_of_outside_cone","evolve_left_edge"],"status":"proved","size":"M","proof_file":"Rule30/Proofs/EvolveLeftSecondDiagonal.lean","attempts":[{"identity":"Vesper","session_id":"9015a7ac-ec03-4e50-b590-82f95dbded57","model":"sonnet","started":"2026-09-06T01:32:37Z","ended":"2026-09-06T01:34:02Z","outcome":"rate_limited","estimate":"M","reported":false,"cost_usd":0.2629998,"turns":11,"notes":"the five-hour window is rate limiting; resume session 9015a7ac-ec03-4e50-b590-82f95dbded57"},{"identity":"Vesper","session_id":"5df887a3-1782-4a5a-a59a-8c68e011d490","model":"sonnet","started":"2026-09-06T01:52:52Z","ended":"2026-09-06T01:53:41Z","outcome":"proved","estimate":"S","reported":true,"cost_usd":0.18189360000000002,"turns":9,"notes":"VERIFIED. Axioms: propext, Classical.choice, Quot.sound"}],"verified":"2026-09-06T01:53:41Z"},{"id":"evolve_left_third_diagonal","region":"P1","lean_name":"evolve_left_third_diagonal","description":"The third diagonal from the left is all white: the cell at -t after t+2 steps is white.","deps":["evolve_left_edge","evolve_left_second_diagonal"],"status":"proved","size":"M","proof_file":"Rule30/Proofs/EvolveLeftThirdDiagonal.lean","attempts":[{"identity":"Vesper","session_id":"614c8a2a-978e-4e11-b24e-7379047ef607","model":"sonnet","started":"2026-09-06T14:47:45Z","ended":"2026-09-06T14:49:46Z","outcome":"proved","estimate":"S","reported":true,"cost_usd":0.3178702,"turns":8,"notes":"VERIFIED. Axioms: propext, Classical.choice, Quot.sound"}],"verified":"2026-09-06T14:49:46Z"},{"id":"centerColumn_zero","region":"P2","lean_name":"centerColumn_zero","description":"The centre column starts black: the initial configuration has exactly one black cell, at the origin.","deps":[],"status":"proved","size":"S","proof_file":"Rule30/Proofs/CenterColumnZero.lean","attempts":[{"identity":"Emmy","session_id":"a3985ae1-b2c7-4b7f-9e38-66ae94a41618","model":"haiku","started":"2026-09-05T21:33:04Z","ended":"2026-09-05T21:33:58Z","outcome":"proved","estimate":"S","reported":true,"cost_usd":0.108113,"turns":9,"notes":"VERIFIED. Axioms: propext — proof file later deleted by a verify_test fixture sharing its name (race, 2026-09-05); node reopened for re-proof"},{"identity":"Emmy","session_id":"b4af88a7-54f1-47d1-9b25-f4c2a0be464e","model":"haiku","started":"2026-09-05T22:16:19Z","ended":"2026-09-05T22:21:00Z","outcome":"proved","estimate":"S","reported":true,"cost_usd":0.07094610000000001,"turns":9,"notes":"VERIFIED. Axioms: propext"}],"verified":"2026-09-05T22:21:00Z"},{"id":"centerColumnDensity_nonneg","region":"P2","lean_name":"centerColumnDensity_nonneg","description":"The density is never negative: it is a count divided by a natural.","deps":[],"status":"proved","size":"S","proof_file":"Rule30/Proofs/CenterColumnDensityNonneg.lean","attempts":[{"identity":"Emmy","session_id":"90bec323-c76a-4ce2-a96e-b8d28d3db166","model":"haiku","started":"2026-09-06T01:32:57Z","ended":"2026-09-06T01:46:04Z","outcome":"proved","estimate":"S","reported":true,"cost_usd":0.18899090000000002,"turns":20,"notes":"VERIFIED. Axioms: propext, Classical.choice, Quot.sound"}],"verified":"2026-09-06T01:46:04Z"},{"id":"centerColumnDensity_le_one","region":"P2","lean_name":"centerColumnDensity_le_one","description":"The density never exceeds one: the filtered set is a subset of range N, so its cardinality is at most N.","deps":[],"status":"proved","size":"M","proof_file":"Rule30/Proofs/CenterColumnDensityLeOne.lean","attempts":[{"identity":"Emmy","session_id":"e7253e46-69f7-45e7-b077-0df129a59929","model":"sonnet","started":"2026-09-06T01:32:57Z","ended":"2026-09-06T01:33:48Z","outcome":"proved","estimate":"M","reported":true,"cost_usd":0.18802839999999998,"turns":8,"notes":"VERIFIED. Axioms: propext, Classical.choice, Quot.sound"}],"verified":"2026-09-06T01:33:48Z"},{"id":"centerColumnDensity_succ","region":"P2","lean_name":"centerColumnDensity_succ","description":"The density recurrence: the count of black cells among the first N+1 equals the count among the first N plus one if cell N is black.","deps":[],"status":"proved","size":"M","proof_file":"Rule30/Proofs/CenterColumnDensitySucc.lean","attempts":[{"identity":"Emmy","session_id":"56a7d95a-8260-43c6-987a-f22e25aadb54","model":"sonnet","started":"2026-09-06T01:33:48Z","ended":"2026-09-06T01:51:11Z","outcome":"proved","estimate":"M","reported":true,"cost_usd":0.5431585999999999,"turns":23,"notes":"VERIFIED. Axioms: propext, Classical.choice, Quot.sound"}],"verified":"2026-09-06T01:51:11Z"}]}
+{
+  "nodes": [
+    {
+      "id": "evolve_eq_false_of_outside_cone",
+      "region": "P1",
+      "lean_name": "evolve_eq_false_of_outside_cone",
+      "description": "Outside the light cone, nothing happens: after t steps every cell farther than t from the origin is still white.",
+      "deps": [],
+      "status": "proved",
+      "size": "M",
+      "proof_file": "Rule30/Proofs/EvolveEqFalseOfOutsideCone.lean",
+      "attempts": [
+        {
+          "identity": "Vesper",
+          "session_id": "781795c6-7032-4460-af84-0d2ea53012d9",
+          "model": "sonnet",
+          "started": "2026-09-05T22:24:51Z",
+          "ended": "2026-09-05T22:46:24Z",
+          "outcome": "proved",
+          "estimate": "M",
+          "reported": true,
+          "cost_usd": 0.7975254000000002,
+          "turns": 27,
+          "notes": "VERIFIED. Axioms: propext, Quot.sound"
+        }
+      ],
+      "verified": "2026-09-05T22:46:24Z"
+    },
+    {
+      "id": "evolve_left_edge",
+      "region": "P1",
+      "lean_name": "evolve_left_edge",
+      "description": "The left edge is always black: the cell at -t after t steps is black for every t.",
+      "deps": [
+        "evolve_eq_false_of_outside_cone"
+      ],
+      "status": "proved",
+      "size": "M",
+      "proof_file": "Rule30/Proofs/EvolveLeftEdge.lean",
+      "attempts": [
+        {
+          "identity": "Vesper",
+          "session_id": "e429d3ea-1f6a-407b-ba30-688470ae8285",
+          "model": "sonnet",
+          "started": "2026-09-06T01:01:42Z",
+          "ended": "2026-09-06T01:07:18Z",
+          "outcome": "proved",
+          "estimate": "M",
+          "reported": true,
+          "cost_usd": 0.36769779999999996,
+          "turns": 10,
+          "notes": "VERIFIED. Axioms: propext, Classical.choice, Quot.sound"
+        }
+      ],
+      "verified": "2026-09-06T01:07:18Z"
+    },
+    {
+      "id": "evolve_right_edge",
+      "region": "P1",
+      "lean_name": "evolve_right_edge",
+      "description": "The right edge is always black: the cell at t after t steps is black for every t.",
+      "deps": [
+        "evolve_eq_false_of_outside_cone"
+      ],
+      "status": "proved",
+      "size": "M",
+      "proof_file": "Rule30/Proofs/EvolveRightEdge.lean",
+      "attempts": [
+        {
+          "identity": "Cadence",
+          "session_id": "232ab5d1-dd60-43c1-b32e-a755d7743f2c",
+          "model": "sonnet",
+          "started": "2026-09-06T14:48:01Z",
+          "ended": "2026-09-06T14:49:37Z",
+          "outcome": "proved",
+          "estimate": "M",
+          "reported": true,
+          "cost_usd": 0.18280379999999996,
+          "turns": 9,
+          "notes": "VERIFIED. Axioms: propext, Classical.choice, Quot.sound"
+        }
+      ],
+      "verified": "2026-09-06T14:49:37Z"
+    },
+    {
+      "id": "evolve_left_second_diagonal",
+      "region": "P1",
+      "lean_name": "evolve_left_second_diagonal",
+      "description": "The second diagonal from the left is all black: the cell at -t after t+1 steps is black.",
+      "deps": [
+        "evolve_eq_false_of_outside_cone",
+        "evolve_left_edge"
+      ],
+      "status": "proved",
+      "size": "M",
+      "proof_file": "Rule30/Proofs/EvolveLeftSecondDiagonal.lean",
+      "attempts": [
+        {
+          "identity": "Vesper",
+          "session_id": "9015a7ac-ec03-4e50-b590-82f95dbded57",
+          "model": "sonnet",
+          "started": "2026-09-06T01:32:37Z",
+          "ended": "2026-09-06T01:34:02Z",
+          "outcome": "rate_limited",
+          "estimate": "M",
+          "reported": false,
+          "cost_usd": 0.2629998,
+          "turns": 11,
+          "notes": "the five-hour window is rate limiting; resume session 9015a7ac-ec03-4e50-b590-82f95dbded57"
+        },
+        {
+          "identity": "Vesper",
+          "session_id": "5df887a3-1782-4a5a-a59a-8c68e011d490",
+          "model": "sonnet",
+          "started": "2026-09-06T01:52:52Z",
+          "ended": "2026-09-06T01:53:41Z",
+          "outcome": "proved",
+          "estimate": "S",
+          "reported": true,
+          "cost_usd": 0.18189360000000002,
+          "turns": 9,
+          "notes": "VERIFIED. Axioms: propext, Classical.choice, Quot.sound"
+        }
+      ],
+      "verified": "2026-09-06T01:53:41Z"
+    },
+    {
+      "id": "evolve_left_third_diagonal",
+      "region": "P1",
+      "lean_name": "evolve_left_third_diagonal",
+      "description": "The third diagonal from the left is all white: the cell at -t after t+2 steps is white.",
+      "deps": [
+        "evolve_left_edge",
+        "evolve_left_second_diagonal"
+      ],
+      "status": "proved",
+      "size": "M",
+      "proof_file": "Rule30/Proofs/EvolveLeftThirdDiagonal.lean",
+      "attempts": [
+        {
+          "identity": "Vesper",
+          "session_id": "614c8a2a-978e-4e11-b24e-7379047ef607",
+          "model": "sonnet",
+          "started": "2026-09-06T14:47:45Z",
+          "ended": "2026-09-06T14:49:46Z",
+          "outcome": "proved",
+          "estimate": "S",
+          "reported": true,
+          "cost_usd": 0.3178702,
+          "turns": 8,
+          "notes": "VERIFIED. Axioms: propext, Classical.choice, Quot.sound"
+        }
+      ],
+      "verified": "2026-09-06T14:49:46Z"
+    },
+    {
+      "id": "centerColumn_zero",
+      "region": "P2",
+      "lean_name": "centerColumn_zero",
+      "description": "The centre column starts black: the initial configuration has exactly one black cell, at the origin.",
+      "deps": [],
+      "status": "proved",
+      "size": "S",
+      "proof_file": "Rule30/Proofs/CenterColumnZero.lean",
+      "attempts": [
+        {
+          "identity": "Emmy",
+          "session_id": "a3985ae1-b2c7-4b7f-9e38-66ae94a41618",
+          "model": "haiku",
+          "started": "2026-09-05T21:33:04Z",
+          "ended": "2026-09-05T21:33:58Z",
+          "outcome": "proved",
+          "estimate": "S",
+          "reported": true,
+          "cost_usd": 0.108113,
+          "turns": 9,
+          "notes": "VERIFIED. Axioms: propext — proof file later deleted by a verify_test fixture sharing its name (race, 2026-09-05); node reopened for re-proof"
+        },
+        {
+          "identity": "Emmy",
+          "session_id": "b4af88a7-54f1-47d1-9b25-f4c2a0be464e",
+          "model": "haiku",
+          "started": "2026-09-05T22:16:19Z",
+          "ended": "2026-09-05T22:21:00Z",
+          "outcome": "proved",
+          "estimate": "S",
+          "reported": true,
+          "cost_usd": 0.07094610000000001,
+          "turns": 9,
+          "notes": "VERIFIED. Axioms: propext"
+        }
+      ],
+      "verified": "2026-09-05T22:21:00Z"
+    },
+    {
+      "id": "centerColumnDensity_nonneg",
+      "region": "P2",
+      "lean_name": "centerColumnDensity_nonneg",
+      "description": "The density is never negative: it is a count divided by a natural.",
+      "deps": [],
+      "status": "proved",
+      "size": "S",
+      "proof_file": "Rule30/Proofs/CenterColumnDensityNonneg.lean",
+      "attempts": [
+        {
+          "identity": "Emmy",
+          "session_id": "90bec323-c76a-4ce2-a96e-b8d28d3db166",
+          "model": "haiku",
+          "started": "2026-09-06T01:32:57Z",
+          "ended": "2026-09-06T01:46:04Z",
+          "outcome": "proved",
+          "estimate": "S",
+          "reported": true,
+          "cost_usd": 0.18899090000000002,
+          "turns": 20,
+          "notes": "VERIFIED. Axioms: propext, Classical.choice, Quot.sound"
+        }
+      ],
+      "verified": "2026-09-06T01:46:04Z"
+    },
+    {
+      "id": "centerColumnDensity_le_one",
+      "region": "P2",
+      "lean_name": "centerColumnDensity_le_one",
+      "description": "The density never exceeds one: the filtered set is a subset of range N, so its cardinality is at most N.",
+      "deps": [],
+      "status": "proved",
+      "size": "M",
+      "proof_file": "Rule30/Proofs/CenterColumnDensityLeOne.lean",
+      "attempts": [
+        {
+          "identity": "Emmy",
+          "session_id": "e7253e46-69f7-45e7-b077-0df129a59929",
+          "model": "sonnet",
+          "started": "2026-09-06T01:32:57Z",
+          "ended": "2026-09-06T01:33:48Z",
+          "outcome": "proved",
+          "estimate": "M",
+          "reported": true,
+          "cost_usd": 0.18802839999999998,
+          "turns": 8,
+          "notes": "VERIFIED. Axioms: propext, Classical.choice, Quot.sound"
+        }
+      ],
+      "verified": "2026-09-06T01:33:48Z"
+    },
+    {
+      "id": "centerColumnDensity_succ",
+      "region": "P2",
+      "lean_name": "centerColumnDensity_succ",
+      "description": "The density recurrence: the count of black cells among the first N+1 equals the count among the first N plus one if cell N is black.",
+      "deps": [],
+      "status": "proved",
+      "size": "M",
+      "proof_file": "Rule30/Proofs/CenterColumnDensitySucc.lean",
+      "attempts": [
+        {
+          "identity": "Emmy",
+          "session_id": "56a7d95a-8260-43c6-987a-f22e25aadb54",
+          "model": "sonnet",
+          "started": "2026-09-06T01:33:48Z",
+          "ended": "2026-09-06T01:51:11Z",
+          "outcome": "proved",
+          "estimate": "M",
+          "reported": true,
+          "cost_usd": 0.5431585999999999,
+          "turns": 23,
+          "notes": "VERIFIED. Axioms: propext, Classical.choice, Quot.sound"
+        }
+      ],
+      "verified": "2026-09-06T01:51:11Z"
+    },
+    {
+      "id": "evolve_left_diagonal_recurrence",
+      "region": "P1",
+      "lean_name": "evolve_left_diagonal_recurrence",
+      "description": "One step of rule 30 in diagonal coordinates: the cell one further along the (m+2)-th left diagonal is the diagonal two shallower, xor (the diagonal one shallower or its own previous term). The dictionary every later diagonal proof should cite instead of re-deriving the coordinate shift. One unfold of evolve_succ and rule30_eq; no induction.",
+      "deps": [],
+      "status": "open",
+      "size": "S",
+      "proof_file": null,
+      "attempts": [],
+      "verified": null
+    },
+    {
+      "id": "evolve_left_fourth_diagonal",
+      "region": "P1",
+      "lean_name": "evolve_left_fourth_diagonal",
+      "description": "The fourth diagonal from the left alternates black and white with no prefix: evolve (t+3) (-t) = decide (t % 2 = 0). The first non-constant diagonal, and the first node where the recurrence feeds a diagonal its own previous term, so it needs an induction on t rather than a single unfold.",
+      "deps": [
+        "evolve_left_diagonal_recurrence",
+        "evolve_left_second_diagonal",
+        "evolve_left_third_diagonal"
+      ],
+      "status": "open",
+      "size": "M",
+      "proof_file": null,
+      "attempts": [],
+      "verified": null
+    },
+    {
+      "id": "evolve_left_fifth_diagonal",
+      "region": "P1",
+      "lean_name": "evolve_left_fifth_diagonal",
+      "description": "The fifth diagonal from the left is all black. Constant again, one step past the alternating one: the recurrence reduces it to d4(j) = d3(j) or d4(j-1), which stays true once true. Evidence that the family cannot be read off by extrapolating the periods.",
+      "deps": [
+        "evolve_left_diagonal_recurrence",
+        "evolve_left_third_diagonal",
+        "evolve_left_fourth_diagonal"
+      ],
+      "status": "open",
+      "size": "M",
+      "proof_file": null,
+      "attempts": [],
+      "verified": null
+    },
+    {
+      "id": "evolve_right_second_diagonal",
+      "region": "P1",
+      "lean_name": "evolve_right_second_diagonal",
+      "description": "The second diagonal from the right alternates, where the second from the left is constant black. The smallest true statement distinguishing the two sides of the cone: one cell in from two black edges, the sides already disagree.",
+      "deps": [
+        "evolve_right_edge",
+        "evolve_eq_false_of_outside_cone"
+      ],
+      "status": "open",
+      "size": "M",
+      "proof_file": null,
+      "attempts": [],
+      "verified": null
+    },
+    {
+      "id": "evolve_left_fourth_diagonal_isEventuallyPeriodic",
+      "region": "P1",
+      "lean_name": "evolve_left_fourth_diagonal_isEventuallyPeriodic",
+      "description": "The fourth left diagonal satisfies IsEventuallyPeriodic, the predicate Rule30/Prize.lean states the aperiodicity conjecture with. Bears nothing on that conjecture, which is about the centre column; it gives the predicate its first inhabited instance in the project. Immediate from the closed form with p = 2 and N = 0.",
+      "deps": [
+        "evolve_left_fourth_diagonal"
+      ],
+      "status": "open",
+      "size": "S",
+      "proof_file": null,
+      "attempts": [],
+      "verified": null
+    },
+    {
+      "id": "evolve_left_diagonals_isEventuallyPeriodic",
+      "region": "P1",
+      "lean_name": "evolve_left_diagonals_isEventuallyPeriodic",
+      "description": "Every left diagonal is eventually periodic. The target the diagonal lemmas are steps towards, and the first node in this DAG that is a goal rather than a step. Not a prize conjecture: it concerns the edge of the cone, not the centre. Measured to k = 63 and no further, with the onset growing in k. Do not dispatch; decompose.",
+      "deps": [
+        "evolve_left_diagonal_recurrence",
+        "evolve_left_fifth_diagonal",
+        "evolve_left_fourth_diagonal_isEventuallyPeriodic"
+      ],
+      "status": "open",
+      "size": "wall",
+      "proof_file": null,
+      "attempts": [],
+      "verified": null
+    }
+  ]
+}
