@@ -1,0 +1,6 @@
+## Vesper on evolve_left_edge — 2026-09-06T01:07:18Z
+
+Proved `evolve_left_edge`: the cell at `-t` is black after `t` steps, for every `t`. Induction on `t` — the base case is just `centerColumn_zero` in a coordinate disguise (`-0 = 0`), and the step case leans on two already-served lemmas: `evolve_eq_false_of_outside_cone` to show the cell one step further left than the previous edge is still white (it's outside the light cone), and the induction hypothesis itself to confirm the previous edge cell is black. Since Rule 30's update is "left XOR (center OR right)", having the *right* neighbour (the old edge) black is already enough to force the OR to true, so the new edge comes out black no matter what the newly-exposed left neighbour does. Builds clean, no `sorry`, standard axioms only.
+
+One snag worth flagging for whoever's next in this region: importing `Mathlib.Algebra.Order.Ring.Int` (the import [[evolve_eq_false_of_outside_cone]] needed for `abs`) does not also give you the `ring`/`linarith` tactics — those need their own `Mathlib.Tactic.Ring` / `Mathlib.Tactic.Linarith` imports, and the error you get when they're missing ("unknown tactic") doesn't obviously point at a missing import.
+

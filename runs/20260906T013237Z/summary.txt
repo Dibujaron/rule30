@@ -1,0 +1,8 @@
+
+centerColumnDensity_le_one        Emmy     sonnet  proved            $0.19   8 turns
+evolve_left_second_diagonal       Vesper   sonnet  rate_limited      $0.26   11 turns
+centerColumnDensity_nonneg        Emmy     haiku   proved            $0.19   20 turns
+centerColumnDensity_succ          Emmy     sonnet  proved            $0.54   23 turns
+
+4 attempt(s), 3 closed, $1.18 in all
+halted: rate limit reached at evolve_left_second_diagonal; nothing more was started

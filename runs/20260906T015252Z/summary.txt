@@ -1,0 +1,15 @@
+
+node      evolve_left_second_diagonal
+identity  Vesper
+model     sonnet
+outcome   proved
+cost      $0.18
+turns     9
+estimate  S
+session   5df887a3-1782-4a5a-a59a-8c68e011d490
+log       c:/Users/dibuj/dev/rule30/runs/20260906T015252Z
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Vesper (#2b3a67): closed 3, abandoned 0, $1.61, calibration 2/3

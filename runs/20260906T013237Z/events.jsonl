@@ -1,0 +1,8 @@
+{"ts":"2026-09-06T01:32:37Z","kind":"run","max_attempts":4,"concurrency":3}
+{"ts":"2026-09-06T01:32:37Z","kind":"dispatch","node":"evolve_left_second_diagonal","identity":"Vesper","model":"sonnet","reason":"open leaf; unblocks 1; ladder step 1","port":4130,"log":"c:/Users/dibuj/dev/rule30/runs/20260906T013237Z/evolve_left_second_diagonal-1","in_flight":1}
+{"ts":"2026-09-06T01:32:57Z","kind":"dispatch","node":"centerColumnDensity_nonneg","identity":"Emmy","model":"haiku","reason":"open leaf; unblocks 0; ladder step 1","port":4131,"log":"c:/Users/dibuj/dev/rule30/runs/20260906T013237Z/centerColumnDensity_nonneg-1","in_flight":2}
+{"ts":"2026-09-06T01:32:57Z","kind":"dispatch","node":"centerColumnDensity_le_one","identity":"Emmy","model":"sonnet","reason":"open leaf; unblocks 0; ladder step 1","port":4132,"log":"c:/Users/dibuj/dev/rule30/runs/20260906T013237Z/centerColumnDensity_le_one-1","in_flight":3}
+{"ts":"2026-09-06T01:33:48Z","kind":"index","node":"centerColumnDensity_le_one","module":"Rule30.Proofs.CenterColumnDensityLeOne","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-06T01:33:48Z","kind":"dispatch","node":"centerColumnDensity_succ","identity":"Emmy","model":"sonnet","reason":"open leaf; unblocks 0; ladder step 1","port":4133,"log":"c:/Users/dibuj/dev/rule30/runs/20260906T013237Z/centerColumnDensity_succ-1","in_flight":3}
+{"ts":"2026-09-06T01:46:04Z","kind":"index","node":"centerColumnDensity_nonneg","module":"Rule30.Proofs.CenterColumnDensityNonneg","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-06T01:51:11Z","kind":"index","node":"centerColumnDensity_succ","module":"Rule30.Proofs.CenterColumnDensitySucc","file":"Rule30/Proofs.lean"}

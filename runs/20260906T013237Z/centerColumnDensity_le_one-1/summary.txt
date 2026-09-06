@@ -1,0 +1,15 @@
+
+node      centerColumnDensity_le_one
+identity  Emmy
+model     sonnet
+outcome   proved
+cost      $0.19
+turns     8
+estimate  M
+session   e7253e46-69f7-45e7-b077-0df129a59929
+log       c:/Users/dibuj/dev/rule30/runs/20260906T013237Z/centerColumnDensity_le_one-1
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Emmy (#3d5a80): closed 3, abandoned 0, $0.37, calibration 3/3

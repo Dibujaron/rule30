@@ -1,0 +1,15 @@
+
+node      evolve_left_second_diagonal
+identity  Vesper
+model     sonnet
+outcome   rate_limited
+cost      $0.26
+turns     11
+estimate  M
+session   9015a7ac-ec03-4e50-b590-82f95dbded57
+log       c:/Users/dibuj/dev/rule30/runs/20260906T013237Z/evolve_left_second_diagonal-1
+
+verifier:
+the five-hour window is rate limiting; resume session 9015a7ac-ec03-4e50-b590-82f95dbded57
+
+Vesper (#2b3a67): closed 2, abandoned 0, $1.43, calibration 2/2

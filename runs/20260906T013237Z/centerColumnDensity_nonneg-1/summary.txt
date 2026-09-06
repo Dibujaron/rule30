@@ -1,0 +1,15 @@
+
+node      centerColumnDensity_nonneg
+identity  Emmy
+model     haiku
+outcome   proved
+cost      $0.19
+turns     20
+estimate  S
+session   90bec323-c76a-4ce2-a96e-b8d28d3db166
+log       c:/Users/dibuj/dev/rule30/runs/20260906T013237Z/centerColumnDensity_nonneg-1
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Emmy (#3d5a80): closed 4, abandoned 0, $0.56, calibration 4/4

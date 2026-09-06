@@ -11,9 +11,6 @@ credentials.json
 .env
 *.apikey
 
-# Harness run artifacts
-/runs/
-
 # Gleam
 /harness/build/
 
