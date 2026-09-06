@@ -1,3 +1,4 @@
+import gleam/int
 import gleam/list
 import gleam/option.{None, Some}
 import gleam/string
@@ -211,4 +212,31 @@ pub fn filtered_all_flag_includes_settled_bugs_test() {
     == ["live"]
   assert list.map(bugs.filtered(board, None, None, True), fn(b) { b.id })
     == ["settled", "live"]
+}
+
+/// A regression guard on the dedupe boundary at scale: forty appends of one
+/// signature, in one fold the way a run's forty denials would arrive, still
+/// leave one row rather than one row per append somehow surviving at a
+/// larger n than the two-append test above exercises.
+pub fn a_run_of_identical_denials_files_one_bug_test() {
+  let board =
+    list.repeat(Nil, 40)
+    |> list.index_map(fn(_, i) { i + 1 })
+    |> list.fold(Board([]), fn(board, n) {
+      bugs.append(
+        board,
+        auto_bug(
+          "Guard denied Bash",
+          "guard:Bash",
+          "2026-09-06T02:00:" <> pad2(n),
+        ),
+      )
+    })
+  assert list.length(board.bugs) == 1
+  let assert [b] = board.bugs
+  assert b.occurrences == 40
+}
+
+fn pad2(n: Int) -> String {
+  string.pad_start(int.to_string(n), 2, "0")
 }

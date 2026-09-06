@@ -136,6 +136,7 @@ pub fn prove_one(
   })
 
   write_channels(cfg, l, identity, node_id, model, attempt, report)
+  auto_file_signals(cfg, l, node_id, identity, attempt)
   let text = summary(d, l, identity, attempt, node_id)
   log.summary(l, text)
   io.println(text)
@@ -519,6 +520,7 @@ fn returned(
     attempt,
     report,
   )
+  auto_file_signals(cfg, flight.attempt_log, node.id, flight.identity, attempt)
   log.summary(
     flight.attempt_log,
     summary(d, flight.attempt_log, flight.identity, attempt, node.id),
@@ -1035,6 +1037,133 @@ fn file_reported_bugs(
       }
     }
   }
+}
+
+/// Bugs the harness files about itself, from signals it already has. Every
+/// one carries a signature, so a run that trips the same fault forty times
+/// leaves one row with `occurrences: 40` rather than forty rows.
+fn auto_file(
+  cfg: config.Config,
+  l: log.Log,
+  node_id: String,
+  identity: roster.Identity,
+  title: String,
+  body: String,
+  area: bugs.Area,
+  severity: bugs.Severity,
+  signature: String,
+) -> Nil {
+  case bugs.load(cfg.bugs_path) {
+    Error(reason) -> io.println_error("harness/dispatch: " <> reason)
+    Ok(board) -> {
+      let board =
+        bugs.append(
+          board,
+          bugs.Bug(
+            id: "",
+            title:,
+            area:,
+            severity:,
+            body:,
+            reported_by: identity.name,
+            source: bugs.Harness,
+            node: Some(node_id),
+            run: Some(l.dir),
+            session_id: None,
+            signature: Some(signature),
+            filed: log.now_iso(),
+            occurrences: 1,
+            status: bugs.Open,
+            resolution: None,
+            fixed: None,
+          ),
+        )
+      case bugs.save(board, cfg.bugs_path) {
+        Ok(Nil) -> Nil
+        Error(reason) -> io.println_error("harness/dispatch: " <> reason)
+      }
+    }
+  }
+}
+
+/// The distinct tools this attempt was denied, read back from the run's
+/// event log. Task 4 put the node on every guard row, which is the only
+/// reason this is attributable when three guards share one `events.jsonl`.
+///
+/// Matched line-wise rather than decoded: the log is one JSON object per
+/// line and may hold thousands of rows by the end of a run, and a missed
+/// match costs a bug that gets filed next time, not a wrong one.
+fn denied_tools(l: log.Log, node_id: String) -> List(String) {
+  case simplifile.read(l.dir <> "/events.jsonl") {
+    Error(_) -> []
+    Ok(text) ->
+      text
+      |> string.split("\n")
+      |> list.filter(fn(line) {
+        string.contains(line, "\"kind\":\"guard\"")
+        && string.contains(line, "Deny(")
+        && string.contains(line, "\"node\":\"" <> node_id <> "\"")
+      })
+      |> list.filter_map(tool_of)
+      |> list.unique
+  }
+}
+
+fn tool_of(line: String) -> Result(String, Nil) {
+  use #(_, rest) <- result.try(string.split_once(line, "\"tool\":\""))
+  use #(tool, _) <- result.try(string.split_once(rest, "\""))
+  Ok(tool)
+}
+
+/// The two auto-filed signals in scope this round: a rate-limited outcome,
+/// and every distinct tool the guard denied during the attempt. Called once
+/// per attempt end, right after `write_channels` — the worker's own report
+/// may have said nothing about either, since a denied call does not always
+/// read to the worker as the harness's fault, and a rate limit is not the
+/// worker's story to tell at all.
+fn auto_file_signals(
+  cfg: config.Config,
+  l: log.Log,
+  node_id: String,
+  identity: roster.Identity,
+  attempt: dag.Attempt,
+) -> Nil {
+  case attempt.outcome {
+    dag.RateLimited ->
+      auto_file(
+        cfg,
+        l,
+        node_id,
+        identity,
+        "Attempt stopped by the five-hour rate limit",
+        "The run halted at "
+          <> node_id
+          <> " with the subscription window exhausted; no further attempts "
+          <> "were started.",
+        bugs.Dispatch,
+        bugs.Blocks,
+        "dispatch:rate_limit",
+      )
+    _ -> Nil
+  }
+  list.each(denied_tools(l, node_id), fn(tool) {
+    auto_file(
+      cfg,
+      l,
+      node_id,
+      identity,
+      "Guard denied " <> tool,
+      "The guard refused a "
+        <> tool
+        <> " call during the attempt at "
+        <> node_id
+        <> ". If the worker needed it, the allowlist is wrong; if it did "
+        <> "not, the brief is.",
+      bugs.Guard,
+      bugs.Friction,
+      "guard:" <> tool,
+    )
+  })
 }
 
 /// Bugs actually worth putting on the board: a malformed report can decode a

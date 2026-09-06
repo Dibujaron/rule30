@@ -14,6 +14,7 @@ import gleam/list
 import gleam/option.{None, Some}
 import gleam/result
 import gleam/string
+import harness/bugs
 import harness/config
 import harness/dag.{Dag, Node}
 import harness/dispatch
@@ -122,6 +123,7 @@ fn fixture_with_roster(
       ..base,
       shim: base.repo_root <> "/harness/test/fake_shim.mjs",
       dag_path: dir <> "/dag.json",
+      bugs_path: dir <> "/bugs.json",
       runs_root: dir <> "/runs",
       roster_path: dir <> "/roster.json",
       agents_dir: dir <> "/agents",
@@ -310,6 +312,33 @@ pub fn a_rate_limit_stops_the_run_from_starting_more_test() {
   assert one.status == dag.Open
   assert node_after(f, "probe_two").attempts == []
   assert string.contains(text, "rate limit")
+}
+
+/// The same rate-limited attempt as above, but read from the bug board
+/// rather than the DAG: the harness notices its own signal without the
+/// worker having said a word about it.
+pub fn a_rate_limited_run_files_one_bug_test() {
+  let f =
+    fixture(
+      "rate-limit-files-a-bug",
+      [
+        [
+          init_line("s"),
+          rate_limit_line(0.95, "surpassed_threshold"),
+          result_line("s", "in_progress"),
+        ],
+      ],
+      4252,
+    )
+  let assert Ok(_) =
+    dispatch.run_with(
+      f.cfg,
+      Plan(max_attempts: 3, concurrency: 1),
+      env(f, verify.BuildFailed("never consulted")),
+    )
+  let assert Ok(board) = bugs.load(f.cfg.bugs_path)
+  let filed = bugs.open_bugs(board)
+  assert list.map(filed, fn(b) { b.signature }) == [Some("dispatch:rate_limit")]
 }
 
 // --- minting ------------------------------------------------------------------------
