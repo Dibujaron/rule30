@@ -120,6 +120,43 @@ check that what you elaborated is the same theorem the statement file
 declares. First the shape the worker will meet, then the identity with the
 seeded text.
 
+### The reason is the payload; the route is optional
+
+The same node settled this within the hour, and it inverts the emphasis this
+spec had when it was first written.
+
+`bool_map_iterate_three` closed on sonnet. It used **neither** the captain's
+false route (`by decide`) **nor** the corrected one (`revert f; decide`). It
+wrote `funext x`, `rcases` on `f true` and `f false`, then `simp_all` —
+enumerating the four functions by hand, needing only `import Rule30.Basic`.
+That is better than the corrected route, which needs
+`Mathlib.Data.Fintype.Pi`, an import no brief mentions.
+
+The description carried two things. A tactic route, which was false and cost
+haiku 41 turns and $0.38. And an English reason: *the only four candidates
+are the identity, negation and the two constants, and each is unchanged
+after three applications.* **Sonnet implemented the reason, line for line.**
+The prose was right, the route was wrong, and the prose is what closed the
+node.
+
+So the balance is not "a route with a reason attached":
+
+> **The reason is required. The route is optional, and admissible only once
+> elaborated.**
+
+An unverified route actively misdirects — it is read in the captain's voice
+by a model with no standing to doubt it, and it forecloses the search. A
+correct reason does the opposite: it lets a stronger model find a route
+better than the captain's. A captain who cannot state the reason has not
+finished thinking about the node, and that is worth catching; a captain who
+cannot supply a route has merely left the search open, which costs nothing.
+
+This is easy to get backwards, and both of us did all day, on the strength
+of one prior success — last tier's "one unfold, no induction" was a route
+that worked, and it made the tactic hint look like the payload and the
+English like decoration. **One success is enough to make you confident about
+the wrong half.**
+
 Both checks are cheap and neither takes the build lock: `lake build`
 acquires it, `lake env lean` does not (`guard.gleam:186-193`). A proposal of
 a dozen nodes checks in the time one prover spends on one compile.
@@ -129,8 +166,9 @@ a dozen nodes checks in the time one prover spends on one compile.
 | | catches | misses |
 |---|---|---|
 | Falsification witness | a statement that is false on a finite range | true statements; existentials; anything over the reals |
-| Route check | a route that does not close the seeded form | a route that closes a *different* true statement |
+| Route check | a route that does not close the seeded form | a route that closes a *different* true statement; a *missing* route, which is fine |
 | `type_of%` identity | a proposal that drifted from its own statement text | nothing about truth |
+| Nothing we have | a reason that is wrong, vague, or absent | — and the reason is the payload |
 
 None of them makes a node good. A node is good only in retrospect, when it
 closes cheaply and later proofs cite it. **Say so on the node.** A statement
@@ -144,12 +182,25 @@ theorem is actually about, and a mirrored coordinate convention would make
 the engine agree with a wrong statement. Cross-check both where you can:
 disagreement between them is itself a finding.
 
-### First run is free
+### Calibrate against a labelled set, not against guaranteed passes
 
-Run the check over the fifteen nodes already on the board. They are all
-believed true, so **anything it flags is a bug in the check** — a
-calibration run that costs no subscription and no seeding pass. Do this
-before the role exists.
+The obvious calibration is the fifteen closed nodes. It is the wrong one:
+their routes *are* their proofs, so every case passes by construction, and a
+**broken check looks identical to a working one.** A check that cannot fail
+has not been calibrated.
+
+Use the five descriptions seeded on the morning of 2026-09-06 instead. The
+run that afternoon adjudicated two of them for free, and they point opposite
+ways:
+
+- `isEventuallyPeriodic_shift` — route correct, closed on haiku at the first
+  rung. **The check must pass this.**
+- `bool_map_iterate_three` — route `by decide`, false. **The check must flag
+  this.**
+
+A route check that does not flag `by decide` on that statement is broken,
+and you can tell in one run. That is the calibration; the fifteen closed
+nodes are at best a smoke test that the harness executes at all.
 
 ## The failure this whole design is about
 
@@ -265,13 +316,27 @@ with no standing to doubt it.
 So the design decision is not where routes come from. It is: **promote the
 route out of `description` prose into a checkable field on the node**, so
 the thing the captain already writes becomes the thing the harness already
-runs. The check then has fifteen real targets today, before any seeder
-exists — which makes the calibration run in *First run is free* a genuine
-test rather than a formality, because these routes were never adjudicated.
+runs.
 
-A route that cannot be reduced to a runnable snippet stays in the
-description as commentary, and the node is `unchecked` — same treatment as a
-statement that cannot carry a witness.
+**Shape** (Rowan's, and it is right): `route: { tactics, imports } | null`,
+on the DAG node beside `size` and `deps`, because that is where node
+metadata lives and it is what `brief.gleam` renders. Not in
+`Rule30/Statements.lean` — that file is types, and a route is not part of
+the theorem.
+
+`null` is the important half. It means *the captain claims nothing*, and it
+is strictly better than prose asserting a route nobody checked. Given the
+inversion above, `null` is also the **expected** value: the reason is what
+the captain owes, and a route is a bonus that has earned its way in by
+elaborating.
+
+The reason nothing could check the five routes seeded on 2026-09-06 is not
+that no route existed. It is that they were written **inside the
+`description` string**, where they are indistinguishable from commentary.
+Pull them into a field and the check has real targets immediately, supplied
+by hand — **no seeder required.** That is worth saying plainly, because this
+document is a seeder design and the checks in it are the half that should
+land first and can land alone.
 
 ## Open, and genuinely open
 
