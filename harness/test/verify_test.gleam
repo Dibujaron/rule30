@@ -185,3 +185,55 @@ pub fn two_fixture_ids_never_collide_test() {
   // `probe_claims_no_real_node_test` rests on survives the token.
   assert string.starts_with(probe_id(), probe_prefix <> "_")
 }
+
+// --- the check theorem --------------------------------------------------------
+
+fn a_node(lean_name: String) -> Node {
+  Node(
+    id: "some_node",
+    region: "P1",
+    lean_name:,
+    description: "",
+    deps: [],
+    status: dag.Claimed,
+    size: dag.S,
+    proof_file: None,
+    attempts: [],
+    verified: None,
+  )
+}
+
+/// **`@` on both sides, and it is load-bearing.**
+///
+/// Without it a statement carrying implicit or instance binders elaborates as
+/// a bare term, Lean inserts those binders as metavariables, and the typeclass
+/// problem is stuck. Measured on `{S : Type} [Fintype S]`:
+///
+///     type_of% stmt  := prf    error: typeclass instance problem is stuck
+///                                     Fintype ?m.1
+///     type_of% @stmt := @prf   depends on axioms: [propext, Classical.choice,
+///                                                  Quot.sound]
+///
+/// It cost a node and two attempts in run 20260906T230339Z. The worker's proof
+/// was correct and `lake build` was green — only the harness's own check
+/// failed, so a harness defect was scored as node difficulty and the ladder
+/// escalated against it.
+pub fn the_check_theorem_makes_binders_explicit_on_both_sides_test() {
+  let src = verify.check_source(a_node("isEventuallyPeriodic_of_periodic_step"))
+  assert string.contains(src, "type_of% @Statements.isEventuallyPeriodic_of_periodic_step")
+  assert string.contains(src, ":= @isEventuallyPeriodic_of_periodic_step")
+  // The bare forms must be gone, not merely accompanied. An `@` added on one
+  // side only would still leave the other elaborating with metavariables.
+  assert !string.contains(src, "type_of% Statements.")
+  assert !string.contains(src, ":= isEventuallyPeriodic")
+}
+
+/// The check theorem still imports both modules and still prints axioms —
+/// `@` is the only thing that changed, and the rest of the shape is what makes
+/// a worker unable to prove something merely NEAR what it was asked for.
+pub fn the_check_theorem_keeps_its_shape_test() {
+  let src = verify.check_source(a_node("evolve_left_edge"))
+  assert string.contains(src, "import Rule30.Statements")
+  assert string.contains(src, "#print axioms harness_check")
+  assert string.contains(src, "theorem harness_check :")
+}

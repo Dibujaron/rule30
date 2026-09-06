@@ -601,3 +601,112 @@ pub fn the_brief_derives_its_counts_rather_than_stating_them_test() {
     )
   assert string.contains(three, "3 closed")
 }
+
+// --- reading the proof notes --------------------------------------------------
+
+/// The `/-!` block is the only place the *reason* a proof worked is written in
+/// English, and it is what the brief carries so a seeder inherits the shapes
+/// that closed cheaply.
+pub fn lifts_the_note_out_of_a_proof_file_test() {
+  let file =
+    "import Rule30.Basic\n\n/-!\n**What this says.** The left edge is always 1.\n**Why it is true.** The cone.\n-/\n\ntheorem evolve_left_edge : True := trivial\n"
+  let assert Ok(note) = seed.note_of(file)
+  assert string.contains(note, "The left edge is always 1.")
+  assert string.contains(note, "The cone.")
+  // The delimiters are not part of the note — they are Lean syntax and the
+  // brief is prose.
+  assert !string.contains(note, "/-!")
+  assert !string.contains(note, "-/")
+  // And nothing outside the block leaks in.
+  assert !string.contains(note, "import")
+  assert !string.contains(note, "theorem")
+}
+
+/// A proof file without a note is not an error — older files predate the
+/// convention. It must be skipped rather than contributing an empty section
+/// that reads as a note nobody wrote.
+pub fn a_proof_file_with_no_note_is_skipped_test() {
+  assert seed.note_of("import Rule30.Basic\ntheorem t : True := trivial\n")
+    == Error(Nil)
+}
+
+/// An unterminated block must not swallow the rest of the file. A note is
+/// prose shown to a seeder; a note that is secretly the whole proof would
+/// quietly blow up the brief and teach nothing.
+pub fn an_unterminated_note_is_not_a_note_test() {
+  assert seed.note_of("/-!\n**What this says.** oops\ntheorem t : True := trivial\n")
+    == Error(Nil)
+}
+
+/// Cost is in the brief to be COMPARED at a glance — which shapes are cheap is
+/// the transferable knowledge. `$0.7975254000000002` defeats that: the reader
+/// is doing arithmetic on noise instead of seeing a pattern.
+pub fn costs_are_rendered_as_money_test() {
+  let b =
+    seed.brief(
+      closed: [closed_node("a", dag.M, "sonnet", 0.7975254000000002)],
+      notes: [],
+      explorer_readme: "",
+      proposal_path: "p",
+    )
+  assert string.contains(b, "$0.80")
+  assert !string.contains(b, "0.7975254")
+}
+
+pub fn a_small_cost_keeps_both_places_test() {
+  let b =
+    seed.brief(
+      closed: [closed_node("a", dag.S, "haiku", 0.0709461)],
+      notes: [],
+      explorer_readme: "",
+      proposal_path: "p",
+    )
+  assert string.contains(b, "$0.07")
+  // The prefix alone is not the check: "$0.0709461" contains "$0.07". This
+  // test passed against the unrounded implementation until that was noticed.
+  assert !string.contains(b, "0.0709461")
+}
+
+// --- refusing to check without a built .lake ----------------------------------
+
+/// **A checkout without `.lake` cannot check anything, and must say so instead
+/// of trying.**
+///
+/// Hit for real on 2026-09-06: `seed check` run from a worktree found no
+/// `.lake` — the 7.4 GB of compiled Mathlib that CLAUDE.md warns a fresh
+/// worktree does not have — so `lake env lean` could not resolve `Rule30`,
+/// STARTED CLONING MATHLIB, and reported every proposal as `BROKEN CHECK`. It
+/// left 675 MB of partial clone behind.
+///
+/// The verdicts were right: `WitnessBroken` says the check failed, not the
+/// statement, so nothing was retracted. The problem is that being right N
+/// times is not the same as being useful once. A reader sees N broken checks
+/// and looks for a fault in their proposals, because that is what the report
+/// is about.
+///
+/// Same shape as a fixture written into the live checkout: a tool doing
+/// something expensive and wrong OUTSIDE the thing it was asked about.
+pub fn check_file_refuses_a_checkout_with_no_lake_test() {
+  let dir = "build/test-runs/seed-nolake"
+  let assert Ok(_) = simplifile.create_directory_all(dir)
+  let assert Ok(_) =
+    simplifile.write(dir <> "/props.json", "{\"proposals\":[]}")
+  let assert Error(reason) = seed.check_file_in(dir, dir <> "/props.json")
+  // Names the missing thing, where it looked, and what to do — a reader who
+  // gets this must not have to guess which of the three it is.
+  assert string.contains(reason, ".lake")
+  assert string.contains(does: string.lowercase(reason), contain: "worktree")
+  assert string.contains(reason, "HARNESS_REPO_ROOT")
+}
+
+/// And it must refuse BEFORE reading proposals, so a malformed proposal in a
+/// checkout that could never have checked it reports the checkout rather than
+/// the proposal. The likelier confusion is the one this orders against.
+pub fn the_lake_check_comes_before_the_proposal_decode_test() {
+  let dir = "build/test-runs/seed-nolake-bad"
+  let assert Ok(_) = simplifile.create_directory_all(dir)
+  let assert Ok(_) = simplifile.write(dir <> "/props.json", "not json at all")
+  let assert Error(reason) = seed.check_file_in(dir, dir <> "/props.json")
+  assert string.contains(reason, ".lake")
+  assert !string.contains(reason, "proposals\": [...]")
+}

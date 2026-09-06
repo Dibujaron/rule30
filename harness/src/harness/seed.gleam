@@ -42,6 +42,7 @@ import gleam/json
 import gleam/list
 import gleam/result
 import gleam/string
+import harness/config
 import harness/dag
 import harness/shell
 import simplifile
@@ -610,12 +611,14 @@ pub fn brief(
       "Aim at what a proof of a prize conjecture's residual would NEED, not at",
       "what is merely true and provable. **A tier of true, cheap, unconnected",
       "lemmas is the failure mode here, and it looks like progress while it",
-      "happens.** The table below is the whole record of what has closed —"
-        <> " "
+      "happens.**",
+      "",
+      "The table below is the whole record of what has closed, "
         <> int.to_string(list.length(closed))
-        <> " closed as it stands; read it and ask which of them a proof of a",
-      "prize residual would actually cite. If the honest answer is none, that",
-      "is the problem you are being asked to fix.",
+        <> " closed as it",
+      "stands. Read it and ask which of them a proof of a prize residual would",
+      "actually cite. If the honest answer is none, that is the problem you are",
+      "being asked to fix.",
       "",
       "## What you may write and run",
       "  write   anything under explorer/",
@@ -687,7 +690,7 @@ fn closed_table(closed: List(dag.Node)) -> String {
       attempts -> {
         let last = list.last(attempts)
         case last {
-          Ok(a) -> #(a.model, float.to_string(a.cost_usd))
+          Ok(a) -> #(a.model, dollars(a.cost_usd))
           Error(_) -> #("-", "-")
         }
       }
@@ -698,7 +701,7 @@ fn closed_table(closed: List(dag.Node)) -> String {
     <> dag.size_to_string(n.size)
     <> "  "
     <> model
-    <> "  $"
+    <> "  "
     <> cost
   })
   |> string.join("\n")
@@ -708,4 +711,161 @@ fn notes_section(notes: List(#(String, String))) -> String {
   notes
   |> list.map(fn(pair) { "### " <> pair.0 <> "\n" <> pair.1 })
   |> string.join("\n\n")
+}
+
+/// The `/-!` block out of a proof file, without its delimiters.
+///
+/// That block is the only place in this project where the *reason* a proof
+/// worked is written in English — CLAUDE.md requires one in every
+/// `Rule30/Proofs/` file, addressed to a reader who will not read the tactic
+/// script. It is what the brief carries so a seeder inherits which shapes
+/// close cheaply, which is the knowledge a fresh session has no other route
+/// to.
+///
+/// `Error(Nil)` for a file with no note, and — the case worth naming — for a
+/// block that is opened and never closed. Taking the rest of the file in that
+/// case would put a whole proof into the brief as though it were prose, which
+/// is a silent way to blow up the one artifact whose job is to be read.
+pub fn note_of(file: String) -> Result(String, Nil) {
+  use #(_, after) <- result.try(string.split_once(file, "/-!"))
+  use #(body, _) <- result.try(string.split_once(after, "-/"))
+  case string.trim(body) {
+    "" -> Error(Nil)
+    text -> Ok(text)
+  }
+}
+
+// --- the seeder, from disk ----------------------------------------------------
+
+/// Where a seeder writes, and the only file outside `explorer/` it may touch.
+///
+/// Under `blueprint/` because that is where the board's own artifacts live,
+/// and NOT in `blueprint/dag.json`: a proposal is a claim about the board, not
+/// a change to it. Rowan reads this and lands what survives review.
+pub fn proposal_path(repo_root: String) -> String {
+  repo_root <> "/blueprint/proposals/next.json"
+}
+
+/// The brief, assembled from the repository as it stands right now.
+///
+/// Everything here is DERIVED rather than remembered — the closed table, the
+/// count, the notes. A brief that carries a hardcoded fact is a brief that is
+/// wrong on a day nobody notices, and this one had exactly that bug within
+/// hours of being written.
+pub fn brief_for(cfg: config.Config) -> Result(String, String) {
+  use d <- result.try(dag.load(cfg.dag_path))
+  let closed = list.filter(d.nodes, fn(n) { n.status == dag.Proved })
+  let notes = proof_notes(cfg.repo_root)
+  let readme =
+    simplifile.read(cfg.repo_root <> "/explorer/README.md")
+    |> result.unwrap("(no explorer/README.md)")
+  Ok(brief(
+    closed: closed,
+    notes: notes,
+    explorer_readme: readme,
+    proposal_path: proposal_path(cfg.repo_root),
+  ))
+}
+
+/// Every `/-!` note under `Rule30/Proofs/`, paired with its file name.
+///
+/// Files without a note are skipped rather than contributing an empty
+/// section: older proofs predate the convention, and an empty heading reads
+/// as a note whose author had nothing to say.
+fn proof_notes(repo_root: String) -> List(#(String, String)) {
+  let dir = repo_root <> "/Rule30/Proofs"
+  case simplifile.read_directory(dir) {
+    Error(_) -> []
+    Ok(entries) ->
+      entries
+      |> list.filter(string.ends_with(_, ".lean"))
+      |> list.sort(string.compare)
+      |> list.filter_map(fn(name) {
+        use text <- result.try(
+          simplifile.read(dir <> "/" <> name) |> result.replace_error(Nil),
+        )
+        use note <- result.try(note_of(text))
+        Ok(#(name, note))
+      })
+  }
+}
+
+/// Check a proposal file and render the report a captain reads.
+///
+/// This is the whole statement-side gate in one call: decode loudly, run both
+/// checks over every proposal, and render. It adjudicates nothing about
+/// whether a node is WORTH proving — no mechanism here can — so it reports
+/// and stops.
+pub fn check_file(
+  cfg: config.Config,
+  path: String,
+) -> Result(String, String) {
+  check_file_in(cfg.repo_root, path)
+}
+
+/// `check_file` with the repository root given directly, so the refusal below
+/// can be tested without a config.
+pub fn check_file_in(
+  repo_root: String,
+  path: String,
+) -> Result(String, String) {
+  // FIRST, before the proposals are even read. A checkout without `.lake` can
+  // check nothing, and `lake env lean` does not fail politely there — it
+  // resolves no `Rule30`, starts CLONING MATHLIB, and every proposal comes
+  // back `BROKEN CHECK`. Measured 2026-09-06 from a worktree: 675 MB of
+  // partial clone and a report that read as though four proposals were at
+  // fault.
+  //
+  // Those verdicts were correct — `WitnessBroken` says the check failed, not
+  // the statement — and being correct N times is not the same as being useful
+  // once. A reader looking at N broken checks looks for the fault in their
+  // proposals, because that is what the report is about. So the checkout is
+  // reported as the checkout, and it is reported before anything expensive
+  // starts.
+  use _ <- result.try(case simplifile.is_directory(repo_root <> "/.lake") {
+    Ok(True) -> Ok(Nil)
+    _ ->
+      Error(
+        "harness/seed: no built `.lake` under "
+        <> repo_root
+        <> ", so nothing can be elaborated there.
+"
+        <> "  A fresh worktree has none — `.lake` is gitignored and is 7.4 GB "
+        <> "of compiled Mathlib, so building one takes hours.
+"
+        <> "  Point HARNESS_REPO_ROOT at a checkout that has one (the main "
+        <> "checkout does) and run this again.
+"
+        <> "  Refused before reading any proposal: without `.lake` this would "
+        <> "start cloning Mathlib and then report every proposal broken.",
+      )
+  })
+  use text <- result.try(
+    simplifile.read(path)
+    |> result.map_error(fn(e) {
+      "harness/seed: cannot read " <> path <> ": " <> simplifile.describe_error(e)
+    }),
+  )
+  use proposals <- result.try(decode_proposals(text))
+  use lake <- result.try(
+    shell.which("lake") |> result.replace_error("harness/seed: no `lake` on PATH"),
+  )
+  let checked =
+    list.map(proposals, fn(p) { check_proposal(repo_root, lake, p, 180_000) })
+  Ok(report(checked))
+}
+
+/// A cost, as money rather than as a float.
+///
+/// The table exists to be compared at a glance — which shapes close cheaply is
+/// the knowledge a seeder cannot get anywhere else. `$0.7975254000000002` makes
+/// the reader do arithmetic on noise instead of seeing a pattern, which is a
+/// quiet way for the most carefully assembled section of the brief to be
+/// skipped.
+fn dollars(amount: Float) -> String {
+  let cents = float.round(amount *. 100.0)
+  "$"
+  <> int.to_string(cents / 100)
+  <> "."
+  <> string.pad_start(int.to_string(cents % 100), 2, "0")
 }

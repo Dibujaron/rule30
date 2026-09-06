@@ -73,18 +73,7 @@ fn verify_check(repo_root: String, lake: String, node: dag.Node) -> Verdict {
   let checks_dir = repo_root <> "/harness/build/checks"
   let check_path = checks_dir <> "/" <> node.id <> ".lean"
   let assert Ok(_) = simplifile.create_directory_all(checks_dir)
-  let check_source =
-    "import Rule30.Statements\n"
-    <> "import "
-    <> dag.proof_module(node)
-    <> "\n"
-    <> "theorem harness_check : type_of% Statements."
-    <> node.lean_name
-    <> " := "
-    <> node.lean_name
-    <> "\n"
-    <> "#print axioms harness_check\n"
-  let assert Ok(_) = simplifile.write(check_path, check_source)
+  let assert Ok(_) = simplifile.write(check_path, check_source(node))
   case shell.run(lake, ["env", "lean", check_path], repo_root, 600_000) {
     Error(msg) -> CheckFailed(msg)
     Ok(shell.Run(status:, output:)) if status != 0 -> CheckFailed(output)
@@ -176,4 +165,42 @@ pub fn is_verified(v: Verdict) -> Bool {
     Verified(..) -> True
     _ -> False
   }
+}
+
+/// The check theorem: the seeded statement's type, proved by the worker's
+/// theorem. This is what makes a worker unable to prove something *near* what
+/// it was asked for — the type comes from `Rule30/Statements.lean` and the
+/// term comes from the worker's file, so they have to agree.
+///
+/// **`@` on both sides, and it is load-bearing rather than tidy.** Without it,
+/// a statement with implicit or instance binders elaborates as a bare term and
+/// Lean inserts those binders as metavariables it then cannot solve. Measured
+/// 2026-09-06 against the real toolchain, on `{S : Type} [Fintype S]`:
+///
+///     type_of% stmt  := prf     error: typeclass instance problem is stuck
+///                                      Fintype ?m.1
+///     type_of% @stmt := @prf    'harness_check' depends on axioms:
+///                                      [propext, Classical.choice, Quot.sound]
+///
+/// It cost a node and two attempts in run 20260906T230339Z before it was
+/// found. The worker's proof was correct and `lake build` was green; only this
+/// check failed, so the harness scored a harness defect as node difficulty and
+/// escalated the ladder against it.
+///
+/// It never fired before because every statement seeded until that night had
+/// only explicit binders — and `@` changes nothing for those, which was
+/// verified on `evolve_left_edge` rather than assumed: identical axioms, both
+/// forms, exit 0. That check is the one that matters for the twenty-seven
+/// nodes already closed.
+pub fn check_source(node: dag.Node) -> String {
+  "import Rule30.Statements\n"
+  <> "import "
+  <> dag.proof_module(node)
+  <> "\n"
+  <> "theorem harness_check : type_of% @Statements."
+  <> node.lean_name
+  <> " := @"
+  <> node.lean_name
+  <> "\n"
+  <> "#print axioms harness_check\n"
 }

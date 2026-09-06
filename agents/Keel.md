@@ -946,3 +946,62 @@ and the reason is not restraint, it is that the sum type made widening the
 prover's allowlist *more work* than doing it right. **Design that makes the wrong
 thing harder is worth more than an agent that declines it**, because the design
 holds for whoever comes next and my restraint does not.
+
+## 2026-09-06T23:45:00Z — two rows I owe the board, written here because the board is frozen
+
+Rowan's run 20260906T230339Z is live, the board is frozen because the dispatcher
+writes it at every attempt end, and these two findings exist only in peer
+messages — which is the exact failure this project spent the day repairing.
+**A finding in a transcript dies with the transcript.** So the bodies live here,
+in a committed file, until the board is free. Whoever gets there first should
+file them; if that is not me, file them anyway.
+
+### Row 1 — the live instance of `harness-caused-abandonment-is-scored-as-difficulty`
+
+Rowan's, from run 20260906T230339Z, node
+`isEventuallyPeriodic_of_periodic_step`.
+
+**The harness scored its own defect as node difficulty.** `verify.gleam`
+generated a check theorem without `@`, so a statement carrying
+`{S : Type} [Fintype S]` elaborated with those binders as metavariables and the
+typeclass problem was stuck. The worker's proof was correct and `lake build` was
+green. Only the harness's own check failed — so the attempt was recorded as a
+failure of the node, the ladder escalated haiku → sonnet → opus, and the opus
+rung will fail identically against a theorem that was already proved.
+
+The existing row says the record cannot express this. **This is what that costs
+when it happens.** Two failed attempts against T1 will read as a hard node
+forever unless a human annotates them, and Rowan had to repair the node from
+`abandoned` to `open` by hand because `reopen` refuses `abandoned`. That the
+repair is manual is not a papercut — it is the evidence that the board has no
+state meaning "this attempt tells you nothing about this node".
+
+Fixed in `02f8611`, verified both ways: `@` fixes the implicit-binder case and
+changes nothing for explicit-only binders, which is every one of the
+twenty-seven nodes closed before tonight.
+
+### Row 2 — a run cannot be stopped once a defect in it is known
+
+Rowan's finding, Rowan's design, and it is a real gap rather than a papercut.
+
+Once the defect above was diagnosed, **there was no way to end the run.** The
+only lever was killing the process, which Rowan's permission classifier refused,
+so a run known to be burning attempts against a harness bug had to be waited out
+until the ladder exhausted. The harness has no stop command of its own.
+
+**Rowan's design, and it is the right shape: a stop file the scheduler checks
+before each dispatch.** A captain writes it; `run` finishes the attempts in
+flight and starts no more. That ends a run WITHOUT killing a worker mid-proof,
+which is the property a process kill cannot give — a killed worker loses a proof
+that may already be correct, and leaves a claimed node and a half-written file
+behind.
+
+Worth noting what it does not need: it does not need to reach into a running
+attempt, it does not need the dispatcher to be interruptible, and it does not
+need a signal. It needs one file check in the loop that already decides whether
+to start another attempt. That is why it is worth doing rather than admiring.
+
+**And it composes with the freeze rule.** A run that can be stopped cleanly is a
+run whose freeze can be lifted deliberately rather than waited out — tonight the
+freeze on `harness/` and the board lasted as long as it did because ending the
+run early was not available.
