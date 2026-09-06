@@ -7,8 +7,9 @@
 
 import gleam/int
 import gleam/list
-import gleam/option.{type Option, None}
+import gleam/option.{type Option, None, Some}
 import harness/dag
+import harness/roster
 
 /// What one `run` is allowed to do: how many attempts it may start in all,
 /// and how many may be in flight at once. Three is the ceiling on
@@ -64,23 +65,62 @@ fn positive(text: String) -> Result(Int, Nil) {
   }
 }
 
-/// The node to start next, or `None` if nothing should start: every slot is
-/// busy, the attempt budget is spent, or no open leaf is left that is not
-/// in `skip`. Claimed nodes are never open leaves, so a node already in
-/// flight is excluded by the DAG itself; `skip` is for nodes this run has
-/// decided not to touch again, such as one whose attempt crashed.
+/// Who an attempt runs as. A persona is a resource with capacity one, so
+/// when every persona for a region is in flight the scheduler does not
+/// wait: it decides to mint a new one, and carries the names it found busy
+/// so the log can say why.
+pub type Who {
+  Existing(roster.Identity)
+  Mint(region: String, busy: List(String))
+}
+
+/// A node to start, and who starts it.
+pub type Assignment {
+  Assignment(node: dag.Node, who: Who)
+}
+
+/// The eldest idle persona for `region`, or the decision to mint one.
+pub fn who_for(
+  roster_: roster.Roster,
+  region: String,
+  busy busy: List(String),
+) -> Who {
+  case roster.idle_for_region(roster_, region, busy:) {
+    Some(identity) -> Existing(identity)
+    None ->
+      Mint(
+        region:,
+        busy: roster.for_region(roster_, region)
+          |> list.map(fn(i) { i.name })
+          |> list.filter(fn(name) { list.contains(busy, name) }),
+      )
+  }
+}
+
+/// The assignment to start next, or `None` if nothing should start: every
+/// slot is busy, the attempt budget is spent, or no open leaf is left that
+/// is not in `skip`. Claimed nodes are never open leaves, so a node already
+/// in flight is excluded by the DAG itself; `skip` is for nodes this run has
+/// decided not to touch again, such as one whose attempt crashed. `busy`
+/// is the names in flight; persona availability never changes which node
+/// is chosen, only who runs it.
 pub fn next_to_start(
   d: dag.Dag,
+  roster_: roster.Roster,
   plan: Plan,
   running running: Int,
+  busy busy: List(String),
   dispatched dispatched: Int,
   skip skip: List(String),
-) -> Option(dag.Node) {
+) -> Option(Assignment) {
   case running < plan.concurrency && dispatched < plan.max_attempts {
     False -> None
     True ->
       dag.open_leaves(d)
       |> list.find(fn(n) { !list.contains(skip, n.id) })
       |> option.from_result
+      |> option.map(fn(node) {
+        Assignment(node:, who: who_for(roster_, node.region, busy:))
+      })
   }
 }
