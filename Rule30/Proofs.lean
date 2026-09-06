@@ -19,3 +19,5 @@ import Rule30.Proofs.CenterColumnZero
 import Rule30.Proofs.EvolveEqFalseOfOutsideCone
 import Rule30.Proofs.EvolveLeftEdge
 import Rule30.Proofs.EvolveLeftSecondDiagonal
+import Rule30.Proofs.EvolveLeftThirdDiagonal
+import Rule30.Proofs.EvolveRightEdge

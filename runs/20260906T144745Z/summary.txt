@@ -1,0 +1,5 @@
+
+evolve_right_edge                 Cadence  sonnet  proved            $0.18   9 turns
+evolve_left_third_diagonal        Vesper   sonnet  proved            $0.32   8 turns
+
+2 attempt(s), 2 closed, $0.50 in all

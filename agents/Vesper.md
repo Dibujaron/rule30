@@ -43,3 +43,18 @@ Proof shape, one level shallower than `evolve_left_edge`'s induction — no indu
 - `rw [h1, h2]; simp` closes `xor false (true || _) = true` — simp knows `true || x = true` and `xor false true = true` without any hints.
 
 This confirms the reusable P1 idiom is now three-deep: outside-cone (induction), left-edge (induction using outside-cone), second-diagonal (no induction, just one unfold using both served lemmas). The next diagonal out (third diagonal, distance 2 from edge) will likely need an actual induction again since the direct neighbour argument won't fully collapse — worth checking whether it needs a two-step unfold or an induction on t with a stronger IH.
+
+## 2026-09-06T14:49:46Z — evolve_left_third_diagonal (sonnet, proved)
+
+One-step unfold, no induction — same shallow shape as second-diagonal, one level further out.
+
+Key insight: `t + 2` is not syntactically `?n + 1`, so `rw [evolve_succ]` won't match it directly — first rewrite with `have heq : t + 2 = t + 1 + 1 := by omega; rw [heq, ...]`. (Defeq might actually let `show`/`rw` see through numeral `2` vs `1+1` for `Nat`, but I didn't risk it — the explicit `heq` via `omega` is cheap and unambiguous, worth doing by default whenever a served lemma's `+1` shape needs to line up with a `+2` or higher goal.)
+
+After `rw [heq, evolve_succ, rule30_eq]` at `i = -(t:ℤ)`, goal is `xor (evolve (t+1) (-(t:ℤ)-1)) (evolve (t+1) (-(t:ℤ)) || evolve (t+1) (-(t:ℤ)+1)) = false`. The trick: you never need the right-neighbour term at all.
+- Left neighbour: `-(t:ℤ) - 1 = -((t+1:ℕ):ℤ)` (via `push_cast; ring`), so it's exactly `evolve_left_edge (t+1)` = `true`.
+- Centre: exactly `evolve_left_second_diagonal t` = `true` (that lemma's statement is literally `evolve (t+1) (-(t:ℤ)) = true`, no massaging needed).
+- `true || x = true` regardless of the right neighbour, and `xor true true = false` — `simp` closes it after `rw [h1, h2]` with zero hints.
+
+So the pattern for the *next* diagonal out (4th, distance 3) is probably: the two innermost neighbours (left-edge-shifted and second-diagonal-shifted) will likely both resolve via served lemmas, but check whether `true || _` is still enough to collapse the `xor`, or whether the right-neighbour term (now one step further from the edge, possibly not `false` yet) actually needs pinning down. Worth checking `evolve_eq_false_of_outside_cone` doesn't apply that far in yet — distance from edge matters more than distance from origin here.
+
+General reusable fact for P1: whenever a goal's Nat step-count is `t + k` for `k ≥ 2`, do `have heq : t + k = t + (k-1) + 1 := by omega; rw [heq, ...]` before `evolve_succ` — don't rely on defeq matching numerals through `rw`.
