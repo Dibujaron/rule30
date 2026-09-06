@@ -800,6 +800,46 @@ pub fn check_file(
   cfg: config.Config,
   path: String,
 ) -> Result(String, String) {
+  check_file_in(cfg.repo_root, path)
+}
+
+/// `check_file` with the repository root given directly, so the refusal below
+/// can be tested without a config.
+pub fn check_file_in(
+  repo_root: String,
+  path: String,
+) -> Result(String, String) {
+  // FIRST, before the proposals are even read. A checkout without `.lake` can
+  // check nothing, and `lake env lean` does not fail politely there — it
+  // resolves no `Rule30`, starts CLONING MATHLIB, and every proposal comes
+  // back `BROKEN CHECK`. Measured 2026-09-06 from a worktree: 675 MB of
+  // partial clone and a report that read as though four proposals were at
+  // fault.
+  //
+  // Those verdicts were correct — `WitnessBroken` says the check failed, not
+  // the statement — and being correct N times is not the same as being useful
+  // once. A reader looking at N broken checks looks for the fault in their
+  // proposals, because that is what the report is about. So the checkout is
+  // reported as the checkout, and it is reported before anything expensive
+  // starts.
+  use _ <- result.try(case simplifile.is_directory(repo_root <> "/.lake") {
+    Ok(True) -> Ok(Nil)
+    _ ->
+      Error(
+        "harness/seed: no built `.lake` under "
+        <> repo_root
+        <> ", so nothing can be elaborated there.
+"
+        <> "  A fresh worktree has none — `.lake` is gitignored and is 7.4 GB "
+        <> "of compiled Mathlib, so building one takes hours.
+"
+        <> "  Point HARNESS_REPO_ROOT at a checkout that has one (the main "
+        <> "checkout does) and run this again.
+"
+        <> "  Refused before reading any proposal: without `.lake` this would "
+        <> "start cloning Mathlib and then report every proposal broken.",
+      )
+  })
   use text <- result.try(
     simplifile.read(path)
     |> result.map_error(fn(e) {
@@ -811,7 +851,7 @@ pub fn check_file(
     shell.which("lake") |> result.replace_error("harness/seed: no `lake` on PATH"),
   )
   let checked =
-    list.map(proposals, fn(p) { check_proposal(cfg.repo_root, lake, p, 180_000) })
+    list.map(proposals, fn(p) { check_proposal(repo_root, lake, p, 180_000) })
   Ok(report(checked))
 }
 

@@ -666,3 +666,47 @@ pub fn a_small_cost_keeps_both_places_test() {
   // test passed against the unrounded implementation until that was noticed.
   assert !string.contains(b, "0.0709461")
 }
+
+// --- refusing to check without a built .lake ----------------------------------
+
+/// **A checkout without `.lake` cannot check anything, and must say so instead
+/// of trying.**
+///
+/// Hit for real on 2026-09-06: `seed check` run from a worktree found no
+/// `.lake` — the 7.4 GB of compiled Mathlib that CLAUDE.md warns a fresh
+/// worktree does not have — so `lake env lean` could not resolve `Rule30`,
+/// STARTED CLONING MATHLIB, and reported every proposal as `BROKEN CHECK`. It
+/// left 675 MB of partial clone behind.
+///
+/// The verdicts were right: `WitnessBroken` says the check failed, not the
+/// statement, so nothing was retracted. The problem is that being right N
+/// times is not the same as being useful once. A reader sees N broken checks
+/// and looks for a fault in their proposals, because that is what the report
+/// is about.
+///
+/// Same shape as a fixture written into the live checkout: a tool doing
+/// something expensive and wrong OUTSIDE the thing it was asked about.
+pub fn check_file_refuses_a_checkout_with_no_lake_test() {
+  let dir = "build/test-runs/seed-nolake"
+  let assert Ok(_) = simplifile.create_directory_all(dir)
+  let assert Ok(_) =
+    simplifile.write(dir <> "/props.json", "{\"proposals\":[]}")
+  let assert Error(reason) = seed.check_file_in(dir, dir <> "/props.json")
+  // Names the missing thing, where it looked, and what to do — a reader who
+  // gets this must not have to guess which of the three it is.
+  assert string.contains(reason, ".lake")
+  assert string.contains(does: string.lowercase(reason), contain: "worktree")
+  assert string.contains(reason, "HARNESS_REPO_ROOT")
+}
+
+/// And it must refuse BEFORE reading proposals, so a malformed proposal in a
+/// checkout that could never have checked it reports the checkout rather than
+/// the proposal. The likelier confusion is the one this orders against.
+pub fn the_lake_check_comes_before_the_proposal_decode_test() {
+  let dir = "build/test-runs/seed-nolake-bad"
+  let assert Ok(_) = simplifile.create_directory_all(dir)
+  let assert Ok(_) = simplifile.write(dir <> "/props.json", "not json at all")
+  let assert Error(reason) = seed.check_file_in(dir, dir <> "/props.json")
+  assert string.contains(reason, ".lake")
+  assert !string.contains(reason, "proposals\": [...]")
+}
