@@ -37,6 +37,14 @@
       "role": "overseer",
       "started": "2026-09-06T14:40:00Z",
       "status": "live"
+    },
+    {
+      "identity": "Keel",
+      "session_name": "proofs-df",
+      "ref": "8032e0",
+      "role": "framework",
+      "started": "2026-09-06T01:40:00Z",
+      "status": "live"
     }
   ]
 }
