@@ -62,7 +62,7 @@ It prints four things, each of which is a way work goes missing:
 
 | Section | What it means |
 |---|---|
-| Local refs ahead of their remote | Exists on one disk. One dead session away from never having happened. |
+| Commits on this disk only | Reachable from no remote ref at all. One dead session away from never having happened. Measured with `--not --remotes` rather than against the branch's own upstream, because a branch can be far ahead of *its* remote while every commit is already on `origin/main` under another ref. |
 | Branches not merged into `origin/main` | A finding nobody can cite, because it has no sha in `main`. |
 | Worktrees with uncommitted changes | Either someone working right now or someone who died mid-edit — **this cannot tell you which, so ask the session.** |
 | Held claims | A `claimed` DAG node or bug whose holder may be dead. **This is the one that loses a peer rather than losing work** — a session waiting on a claim will not go looking. |

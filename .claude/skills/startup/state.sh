@@ -24,19 +24,21 @@ echo
 # --- 1. Work that exists on one disk -----------------------------------------
 # The highest-value line in this report. On 2026-09-06 `main` sat eight commits
 # ahead of its remote while three sessions cited shas that were on one disk.
-echo "== LOCAL REFS AHEAD OF THEIR REMOTE (exists on this disk only) =="
+echo "== COMMITS ON THIS DISK ONLY (reachable from no remote ref) =="
 found=0
 while read -r branch; do
-  remote="origin/$branch"
-  if ! git rev-parse --verify -q "$remote" >/dev/null; then
-    printf '  %-34s NO REMOTE BRANCH — never pushed\n' "$branch"; found=1; continue
-  fi
-  ahead=$(git rev-list --count "$remote..$branch")
-  [ "$ahead" -eq 0 ] && continue
-  printf '  %-34s %s ahead of %s\n' "$branch" "$ahead" "$remote"
+  # `--not --remotes` is the point: a branch can be far "ahead of its own
+  # remote branch" while every one of those commits is already on
+  # origin/main under a different ref, which is not stranded and must not be
+  # reported as such. What matters is a commit no remote ref can reach.
+  stranded=$(git rev-list --count "$branch" --not --remotes)
+  [ "$stranded" -eq 0 ] && continue
+  who=$(git log -1 --format='%an, %cr' "$branch")
+  printf '  %-34s %s commit(s) — %s
+' "$branch" "$stranded" "$who"
   found=1
 done < <(git for-each-ref --format='%(refname:short)' refs/heads)
-[ "$found" -eq 0 ] && echo "  (none — every local branch is on the remote)"
+[ "$found" -eq 0 ] && echo "  (none — every local commit is reachable from some remote ref)"
 echo
 
 # --- 2. Work that never landed -----------------------------------------------

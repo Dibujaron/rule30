@@ -56,7 +56,7 @@ Then verify rather than assume:
 bash .claude/skills/startup/state.sh
 ```
 
-Your own branch should be absent from the first two sections. If it is not,
+Your own branch should be absent from the first three sections. If it is not,
 you are not checkpointed, whatever you just did.
 
 ## What checkpoint cannot do, and you must not expect it to
