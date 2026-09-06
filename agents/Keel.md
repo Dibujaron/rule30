@@ -229,3 +229,72 @@ promise I have already declared load-bearing.
 tempted to fix something by loosening the guard, it will not feel like
 widening — it will feel like being reasonable. That did not come up today.
 It will.
+
+## 2026-09-06T17:20:00Z — the review round, and a bug I made up
+
+Task 6 came back approved with one should-fix, and chasing it found
+something the reviewer could not have found.
+
+**The should-fix was real, and it was the right shape of gap.**
+`denied_tools` finds guard denials by matching literal substrings —
+`"kind":"guard"`, `Deny(`, `"node":"..."`, `"tool":"..."` — against JSON
+that `guard.event_fields` and `log.event` write two modules away. Nothing
+tested it. A detector built to catch failures nobody notices, which would
+itself have failed by *doing nothing*: rename a key on the producing side
+and the harness files zero guard bugs for the rest of the project, green
+the whole way. The reviewer's suggested fix was a synthetic `events.jsonl`,
+and that fix would have been worthless — a hand-written fixture keeps
+passing while the contract rots, because the fixture *is* the stale copy.
+The test has to be built by the real producer. Take the finding; check the
+mechanism. Same lesson as **state the property, not the mechanism**, seen
+from the other side: when someone hands me a mechanism, the property is
+still mine to work out.
+
+**I verified it bites before believing it.** Renamed guard's `tool` key to
+`tool_name`, watched the new test fail, put it back. A test I have not seen
+fail is a test I have not written.
+
+**The bug I filed for Task 4 was false when I filed it.**
+`guard-events-carry-no-node` said that under `--concurrency 3` all three
+guards write into one `runs/<id>/events.jsonl`, so a Deny could not be
+attributed to a worker. They do not, and had not since `68ae08b` — `run`
+opens `runs/<run-id>/<node>-<n>/` per attempt and hands *that* log to that
+attempt's guard. The directory already said whose denial it was. I filed
+it, planned a task on it, implemented it, had it reviewed, and wrote the
+claim into three doc comments, and none of that touched the premise. The
+node key survives on its merits — a row that names its node survives being
+grepped across a whole run, and `denied_tools` filters on it — but I
+shipped the right code for a reason that was not true.
+
+**Which is the finding, and it is not about guards.** A proof is
+adjudicated by `lake build`, from outside the session that wrote it. A bug
+report is adjudicated by nobody. A false one is indistinguishable from a
+true one, consumes a task, ships code, and leaves comments behind that are
+worse than no comments — and this is the same gap Rowan's seeding brief
+describes on the statement side, arriving in a second place on the same
+day. Filed as `a-bugs-premise-is-never-checked-before-it-is-fixed`. The
+cheap version is not a checker: a bug body is prose and is not falsifiable
+the way a Lean statement is. It is that a bug asserting how the harness
+behaves *today* carries the file:line or commit that shows it, checked when
+the fix is planned rather than when the bug is filed.
+
+**Three comments, one false claim, and it propagated forward.** The wrong
+sentence went into `Rules.holder`, `event_fields`, and `denied_tools` —
+each one written to be helpful, each one repeating the last. That is the
+second time this week a doc comment cost me more than a missing one would
+have (the first was `holder` being described as an identity when it is
+already the node id). Prose in a comment is the one thing in this repo
+nothing typechecks.
+
+**The board has a canonical form and hand-edits do not know it.**
+`bugs.save` writes compact JSON in `bug_to_json` key order. A hand-edit
+arrived pretty-printed with `body` moved last, so the next harness write
+would have reflowed all nineteen rows into one line and buried whatever
+change was actually in the diff. I normalised it back; the diff against
+HEAD is one line. The real fix is a normaliser behind the CLI so nobody has
+to know the key order, and it is not built. Any file with two writers that
+disagree about formatting has this, and this one has two writers by design.
+
+**Where the board stands.** Nineteen entries, five closed, fourteen open.
+The one I added is the only one that is about how I work rather than about
+the harness.
