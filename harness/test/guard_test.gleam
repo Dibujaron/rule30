@@ -1,3 +1,4 @@
+import gleam/json
 import gleam/list
 import gleam/string
 import harness/guard.{Rules}
@@ -198,6 +199,27 @@ pub fn precompact_archives_the_transcript_test() {
 pub fn precompact_without_a_transcript_is_allowed_test() {
   let input = "{\"hook_event_name\":\"PreCompact\",\"session_id\":\"sess-9\"}"
   assert guard.decide(rules, input) == guard.Allow
+}
+
+pub fn guard_events_name_the_node_test() {
+  let at_node =
+    Rules(
+      repo_root: "C:\\r",
+      allowed_write: "C:\\r\\Rule30\\Proofs\\X.lean",
+      holder: "evolve_left_edge",
+    )
+  let fields =
+    guard.event_fields(at_node, "PreToolUse", "Bash", guard.Deny("nope"))
+  let assert Ok(#(_, node)) = list.find(fields, fn(f) { f.0 == "node" })
+  assert json.to_string(node) == "\"evolve_left_edge\""
+}
+
+pub fn guard_events_still_carry_event_tool_and_decision_test() {
+  let fields = guard.event_fields(rules, "PreToolUse", "Bash", guard.Allow)
+  let keys = list.map(fields, fn(f) { f.0 })
+  assert list.contains(keys, "event")
+  assert list.contains(keys, "tool")
+  assert list.contains(keys, "decision")
 }
 
 pub fn guard_http_denies_rm_over_hook_endpoint_test() {

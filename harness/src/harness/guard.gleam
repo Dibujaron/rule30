@@ -26,8 +26,14 @@ import harness/log
 import mist
 import simplifile
 
-/// The one file a worker may edit, the repo it works in, and the identity it
-/// acquires the build lock under.
+/// The one file a worker may edit, the repo it works in, and the name it
+/// takes the build lock under.
+///
+/// `holder` is the **node id**, not an identity: the dispatcher passes
+/// `node_id`, and one attempt sits at one node, so the node id is already a
+/// unique lock name. It is therefore also what says which worker a decision
+/// belongs to when three guards share one `events.jsonl` — which is why
+/// `event_fields` logs it as `node`.
 pub type Rules {
   Rules(repo_root: String, allowed_write: String, holder: String)
 }
@@ -383,12 +389,25 @@ fn respond_to_hook(
     Error(_) -> #("", "")
   }
   let decision = apply_side_effects(decide(rules, body), rules, lock, log)
-  log.event(log, "guard", [
+  log.event(log, "guard", event_fields(rules, event_name, tool_name, decision))
+  json_response(200, decision_json(decision, event_name))
+}
+
+/// The fields logged for one guard decision. Pulled out of `respond_to_hook`
+/// so it can be tested without standing up the HTTP server, and because the
+/// `node` key is what makes a denial attributable under `--concurrency 3`.
+pub fn event_fields(
+  rules: Rules,
+  event_name: String,
+  tool_name: String,
+  decision: Decision,
+) -> List(#(String, json.Json)) {
+  [
+    #("node", json.string(rules.holder)),
     #("event", json.string(event_name)),
     #("tool", json.string(tool_name)),
     #("decision", json.string(string.inspect(decision))),
-  ])
-  json_response(200, decision_json(decision, event_name))
+  ]
 }
 
 /// Turn `AcquireBuild`/`ReleaseBuild` into actual lock operations, and
