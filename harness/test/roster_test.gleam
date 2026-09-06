@@ -75,11 +75,21 @@ pub fn save_then_load_round_trips_through_disk_test() {
   let _ = simplifile.delete(dir)
 }
 
-pub fn for_region_finds_the_specialist_test() {
-  let r = Roster([thessaly(), ravel()])
-  assert roster.for_region(r, "P1") == Some(thessaly())
-  assert roster.for_region(r, "P2") == Some(ravel())
-  assert roster.for_region(r, "P3") == None
+pub fn for_region_lists_the_specialists_in_roster_order_test() {
+  let r = Roster([thessaly(), ravel(), Identity(..thessaly(), name: "Tarn")])
+  assert list.map(roster.for_region(r, "P1"), fn(i) { i.name })
+    == ["Thessaly", "Tarn"]
+  assert roster.for_region(r, "P2") == [ravel()]
+  assert roster.for_region(r, "P3") == []
+}
+
+pub fn idle_for_region_skips_busy_names_and_prefers_the_eldest_test() {
+  let tarn = Identity(..thessaly(), name: "Tarn")
+  let r = Roster([thessaly(), ravel(), tarn])
+  assert roster.idle_for_region(r, "P1", busy: []) == Some(thessaly())
+  assert roster.idle_for_region(r, "P1", busy: ["Thessaly"]) == Some(tarn)
+  assert roster.idle_for_region(r, "P1", busy: ["Thessaly", "Tarn"]) == None
+  assert roster.idle_for_region(r, "P3", busy: []) == None
 }
 
 pub fn add_appends_test() {

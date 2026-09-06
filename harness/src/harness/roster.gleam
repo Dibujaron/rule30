@@ -70,10 +70,22 @@ pub fn save(roster: Roster, path: String) -> Result(Nil, String) {
   |> result.map_error(simplifile.describe_error)
 }
 
-/// The identity that specialises in `region`, if one has been named yet.
-pub fn for_region(roster: Roster, region: String) -> Option(Identity) {
-  roster.identities
-  |> list.find(fn(i) { i.region == region })
+/// Every identity that specialises in `region`, in roster order — which is
+/// creation order, so the eldest comes first.
+pub fn for_region(roster: Roster, region: String) -> List(Identity) {
+  list.filter(roster.identities, fn(i) { i.region == region })
+}
+
+/// The eldest identity for `region` whose name is not in `busy`: a persona
+/// is a resource with capacity one, and this is the free one. `None` when
+/// every persona for the region is busy, or the region has none.
+pub fn idle_for_region(
+  roster: Roster,
+  region: String,
+  busy busy: List(String),
+) -> Option(Identity) {
+  for_region(roster, region)
+  |> list.find(fn(i) { !list.contains(busy, i.name) })
   |> option.from_result
 }
 
