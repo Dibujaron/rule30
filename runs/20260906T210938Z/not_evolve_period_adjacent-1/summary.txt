@@ -1,0 +1,15 @@
+
+node      not_evolve_period_adjacent
+identity  Vesper
+model     sonnet
+outcome   proved
+cost      $0.45
+turns     10
+estimate  M
+session   f6599888-977c-4502-9d0f-8919395e1a94
+log       c:/Users/dibuj/dev/rule30/runs/20260906T210938Z/not_evolve_period_adjacent-1
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Vesper (#2b3a67): closed 15, abandoned 1, $6.87, calibration 13/15

@@ -1,0 +1,15 @@
+
+node      evolve_period_sub_one
+identity  Vesper
+model     haiku
+outcome   proved
+cost      $0.32
+turns     17
+estimate  S
+session   094cf57b-fef5-4f4c-ad12-00555ff860dd
+log       c:/Users/dibuj/dev/rule30/runs/20260906T210938Z/evolve_period_sub_one-1
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Vesper (#2b3a67): closed 13, abandoned 1, $5.99, calibration 11/13

@@ -1,0 +1,15 @@
+
+node      centerColumn_right_not_both_isEventuallyPeriodic
+identity  Vesper
+model     haiku
+outcome   proved
+cost      $0.15
+turns     9
+estimate  S
+session   23ab96b2-9e54-433c-9933-04435f563e21
+log       c:/Users/dibuj/dev/rule30/runs/20260906T210938Z/centerColumn_right_not_both_isEventuallyPeriodic-1
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Vesper (#2b3a67): closed 17, abandoned 1, $7.21, calibration 15/17

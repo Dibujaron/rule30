@@ -158,3 +158,59 @@ For `k = 1`, no rewriting was even needed — `evolve_left_second_diagonal (n+1)
 Confirms [[evolve-left-fourth-diagonal-isEventuallyPeriodic]]'s idiom (have the closed form at each shifted index, then `rw` both into the goal) generalizes cleanly to the strong-induction base cases too — the pattern is: never fight the index shape with `simp`, just state a `have` matching it precisely and bridge with a small `omega`-proved index equation when the served lemma's own shape doesn't happen to line up syntactically.
 
 This closes the top-level "every left diagonal is eventually periodic" goal for P1's left side. The right side (evolve_right_edge, evolve_right_second_diagonal already served) presumably wants the mirror-image family next, if not already underway by a peer.
+
+## 2026-09-06T21:14:47Z — evolve_sub_one_eq_xor (haiku, proved)
+
+
+
+## 2026-09-06T21:29:25Z — evolve_period_sub_one (haiku, proved)
+
+**evolve_sub_one_eq_xor as the workhorse**: The lemma `evolve t (i - 1) = xor (evolve (t + 1) i) (evolve t i || evolve t (i + 1))` directly expresses how each cell on the left is determined by three cells to its right, spanning times t and t+1. This is the key to the proof: rewrite both sides of the periodicity goal with this lemma at different times, then the hypotheses h0/h1 collapse everything to reflexivity.
+
+**Rewrite order matters**: Applying `evolve_sub_one_eq_xor (t + p) i` and then `evolve_sub_one_eq_xor t i` in sequence leaves a goal whose left side has terms at time (t+p+1), (t+p), and right side at (t+1), (t). Then `ring` to rewrite `t + p + 1 = t + 1 + p`, and h0/h1 at t and t+1 collapse all four terms to syntactic identity.
+
+**Arithmetic on Nat subtraction not needed**: Unlike earlier P1 nodes where we had to worry about `t - 1` and whether `t + p - 1 + 1 = t + p`, here we avoid subtraction entirely. evolve_sub_one_eq_xor is stated in forward time (`t` and `t+1`), not in the backwards form we initially tried, so the proof never computes `t - 1` or `t + p - 1` as natural numbers.
+
+## 2026-09-06T21:30:46Z — evolve_period_sub (sonnet, proved)
+
+Went exactly as the brief specced — first-try build, no dead ends. The route: prove a stronger conjunctive statement by induction on k, `key : ∀ k, (col (i-k) periodic) ∧ (col (i-k+1) periodic)`, then project `.1` for the actual goal. Carrying the pair is essential because `evolve_period_sub_one` needs *both* a column and its right neighbour to conclude the column one further left.
+
+Base case `k = 0`: `simpa using ⟨h0, h1⟩` — simp normalizes `i - (↑(0:ℕ))` to `i` and `i - 0 + 1` to `i + 1` (via `Nat.cast_zero`/`sub_zero`/etc.) automatically, no manual cast lemma needed there.
+
+Step case: `evolve_period_sub_one (i - (k:ℤ)) p N ih.1 ih.2` gives periodicity of column `(i-k)-1`, exactly what's needed for the new "first" component after re-expressing `i - ((k+1:ℕ):ℤ)` as `i - (k:ℤ) - 1`. The second (right-neighbour) component of the new pair is just `ih.1` again after the matching rewrite `i - ((k+1:ℕ):ℤ) + 1 = i - (k:ℤ)` — no new lemma needed, just re-threading the previous "current column" into the new "right neighbour" slot.
+
+Both cast identities close with `by push_cast; ring` exactly as the brief promised — `push_cast` turns `((k+1:ℕ):ℤ)` into `(k:ℤ) + 1` and then `ring` handles the rest. `rw [show ... from by push_cast; ring]` (rewriting the goal's LHS index expression to the shape `evolve_period_sub_one`'s output already has) rather than trying to rewrite `hstep`'s statement — cheaper to align the goal to the served term than vice versa.
+
+Confirms the reusable idiom from [[evolve-period-sub-one]] and the diagonal family: when an induction's Nat-indexed goal has a `+1`/`-1` shape mismatch against a served lemma, a targeted `rw [show <bridge equation> from by push_cast; ring]` is the standard fix — cheaper than trying to get `simp` to normalize both sides into agreement, which risks over-normalizing past the point where the served lemma's own statement still matches syntactically.
+
+This closes another node in the periodicity-propagation family that presumably feeds toward comparing whole regions of the light cone for eventual periodicity, mirroring the left-diagonal `IsEventuallyPeriodic` work but for adjacent-column pairs rather than a single diagonal sequence.
+
+## 2026-09-06T21:33:04Z — not_evolve_period_adjacent (sonnet, proved)
+
+First try, no dead ends — the captain's route in the brief was exact and needed zero adjustment. Worth recording as the reusable idiom for this last node's shape (a global-contradiction proof rather than an induction), since it's a different shape from every other P1 node so far.
+
+**The `∃ m, m = ...` / `obtain` idiom beats naming with `let`/`set` here.** Rather than binding `m := N + p + (-i).toNat + 1` and `k := (i + m).toNat` as `let`s (risking the `set`-tactic import trap [[bool-driven-eventually-two-periodic]] hit), I used `obtain ⟨m, hm⟩ : ∃ m : ℕ, m = ... := ⟨_, rfl⟩` twice. This keeps `hm`/`hk` as ordinary equations in context that `omega` can see and use, with no defeq-transparency subtlety at all — cleaner than `let` for this purpose since every later step is pure arithmetic omega can close outright.
+
+**`omega` closes `Int.toNat` reasoning directly, no manual case-split needed.** The load-bearing fact `i - (k:ℤ) = -(m:ℤ)` (with `hk : k = (i + (m:ℤ)).toNat` in context) needs `i + m ≥ 0` to know `(k:ℤ) = i + m` (via `Int.toNat_of_nonneg`), and that nonneg fact itself depends on unfolding `(-i).toNat` inside `hm`. I expected to need `Int.toNat_of_nonneg`/`Int.le_toNat`/case-splits by hand, but `omega` swallowed the whole thing in one call given just `hm` and `hk` in context — confirms omega's Int.toNat special-casing (mentioned in passing in earlier P1 notes but never actually exercised until this node) is real and doesn't need any manual bridging lemma. Same for `hmp : p ≤ m` and `htN : m - p ≥ N` — both closed by bare `omega` from `hm` alone.
+
+**`Nat.abs_cast` is a real lemma name in this Mathlib snapshot** — `|(n:ℤ)| = n` for `n : ℕ`, used after `abs_neg` to turn `|-(m:ℤ)|` into `(m:ℤ)` directly. Chain was `rw [abs_neg, Nat.abs_cast]` exactly as the brief specified, then `exact_mod_cast (by omega : m - p < m)` for the final numeral inequality — no surprises.
+
+**Import set**: `Rule30.Basic`, `Rule30.Proofs.EvolvePeriodSub`, `Rule30.Proofs.EvolveLeftEdge`, `Rule30.Proofs.EvolveEqFalseOfOutsideCone`, `Mathlib.Algebra.Order.Ring.Int`, `Mathlib.Tactic.Ring` — the last two turned out unnecessary in the end (no bare `ring`/abs-sign-splitting was needed once `omega` swallowed everything), but harmless to leave in since they were already pulled in transitively by the served-lemma imports anyway. Next time a similar all-omega proof comes up in P1, worth trying with a narrower import list first since `ring`/`Order.Ring.Int` may not be needed at all when `omega` is doing all the arithmetic.
+
+This appears to close the last currently-open node in the P1 seeded spine (the "no two adjacent columns share a period" node was the final piece connecting the diagonal/periodicity family into a usable contradiction). Worth checking with Rowan/the dispatcher whether a new tier is queued next.
+
+## 2026-09-06T21:38:18Z — not_isEventuallyPeriodic_adjacent (haiku, proved)
+
+The route was exactly as the captain specified in the brief. After unpacking the conjunction of the two eventually-periodic hypotheses with `rintro`, apply `isEventuallyPeriodic_common_period` with the two function literals `fun t => evolve t i` and `fun t => evolve t (i + 1)` as explicit arguments (the lemma needs the actual functions passed in, not just the proofs). The lemma returns a common period `p`, proof `hp : 0 < p`, starting time `N`, and the periodicity conditions `h0` and `h1` for both columns. Thread these directly into `not_evolve_period_adjacent i p N hp h0 h1`, which yields False.
+
+No friction — the proof built first try once the function arguments were passed explicitly to the common-period lemma. The three-heading proof note follows the taught pattern: what it says (boundary fact about the automaton), why it's true (periodicity propagates contradictorily), where the work is (none — just lemma threading).
+
+Uses only the standard three axioms (propext, Classical.choice, Quot.sound), inherited from served lemmas.
+
+## 2026-09-06T21:43:21Z — centerColumn_right_not_both_isEventuallyPeriodic (haiku, proved)
+
+**Direct application of served lemma.** `centerColumn` unfolds to `fun t => evolve t 0` by definition. The served lemma `not_isEventuallyPeriodic_adjacent i` states that columns i and i+1 cannot both be eventually periodic. At i=0, this gives exactly what we need after unfolding centerColumn and letting simpa handle the `0 + 1 = 1` arithmetic. No induction, no proof search — just definitional unfolding and lemma threading.
+
+## 2026-09-06T21:44:24Z — centerColumn_not_eventually_periodic_of_right (haiku, proved)
+
+**Bridge lemmas are transparent:** When a hypothesis has the form "if X then Y", applying it to a proof of X and feeding the result to a contradiction lemma (via a pair or tuple) reads as the direct encoding of "X is impossible" — no intermediate steps or names needed. This pattern appears three times now in the P1 region: here, in `not_isEventuallyPeriodic_adjacent`, and in the driven-sequence node. For anyone building a final contradiction from eventually-periodic neighbors, the shape is always `intro hc; exact not_isEventuallyPeriodic_adjacent i ⟨hc, h hc⟩` where `h` is the propagation rule and `i` is the coordinate pair.

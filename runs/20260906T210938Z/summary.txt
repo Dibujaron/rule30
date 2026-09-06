@@ -1,0 +1,10 @@
+
+evolve_sub_one_eq_xor             Vesper   haiku   proved            $0.20   8 turns
+evolve_period_sub_one             Vesper   haiku   proved            $0.32   17 turns
+evolve_period_sub                 Vesper   sonnet  proved            $0.42   8 turns
+not_evolve_period_adjacent        Vesper   sonnet  proved            $0.45   10 turns
+not_isEventuallyPeriodic_adjacent Vesper   haiku   proved            $0.20   14 turns
+centerColumn_right_not_both_isEventuallyPeriodicVesper   haiku   proved            $0.15   9 turns
+centerColumn_not_eventually_periodic_of_rightVesper   haiku   proved            $0.12   7 turns
+
+7 attempt(s), 7 closed, $1.86 in all

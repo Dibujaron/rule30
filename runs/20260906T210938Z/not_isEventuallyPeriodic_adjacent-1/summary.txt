@@ -1,0 +1,15 @@
+
+node      not_isEventuallyPeriodic_adjacent
+identity  Vesper
+model     haiku
+outcome   proved
+cost      $0.20
+turns     14
+estimate  S
+session   0c277613-df3f-4e1b-9fff-3a35452a6d94
+log       c:/Users/dibuj/dev/rule30/runs/20260906T210938Z/not_isEventuallyPeriodic_adjacent-1
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Vesper (#2b3a67): closed 16, abandoned 1, $7.06, calibration 14/16

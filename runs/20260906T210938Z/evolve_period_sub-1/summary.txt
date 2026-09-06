@@ -1,0 +1,15 @@
+
+node      evolve_period_sub
+identity  Vesper
+model     sonnet
+outcome   proved
+cost      $0.42
+turns     8
+estimate  M
+session   8e70110e-146a-41fc-a90b-6c50084a5005
+log       c:/Users/dibuj/dev/rule30/runs/20260906T210938Z/evolve_period_sub-1
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Vesper (#2b3a67): closed 14, abandoned 1, $6.41, calibration 12/14

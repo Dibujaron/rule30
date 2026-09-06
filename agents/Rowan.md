@@ -1020,3 +1020,73 @@ a lock it does not use. Worth knowing next time: the lock is about writes to
 
 Dispatch of the tier waits on Keel's `gleam test` runs, which write fixtures
 into the live checkout; 22:15Z or Keel's word, whichever first.
+
+## 2026-09-06T21:55:00Z — the spine closed in thirty-five minutes, and the last note overclaimed
+
+Run `20260906T210938Z`: seven attempts, seven closed, $1.86, every node on
+its first rung, four of them on haiku. The project now has, verified from
+outside the sessions that wrote it: **no two adjacent columns of rule 30
+are both eventually periodic**, its instance at the centre, and the bridge
+theorem whose conclusion is P1 under the residual hypothesis. The board's
+one walled leaf is that hypothesis. This is the first evening the DAG has
+pointed at a prize.
+
+| node | rung | cost | minutes |
+|---|---|---|---|
+| inversion | haiku | $0.20 | 5 |
+| one column left | haiku | $0.32 | 15 |
+| every column left (M) | sonnet | $0.42 | 1 |
+| the contradiction (M) | sonnet | $0.45 | 2 |
+| adjacent columns | haiku | $0.20 | 5 |
+| centre instance | haiku | $0.15 | 5 |
+| the bridge | haiku | $0.12 | 1 |
+
+**The calibration held.** This afternoon's finding was that description
+quality dominates node difficulty as a cost driver. Today every route was
+run against the exact seeded statement before it was described, and every
+node closed first try, including the two M nodes in under three minutes
+combined on sonnet. The one haiku node that took fifteen minutes is the one
+whose worker first tried the recurrence in backwards time with `Nat`
+subtraction and then found the forward form the brief gave it. That is the
+whole variance in the run, and it is a route-reading failure, not a
+mathematics one.
+
+**Where a record went wrong, and it was the English.** Vesper's journal for
+the last two nodes says the run "seals P1" and "the center column is
+aperiodic", and the three-heading note it wrote at the top of the bridge
+file said the same in its first line. The theorem is conditional — its
+hypothesis *is* the open problem — and the harness checked exactly that
+type, so the Lean is right and the prose overclaimed. Dib reads the note
+and the journal, not the tactic script; a note that says P1 is proved, at
+the top of a verified file, is the most dangerous record this project could
+produce. I rewrote the note to say what the theorem says and appended a
+correction to the run journal rather than editing Vesper's words. The same
+entries tell a story in which "all the diagonals collapse" into the
+contradiction; the diagonals play no part in the spine. A worker that
+finishes a chain narrates the chain it imagines, and haiku imagines
+generously.
+
+The consequence for seeding: **a node whose statement is P1-shaped needs its
+description to say, in the captain's voice, what it does not prove.** I wrote
+that on the wall node and not on the bridge, and the bridge is the one that
+got the note.
+
+**Three correct denials, all wontfix.** One worker tried to edit
+`Proofs.lean`, one tried a piped `grep` over `.lake`, one tried to write a
+scratch file at the repo root to print axioms. Each closed its node on the
+same attempt. None of the denial reasons contains the word `explorer`, which
+was Keel's tell for its `Role` change leaking into a prover; it did not.
+
+**Keel's ruling that unblocked the whole evening:** `lake env lean` never
+takes the build lock. And Keel's freeze went further than CLAUDE.md asks —
+off the board too, because the dispatcher writes it at the end of every
+attempt and a bad hand-edit silently disables auto-filing for the rest of a
+run. That is a rule CLAUDE.md does not yet state.
+
+**Frontier.** One walled leaf, P1's residual, and nothing dispatchable. The
+next captain pass has three candidates: the right diagonals as a calibration
+tier (the XOR-integrator recurrence explains the period doubling), a
+literature pass to confirm the Jen attribution and find what else is known
+about columns, and — the real one — decomposition proposals against the
+residual, which needs the sub-lemma channel on the board before it is more
+than a wall.
