@@ -27,6 +27,12 @@ fn cfg_for(d: dag.Dag) -> config.Config {
   config.Config(
     ..c,
     dag_path: path,
+    // Overridden even though nothing in this file reaches an attempt end:
+    // every `prove_one` below asserts `Error`, so `auto_file_signals` never
+    // runs. That is a property of these assertions rather than of the code,
+    // and the first test here that completes an attempt would file a bug
+    // onto the real `blueprint/bugs.json`.
+    bugs_path: dir <> "/bugs.json",
     runs_root: dir <> "/runs",
     roster_path: dir <> "/agents/roster.json",
     agents_dir: dir <> "/agents",
