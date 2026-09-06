@@ -381,3 +381,73 @@ decision I had verified and did not doubt, which devalues the signal for
 when I am actually unsure; and I wrote file headers that narrated the
 designs they replaced, which git already holds. Files say what is true
 now. The story goes in the commit message.
+
+## 2026-09-06T16:20:00Z — the proofs explain themselves now, and the board is idle
+
+Dib opened `CenterColumnDensitySucc.lean` and could not read it, then said
+the same of all of them. He was right and it was the sharpest thing said to
+me today: the project documents its *statements* carefully and its *proofs*
+not at all, so it teaches its provers and not the person it exists to teach.
+Fourteen of fourteen had no prose.
+
+Every proof file now opens with a `/-!` block in three fixed headings —
+what this says, why it is true, where the work is — and the contract is in
+`CLAUDE.md`, which `brief.gleam` reads whole at runtime, so it reaches every
+worker dispatched from now on with no harness change.
+
+**The shape is the whole design.** Dib flagged his own fear when he asked:
+that it would turn into an incomprehensible essay. "Explain your proof"
+invites exactly that. A form with three headings and a six-line ceiling does
+not, and it makes the useless answer impossible to pad — "Nowhere. Once the
+three definitions are unfolded the claim is a concrete computation, and
+`decide` runs it" is the entire truth about `centerColumn_zero`.
+
+**Writing fourteen taught me things reading them had not.** Three diagonal
+proofs turn on `false XOR (_ OR true) = true`, so the centre neighbour never
+matters and the proof never needs to know it. Two lemmas are shaped entirely
+by `x / 0 = 0` in Lean, which is why `N = 0` keeps being split off — a Lean
+fact, not a mathematical one, and invisible in the tactic script. And the
+honest answer for `evolve_left_diagonal_recurrence` is that no work happens
+in it at all.
+
+**Where I was wrong: I wrote fourteen notes in one sitting, so they read as
+a sequence.** Dib caught "That same fraction never exceeds one", which
+refers to a sentence in a different file. Five files had it. Every file is
+opened alone, and the rule that survives is: **name what you point at.**
+`evolve_left_fourth_diagonal` can be followed; "the recurrence again" cannot.
+That is in the worker contract now, because each prover writes exactly one
+file and will not feel the sequence I felt.
+
+Also today: TypeScript is the anchor and Kotlin is retired, Dib's call. The
+worked example in the teaching contract was itself Kotlin, so `sorry` is now
+`x as unknown as T` — the better analogy anyway, because both are *silent*,
+where `TODO()` throws and is honest about it.
+
+**Keel found the defect in my push hook and it was a real one.** Pushing
+`HEAD:main` from a feature branch does not keep main fresh, it merges the
+branch continuously, one commit at a time, ahead of any review — so Keel's
+end-of-branch review would have reviewed shipped code. Dib's ruling was that
+branches mean something. The hook pushes the branch now and prints how far
+main is behind on every commit, because the staleness it was built to fix
+comes straight back otherwise, and silent staleness is how main reached 41.
+
+**Frontier, and it is not a harness problem.** Keel's wall fix landed and I
+verified it myself rather than taking the report: `status` separates walled
+leaves from dispatchable ones, and open leaves reads `(none)`. That is the
+true state of the board, not a symptom. Fourteen of fifteen proved, and the
+fifteenth is the `wall` target, which by definition must be decomposed
+before it can be attempted. **Decomposing it is captain work and it is mine.**
+Somebody has to decide what smaller statements compose into "every left
+diagonal is eventually periodic", and the measurement to do it from already
+exists — the onsets grow with `k`, which is the part a decomposition has to
+account for and the part I do not yet understand.
+
+For whoever runs the next dispatch: **stay at concurrency 1 or 2** until
+Keel lands the `Decision` split. One build lock shared by three workers
+makes contention the normal path, a worker can still read a lock timeout as
+a permanent refusal and abandon, and the calibration fix that would stop
+that abandonment being scored as node difficulty sits behind it.
+
+My dispatcher worktree is re-pointed at the tip. It was three commits stale
+this afternoon and that is how I nearly re-filed a bug Keel had already
+fixed.
