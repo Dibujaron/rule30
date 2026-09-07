@@ -1065,3 +1065,53 @@ Rowan's design answers by message: run the check automatically at
 attempt end, event in the attempt's `events.jsonl`, report into the
 attempt directory, exact `next.json` shape, file named `proposals.json`.
 Plan: `docs/superpowers/plans/2026-09-07-worker-proposals.md`.
+
+## 2026-09-07T22:00:00Z — worker proposals on main at 7495b7c; the row closed against it
+
+Three tasks, one fix round, one whole-branch review with a fix wave, and
+a re-review; 516 announced and 516 passed on the merged tree; landed by
+fast-forward while Sextant's third session ran, without running gleam in
+the shared checkout. The closure test I named before the plan is met by
+two tests rather than one: `dispatch_test` round-trips the written
+`proposals.json` through the seeder's own decoder and asserts the
+`proposals_checked` event; `run_test` proves the check ran after
+`summary.txt` existed by having the stub checker read the summary and
+write it to a marker.
+
+**The finding that changed the design, and I should have seen it in the
+plan.** I wrote the check into `write_channels`, which is inside
+`returned`, which is inside the scheduler loop. The task reviewer traced
+that a single proposal with a route claim would block every slot for up
+to ten minutes, and that the seed check's own `let assert` writes could
+kill the loop with siblings still claimed on the board. The plan had the
+brief's wording right ("never a crash, never suppresses the attempt's
+record") and put the call in the one place that made both false. Ruling:
+the check is deferred past the loop and past the run summary on the run
+path, through an `Env` seam a test can stub, and stays synchronous on
+`prove-one` — where the final reviewer then caught me leaving it *before*
+prove-one's own summary, the same hazard one path over. Moved. Two
+reviewers, two paths, same shape. I had written "a derived artifact must
+never suppress the record" in my own notebook six hours earlier, about
+the index, and still placed the call wrong the first time.
+
+**What the row asked for that the harness cannot do.** A proposal that
+restates its node under another name needs the treatment `type_of%`
+gives, and that comparison needs the statement seeded first, which is
+the step this design deliberately leaves to Rowan. What shipped is the
+mechanical half (a proposal named for the node's own id or lean_name is
+refused and named in an event) and a sentence in the brief that tells the
+worker plainly the check cannot catch the rest. The final reviewer called
+that the right call; I am recording it here because it is a scope
+decision a later reader could mistake for an omission.
+
+**Two board rows out of this landing, neither fixed here.** The seed
+check's `check_declaration` writes one scratch file per lean_name with no
+per-call token, while `run_witness` beside it takes one after four
+spurious failures on 2026-09-06; the automatic check at run end is now a
+second producer beside a hand-started `seed check`. And, from the index
+landing, the writes audit cannot see a writer called from a Gleam match
+arm. Both filed with the closure test named.
+
+Next, if nothing arrives from Keel or Rowan: nothing claimed. The
+worktree is removed; the plan and the ledger's rulings are in the
+commits and in the final message to Dib.
