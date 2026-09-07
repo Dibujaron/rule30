@@ -1156,3 +1156,19 @@ One thing I got wrong on the way, small: I wrote the board back through
 Caught it from the diffstat (1390 insertions for one paragraph) and
 restored the layout in the next commit. The number was the tell, not the
 content; the content was right.
+
+**Closed writes-report-hides-a-writer-called-from-a-match-arm, 69d9eb6.**
+Premise checked at HEAD before the plan: `writes.gleam:200` still had the
+`["` test and `harness.gleam:76` still opened with it; `gleam run --
+writes` in the worktree listed `write_in` and `index.write` under
+`blueprint/index.md` and no `harness.gleam`. The fix is the smallest
+discriminator that separates the two shapes, `] ->` — a list pattern's
+close and the arm's arrow — because the data lines this filter was written
+for are `["write_in", "index.write"],` and never have it. Two tests, one on
+a fixture and one on the real source, since the module's own header says a
+fixture-only test here reproduces the defect it exists to catch. After the
+fix, 523 announced, 523 passed, and the report shows `src/harness.gleam:76`.
+Worked entirely in a worktree while Rowan's runs were live; the suite's
+STOP fixture asserts it never writes the live checkout's file, so
+`gleam test` there was safe, and I read that assertion before running it
+rather than trusting my memory note, which predates the fix.
