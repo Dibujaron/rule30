@@ -781,3 +781,139 @@ a reflex fires before the knowledge is consulted. What caught it was running
 not install a check against it; what changes behaviour is a lowered threshold
 for verifying the boring step. The specific lessons are forgettable. The
 threshold is not.
+
+## 2026-09-07T02:10:00Z — a premise check closed a bug in five minutes and the claim it exposed took an hour
+
+Started tonight from Dib's "what can you split off from Keel without
+disruption", and the answer was decided by a `git status` in Keel's
+worktree, not by the board: dispatch, verify, worker and their tests were
+Keel's, so my region was everything that was not those.
+
+**The cheapest close on the board was one nobody had looked at.**
+`shared-checkout-has-no-stated-resting-branch` said NEEDS DIB, CLAUDE.md is
+his. `git log -S` on the sentence it asked for found Rowan's 441515d, landed
+five minutes after the row was filed. Filed at 18:30Z, fixed at 18:35Z, open
+until 02:00Z because the row said the fix needed asking and nobody asked the
+file. That is `a-bugs-premise-is-never-checked-before-it-is-fixed` in its
+mildest form — the premise was "this is not done", and the check was one
+command.
+
+**The board's claim was a hand edit with nothing in it.** Keel's claimed row
+carried status `claimed` and no holder, no time. `state.sh` printed the id
+and a note saying it could not check it. So the "board half" of
+`a-held-claim-has-an-owner-but-no-expiry` was not "the claim has an owner
+but no expiry", it was "the claim has neither" — the bug's own title
+overstated what existed. Fix is `bugs claim --as`, `bugs reopen`, and two
+optional fields that decode as `None` when absent so the live row keeps
+decoding; then `state.sh` prints holder and age for both boards and a
+last-written age for dirty worktrees.
+
+**A thing I got right by testing rather than reading.** I fabricated a repo
+with every branch of the new `state.sh` code — a node with two attempts, a
+node with none, a bug with fields, one with nulls, one from before the
+fields existed, and a fixed bug that still carried `claimed_by` — because
+the parser is `sed` and `grep` on one-line JSON and the failure mode of that
+is a wrong row that looks fine. It all rendered. First run of the age line
+said "0m ago" for files I had touched to be three hours old, and the reason
+was that the fixture files I had just written were also dirty. The check
+was right and my test was wrong; re-aged, "3h 45m ago".
+
+**Handed the Gleam to a subagent with a written spec, per Dib's standing
+rule.** Keel replied mid-way asking for a close verb and for its own row to
+be stamped; both folded into the same change rather than a second one.
+
+## 2026-09-07T02:35:00Z — a scratch repo root is a repo root, and lake believed it
+
+Rowan started a run in the shared checkout while my change was half
+verified, and the suite defaults two modules to that checkout, so I
+pointed `HARNESS_REPO_ROOT` at a scratch copy instead. Three runs, three
+different wrong numbers, and I am recording them because the third was the
+one I nearly believed.
+
+Run one: 210 passed, 21 failures, against 285 announced. Fifty-four
+missing, because the fake shim is resolved from the repo root and my copy
+had no `harness/test/`, so the worker-loop module died as a module. Run
+two, after copying in the shim, the Lean sources, the lakefile and the
+toolchain: 172 passed, 5 failures. Fewer tests ran, not more. A seed test
+runs `lake env lean` in whatever the root is, and a root with a lakefile
+and no `.lake` is a root lake will start building Mathlib in; eunit timed
+the test out at five seconds, blamed the module, and cancelled every
+module after it. `ls` afterwards showed `lake-manifest.json` and a `.lake`
+that had not been there. CLAUDE.md says exactly this about fresh worktrees
+and I read it as being about worktrees.
+
+**The number that was right was the announced total.** Keel's
+`expecting N tests` line is what made both shortfalls visible; the
+`passed, failures` line on its own read like a suite that ran twice and
+got two verdicts. Same lesson as `a-green-suite-can-under-report-and-still-look-green`,
+which I helped file, and I still needed the line to catch me.
+
+Also: three `lake.exe` processes were live when I looked, one at 485 MB,
+and my first thought was to kill mine. Rowan's run had three workers
+building at that moment. I could not tell whose they were, so I looked
+again instead, and by then they were gone. A process I cannot attribute
+is one I do not kill, and that rule cost thirty seconds.
+
+## 2026-09-07T03:00:00Z — two things the record could not tell me until I read a different record
+
+**A claimed node has no date on it, and its own attempt row cannot supply
+one.** The first version of my `state.sh` change read the last attempt's
+`started` for a claimed node. Run read-only against Rowan's live run, all
+three claimed nodes printed "claimed with no attempt recorded" — because
+the attempt row is appended when the attempt *ends*. So a node held by a
+live worker and a node whose dispatcher died before writing look identical
+in `dag.json`, by construction, and the field I reached for is the one that
+is guaranteed absent exactly when the question is being asked. The dispatch
+event in `runs/<run>/events.jsonl` is written when the attempt starts and is
+the only timestamp a claim has. Reading it from there dated all three nodes
+to sixteen minutes earlier, correctly. Same rule as CLAUDE.md's: derive it
+from outside the process. I had read that rule as being about sessions.
+
+**A rebase would have orphaned every sha I cited tonight.** My board
+resolutions say `bb52b40` and `2191f23`, and a rebase onto `origin/main`
+rewrites those into commits that exist nowhere. So the landing is a merge,
+not a rebase, and that is not taste: a resolution citing a sha unreachable
+from `main` "points at nothing", in the checkpoint skill's words, and the
+skill was written before anyone had made this particular mistake. Nearly
+made it thirty seconds after reading the dry-run's "byte for byte".
+
+**And the dry-run was worth doing before the real one.** The merge script
+against `origin/main` as it stood produced my board byte for byte, which
+says two things at once: the script's three-way logic is at least not
+destructive on the easy case, and nobody has touched the board on `main`
+since I branched. The second fact is the one I could not have got by
+reading the script.
+
+## 2026-09-07T03:35:00Z — landed at 19c33be, and the merge was the boring part
+
+Nine commits on `fathom/bug-claims`, landed on `main` by merge after
+Rowan's run record went in first. The board merge that the one-line row
+warned about took one script run: 52 rows, Rowan's five new ones kept,
+nothing changed on both sides, every id from both parents checked by name.
+The dry-run against `origin/main` an hour earlier is why it was boring.
+
+**Full suite against the live checkout, once the run had ended: 303
+passed, no failures, 303 announced.** The three scratch-root runs before it
+were never a verdict on the code, only on the scratch root, and the
+announced-total line was the only thing that said so each time.
+
+**What is now true that was not at 01:40Z.** A bug claim has a holder, a
+time and a session ref, and a command to make and undo it. A held node is
+dated from its dispatch event. A dirty worktree shows when it was last
+written. The board is one row per line. There is a skill that puts the
+premise check before the plan. Five rows closed, three amended, and the
+first one closed was closed by reading a file that said the fix needed
+asking.
+
+**What I did not do, and why.** Two rows need Dib: `.gitattributes` for
+line endings, which will collide with every live branch and should go in
+when nothing is in flight, and a one-line spec status. The DAG half of the
+session join key is a `dispatch.gleam` change, and that file has been
+Keel's all night with six branches queued behind it. Everything else open
+is either Keel's announced eight or a design item larger than a night.
+
+**Rowan's merge order was the mechanism that made two framework agents
+and an overseer not collide on one file for three hours.** Nobody enforced
+it. It was stated once, with who goes first and what each does before
+saying "done", and everyone waited for the word. That is the whole
+protocol this project has, and tonight it held.

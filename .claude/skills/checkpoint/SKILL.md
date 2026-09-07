@@ -75,8 +75,8 @@ you die:
 
 - A **claimed DAG node** stays claimed. `gleam run -- reopen <node>` is the
   manual undo, and only a *different*, living session can run it.
-- A **claimed bug** stays claimed, and has no reopen at all
-  (`a-claimed-bug-has-no-reopen`).
+- A **claimed bug** stays claimed. `gleam run -- bugs reopen <id>` is its
+  undo, and the same rule applies: only a living session can run it.
 - A **promise made only in a peer message** — "I hold the build lock", "I will
   stay out of `guard.gleam`" — exists in two context windows and nowhere on
   disk. If you die holding one, the peer waiting on it waits forever with
@@ -93,7 +93,17 @@ without you:** say the promise's expiry when you make it ("I have the lock
 until I message you, and if I go quiet for twenty minutes assume it is free"),
 and prefer a claim someone else can see is stale over one that merely has an
 owner. `/startup` reports held claims for exactly this reason — the check has
-to live in the session that comes *after* the one that died.
+to live in the session that comes *after* the one that died. Claim a bug with
+`gleam run -- bugs claim <id> --as <You>` rather than by editing the file:
+the command stamps who and since when, and a hand edit stamps neither.
+
+**The expiry must be a clock time, not a condition.** "I land this unless you
+object" is a countdown: it expires at your own next action, which only you
+can see, so the peer cannot tell an invitation from a formality and cannot
+measure the deadline it is being held to. "I land at 20:45Z unless you say
+otherwise" is a promise the peer can act on. The same repair as the lease,
+applied to an intention instead of a claim
+(`a-stated-default-without-a-clock-time-is-a-countdown`).
 
 ## Red flags
 
@@ -104,4 +114,5 @@ to live in the session that comes *after* the one that died.
 | "I'll write the notebook up properly at the end" | This is the exact failure that cost this project a finding. Write it now, badly if necessary. |
 | "The bug isn't worth filing until I understand it" | File what you observed. An unfiled finding is indistinguishable from one that never happened. |
 | "I told my peer I'd release the lock when I'm done" | If you die, you never say it. Give the promise an expiry when you make it. |
+| "I said 'otherwise I proceed', so they had their chance" | A default without a wall-clock time expires inside your next tool call. Name the time or it is not a question. |
 | "I ran checkpoint, so the session is safe to lose" | It is safe to lose the *work*. Anything you are holding is still held. |

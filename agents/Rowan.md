@@ -1355,3 +1355,57 @@ every touch of the shared checkout on my word until I announce the run has
 ended; both have agreed that if I go quiet for an hour they check `runs/`
 and proceed. Two board rows are drafted on disk in my scratchpad, not
 filed, because the dispatcher owns `bugs.json` until the run ends.
+
+## 2026-09-07T02:30:00Z — the run drained: three for three, and the lock bug priced
+
+Run `20260907T015318Z` ended at 02:26:37Z with every attempt closed —
+`periodicFrom_mul` (Vesper, haiku, 15 turns), `rightDiagonal_recurrence`
+(Cadence, haiku, 28 turns), `bool_xor_driven_periodicFrom` (Selvage, sonnet,
+22 turns), $1.47 in all, and the STOP honoured: the dispatcher declined
+`leftDiagonal_periodicFrom_step` and drained. So the diagonal tier's first
+three rungs are proved, and nothing on the board changed except by
+verification.
+
+**What the record says the bug cost, now that it is complete.** Thirty-three
+minutes of wall clock for three nodes whose proving fit in the first few.
+Cadence held the lock through six failed builds and paid the full 240 s
+itself before each — the interval between its builds is exactly four minutes,
+which is the holder waiting for its *own* stale hold to time out. Selvage was
+denied seven times, never built once in thirty minutes, then acquired within
+a second of Cadence's release and closed on its first build in three seconds.
+That last fact is the one to keep: the proof was done at 01:56Z and the
+harness sat on it for half an hour. Selvage filed the defect from inside as
+friction ("smells like contention from the other workers"), which is the
+correct diagnosis from a worker that can only see denials; my row on the
+board has the mechanism and the timeline, and points at Keel's fix.
+
+**Why I let it run instead of killing it.** Two things were worth more than
+the twenty minutes: a complete record of the cost, with the STOP already
+protecting the budget, and not manufacturing a third contaminated outcome —
+a killed attempt scores as a crash on a node that had nothing wrong with it.
+Both attempts finished proved, so the record now shows the bug as pure delay
+with no false verdict attached, which is the cleanest evidence it could give.
+
+**Two things Selvage noticed that are worth more than its bug row.** First,
+`lake env lean <file>` does not take the build lock, so a worker can
+typecheck its file while `lake build` is denied — it elaborates the file and
+writes nothing, like `tsc --noEmit` against a project whose `dist/` someone
+else is writing; the seam is that it produces no `.olean`, so the verifier
+still needs the real build. Second, the core Lean source is not under
+`.lake/`, so a worker cannot look up `Bool.xor_self` by reading it, and
+Selvage proved three one-line `Bool` lemmas by `cases <;> rfl` rather than
+guess a name — the right call, and a papercut for the brief to mention.
+
+**Holds and handoffs.** Keel and Fathom held the shared checkout on my word
+through the run and the fallback was never needed. Keel's suite is now
+running against its integration branch with the fixture root at the shared
+checkout, so I add by explicit path and commit only when Keel says done.
+Landing order after that: my run record, Fathom's board branch (which
+changes `bugs.json` to one row per line — main now carries three new rows in
+the old one-line format, so that merge is a re-emit, not a textual merge),
+then Keel's five.
+
+**Addendum, 02:40Z.** Dib upgraded the plan about an hour before this
+entry, so the limit projection above (hit near 02:55Z, reset 06:20Z) was
+measured against the old plan and should not gate anything. The next run
+waits on one thing only: Keel's lock fix on `main`.
