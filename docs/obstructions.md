@@ -78,3 +78,48 @@ that closes this wall.
 
 **Recorded** 2026-09-07 by Sextant, from the attack document of the same
 date.
+
+## Counting the right sides consistent with the centre column
+
+**The natural attempt.** The pair `(column 0, column 1)` under the cone
+constraint looks like a finite counting problem: for a periodic centre
+column `c`, count the prefixes of column 1, or the windows `X(1..T)` of a
+configuration white on `x ≤ -1`, whose column 0 agrees with `c` to depth
+`T`, and hope the count stays bounded in `T`, so that column 1 is forced
+and the wall falls. The attack document of 2026-09-07 on
+`centerColumn_other_isEventuallyPeriodic_of_center` proposed exactly this
+in its last section.
+
+**Why it fails.** The count doubles at nearly every step for any column
+that survives at all, because a cell at position `k > 0` cannot change
+column 0 before the damage front from it has walked left to the origin,
+which takes about `4k` rows at the measured front speed of `0.24`. So at
+depth `T` the cells beyond a horizon of order `T/4` are unconstrained and
+the count measures the horizon, not the column. For the single seed's own
+centre column the count of windows white on `x ≤ -1` reads
+`1, 2, 4, 5, 10, 20, 40, 67, 89, 178, 356, 456, 912, …, 215264` at
+`T = 0..21` (`explorer/whiteleft.mjs`). The complementary object, the
+number of distinct column words of length `t + 1` realisable by *some*
+window white on `x ≤ -1`, is `3, 4, 6, 8, 10, 12, 15, 19, 24, 31` for
+`t = 1..10` and `153` at `t = 22` (`explorer/numberlikewords.mjs`): a
+factor `15` between `t = 5` and `t = 22`, which fits a rate near
+`2^0.24` per step, the measured left front speed, as well as it fits a
+low power of `t`; either way it is a complexity, and it says which words
+occur, not how many times. Neither number is about column 1.
+
+**What it would take.** A bound below `1` on the speed of the left damage
+front for the single seed, which `blueprint/crystals.md` (A3) says not to
+seed because the worst case is speed exactly `1`; and even with it the
+count bounds a horizon at finite depth, where the residual is a statement
+about all of time. The informative object is not a count but a single
+identity: at every black time of column 0, column 1 drops out of the rule
+at the origin and the next centre cell is the complement of column -1,
+which the half-line `x ≤ -1` computes from column 0 alone
+(`explorer/periodicleft.mjs`, `explorer/sparseleft.mjs`). One correction
+to the entry above this one: "the left half-line for the same boundary is
+constant too" is true of the fixed-point row `…1010 1 | 000…`, not of the
+half-line grown from a white start with boundary `b ≡ true`, whose rows
+1..5 read `1`, `11`, `011`, `0011`, `11011` (cells `-1` rightmost).
+
+**Recorded** 2026-09-07 by Sextant, from the attack document
+`docs/attacks/2026-09-07-centercolumn-other-iseventuallyperiodic-of-center-the-pair-of-columns-0-and-1-under-the-cone-constraint.md`.

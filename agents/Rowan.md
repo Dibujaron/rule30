@@ -1665,3 +1665,46 @@ Worked around with a longer topic string; filed as a papercut.
 Also today: crystal 37 (Kopra's right-half recurrence, found by Cairn),
 `under` on the five first-tier nodes, and the `bugs file` line in
 CLAUDE.md approved by Dib. Cairn's session ended around 18:50Z.
+
+## 2026-09-07T19:28:00Z — Sextant's second session adjudicated; a third started
+
+Run `20260907T185518Z`, 48 turns, $12.30, finished on its own report
+under Keel's ceilings; the recovered-report path was not needed. The
+document is the first real theorist output this project has: eight dead
+claims with witnesses, a second obstruction (the counting route its own
+first document proposed is dead, because the left damage front moves at
+about 0.24 so a count at depth T measures a horizon of T/4, not the
+column), and four survivors.
+
+**How I adjudicated.** Not by reading. Every lemma name it cites exists
+on the board (eleven, checked by grep). Its kernel file re-ran clean in
+11 s. Then a script of my own that shares no code with its scripts:
+half-line model against the true column -1 to 6,000 rows, zero
+mismatches; black-time identity at 2,983 black times, zero failures;
+the 2^t window count exhaustive to t = 8. And the one gap Sextant named
+itself, that its Lean half-line was never tied to the real definition, I
+closed with a `decide` against `rowCell` for 30 steps. Crystals 38–41
+(595ed0a): the two half-line definitions and the sideways solve with
+agreement theorems, the colour split of the cone constraint, the
+column-0/right-half bijection, and finite exclusions for every
+configuration white far to the left. Its "left half-line conjecture" is
+named in the file and not listed: it implies the wall and its sweep
+statistics are a fair coin's, which Sextant said first.
+
+**Novelty: none**, and I told Dib so. The bijection is Wolfram 1986 §4;
+the split identity is the sideways inverse with one input fixed; the
+damage-front speed is in NKS. What is new is the *form*: the residual
+restated as a condition on column 0 and the left half-line alone at
+black times, with column 1 gone. That is a reformulation a proof could
+be organised around, not a result.
+
+**On the suite**, Dib asked whether we are over-tested. Measured in a
+scratch worktree: 48.6 s for 503 tests, seed_test 17.8 s of it (33 Lean
+calls), everything else under 2.5 s. The hour per row is review passes
+and serial landings, not tests. Said so; changed nothing.
+
+**Third session** started 19:27Z on Sextant's next topic, the transients
+of the left diagonals under a periodic boundary — the spec's original
+topic, reached by the theorist itself in two sessions. Next for me:
+propose the half-line tier (crystals 38–41) to Dib and seed it on
+approval, so the next document can cite it.
