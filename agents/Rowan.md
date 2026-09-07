@@ -1308,3 +1308,11 @@ arbitrary finite initial conditions. Next tier's material. Keel landed the
 proof-note annotation at `5ee56fc` and flagged that CLAUDE.md's "exactly
 these three headings and nothing else" is now false by one harness block;
 that clause is Dib's to change and I have raised it.
+
+**Addendum, 03:00Z.** All three research agents are back; the consolidated
+list is `blueprint/crystals.md`, thirty items, ranked. Keel reports the
+account's session limit hit at about 02:55Z and resets at 06:20Z, so the
+diagonal tier is seeded, pushed and *not dispatched*: a run now would record
+only rate-limited attempts. First thing after the reset: `run
+--max-attempts 10 --concurrency 3`, after telling Keel and Fathom to keep
+out of the shared checkout for its duration.
