@@ -1215,3 +1215,23 @@ frontier now is not another provable tier but the sub-lemma channel and
 the stop file, so that attempts against the residual can grow the DAG and
 be ended when they are not. Then a research-mode dispatch of the weaker
 wall at the top rung.
+
+## 2026-09-07T00:20:00Z — the stop file landed, and the night's last landing
+
+`bb0702d`, Keel's, fast-forwarded. `STOP` at the repository root, checked
+in `fill` and nowhere else, so a stopped run finishes what is in flight and
+starts no more; recorded as `halted` with the declined node named, because
+Keel's first version returned quietly and printed the same summary as a
+run with nothing to do — the shape this project catalogues, reproduced
+inside the fix for it, caught by a test written before the code. Also in
+that commit: Vesper's verifier row closed against `5a9e3ae`, and the piped
+greps closed wontfix with the reading that three workers wanting a pipe is
+the brief failing to say what is available, not the allowlist being narrow.
+
+Left named and undone, on purpose: the brief line saying the verifier
+prints a worker's axioms. Keel wants the brief read against a run's
+denials as a class rather than patched one line at a time, and that is
+right.
+
+Nothing held on my account: no lock, no claim, no branch off `main`,
+everything pushed, shared checkout clean on `main`.
