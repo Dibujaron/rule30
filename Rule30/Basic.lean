@@ -186,3 +186,37 @@ theorem evolve_eq_evolveFrom_initial (t : Nat) :
 /-- The centre column is column `0` of the single-seed picture. -/
 theorem centerColumn_eq_column (t : Nat) :
     centerColumn t = column initialConfig 0 t := rfl
+
+/-! ## The row model
+
+A row of the single-seed picture has at most `2t + 1` cells, so it fits in
+one natural number, and one step of rule 30 is three big-integer operations.
+Lean's kernel evaluates `Nat` arithmetic with built-in bignums, so `decide`
+can compute row 5000 in a second where evaluating `evolve` cell by cell
+gives out near row 18. `rowCell_eq_evolve` (a node on the board) says the
+model and the definition agree; after it, a concrete fact about any row to
+depth in the thousands is a theorem by `decide`, with no extra axiom. -/
+
+/-- Row `t` of the single-seed picture as one number: the cell at position
+`x` is bit `x + t`, so bit `0` is the left edge and bit `2t` the right edge.
+
+The step is `rule30_eq` on all bits at once. `4 * r` shifts the row two bits
+up so that bit `b` of it is the *left* neighbour of position `b - t - 1`;
+`2 * r` is the centre; `r` itself is the right neighbour; and
+`(4 * r) ^^^ ((2 * r) ||| r)` is `left XOR (centre OR right)`. The explorer's
+BigInt engine does the same thing with shifts. -/
+def rowNat : Nat → Nat
+  | 0 => 1
+  | t + 1 => let r := rowNat t; (4 * r) ^^^ ((2 * r) ||| r)
+
+/-- The cell at position `x` of row `t`, read from `rowNat`; white outside
+the cone `-t .. t`, where the number has no bit for it. -/
+def rowCell (t : Nat) (x : ℤ) : Bool :=
+  if -(t : ℤ) ≤ x ∧ x ≤ t then (rowNat t).testBit (x + t).toNat else false
+
+/-- The model agrees with `evolve` on every cell of the first seven rows. A
+kernel computation, kept in the file as a guard against the orientation
+error that is easy to make here (the mirror image is rule 86 and passes
+every symmetric check). The general statement is `rowCell_eq_evolve`. -/
+example : ∀ t : Fin 7, ∀ x : Fin 13, rowCell t ((x : ℤ) - 6) = evolve t ((x : ℤ) - 6) := by
+  decide
