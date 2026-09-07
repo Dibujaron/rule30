@@ -584,6 +584,29 @@ pub fn a_rate_limit_event_with_no_status_still_decodes_test() {
   assert five_hour_utilization == 0.97
 }
 
+// --- the StructuredOutput call ------------------------------------------------
+
+pub fn an_assistant_event_yields_its_structured_output_call_test() {
+  // Line 256 of runs/20260907T175146Z/theorist-1/events.jsonl, with the
+  // report's long fields cut down. The `result` two lines later carried no
+  // `structured_output`, so this call is the only copy of that report.
+  let line =
+    "{\"type\":\"assistant\",\"message\":{\"model\":\"claude-fable-5-1\",\"id\":\"msg_011CepWjdZZAR73snELbkfn7\",\"type\":\"message\",\"role\":\"assistant\",\"content\":[{\"type\":\"tool_use\",\"id\":\"toolu_0142nmxxVsVvq1HZdpjGUktP\",\"name\":\"StructuredOutput\",\"input\":{\"outcome\":\"attacked\",\"summary\":\"Document written with all six sections\",\"notebook\":\"## 2026-09-07\",\"journal\":\"j\",\"next_topic\":\"\"}}],\"stop_reason\":null},\"parent_tool_use_id\":null,\"session_id\":\"c3d9b446-6d98-4484-88e9-053f32deea64\",\"uuid\":\"1\"}"
+  let assert Some(dyn) = claude.structured_output_call(line)
+  let assert Ok(outcome) =
+    decode.run(dyn, decode.at(["outcome"], decode.string))
+  assert outcome == "attacked"
+}
+
+pub fn an_assistant_event_without_the_call_yields_none_test() {
+  let text =
+    "{\"type\":\"assistant\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"Done.\"}]}}"
+  let other_tool =
+    "{\"type\":\"assistant\",\"message\":{\"role\":\"assistant\",\"content\":[{\"type\":\"tool_use\",\"id\":\"t\",\"name\":\"Write\",\"input\":{\"outcome\":\"proved\"}}]}}"
+  assert claude.structured_output_call(text) == None
+  assert claude.structured_output_call(other_tool) == None
+}
+
 // --- reported bugs --------------------------------------------------------
 
 pub fn report_decodes_bugs_test() {

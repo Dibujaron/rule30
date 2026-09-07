@@ -895,9 +895,10 @@ fn turn_loop(t: Loop(r)) -> #(Tally, Ending(r)) {
           raw:,
         ) -> {
           let t = Loop(..t, tally: Tally(session_id, total_cost_usd, num_turns))
-          let report =
-            structured_output
-            |> option.then(fn(dyn) { t.role.decode(dyn) |> option.from_result })
+          let report = case structured_output {
+            Some(dyn) -> t.role.decode(dyn) |> option.from_result
+            None -> recover_report(t, seen)
+          }
           case t.rate_limited, is_error {
             // Park the attempt rather than losing it: a rate limit is a
             // pause, and the session id is how a later run resumes.
@@ -918,6 +919,62 @@ fn turn_loop(t: Loop(r)) -> #(Tally, Ending(r)) {
       }
     }
   }
+}
+
+/// The report of a turn whose `result` carried no `structured_output`. A
+/// session reports by calling the `StructuredOutput` tool, and the CLI
+/// copies that call's input into the result — but a result that ends the
+/// session in error carries no copy, and the call in the stream is then
+/// the only one. So the last `StructuredOutput` call in the turn's own
+/// events is decoded by the role exactly as the result's copy would have
+/// been, and the log says it happened. A turn that made no such call gets
+/// `None`, which is what a turn without a report always got.
+///
+/// Only this turn's events are searched, never an earlier turn's: a report
+/// from an earlier turn was already acted on when it arrived, and the
+/// harness's reply to it is what this turn was doing.
+fn recover_report(t: Loop(r), seen: List(claude.Event)) -> Option(r) {
+  case last_structured_output_call(seen) {
+    None -> None
+    Some(dyn) ->
+      case t.role.decode(dyn) {
+        Ok(report) -> {
+          log.event(t.l, "report_recovered", [
+            #(
+              "reason",
+              json.string(
+                "result carried no structured_output; recovered from the last StructuredOutput call",
+              ),
+            ),
+          ])
+          Some(report)
+        }
+        Error(reason) -> {
+          log.event(t.l, "report_recovery_failed", [
+            #(
+              "reason",
+              json.string(
+                "result carried no structured_output, and the last StructuredOutput call did not decode: "
+                <> reason,
+              ),
+            ),
+          ])
+          None
+        }
+      }
+  }
+}
+
+/// The input of the last `StructuredOutput` call among `seen`, one turn's
+/// events oldest first.
+fn last_structured_output_call(seen: List(claude.Event)) -> Option(Dynamic) {
+  list.fold(seen, None, fn(last, event) {
+    case event {
+      claude.Assistant(raw:) ->
+        option.or(claude.structured_output_call(raw), last)
+      _ -> last
+    }
+  })
 }
 
 /// What to do about one of a prover's turns: adjudicate a claim, keep a
