@@ -128,6 +128,12 @@ fn fixture_with_roster(
       runs_root: dir <> "/runs",
       roster_path: dir <> "/roster.json",
       agents_dir: dir <> "/agents",
+      // Redirected like the five above, and for a sharper reason: `repo_root`
+        // stays the live checkout (it is where `.lake` is), and a STOP written
+        // there is the captain's stop file. A fixture that wrote it would halt
+        // a live run at its next attempt boundary, with a record that reads as a
+        // deliberate stop. See `the-test-suites-stop-fixture-halts-a-live-run`.
+        stop_path: dir <> "/STOP",
       guard_port: port,
       turn_timeout_ms: 20_000,
     )
@@ -468,7 +474,7 @@ pub fn a_stop_file_starts_no_further_attempts_test() {
       [[init_line("s"), result_line("s", "proved")]],
       ports.span(16),
     )
-  let assert Ok(_) = simplifile.write(f.cfg.repo_root <> "/STOP", "keel")
+  let assert Ok(_) = simplifile.write(f.cfg.stop_path, "keel")
   let assert Ok(text) =
     dispatch.run_with(
       f.cfg,
@@ -482,7 +488,7 @@ pub fn a_stop_file_starts_no_further_attempts_test() {
         ),
       ),
     )
-  let _ = simplifile.delete(f.cfg.repo_root <> "/STOP")
+  let _ = simplifile.delete(f.cfg.stop_path)
   // Nothing started. The plan allowed three attempts and two leaves were
   // ready; a stop present before the first fill means none of them begin.
   assert node_after(f, "probe_one").status == dag.Open
@@ -492,6 +498,52 @@ pub fn a_stop_file_starts_no_further_attempts_test() {
   // with nothing to do — those are the same summary otherwise, which is this
   // project's most expensive shape.
   assert string.contains(string.lowercase(text), "stop")
+}
+
+/// **The stop fixture never touches the live checkout's stop file.**
+///
+/// The fixture's `repo_root` is the live checkout, because that is where
+/// `.lake` is; before `stop_path` was its own config field the stop test wrote
+/// `repo_root <> "/STOP"`, which is the captain's stop file, so every suite
+/// run could halt a live run at its next attempt boundary — and the run's
+/// record would read as a deliberate stop. Two checks close that: the path the
+/// dispatcher names in its halt reason is the fixture's own, under the fixture
+/// directory; and the live checkout's `STOP` is in the same state after the
+/// stopped run as before it. Not "absent after", because a `STOP` already
+/// there is the captain's, and a test that deleted or reported it would be
+/// reading someone else's signal as its own.
+/// See `the-test-suites-stop-fixture-halts-a-live-run`.
+pub fn the_stop_fixture_never_writes_the_live_stop_file_test() {
+  let f =
+    fixture(
+      "stop-file-closure",
+      [[init_line("s"), result_line("s", "proved")]],
+      ports.span(16),
+    )
+  let live_stop = f.cfg.repo_root <> "/STOP"
+  assert f.cfg.stop_path != live_stop
+  assert string.starts_with(f.cfg.stop_path, f.dir <> "/")
+  let live_before = simplifile.is_file(live_stop)
+  let assert Ok(_) = simplifile.write(f.cfg.stop_path, "keel")
+  let assert Ok(text) =
+    dispatch.run_with(
+      f.cfg,
+      Plan(max_attempts: 3, concurrency: 2),
+      env(
+        f,
+        verify.Verified(
+          ["propext"],
+          "Statements.harness_probe : True",
+          "'harness_check' depends on axioms",
+        ),
+      ),
+    )
+  let _ = simplifile.delete(f.cfg.stop_path)
+  // The dispatcher halted on the fixture's file, and said so by path.
+  assert string.contains(text, "stopped by " <> f.cfg.stop_path)
+  assert node_after(f, "probe_one").status == dag.Open
+  // And the live checkout's stop file is exactly as this test found it.
+  assert simplifile.is_file(live_stop) == live_before
 }
 
 /// Without the file, the same fixture runs normally — the guard against a stop

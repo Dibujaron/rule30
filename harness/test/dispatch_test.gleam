@@ -42,6 +42,10 @@ fn cfg_for(d: dag.Dag) -> config.Config {
     runs_root: dir <> "/runs",
     roster_path: dir <> "/agents/roster.json",
     agents_dir: dir <> "/agents",
+    // `prove_one` never checks the stop file, but a fixture whose `repo_root`
+      // is the live checkout should not be one config field away from reading
+      // the captain's `STOP`.
+      stop_path: dir <> "/STOP",
   )
 }
 
