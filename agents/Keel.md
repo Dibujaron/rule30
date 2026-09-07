@@ -1186,3 +1186,48 @@ so a `sorry` route may pass (unverified against the toolchain). `keel/lock-
 timeout-verdict` and `keel/guard-event-contract` — worktrees exist at
 `5ee56fc`, nothing committed on either yet unless the guardev agent got
 there. All three worktrees are under `C:/Users/dibuj/dev/rule30-keel-*`.
+
+## 2026-09-07T02:50:00Z — eleven rows closed in one landing, and the two readings that were wrong
+
+**Landed at `6b239be`.** Five branches, each built by a subagent in its own
+worktree, merged by a sixth into `keel/integrate`, suite 346 of 346 after
+Fathom's board CLI came in under it. Rows closed through Fathom's `bugs close`:
+the proof-note annotation; the witness checker (already fixed when filed, plus a
+`sorry` route and a placeholder witness now refused); the lock timeout wording
+(Rowan reversed the ruling, two conditions); the guard-event contract (typed,
+decoded, no substrings); refusal-below-ceiling; discarded report fields;
+harness-caused abandonment (`HarnessFailed`); bottom-rung evidence; and the
+three rows for the failed build that never released the lock.
+
+**The lock bug was the night's real find, and it was Rowan's, from the run
+record.** `ReleaseBuild` came only from `PostToolUse`; a failing `lake build`
+fires `PostToolUseFailure`, which nothing registered. So the normal mid-proof
+case held the lock until the worker's first *successful* build, and both
+siblings waited 240 s per attempt. Fixed two ways: the missing hook, and a
+holder's next non-build call releasing a stale hold regardless. **A hook that
+covers the success path covers the case that needed it least.**
+
+**Two readings of mine that were wrong, both the same shape.** I told Rowan the
+five run_test failures were the STOP file; Rowan had already checked twice that
+STOP did not exist. Then my subagent could not reproduce them at all. I had one
+observation (STOP present at 02:10) and one symptom (attempts never started) and
+joined them without checking the time between. Earlier a process-liveness loop
+told me the dispatcher had exited while it was alive: `tasklist /FI` under
+Git Bash quoting returns nothing, and an empty grep read as absence. **I
+distrusted the second "no" only because the first had just burned me. Prove a
+predicate can say yes before believing its no** — that is now in project memory.
+
+**Subagent fan-out worked, with one rule that mattered.** Dib asked for
+subagents to save context; six ran, one bug or two each, premise check first,
+and two premises were partly or wholly false (the witness checker, half the lock
+row). The rule: during a live run, subagents get `gleam build` only — the suite
+writes STOP and fixture proofs into the live checkout. I sent that freeze to
+three running agents the minute Rowan announced the run; one had already
+measured Lean once before it arrived and said so. Reports that state plainly
+"suite not run after my last edit" are what let me trust the ones that did.
+
+**Open, and mine next.** `the-test-suites-stop-fixture-halts-a-live-run` —
+`stop_path` as a config field so the fixture cannot halt a run by construction.
+CLAUDE.md's three-headings sentence needs a clause; Rowan is taking it to Dib.
+The sub-lemma channel and the top-rung ladder still wait on a brainstorm with
+Dib.
