@@ -1,68 +1,43 @@
-//// The verifier, run against the real toolchain — the one test in this
-//// suite that writes into the live checkout, and it has to.
+//// The verifier, run against the real toolchain.
 ////
 //// `verify` builds the proof module with `lake build Rule30.Proofs.<Pascal>`,
-//// so the fixture file must sit inside the Lean project, next to every real
-//// proof, in a checkout with a built `.lake`. It cannot be moved to a temp
-//// root without testing something other than the verifier.
-////
-//// So the write is unavoidable and the *delete* is the hazard: the fixture
-//// is removed on the way out, and a runner killed between the write and the
-//// delete leaves a file behind — or, if the name ever collided with a file
-//// something else owns, removed that. Two things can own it: a real DAG
-//// node, and another test runner. `probe_claims_no_real_node_test` rules out
-//// the first; a per-run token in the fixture id rules out the second, so no
-//// two runners ever name the same file. See the bug
-//// `offline-fixtures-write-into-the-live-checkout`.
+//// so the fixture file must sit inside a Lean project whose `Rule30.Basic`
+//// and `Rule30.Statements` build. That project is `test/fixture-project`
+//// (see `lean_fixture`), not the live checkout: its `Rule30/Proofs/` holds
+//// no real proof, so the write and the delete below can only ever touch a
+//// file this test made. Two runners in one tree still share that
+//// directory, and a per-run token in the fixture id keeps them off each
+//// other's files.
 
-import envoy
-import gleam/list
 import gleam/option.{None}
 import gleam/string
 import harness/dag.{type Node, Node}
 import harness/shell
 import harness/verify
+import lean_fixture
 import simplifile
 
-/// The live checkout, because a built `.lake` lives there and nowhere else.
-/// `HARNESS_REPO_ROOT` overrides it so this is not pinned to one machine —
-/// note that pointing it at a fresh worktree makes these tests build Mathlib
-/// from scratch, which is why the default is the main checkout.
-fn repo() -> String {
-  case envoy.get("HARNESS_REPO_ROOT") {
-    Ok("") | Error(Nil) -> "C:\\Users\\dibuj\\dev\\rule30"
-    Ok(root) -> root
-  }
-}
-
-/// The fixture's node id, and the whole of its collision safety.
-///
-/// `dag.proof_path` derives the file name from the *id*, not the
-/// `lean_name`, so this id alone decides which file gets written and then
-/// deleted. It is deliberately not `harness_probe`: that is the `lean_name`
-/// of a real statement in `Rule30/Statements.lean`, and a fixture whose file
-/// name can coincide with a node's is one rename away from deleting a real
-/// proof — which has happened once already (see `agents/Rowan.md`).
-///
-/// `probe_claims_no_real_node_test` is what keeps this true rather than
-/// merely intended.
+/// The fixture's node id prefix. `dag.proof_path` derives the file name from
+/// the *id*, not the `lean_name`, so the id decides which file gets written
+/// and then deleted. It is deliberately not `harness_probe`, the
+/// `lean_name`, so that the file a fixture writes is always recognisably a
+/// fixture's — a killed runner's leftover in `Rule30/Proofs/` says what it
+/// is.
 const probe_prefix = "harness_probe_fixture"
 
 /// A fixture id nothing else on this machine can be holding: the prefix plus
 /// 32 hex characters of CSPRNG, fresh per call.
 ///
-/// The token is what makes concurrent suites safe, and it is not decoration.
-/// Two runners on this machine write into the same checkout — both default
-/// `HARNESS_REPO_ROOT` there, because that is where the built `.lake` is —
-/// so a constant id gave every runner one absolute path with no lock on it.
-/// Measured, 2026-09-06: a healthy peer's write tripped another suite's
-/// "already exists" guard for four spurious failures. The destructive
-/// direction is NOT reachable — the `is_file` check below precedes the write
-/// and the delete, and a failed `let assert` panics, so a runner that finds a
-/// peer's file aborts before it can remove it. What remains is the window
-/// where both runners pass that check before either writes; every
-/// interleaving of it ends in a failed assertion here rather than a wrong
-/// verdict. Loud and spurious, never silent.
+/// The token is what makes concurrent suites in one tree safe, and it is not
+/// decoration: a constant id gave every runner one absolute path with no
+/// lock on it. Measured, 2026-09-06: a healthy peer's write tripped another
+/// suite's "already exists" guard for four spurious failures. The
+/// destructive direction is NOT reachable — the `is_file` check below
+/// precedes the write and the delete, and a failed `let assert` panics, so a
+/// runner that finds a peer's file aborts before it can remove it. What
+/// remains is the window where both runners pass that check before either
+/// writes; every interleaving of it ends in a failed assertion here rather
+/// than a wrong verdict. Loud and spurious, never silent.
 ///
 /// The cost, which is real: litter from a killed runner no longer has one
 /// known name. Untidy beats silently wrong.
@@ -98,38 +73,19 @@ fn harness_probe(id: String) -> Node {
   )
 }
 
-/// No node in the live DAG may own the file this fixture writes and deletes.
-///
-/// This is the test that makes the rest of the file safe, so it asserts
-/// against `blueprint/dag.json` itself rather than a fixture DAG: the thing
-/// worth knowing is whether the *real* board has grown a node that collides,
-/// and a fixture board cannot tell us that.
-pub fn probe_claims_no_real_node_test() {
-  let assert Ok(d) = dag.load(repo() <> "/blueprint/dag.json")
-  // The prefix, not one generated id: a token makes any single id collide
-  // with nothing by luck, which would make this test pass without testing
-  // anything. What must hold is that no real node's file can begin where a
-  // fixture's file begins, however the token comes out.
-  // "Rule30/Proofs/HarnessProbeFixture", the path a fixture file must start
-  // with once the token is appended.
-  let stem = string.drop_end(dag.proof_path(harness_probe(probe_prefix)), 5)
-  let collisions =
-    d.nodes
-    |> list.filter(fn(n) { string.starts_with(dag.proof_path(n), stem) })
-    |> list.map(fn(n) { n.id })
-  assert collisions == []
-}
-
-/// Writes `body` to the fixture path, runs `verify.verify` against it, and
-/// deletes the fixture before returning the verdict — even if the caller's
-/// own assertion on the verdict fails, since the delete happens first.
+/// Writes `body` to the fixture path inside the fixture project, runs
+/// `verify.verify` against it, and deletes the fixture before returning the
+/// verdict — even if the caller's own assertion on the verdict fails, since
+/// the delete happens first. `verify` runs its own `lake build` of
+/// `Rule30.Statements` and the proof module, so the project need not be
+/// built beforehand.
 ///
 /// Refuses to start if the file already exists. A leftover from a killed
 /// runner is the expected cause, and the right response is to fail loudly:
 /// overwriting it would destroy whatever is there, and this fixture must
 /// never be the thing that deletes a file it did not create.
 fn verify_with_proof(body: String) -> verify.Verdict {
-  let root = repo()
+  let root = lean_fixture.root()
   // One node, built once and used for both the path and the verify call. A
   // fresh `probe_id()` per call would write one file and verify another.
   let node = harness_probe(probe_id())
@@ -189,8 +145,8 @@ pub fn rejects_forbidden_import_test() {
 /// as obviously safe — this fails, and nothing else in the file would.
 pub fn two_fixture_ids_never_collide_test() {
   assert probe_id() != probe_id()
-  // And both are still fixture paths, so the prefix guarantee that
-  // `probe_claims_no_real_node_test` rests on survives the token.
+  // And both are still fixture paths: the prefix is what makes a leftover
+  // file recognisable, and it must survive the token.
   assert string.starts_with(probe_id(), probe_prefix <> "_")
 }
 

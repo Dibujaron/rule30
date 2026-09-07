@@ -8,19 +8,21 @@
 //// routes, one known-bad and one known-good, both adjudicated by hand on
 //// 2026-09-06 and one of them by a live run that cost $0.97 to learn it.
 
-import envoy
 import gleam/option
 import gleam/string
 import harness/dag
 import harness/seed.{Claimed, NoClaim, Route}
 import harness/shell
+import lean_fixture
 import simplifile
 
+/// The Mathlib-free fixture project (see `lean_fixture`), whose
+/// `Rule30/Statements.lean` carries the declarations these tests lift and
+/// whose `Rule30/Basic.lean` is what their routes and witnesses elaborate
+/// against. Tests that hand `lake` to Lean use `lean_fixture.built()`
+/// instead, since `lake env lean` builds nothing for itself.
 fn repo() -> String {
-  case envoy.get("HARNESS_REPO_ROOT") {
-    Ok("") | Error(Nil) -> "C:\\Users\\dibuj\\dev\\rule30"
-    Ok(root) -> root
-  }
+  lean_fixture.root()
 }
 
 fn statements() -> String {
@@ -30,7 +32,7 @@ fn statements() -> String {
 
 fn check(lean_name: String, claim: seed.Claim) -> seed.RouteVerdict {
   let assert Ok(lake) = shell.which("lake")
-  seed.check_route(repo(), lake, statements(), lean_name, claim)
+  seed.check_route(lean_fixture.built(), lake, statements(), lean_name, claim)
 }
 
 // --- lifting the declaration -------------------------------------------
@@ -109,12 +111,13 @@ pub fn flags_the_route_that_cost_a_rung_test() {
 
 /// The known positive, on the same statement, so the only thing that varies
 /// is the route. Both halves matter: `revert f` puts the binder back so
-/// `decide` has a closed proposition, and `Mathlib.Data.Fintype.Pi` supplies
-/// the `Decidable` instance that `Rule30.Basic` alone does not.
+/// `decide` has a closed proposition, and an import supplies the `Decidable`
+/// instance that `Rule30.Basic` alone does not — `Mathlib.Data.Fintype.Pi`
+/// in the real project, `Rule30.FintypePi` in the fixture project.
 pub fn accepts_the_corrected_route_test() {
   assert check(
       "bool_map_iterate_three",
-      Claimed(Route("revert f; decide", ["Mathlib.Data.Fintype.Pi"])),
+      Claimed(Route("revert f; decide", ["Rule30.FintypePi"])),
     )
     == seed.RouteClosed
 }
@@ -282,13 +285,13 @@ pub fn a_proposal_landed_byte_for_byte_closes_on_the_corrected_route_test() {
   let assert Ok(lake) = shell.which("lake")
   let checked =
     seed.check_proposal(
-      repo(),
+      lean_fixture.built(),
       lake,
       statements(),
       seed.Proposal(
         ..a_proposal("bool_map_iterate_three"),
         statement: seeded_bool_map <> "\n  sorry",
-        route: Claimed(Route("revert f; decide", ["Mathlib.Data.Fintype.Pi"])),
+        route: Claimed(Route("revert f; decide", ["Rule30.FintypePi"])),
       ),
       180_000,
     )
@@ -367,7 +370,7 @@ fn check_w(
 ) -> seed.WitnessVerdict {
   let assert Ok(lake) = shell.which("lake")
   seed.check_witness(
-    repo(),
+    lean_fixture.built(),
     lake,
     "witness_calibration",
     statement,
@@ -394,7 +397,7 @@ pub fn a_true_witness_comes_back_holding_test() {
 
 /// **The known negative. A witness checker that does not flag this is broken.**
 ///
-/// `centerColumn` is 1,1,1,0,1,… — not constantly true, and false by t = 3. So
+/// `centerColumn` is 1,1,0,1,1,1,0,… — not constantly true, and false at t = 2. So
 /// `#eval` prints `false`, and it prints it with EXIT STATUS 0, which is the
 /// whole reason this test exists rather than being assumed.
 pub fn a_false_witness_is_falsified_and_not_a_pass_test() {
@@ -554,7 +557,7 @@ pub fn a_timed_out_witness_is_unchecked_not_falsified_test() {
   let assert Ok(lake) = shell.which("lake")
   let verdict =
     seed.check_witness(
-      repo(),
+      lean_fixture.built(),
       lake,
       "witness_timeout",
       center_statement,
