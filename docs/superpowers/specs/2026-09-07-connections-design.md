@@ -252,6 +252,19 @@ The brief says plainly that most claims are expected to die, that a claim
 which survives to depth a million is the deliverable, and that the
 document is read by a captain and by other theorists, not by a prover.
 
+**Persona and notebook.** A theorist is a persona, not a nameless role
+(Dib, 2026-09-07). Theorists live in a region `theory` in
+`agents/roster.json` and are minted through the same naming ceremony as
+provers on first use, one live session per persona, the naming event
+recorded in the attempt's `events.jsonl`. `theorise` takes `--as <Name>`
+to start a named persona if idle, and without it picks an idle theory
+persona or mints one. A theorist's system prompt carries its own notebook
+`agents/<Name>.md` and no other theorist's, so that five theorists on one
+topic are five accumulated views rather than one; its session ends with a
+structured report (outcome, the attack document path, a notebook entry, a
+journal entry) from which the harness writes the notebook and the run
+journal, as it does for provers. A theorist never edits `agents/`.
+
 **Deliverable.** The attack document, and nothing else. A theorist never
 writes a statement, a proposal, or a node. Rowan reads the document, moves
 surviving claims into `blueprint/crystals.md` with their depth, and only the
