@@ -187,6 +187,15 @@ captain at landing; the renderer groups by it and lists a node with no
 object under "unclassified" so the omission is visible. The existing 51
 nodes get their `object` in one board-repair commit.
 
+**The wall clause is knowingly empty today.** As landed on 2026-09-07 the
+renderer reads "the wall it sits under" as "a wall whose `deps` reach this
+node", and no wall on the board has any: `deps` means "must be proved
+first" to the scheduler, which is not what "decomposes" means, so giving a
+wall deps would claim a proof route that does not exist. The honest field
+is a captain-set `under: <wall id>` on a node, meaning "seeded as part of
+attacking that wall", set at landing the way `object` is; once it exists
+the renderer reads it instead. Until then the clause prints on no entry.
+
 ### `docs/obstructions.md`, hand-written
 
 Maintained by Rowan and by theorists; the only file a theorist writes
