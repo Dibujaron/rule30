@@ -6,7 +6,7 @@ import gleam/option.{None, Some}
 import gleam/result
 import gleam/string
 import harness/dispatch
-import harness/guard.{Rules}
+import harness/guard.{type Rules, Rules}
 import harness/guard_event
 import harness/lock
 import harness/log
@@ -118,6 +118,29 @@ pub fn non_tool_events_are_allowed_test() {
   assert guard.decide(rules, input) == guard.Allow
 }
 
+/// Dib's decision, 2026-09-07: a dispatched session does not message other
+/// sessions. The guard sees the send on the sender's side, because there it
+/// IS a tool call, and refuses it with a reason that says where the session
+/// should speak instead. The report's old `posts` field is being retired on a
+/// sibling branch and must not be named here.
+pub fn a_prover_cannot_send_a_message_test() {
+  let assert guard.Deny(kind: guard_event.NotPermitted, reason:) =
+    guard.decide(rules, send_message("Rowan", "are you there"))
+  assert reason == guard.message_deny_reason
+  assert string.contains(reason, "notebook")
+  assert string.contains(reason, "journal")
+  assert !string.contains(reason, "posts")
+}
+
+/// One `SendMessage` hook body, as Claude Code would post it.
+fn send_message(to: String, message: String) -> String {
+  "{\"hook_event_name\":\"PreToolUse\",\"tool_name\":\"SendMessage\",\"tool_input\":{\"to\":\""
+  <> to
+  <> "\",\"message\":\""
+  <> message
+  <> "\",\"summary\":\"a test\"}}"
+}
+
 pub fn deny_json_shape_test() {
   let j =
     guard.decision_json(
@@ -220,6 +243,43 @@ pub fn a_failed_bash_call_is_hooked_the_same_as_a_successful_one_test() {
 
 fn count(haystack: String, needle: String) -> Int {
   list.length(string.split(haystack, needle)) - 1
+}
+
+/// The generated settings and `harness/hooks/settings.template.json` are the
+/// same document with `<TOKEN>` and `<PORT>` filled in. The template is what
+/// a reader opens to learn what a worker's hooks are, so the two must not
+/// drift: every event, matcher, timeout and command is compared, decoded
+/// rather than as text, because the template is hand-indented and the
+/// generated file is not.
+pub fn the_generated_settings_match_the_template_test() {
+  let assert Ok(_) = simplifile.create_directory_all("build/test-runs")
+  let g = guard.Guard(port: 5555, token: "abc123", settings_path: "unused")
+  let path = "build/test-runs/settings-template.json"
+  let assert Ok(_) = guard.write_settings(g, path)
+  let assert Ok(generated) = simplifile.read(path)
+  let assert Ok(template) = simplifile.read("hooks/settings.template.json")
+  let filled =
+    template
+    |> string.replace("<TOKEN>", "abc123")
+    |> string.replace("<PORT>", "5555")
+  list.each(
+    ["PreToolUse", "PostToolUse", "PostToolUseFailure", "PreCompact"],
+    fn(event) {
+      assert registered_hooks(generated, event)
+        == registered_hooks(filled, event)
+    },
+  )
+  let assert Ok(_) = simplifile.delete("build/test-runs")
+}
+
+/// A hook that is not registered never fires, so the guard's `SendMessage`
+/// refusal is only as real as this matcher. Checked on the template, which
+/// the test above holds equal to the generated file.
+pub fn the_pretooluse_matcher_names_send_message_test() {
+  let assert Ok(template) = simplifile.read("hooks/settings.template.json")
+  let assert [#(matcher, _, _)] = registered_hooks(template, "PreToolUse")
+  assert list.contains(string.split(matcher, "|"), "SendMessage")
+  assert list.contains(string.split(matcher, "|"), "Bash")
 }
 
 // --- PreCompact ---------------------------------------------------------------
@@ -382,9 +442,26 @@ fn start_on_free_port(
   build_lock_wait_ms: Int,
   attempts: Int,
 ) -> guard.Guard {
+  start_on_free_port_as(
+    rules,
+    lock_actor,
+    run_log,
+    build_lock_wait_ms,
+    attempts,
+  )
+}
+
+/// `start_on_free_port` for a rule set other than the prover's.
+fn start_on_free_port_as(
+  as_rules: Rules,
+  lock_actor: Subject(lock.Msg),
+  run_log: log.Log,
+  build_lock_wait_ms: Int,
+  attempts: Int,
+) -> guard.Guard {
   case
     guard.start_with(
-      rules,
+      as_rules,
       lock_actor,
       run_log,
       ports.span(1),
@@ -394,7 +471,13 @@ fn start_on_free_port(
   {
     Ok(started), _ -> started
     Error(_), n if n > 1 ->
-      start_on_free_port(lock_actor, run_log, build_lock_wait_ms, n - 1)
+      start_on_free_port_as(
+        as_rules,
+        lock_actor,
+        run_log,
+        build_lock_wait_ms,
+        n - 1,
+      )
     Error(e), _ ->
       panic as { "guard.start found no free port in 8 attempts: " <> e }
   }
@@ -629,4 +712,70 @@ pub fn a_second_build_does_not_release_in_front_of_its_own_acquire_test() {
 fn row_kind(line: String) -> Result(String, Nil) {
   json.parse(line, decode.at([log.kind_key], decode.string))
   |> result.replace_error(Nil)
+}
+
+// --- SendMessage over the wire ------------------------------------------------
+
+/// A prover's `SendMessage` refused through the real hook endpoint: the reply
+/// is a deny carrying the reasoned text, and the row the dispatcher reads
+/// back is `not_permitted` with the recipient as what was attempted — the
+/// guard's record of a send the message log will never hold, since the
+/// message never went.
+pub fn a_provers_send_message_is_denied_over_the_wire_test() {
+  let dir = "build/test-runs-send-message-prover"
+  let _ = simplifile.delete(dir)
+  let assert Ok(lock_actor) = lock.start(60_000)
+  let assert Ok(run_log) = log.open(dir, "run")
+  let started =
+    start_on_free_port(lock_actor, run_log, guard.build_lock_wait_ms, 8)
+  let output = post_hook(started, send_message("Rowan", "hello"))
+  assert string.contains(output, "\"permissionDecision\":\"deny\"")
+  assert string.contains(output, "notebook and journal fields")
+  assert dispatch.guard_denials(run_log, rules.holder)
+    == [
+      dispatch.GuardDenial(
+        tool: "SendMessage",
+        denial: guard_event.NotPermitted,
+        attempted: "Rowan",
+      ),
+    ]
+  let assert Ok(_) = simplifile.delete(dir)
+}
+
+/// The seeder's rule set is wider than the prover's and separate from it, so
+/// the refusal has to be shown for it separately: a `Seeder` guard, the same
+/// send, the same deny and the same row.
+pub fn a_seeders_send_message_is_denied_over_the_wire_test() {
+  let dir = "build/test-runs-send-message-seeder"
+  let _ = simplifile.delete(dir)
+  let seeder =
+    Rules(
+      repo_root: "C:\\r",
+      role: guard.Seeder(
+        proposal_path: "C:\\r\\blueprint\\proposals\\next.json",
+      ),
+      holder: "seed-1",
+    )
+  let assert Ok(lock_actor) = lock.start(60_000)
+  let assert Ok(run_log) = log.open(dir, "run")
+  let started =
+    start_on_free_port_as(
+      seeder,
+      lock_actor,
+      run_log,
+      guard.build_lock_wait_ms,
+      8,
+    )
+  let output = post_hook(started, send_message("Keel", "hello"))
+  assert string.contains(output, "\"permissionDecision\":\"deny\"")
+  assert string.contains(output, guard.message_deny_reason)
+  assert dispatch.guard_denials(run_log, seeder.holder)
+    == [
+      dispatch.GuardDenial(
+        tool: "SendMessage",
+        denial: guard_event.NotPermitted,
+        attempted: "Keel",
+      ),
+    ]
+  let assert Ok(_) = simplifile.delete(dir)
 }

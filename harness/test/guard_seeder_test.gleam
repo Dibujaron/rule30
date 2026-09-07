@@ -131,3 +131,17 @@ pub fn a_prover_still_writes_only_its_one_file_test() {
   let assert guard.Deny(..) =
     guard.decide(prover, write("c:/r/Rule30/Proofs/Y.lean"))
 }
+
+// --- neither role may message a session ---------------------------------------
+
+/// The seeder's list is wider than the prover's, and this is one thing it is
+/// not wider on: a `SendMessage` from a seeder is refused exactly as a
+/// prover's is, with the same text.
+pub fn a_seeder_cannot_send_a_message_either_test() {
+  let send =
+    "{\"hook_event_name\":\"PreToolUse\",\"tool_name\":\"SendMessage\",\"tool_input\":{\"to\":\"Rowan\",\"message\":\"hi\"}}"
+  let assert guard.Deny(reason: seeder_reason, ..) = guard.decide(seeder, send)
+  let assert guard.Deny(reason: prover_reason, ..) = guard.decide(prover, send)
+  assert seeder_reason == prover_reason
+  assert seeder_reason == guard.message_deny_reason
+}
