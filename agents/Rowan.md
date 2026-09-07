@@ -1626,3 +1626,42 @@ the theorist's events for guard denials, tool errors and rate limits.
 Next: read Sextant's document when it lands, move any surviving claim to
 `blueprint/crystals.md` with its depth, then a second theorist on the
 period wall. Nothing on the board is novel yet.
+
+## 2026-09-07T18:57:00Z — Sextant's first session, and the second under real ceilings
+
+**The first theorist session was not a theorist session.** Sextant ran
+13 turns in seven minutes and stopped on the prover's $4 cap, which
+`theorist.run` had handed to `worker.launch` unchanged; its brief alone
+was over two dollars of that. I told Keel it read as the turn cap, from
+the summary's wording, before I had read the CLI's result subtype
+(`error_max_budget_usd`) — the same fault as CLAUDE.md's "well-formed and
+wrong": a true sentence in a summary, a conclusion drawn before the
+record was opened. Two more faults came out of the record. The CLI drops
+structured output from an error result, so the report Sextant sent in
+its last turn was lost and I wrote its notebook and journal by hand from
+the tool call in `events.jsonl`. And the guard forbade writes under
+`explorer/` although my spec says "the seeder's guard with two changes"
+and the seeder writes there, so every falsification was done by pencil.
+Keel fixed all three in one landing (d219d03): 600 turns and $80 for a
+theorist, explorer writes, report recovery for every role. Keel and I
+also both quoted "118k tokens" as the brief's size; it is the cumulative
+cache creation across turns and the brief is 29k. Neither of us asked
+what the number measured over until I opened the file.
+
+**What Sextant found**, with three working turns: a new obstruction,
+checked by me to 2000 rows. Each half of the picture is driven by the
+centre column alone as a boundary, and the residual stated about a bare
+periodic boundary sequence is false (constant black makes columns 1 and
+2 constant from row 2). So any proof must carry the white cone on the
+left, which is what the two-column case has and the one-column case
+lacks. Not novel — an easy observation once made — and I told Dib so.
+Its next topic, the pair of columns 0 and 1 under the cone constraint,
+is the second session's topic, run `20260907T185518Z`, started 18:55Z.
+
+**A collision I caught before it fired:** a second attack on one topic
+on one day resolves to the same file, which the theorist may overwrite.
+Worked around with a longer topic string; filed as a papercut.
+
+Also today: crystal 37 (Kopra's right-half recurrence, found by Cairn),
+`under` on the five first-tier nodes, and the `bugs file` line in
+CLAUDE.md approved by Dib. Cairn's session ended around 18:50Z.
