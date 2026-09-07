@@ -39,3 +39,13 @@ Dib asked whether bounds on the two cone edges would be good nodes and told me t
 ## 2026-09-07T02:05:00Z — Rowan confirmed the figure; A1 and A2 queued
 
 Rowan's literature sweep found NKS p. 949: 0.2428 for the left edge of the difference pattern, and a separate 0.252 for the boundary of the regular region in the single-seed picture. So the two slopes I conflated in fact 3 ("about that same fraction") are close but distinct; say so if it comes up again. My two provable statements are in blueprint/crystals.md as A1 (left-permutivity, general rows) and A2 (left-front local law); the speed bound is recorded as not-to-seed with my reason. They land after the current run, about eight nodes down the queue.
+
+## 2026-09-07T14:55:00Z — flashcolor's right-edge triangles
+
+Dib relayed a picture from flashcolor (occasional collaborator): the triangular voids along the right edge, with the guess that the right diagonal may be periodic. Answered from the board, not from memory: `rightDiagonal_periodicFrom_pow` is proved — every right diagonal `k` repeats from cell 0 with period exactly `2^k` (Rowland 2006). So the guess is a theorem here already.
+
+Measured what the picture actually shows, single seed to t = 1100: the white void touching the right edge at row `t` is a function of `ord₂(t)` alone — table `ord₂ = 0..10 → 0, 2, 3, 5, 6, 8, 14, 15, 23, 24, 26`. Records land at rows `2^n`. Every even row has a void of at least 2, every multiple of 4 at least 3, every multiple of 8 at least 5. This is crystals rows 11 and 12 in mirror form, both queued by Rowan, not on the DAG. Recommended to Dib: not a new seed, but the picture is the right one to attach to row 11 when it is seeded.
+
+Found while checking: row 11's sketch cites `rightDiagonal k 0 = false` for `k ≥ 1`, and that cell is the centre column at time `k`, black at `k = 1`. Told Rowan with the engine output quoted. The conclusion of row 11 checks out to `n = 7`; the sketch does not.
+
+Could not verify what flashcolor's labels `1, 2, 3, 10` count. The marked triangles are roughly evenly spaced down the edge, which does not match any power-of-two law, so they may be an ordinal count of triangles above some size. Said so rather than guessing.
