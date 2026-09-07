@@ -762,6 +762,56 @@ any row to depth in the thousands is a theorem by `decide`. -/
 theorem rowCell_eq_evolve (t : ℕ) (x : ℤ) : rowCell t x = evolve t x := by
   sorry
 
+/-! ## P2 — the count side of balance
+
+The prize's real-valued limit, rewritten over the integer black count, and
+the three count lemmas that rewriting needs. Every one holds for any Bool
+sequence in the centre column's place. Seeded by the first P2 seeder,
+2026-09-07. -/
+
+/-- **The prize's limit, as a statement about an integer.** The density tends
+to one half exactly when the excess, twice the black count minus `N`, is
+eventually small relative to `N`. Lossless in both directions, so every
+later P2 statement can live in `ℕ` and `ℤ` and never divide. True of any
+Bool sequence in the centre column's place; it proves nothing about rule 30. -/
+theorem centerColumn_density_tendsto_half_iff_excess :
+    Filter.Tendsto centerColumnDensity Filter.atTop (nhds (1 / 2 : ℝ)) ↔
+      ∀ ε : ℝ, 0 < ε → ∃ N₀ : ℕ, ∀ N ≥ N₀,
+        |2 * (((Finset.range N).filter fun n => centerColumn n = true).card : ℝ) - (N : ℝ)|
+          ≤ ε * (N : ℝ) := by
+  sorry
+
+/-- **The black count over `N + 1` cells is the count over `N`, plus one if
+cell `N` is black.** The integer twin of `centerColumnDensity_succ`, whose
+proof already contains this step without a name. -/
+theorem centerColumnCount_succ (N : ℕ) :
+    ((Finset.range (N + 1)).filter fun n => centerColumn n = true).card =
+      ((Finset.range N).filter fun n => centerColumn n = true).card
+        + (if centerColumn N then 1 else 0) := by
+  sorry
+
+/-- **Widening the window from `M` to `N` adds between `0` and `N - M`
+black cells.** Induction on `N` from the count recurrence. True of any
+Bool sequence. -/
+theorem centerColumnCount_sandwich (M N : ℕ) (h : M ≤ N) :
+    ((Finset.range M).filter fun n => centerColumn n = true).card ≤
+        ((Finset.range N).filter fun n => centerColumn n = true).card ∧
+      ((Finset.range N).filter fun n => centerColumn n = true).card ≤
+        ((Finset.range M).filter fun n => centerColumn n = true).card + (N - M) := by
+  sorry
+
+/-- **The excess cannot move faster than the window.** Between window sizes
+`M` and `N` the excess `2 * count - N` changes by at most `N - M`, so a
+proof that controls it at a sparse set of sizes controls every size in
+between. A bound on the excess's speed, not on the excess; true of any Bool
+sequence, and the shape a real P2 argument would need because rule 30's
+known structure arrives at powers of two. -/
+theorem centerColumn_excess_interpolate (M N : ℕ) (h : M ≤ N) :
+    |2 * (((Finset.range N).filter fun n => centerColumn n = true).card : ℤ) - (N : ℤ)| ≤
+      |2 * (((Finset.range M).filter fun n => centerColumn n = true).card : ℤ) - (M : ℤ)|
+        + ((N : ℤ) - (M : ℤ)) := by
+  sorry
+
 /-- A trivially true statement that exists only so the harness's verifier
 tests have something to prove without touching a real node's proof file. It
 is deliberately absent from `blueprint/dag.json`. -/

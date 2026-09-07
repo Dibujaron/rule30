@@ -1,0 +1,15 @@
+
+node      centerColumnCount_sandwich
+identity  Emmy
+model     sonnet
+outcome   proved
+cost      $0.39
+turns     9
+estimate  S
+session   c8d402b3-68da-463b-8132-69e25e9ad624
+log       c:/Users/dibuj/dev/rule30/runs/20260907T164112Z/centerColumnCount_sandwich-2
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Emmy (#3d5a80): closed 7, abandoned 1, $2.24, calibration 7/7

@@ -158,7 +158,7 @@ def ofWindow {t : Nat} (w : Fin (2 * t + 1) → Bool) : Config :=
 
 /-- `f` is **left-permutive** with radius `r`: two rows that agree at every
 position `i - r + 1 .. i + r` and differ at `i - r` are sent to rows that
-differ at `i`. Flipping the leftmost cell a step reads always flips its
+differ at `i`. Flipping the leftmost cell that a step reads always flips its
 output, whatever the other cells hold.
 
 This is the property everything about rule 30's columns leans on. For one
@@ -170,12 +170,8 @@ def LeftPermutive (f : Config → Config) (r : Nat) : Prop :=
     (∀ j : ℤ, i - r < j → j ≤ i + r → c j = d j) → c (i - r) ≠ d (i - r) → f c i ≠ f d i
 
 /-- How many of the `2 ^ (2t + 1)` windows of width `2t + 1` grow a black
-centre cell after `t` steps. `window_count_half` says it is exactly half.
-
-`noncomputable` because Mathlib's `Fintype` instance on functions is built
-from a `Finset` of all functions, which the kernel can enumerate but the
-compiler will not generate code for; nothing here is meant to run. -/
-noncomputable def blackWindowCount (t : Nat) : Nat :=
+centre cell after `t` steps. `window_count_half` says it is exactly half. -/
+def blackWindowCount (t : Nat) : Nat :=
   (Finset.univ.filter fun w : Fin (2 * t + 1) → Bool =>
     evolveFrom (ofWindow w) t 0 = true).card
 
@@ -186,6 +182,12 @@ theorem evolve_eq_evolveFrom_initial (t : Nat) :
 /-- The centre column is column `0` of the single-seed picture. -/
 theorem centerColumn_eq_column (t : Nat) :
     centerColumn t = column initialConfig 0 t := rfl
+
+/-- `evolveFrom` unfolded one step, the way `evolve_succ` unfolds `evolve`, so
+that `rule30_eq` can be applied to the picture grown from any row. -/
+theorem evolveFrom_succ (c : Config) (t : Nat) :
+    evolveFrom c (t + 1) = rule30 (evolveFrom c t) := by
+  simp [evolveFrom, Function.iterate_succ_apply']
 
 /-! ## The row model
 

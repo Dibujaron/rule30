@@ -1,0 +1,15 @@
+
+node      sideways_inverse
+identity  Cadence
+model     haiku
+outcome   proved
+cost      $0.21
+turns     13
+estimate  S
+session   3c1863c0-fc25-4f73-9ec9-c9dd72aadb40
+log       c:/Users/dibuj/dev/rule30/runs/20260907T161211Z/sideways_inverse-1
+
+verifier:
+VERIFIED. Axioms: propext
+
+Cadence (#2a6f77): closed 12, abandoned 0, $3.81, calibration 11/12

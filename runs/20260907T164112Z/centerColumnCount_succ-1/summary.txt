@@ -1,0 +1,15 @@
+
+node      centerColumnCount_succ
+identity  Emmy
+model     haiku
+outcome   proved
+cost      $0.12
+turns     7
+estimate  S
+session   ebc8f5f1-78db-41b7-a1ac-f36488882f9c
+log       c:/Users/dibuj/dev/rule30/runs/20260907T164112Z/centerColumnCount_succ-1
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Emmy (#3d5a80): closed 6, abandoned 0, $1.22, calibration 6/6

@@ -14,6 +14,15 @@ Rule 30 is `left XOR (centre OR right)`. **Left-permutive** means flipping
 the left neighbour always flips the output; it is the property everything
 below leans on.
 
+**A captain rule for every statement, seeded or proposed (2026-09-07):**
+state it in `ℕ` where it can be stated in `ℕ`. An absolute value over
+casts is almost always two `ℕ` inequalities; a count is a natural number
+and an excess can be two bounds instead of one `|·|`. On this board the
+statements that mix `ℕ`, `ℤ` and `|·|` have cost a ladder rung apiece for
+two-line facts (`centerColumnCount_sandwich`, `centerColumn_excess_interpolate`),
+and the same facts in `ℕ` close on the first rung. A seeder proposing a
+cast-heavy statement should say why the `ℕ` form does not exist.
+
 Status words: *proved* (in the cited source), *computed* (checked
 numerically, no proof in print), *folklore* (true and easy, no citation),
 *open*. Difficulty is a guess for an automated prover: trivial / induction /

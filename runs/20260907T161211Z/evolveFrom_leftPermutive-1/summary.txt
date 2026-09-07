@@ -1,0 +1,15 @@
+
+node      evolveFrom_leftPermutive
+identity  Vesper
+model     sonnet
+outcome   proved
+cost      $1.40
+turns     17
+estimate  M
+session   52f08a59-4766-4ad2-8d4b-a9638128fdce
+log       c:/Users/dibuj/dev/rule30/runs/20260907T161211Z/evolveFrom_leftPermutive-1
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Vesper (#2b3a67): closed 34, abandoned 1, $14.59, calibration 29/34

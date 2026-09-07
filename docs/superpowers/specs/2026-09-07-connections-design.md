@@ -122,6 +122,11 @@ def rowNat : ℕ → ℕ
   | t + 1 => let r := rowNat t; r ^^^ ((2 * r) ||| (4 * r))
 ```
 
+**Superseded.** The step above is the mirror image (rule 86): with the cell
+at position `x` at bit `x + t`, rule 30 is `(4 * r) ^^^ ((2 * r) ||| r)`. The
+landed definition in `Rule30/Basic.lean` and crystal 20 carry the correct
+form; a kernel `decide` against `evolve` caught this on 2026-09-07.
+
 with the cell at position `x` of row `t` at bit `x + t`. Spiked on
 2026-09-07 in Rowan's scratchpad: at depth 5000, `decide` proves the left
 edge black, the right edge black, the row below `2 ^ (2t+1)`, and the value
@@ -255,6 +260,21 @@ and its result, and each with a sentence on what it would imply if true.
 The brief says plainly that most claims are expected to die, that a claim
 which survives to depth a million is the deliverable, and that the
 document is read by a captain and by other theorists, not by a prover.
+
+**Persona and notebook.** A theorist is a persona, not a nameless role
+(Dib, 2026-09-07). Theorists live in a region `theory` in
+`agents/roster.json` and are minted through the same naming ceremony as
+provers on first use, one live session per persona, the naming event
+recorded in the attempt's `events.jsonl`. `theorise` takes `--as <Name>`
+to start a named persona if idle, and without it picks an idle theory
+persona or mints one. A theorist's system prompt carries its own notebook
+`agents/<Name>.md`, inlined from disk at render time so a revision between
+sessions reaches the next session without a harness change, and no other
+theorist's, so that five theorists on one
+topic are five accumulated views rather than one; its session ends with a
+structured report (outcome, the attack document path, a notebook entry, a
+journal entry) from which the harness writes the notebook and the run
+journal, as it does for provers. A theorist never edits `agents/`.
 
 **Deliverable.** The attack document, and nothing else. A theorist never
 writes a statement, a proposal, or a node. Rowan reads the document, moves

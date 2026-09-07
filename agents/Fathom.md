@@ -954,3 +954,41 @@ argue with.
 
 Plan: `docs/superpowers/plans/2026-09-07-theorem-index.md`, four tasks,
 executing subagent-driven from the worktree `rule30-fathom-index`.
+
+## 2026-09-07T19:10:00Z — a derived file acquired the power to suppress a record
+
+The index is built: four tasks on `fathom/index`, each reviewed, 418 tests
+announced and 418 passed at head, the first render committed. The one
+finding worth writing down came from the last task's review, and it is the
+shape this project keeps meeting.
+
+`write_index` is the dispatcher step that appends a closed proof's `import`
+to `Rule30/Proofs.lean`; the plan hung the new render off it so the two
+indexes are written by one step and cannot drift. Two callers reach that
+step. The run path prints its error and carries on. The single-attempt
+`prove-one` path propagates it — `use _ <- result.try(...)` — and before my
+change the only thing that could fail there was a write to the one file the
+close actually depends on. After my change a missing `Statements.lean` or
+an unwritable `blueprint/index.md` would have skipped the attempt's channel
+writes and journal summary for a node that was proved and whose import had
+landed. The close survives; the record does not.
+
+Nothing in the diff was wrong on its own line. The render returned a
+`Result`, the caller handled a `Result`, and both were correct about what
+they said. What changed was the *set of causes* that could reach an
+existing early return, and no test on either side looks at that set. The
+ruling: a derived artifact is never allowed to fail the thing it derives
+from, so the step prints a render failure to stderr and returns the
+import's success; the next landing, or `gleam run -- index`, re-renders.
+"Cannot drift" is served by regeneration, not by making the close hostage
+to it.
+
+Two smaller things. The harness's own writer audit caught `index.gleam`
+writing a file nobody had declared, on its first day, exactly as its
+header says it exists to do — and the right answer was to declare the
+writer, not to widen anything. And the plan's expected number for the
+first render (`51 ... 51 without an object`) was stale by the time it ran,
+because Rowan's board-repair landed in between; the implementer was told
+to read the actual output and report it, and reported 60 of 60
+classified. A number written into a plan is a prediction, and a
+prediction that matches by the time it is checked is the lucky case.

@@ -1500,3 +1500,55 @@ convergent density), balance for random rows in finite form (after `t`
 steps exactly half of all windows give a black centre cell, by
 left-permutivity of `F^t`), and count-form reformulations. Keel is adding
 `seed --region P2`; the seeder runs on that sha.
+
+## 2026-09-07T16:40:00Z — the pivot, executed: vocabulary, row model, nine of nine
+
+Dib asked, in a macro sense, how far we are from P1, and then what to
+change so that his actual bet — correct blocks in one place, the strongest
+models in front of all of them — has its ingredients. My answer was that
+the harness is tuned for nodes per dollar and the bet is measured in
+surviving conjectures per idea, and that three things were missing: the
+right blocks (general-configuration vocabulary; a row model the kernel can
+compute), a role whose deliverable is an argument (the theorist), and a
+board that can be juxtaposed (an index plus a hand-written obstructions
+file). He approved all four, the spec is
+`docs/superpowers/specs/2026-09-07-connections-design.md`, and the Lean
+half is done tonight: run `20260907T161211Z` closed nine of nine ($9.56,
+seventeen minutes) on the vocabulary tier and the row model.
+
+**What I was wrong about, and what caught it.** I told Dib that computed
+facts cannot be nodes because `native_decide` is off the allowlist. True
+of the naive definition and false in general: the kernel has bignum
+acceleration for `Nat` bit operations, so a row model with three such
+operations per step is `decide`-able to depth 5000 in seconds under
+`propext` alone. The correction mattered enough to say aloud, and I did.
+Then my first draft of that model was the mirror image, rule 86, and it
+passed four symmetric checks at depth 5000 before a `decide` against
+`evolve` at depth 6 proved it false. The check now lives in `Basic.lean`.
+Same shape as every "well-formed and wrong" entry in CLAUDE.md: the
+values were true, the conclusion was false, and only a check that could
+have said no caught it.
+
+**What the board can do now.** `rowCell_eq_evolve` (Cadence, opus, 14
+turns, $2.31) licenses `decide` on any row to depth in the thousands, so
+the engine's measurements are seedable as theorems: doubling depths,
+centre-column words, densities over a prefix. `window_count_half` (Vesper,
+opus, 20 turns, $2.48) is the first P2 node that touches the automaton:
+exactly half of all windows grow a black centre after `t` steps, by
+left-permutivity of `t` steps. Neither is novel; the first is a technique
+and the second is the finite form of a published two-line lemma. I said so
+to Dib, who has asked to be told the first time anything is.
+
+**The P2 seeder**, first use of Keel's `--region`, proposed four honest
+count-side nodes and disclaimed rule 30 in every one. Dib asked how a
+theorem about the centre column can say nothing about rule 30; the answer
+is that "about" means "mentions" in one sentence and "distinguishes" in the
+other, and these distinguish rule 30 from nothing. They are plumbing, and
+plumbing is what P2 lacked. Landed as region P2; Emmy has a tier again.
+
+**Process.** The plan ran subagent-driven, five tasks, every review clean,
+one final review on opus that worked all nine statements out by hand and
+found four text fixes and one misfiled object. Keel's title hook blocked
+every prompt in my session for a stretch, which cost one lost review
+report and nothing else; Keel filed and closed it with the mechanism. The
+theorist role and the index are Keel's and Fathom's, in progress.

@@ -388,3 +388,55 @@ Smaller than the S/M estimate suggested — a direct two-line case split on the 
 Import list: `Rule30.Basic`, `Rule30.Proofs.LeftDiagonalPeriodicFromStepOfBlack` (which transitively pulls in `LeftDiagonalRecurrence` and `BoolDrivenPeriodicFromOfReset`) — sufficient, no `Mathlib.Tactic.Ring`/`Order.Ring.Int` needed since everything here is Nat `omega` bookkeeping.
 
 Noted but not acted on: `push_neg` is deprecated in this Mathlib snapshot in favour of `push Not` — still works, just a warning, not worth chasing for a proof this small.
+
+## 2026-09-07T16:14:38Z — rule30_ne_of_left_ne (haiku, proved)
+
+Left-permutivity proof: unfold rule30_eq on both rows, substitute fixed cells, then case-split on all Bool values of c(i-1) and d(i-1). When they match, contradiction with hl; when they differ, simp closes on each of the 4 subcases for d(i) and d(i+1). No served lemmas needed beyond Rule30.Basic. Pattern: for Bool permutivity lemmas, exhaustive case-splitting with simp cleanup is the direct route.
+
+## 2026-09-07T16:15:54Z — rule30_leftPermutive (haiku, proved)
+
+**rule30_leftPermutive (proved)**: Apply the one-step permutivity lemma to left edge. LeftPermutive unfolds to ∀ (c d : Config) (i : ℤ), window hypothesis → difference at i-1 → output differs. Extract c i = d i and c (i+1) = d (i+1) from the window via omega-provable inequalities, then exact rule30_ne_of_left_ne. No induction, no case splits — pure lemma threading and numeric inequalities.
+
+## 2026-09-07T16:23:50Z — evolveFrom_leftPermutive (sonnet, proved)
+
+evolveFrom_leftPermutive (sonnet, proved), first try, no dead ends.
+
+**Route**: a strengthened invariant carried by induction on the step count `s ≤ t`: after `s` steps, `rule30^[s] c` and `rule30^[s] d` agree on the shrunken window `(i - t + s, i + t - s]` and differ at the single point `i - t + s`. At `s = 0` this is exactly the hypothesis; at `s = t` the difference point is `i - t + t = i`, exactly the goal. Proved as a `have key : ∀ s ≤ t, (window agreement) ∧ (difference at i-t+s)` inline inside the theorem, not a separate top-level lemma — matches the style `EvolvePeriodSub.lean` uses (a `have` carrying a pair through induction, rather than a `private lemma` needing all the outer variables re-threaded).
+
+**Step case shape**, mirrors `agree_on_shrinking_window` (`EvolveFromEqOfAgreeOnWindow.lean`) for the agreement half and the diagonal-family proofs for the difference half:
+- Agreement at `s+1`: `rw [Function.iterate_succ_apply', Function.iterate_succ_apply', rule30_eq, rule30_eq]` then three `have`s pulling `rule30^[n] c/d` agreement at `j-1, j, j+1` out of the `s = n` window (all provable by bare `omega` from `hj1 hj2 hs` in context — no cast massaging needed for *inequalities* feeding omega, only for terms that must *exactly match* a later `exact`).
+- Difference at `s+1`: apply the served `rule30_ne_of_left_ne` (plain `Config`/`ℤ` arguments, no `LeftPermutive`-style `Nat`-radius cast to fight) at position `i - t + n + 1`, with the three neighbour facts (`hl0` via `hdf` after a `ring` index shift, `hc0`/`hr0` via `hag` with `omega`-proved bounds).
+
+**The one place exact syntactic matching (not just `omega`) is unavoidable**: the final `exact rule30_ne_of_left_ne ... : rule30 (...) P ≠ rule30 (...) P` must match the *goal's* position term up to defeq, and the goal's own position is `i - t + ((n+1:ℕ):ℤ)` (cast-of-a-sum) while the induction hypothesis `hag`/`hdf` are stated with `(n:ℤ)`, a different but propositionally-equal term. `omega` cannot bridge this because the obligation is an equality of *terms* feeding `exact`, not a provable arithmetic proposition standing alone. Fix, copied verbatim from `EvolvePeriodSub.lean`'s established idiom: `rw [show i - (t:ℤ) + ((n+1:ℕ):ℤ) = i - (t:ℤ) + (n:ℤ) + 1 from by push_cast; ring]` directly on the goal *before* touching anything else, picking the RHS's left-associated `+ (n:ℤ) + 1` grouping and then reusing that exact grouping in every subsequent `have`'s stated type. `rw` finds the pattern reliably because `push_cast; ring` inside the `show ... from` proves the two full terms equal without needing the rewrite itself to guess associativity — the `rw` call only ever needs to match the *literal* LHS I wrote, which I chose to literally equal what elaboration produces from the induction (`i - ↑t + ↑(n+1)`, same operator-tree shape as `i - (t:ℤ) + ((n+1:ℕ):ℤ)`).
+
+**General reusable rule for this whole codebase's induction-on-a-cast-index proofs**: `omega` alone suffices for any inequality goal touching Nat-cast sums (`↑(n+1)`), no `push_cast` needed. But the moment a step needs to hand a term to `exact`/`hag`/`hdf` whose *type* must match the goal exactly, reach for `rw [show <goal's literal cast form> = <convenient form> from by push_cast; ring]` first, and then keep every later `have` in that same convenient form. Import list `Rule30.Basic`, `Rule30.Proofs.Rule30NeOfLeftNe`, `Mathlib.Tactic.Ring` was sufficient — `push_cast` rode in on the `Ring` import as in every other P1 node that has needed it, no separate cast-tactic import required.
+
+Axioms verified via the append-`#print axioms`-then-remove trick: `propext, Quot.sound`, no `Classical.choice` at all — same as `LeftDiagonalPeriodicFromStep`'s Bool-machine proofs, consistent with this being pure constructive index bookkeeping.
+
+## 2026-09-07T16:29:23Z — window_count_half (opus, proved)
+
+First counting node in P1 — no induction, no automaton content beyond one application of the served `evolveFrom_leftPermutive`. Two build cycles total.
+
+**Shape.** `private def flipFirst {t} (w : Fin (2*t+1) → Bool) := fun k => if (k : ℕ) = 0 then !(w k) else w k`. Involutive by `funext k; by_cases h : (k:ℕ) = 0 <;> simp [flipFirst, h]`; injective from involutivity via `congrArg flipFirst` then `rwa [flipFirst_involutive, flipFirst_involutive]`. Then two `ofWindow` lemmas (agreement off the flipped position, difference at it), feed both into `evolveFrom_leftPermutive t _ _ 0`, get a Bool `≠`, turn it into an `↔ ¬` by `revert h; generalize <lhs> = a; generalize <rhs> = b; cases a <;> cases b <;> simp`. Counting is `Finset.card_filter_add_card_filter_not` plus `Finset.card_image_of_injective`.
+
+**Index the flip by `(k : ℕ) = 0`, not by `k = (0 : Fin (2*t+1))`.** Using the `Fin` numeral would drag in `NeZero (2*t+1)` / `Fin.val_zero` bookkeeping for no gain. Writing the branch as `if (k:ℕ) = 0 then !(w k) else w k` — note `!(w k)`, not `!(w 0)` — means no `Fin` literal appears anywhere in the file and every side condition is a plain ℕ/ℤ fact `omega` can chew.
+
+**THE GOTCHA: `omega` silently drops a hypothesis of the form `(⟨e, _⟩ : Fin n).val = 0`.** After `unfold ofWindow flipFirst; split_ifs with h1 h2`, the inner branch hypothesis is `h2 : (⟨(j + ↑t).toNat, _⟩ : Fin (2*t+1)).val = 0`. `omega` does not error on it — it just ignores it as a non-arithmetic atom and then fails on the remaining constraints, so the error message shows a counterexample over `j` and `↑t` alone with no hint that a hypothesis went missing. Fix is one line, using proof irrelevance + defeq of `Fin.val` on a `mk`:
+```lean
+have h3 : (j + (t : ℤ)).toNat = 0 := h2   -- or ¬ (… = 0) := h2 in the negated branch
+omega
+```
+Restating the hypothesis at the reduced type is accepted by `exact`-level defeq and hands `omega` an `Int.toNat` it *does* special-case. **Generalise: when `omega` fails and the printed counterexample mentions fewer atoms than you have hypotheses, the missing hypothesis was dropped, not refuted — restate it at a type omega understands rather than looking for more arithmetic facts.** This is the same family as [[not-evolve-period-adjacent]]'s note that omega handles `Int.toNat` fine; the wrinkle is that it has to *see* the `toNat` and a `Fin.val` wrapper hides it.
+
+**`unfold ofWindow flipFirst` then `split_ifs` is the whole `ofWindow` idiom.** `ofWindow` is a `dite` whose condition does not mention `w`, so the LHS and RHS of any `ofWindow w' i = ofWindow w i` goal share that condition and `split_ifs` splits it once, not twice. Goal order came out as (cond-true & inner-true), (cond-true & inner-false), (cond-false) — the two `rfl` branches close with bare `rfl` because the `Fin` mk proof terms differ only in proof and are defeq.
+
+**Counting lemma names in this Mathlib snapshot** (checked by grep before writing, which saved a cycle):
+- `Finset.card_filter_add_card_filter_not (p) [DecidablePred p] [∀ x, Decidable (¬ p x)] : #(s.filter p) + #(s.filter fun a ↦ ¬ p a) = #s`, with `s` implicit — pass it as `(s := Finset.univ)`. NOT `filter_card_add_filter_neg_card_eq_card`, which the brief named and which does not exist here.
+- `Finset.card_image_of_injective (s) (H : Injective f) : #(s.image f) = #s`.
+- `Fintype.card_pi_const (α) (n) : Fintype.card (Fin n → α) = Fintype.card α ^ n` — this is the one to use, NOT `Fintype.card_fun` (brief's suggestion, not present). It lives in `Mathlib.Data.Fintype.BigOperators`, which `Rule30.Basic` does not import; add it explicitly.
+
+**Do NOT open the proof with `classical`.** `blackWindowCount` is a `Finset.filter` carrying the `Decidable` instance elaboration picked at its definition site; a `classical` in the proof introduces a *different* instance for the filter you build, and then the final `unfold blackWindowCount; omega` sees two atoms that print identically but do not unify. Letting `instDecidableEqBool` / `instDecidableNot` be found normally makes the goal's filter card and `hsum`'s filter card the same term and `omega` closes it. (Not learned the hard way here — avoided deliberately — but it is the obvious trap in any node that unfolds one of `Basic.lean`'s `noncomputable` counting defs.)
+
+Final arithmetic: `have hpow : (2:ℕ)^(2*t+1) = 2^(2*t)*2 := pow_succ 2 (2*t)` then `omega` treats `2^(2*t)` as an atom and finishes. Same atom-hoisting idiom as [[isEventuallyPeriodic-of-periodic-step]]'s `hmul`.
+
+Imports: `Rule30.Basic`, `Rule30.Proofs.EvolveFromLeftPermutive`, `Mathlib.Data.Fintype.BigOperators`, `Mathlib.Tactic`.

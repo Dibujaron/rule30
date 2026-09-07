@@ -1,0 +1,15 @@
+
+node      rule30_leftPermutive
+identity  Vesper
+model     haiku
+outcome   proved
+cost      $0.22
+turns     13
+estimate  S
+session   2b6858e1-1ef1-484e-968e-229e307680e3
+log       c:/Users/dibuj/dev/rule30/runs/20260907T161211Z/rule30_leftPermutive-1
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Vesper (#2b3a67): closed 33, abandoned 1, $13.19, calibration 28/33

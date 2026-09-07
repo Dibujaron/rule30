@@ -1,0 +1,15 @@
+
+node      centerColumn_density_tendsto_half_iff_excess
+identity  Marrow
+model     sonnet
+outcome   proved
+cost      $0.94
+turns     22
+estimate  M
+session   1b1d0e0e-9b38-4d6a-9477-b6f2ef870af3
+log       c:/Users/dibuj/dev/rule30/runs/20260907T164112Z/centerColumn_density_tendsto_half_iff_excess-1
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Marrow (#5c7a89): closed 1, abandoned 0, $0.94, calibration 1/1
