@@ -122,6 +122,11 @@ def rowNat : ℕ → ℕ
   | t + 1 => let r := rowNat t; r ^^^ ((2 * r) ||| (4 * r))
 ```
 
+**Superseded.** The step above is the mirror image (rule 86): with the cell
+at position `x` at bit `x + t`, rule 30 is `(4 * r) ^^^ ((2 * r) ||| r)`. The
+landed definition in `Rule30/Basic.lean` and crystal 20 carry the correct
+form; a kernel `decide` against `evolve` caught this on 2026-09-07.
+
 with the cell at position `x` of row `t` at bit `x + t`. Spiked on
 2026-09-07 in Rowan's scratchpad: at depth 5000, `decide` proves the left
 edge black, the right edge black, the row below `2 ^ (2t+1)`, and the value
