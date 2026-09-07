@@ -52,6 +52,10 @@ type Run {
     killed: Bool,
     events: String,
     verify_calls: Int,
+    /// What the injected annotator was handed: one `<node>\t<statement>`
+    /// line per call, so a test can assert both that it ran and what it was
+    /// told to write.
+    annotations: String,
     elapsed_ms: Int,
   )
 }
@@ -75,6 +79,7 @@ fn go(s: Scenario) -> Run {
   let marker_path = dir <> "/eof"
   let killed_path = dir <> "/killed"
   let calls_path = dir <> "/verify-calls"
+  let annotations_path = dir <> "/annotations"
   let assert Ok(_) = simplifile.write(script_path, script_json(s.script))
   envoy.set("HARNESS_FAKE_SCRIPT", script_path)
   envoy.set("HARNESS_FAKE_MARKER", marker_path)
@@ -99,6 +104,13 @@ fn go(s: Scenario) -> Run {
   let deps =
     worker.Deps(
       verify: scripted_verifier(calls_path, s.verdicts),
+      annotate: fn(node, statement) {
+        simplifile.append(
+          annotations_path,
+          node.id <> "\t" <> statement <> "\n",
+        )
+        |> result.map_error(simplifile.describe_error)
+      },
       task_message: "Prove it.",
     )
 
@@ -117,6 +129,7 @@ fn go(s: Scenario) -> Run {
     },
     events: simplifile.read(l.dir <> "/events.jsonl") |> result.unwrap(""),
     verify_calls: line_count(calls_path),
+    annotations: simplifile.read(annotations_path) |> result.unwrap(""),
     elapsed_ms: log.mono_ms() - started,
   )
 }
@@ -410,7 +423,11 @@ pub fn a_failed_verdict_goes_back_and_the_second_claim_closes_test() {
         ]),
         verdicts: [
           verify.BuildFailed("unknown identifier 'foo'"),
-          verify.Verified(["propext"], "'harness_check' depends on axioms"),
+          verify.Verified(
+            ["propext"],
+            "Statements.harness_probe : True",
+            "'harness_check' depends on axioms",
+          ),
         ],
       ),
     )
@@ -419,6 +436,11 @@ pub fn a_failed_verdict_goes_back_and_the_second_claim_closes_test() {
   assert r.verify_calls == 2
   assert r.attempt.session_id == "sess-a"
   assert string.contains(r.attempt.notes, "VERIFIED")
+  // The verified claim, and only that one, put the checked statement into
+  // the proof note — the failed verdict wrote nothing.
+  assert r.annotations == "harness_probe\tStatements.harness_probe : True\n"
+  assert string.contains(r.events, "\"annotate\"")
+  assert string.contains(r.events, "\"written\":true")
   let assert Some(report) = r.report
   assert report.outcome == "proved"
   assert r.eof
@@ -485,7 +507,13 @@ pub fn a_rate_limited_turn_whose_proof_verifies_still_closes_test() {
             result_line("sess-v", False, "proved"),
           ],
         ]),
-        verdicts: [verify.Verified(["propext"], "depends on axioms: [propext]")],
+        verdicts: [
+          verify.Verified(
+            ["propext"],
+            "Statements.harness_probe : True",
+            "depends on axioms: [propext]",
+          ),
+        ],
       ),
     )
   // A pause is not a reason to throw away a proof that builds: the claim is
@@ -493,6 +521,9 @@ pub fn a_rate_limited_turn_whose_proof_verifies_still_closes_test() {
   assert r.attempt.outcome == dag.Closed
   assert r.verify_calls == 1
   assert string.contains(r.attempt.notes, "VERIFIED")
+  // The parked path closes through the same door as the ordinary one, so
+  // the note is annotated here too.
+  assert r.annotations == "harness_probe\tStatements.harness_probe : True\n"
   assert r.eof
 }
 
@@ -513,6 +544,9 @@ pub fn a_rate_limited_turn_whose_proof_fails_is_parked_test() {
   assert r.attempt.outcome == dag.RateLimited
   assert r.attempt.session_id == "sess-w"
   assert string.contains(r.attempt.notes, "sess-w")
+  // A failed verdict annotates nothing: the note only ever carries a
+  // statement the check file actually printed for a verified proof.
+  assert r.annotations == ""
   // Adjudicated once, and no verdict sent back: the window is throttling
   // us, so another turn would spend it for nothing.
   assert r.verify_calls == 1
@@ -632,7 +666,11 @@ pub fn every_line_the_harness_sends_is_logged_test() {
         ]),
         verdicts: [
           verify.BuildFailed("unknown identifier 'foo'"),
-          verify.Verified(["propext"], "depends on axioms: [propext]"),
+          verify.Verified(
+            ["propext"],
+            "Statements.harness_probe : True",
+            "depends on axioms: [propext]",
+          ),
         ],
       ),
     )

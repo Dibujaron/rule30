@@ -47,7 +47,10 @@ pub fn lifts_the_declaration_verbatim_test() {
 
 pub fn lifts_a_multi_line_declaration_test() {
   let assert Ok(d) =
-    seed.declaration_without_proof(statements(), "evolve_eq_false_of_outside_cone")
+    seed.declaration_without_proof(
+      statements(),
+      "evolve_eq_false_of_outside_cone",
+    )
   assert string.contains(d, "theorem evolve_eq_false_of_outside_cone")
   assert string.ends_with(d, ":= by")
   // The type wraps, so a one-line assumption would have silently truncated.
@@ -55,8 +58,7 @@ pub fn lifts_a_multi_line_declaration_test() {
 }
 
 pub fn does_not_match_a_longer_name_test() {
-  let source =
-    "theorem evolve_left_edge_two (t : ℕ) : True := by\n  sorry\n"
+  let source = "theorem evolve_left_edge_two (t : ℕ) : True := by\n  sorry\n"
   assert seed.declaration_without_proof(source, "evolve_left_edge")
     == Error(Nil)
 }
@@ -70,7 +72,10 @@ pub fn missing_statement_is_reported_test() {
 
 pub fn check_source_never_imports_the_statement_file_test() {
   let src =
-    seed.check_source("theorem t : True := by", Route("trivial", ["Mathlib.Tactic"]))
+    seed.check_source(
+      "theorem t : True := by",
+      Route("trivial", ["Mathlib.Tactic"]),
+    )
   assert string.starts_with(src, "import Rule30.Basic\n")
   assert string.contains(src, "import Mathlib.Tactic")
   assert string.contains(src, "  trivial")
@@ -200,7 +205,10 @@ fn check_w(expression: String, range: String) -> seed.WitnessVerdict {
 /// and t < 12 is inside the tractable range measured on 2026-09-06.
 pub fn a_true_witness_comes_back_holding_test() {
   let assert seed.WitnessHolds(range) =
-    check_w("(List.range 12).all (fun t => evolve t (-(t:Int)) == true)", "t < 12")
+    check_w(
+      "(List.range 12).all (fun t => evolve t (-(t:Int)) == true)",
+      "t < 12",
+    )
   assert range == "t < 12"
 }
 
@@ -304,8 +312,7 @@ pub fn a_proposal_without_a_route_or_witness_decodes_test() {
 /// dropped proposal is a node that quietly does not get seeded, and that is
 /// indistinguishable from a seeder that wrote fewer proposals.
 pub fn a_malformed_proposal_names_its_index_and_does_not_drop_test() {
-  let text =
-    "{\"proposals\":[{" <> full_proposal <> "},{\"id\":\"bad\"}]}"
+  let text = "{\"proposals\":[{" <> full_proposal <> "},{\"id\":\"bad\"}]}"
   let assert Error(reason) = seed.decode_proposals(text)
   assert string.contains(does: reason, contain: "1")
   assert string.contains(does: reason, contain: "bad")
@@ -411,7 +418,12 @@ pub fn the_report_summarises_what_needs_attention_test() {
 // section does not fail anything — it produces a worse tier a day later, which
 // is the least checkable failure this project has.
 
-fn closed_node(id: String, size: dag.Size, model: String, cost: Float) -> dag.Node {
+fn closed_node(
+  id: String,
+  size: dag.Size,
+  model: String,
+  cost: Float,
+) -> dag.Node {
   dag.Node(
     id:,
     region: "P1",
@@ -444,7 +456,7 @@ fn brief() -> String {
   seed.brief(
     closed: [
       closed_node("evolve_left_edge", dag.M, "sonnet", 0.36),
-      closed_node("centerColumn_zero", dag.S, "haiku", 0.10),
+      closed_node("centerColumn_zero", dag.S, "haiku", 0.1),
     ],
     notes: [#("EvolveLeftEdge.lean", "**What this says.** The left edge is 1.")],
     explorer_readme: "the BigInt engine",
@@ -531,7 +543,8 @@ pub fn a_proposal_can_say_what_it_does_not_prove_test() {
     seed.decode_proposals(proposal_json(
       "\"id\":\"a\",\"lean_name\":\"a\",\"statement\":\"theorem a : True := by\\n  sorry\",\"reason\":\"r\",\"disclaims\":\"This does NOT prove P1: the hypothesis is the whole difficulty.\"",
     ))
-  assert p.disclaims == "This does NOT prove P1: the hypothesis is the whole difficulty."
+  assert p.disclaims
+    == "This does NOT prove P1: the hypothesis is the whole difficulty."
 }
 
 pub fn a_proposal_without_a_disclaimer_decodes_to_empty_test() {
@@ -634,7 +647,9 @@ pub fn a_proof_file_with_no_note_is_skipped_test() {
 /// prose shown to a seeder; a note that is secretly the whole proof would
 /// quietly blow up the brief and teach nothing.
 pub fn an_unterminated_note_is_not_a_note_test() {
-  assert seed.note_of("/-!\n**What this says.** oops\ntheorem t : True := trivial\n")
+  assert seed.note_of(
+      "/-!\n**What this says.** oops\ntheorem t : True := trivial\n",
+    )
     == Error(Nil)
 }
 

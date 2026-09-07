@@ -150,17 +150,21 @@ pub fn prove_one(
 
 /// What `run` reaches outside itself for, so a test can hand it stand-ins:
 /// the verifier (given the run's build lock, since a verification is a
-/// `lake build` too and must queue with the workers') and the proofs-index
-/// writer.
+/// `lake build` too and must queue with the workers'), the annotator that
+/// writes a verified statement into its proof note, and the proofs-index
+/// writer. The last two both write under `Rule30/`, which is why a test
+/// must be able to replace them.
 pub type Env {
   Env(
     verifier: fn(Subject(lock.Msg)) -> fn(dag.Node) -> verify.Verdict,
+    annotate: fn(dag.Node, String) -> Result(Nil, String),
     index: fn(dag.Node) -> Result(Nil, String),
   )
 }
 
-/// The real thing: `verify.verify` under the build lock, and
-/// `Rule30/Proofs.lean`.
+/// The real thing: `verify.verify` under the build lock, `verify.annotate`
+/// outside it — it edits one comment block, and `lake` will re-elaborate
+/// that one module on its next build — and `Rule30/Proofs.lean`.
 pub fn live_env(cfg: config.Config) -> Env {
   Env(
     verifier: fn(build_lock: Subject(lock.Msg)) {
@@ -178,6 +182,9 @@ pub fn live_env(cfg: config.Config) -> Env {
             )
         }
       }
+    },
+    annotate: fn(node, statement) {
+      verify.annotate(cfg.repo_root, node, statement)
     },
     index: fn(node) { write_index(cfg, node) },
   )
@@ -491,7 +498,12 @@ fn start(
         )
       let d = dag.update(state.d, claimed)
       use _ <- result.try(dag.save(d, cfg.dag_path))
-      let deps = worker.Deps(verify: run_.verify, task_message:)
+      let deps =
+        worker.Deps(
+          verify: run_.verify,
+          annotate: run_.env.annotate,
+          task_message:,
+        )
       let done = run_.done
       let pid =
         process.spawn_unlinked(fn() {

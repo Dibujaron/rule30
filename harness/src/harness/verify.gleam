@@ -7,7 +7,17 @@
 //// axiom beyond the three Lean/Mathlib allows. The check theorem is written
 //// fresh each time under `<repo>/harness/build/checks/`, which is
 //// git-ignored.
+////
+//// The same check file also prints the statement's signature, and
+//// `annotate` writes that into the worker's `/-!` note once the verdict is
+//// in. The note is the one artifact a human reads and the one nothing
+//// adjudicates: on 2026-09-06 two verified proofs carried notes that were
+//// wrong about what they proved, in opposite directions. The harness's
+//// block is the signature as Lean printed it and not a sentence about it,
+//// because a type cannot be over-read into a claim about its own hypotheses
+//// and English about a type can. See `nothing-checks-what-a-proof-note-claims`.
 
+import gleam/bool
 import gleam/list
 import gleam/option.{type Option}
 import gleam/result
@@ -18,8 +28,14 @@ import simplifile
 
 /// What verification found. `Verified` is the only success; every other
 /// variant carries enough to explain the failure back to the worker.
+///
+/// `statement` is the seeded statement's signature as `#check` printed it
+/// from the check file — what `annotate` writes into the proof note. It is
+/// `""` when the output had no such line, which is a harness defect and
+/// never the worker's: the proof still verified, and the annotation is
+/// skipped rather than the node failed.
 pub type Verdict {
-  Verified(axioms: List(String), output: String)
+  Verified(axioms: List(String), statement: String, output: String)
   ForbiddenImport(line: String)
   ContainsSorry(line: String)
   BuildFailed(output: String)
@@ -77,15 +93,41 @@ fn verify_check(repo_root: String, lake: String, node: dag.Node) -> Verdict {
   case shell.run(lake, ["env", "lean", check_path], repo_root, 600_000) {
     Error(msg) -> CheckFailed(msg)
     Ok(shell.Run(status:, output:)) if status != 0 -> CheckFailed(output)
-    Ok(shell.Run(output:, ..)) -> judge_axioms(output)
+    Ok(shell.Run(output:, ..)) -> judge_axioms(node, output)
   }
 }
 
-fn judge_axioms(output: String) -> Verdict {
+fn judge_axioms(node: dag.Node, output: String) -> Verdict {
   let axioms = parse_axioms(output)
   case list.all(axioms, list.contains(allowed_axioms, _)) {
-    True -> Verified(axioms, output)
+    True -> Verified(axioms, statement_of(output, node.lean_name), output)
     False -> BadAxioms(axioms, output)
+  }
+}
+
+/// The `#check Statements.<lean_name>` message out of the check file's
+/// output: the line that opens with the statement's name, plus the indented
+/// lines Lean wraps a long signature onto. `""` if there is no such line.
+///
+/// Measured against the real toolchain on 2026-09-07: `lean` on a file
+/// prints an info message bare, with no `path:line:col:` prefix, and the
+/// axioms line follows it. The name must be followed by a space or a colon
+/// so that a statement whose name extends another's is not mistaken for it.
+pub fn statement_of(output: String, lean_name: String) -> String {
+  let name = "Statements." <> lean_name
+  let opens = fn(line) {
+    string.starts_with(line, name <> " ")
+    || string.starts_with(line, name <> ":")
+  }
+  case list.drop_while(string.split(output, "\n"), fn(l) { !opens(l) }) {
+    [] -> ""
+    [first, ..more] -> {
+      let continuation =
+        list.take_while(more, fn(line) {
+          string.starts_with(line, " ") && string.trim(line) != ""
+        })
+      string.join([first, ..continuation], "\n") |> string.trim_end
+    }
   }
 }
 
@@ -202,5 +244,89 @@ pub fn check_source(node: dag.Node) -> String {
   <> " := @"
   <> node.lean_name
   <> "\n"
+  <> "#check Statements."
+  <> node.lean_name
+  <> "\n"
   <> "#print axioms harness_check\n"
+}
+
+// --- the annotation -----------------------------------------------------------
+
+/// The line that opens the harness's block in a proof note. It names the
+/// writer and nothing else: every sentence of English the harness adds to a
+/// note is one more proposition a reader can misread, so the block is a
+/// label and a signature. It is also the marker `annotated` strips before
+/// writing, so re-verifying a node replaces the block instead of stacking
+/// a second one.
+pub const annotation_heading = "**Checked type** (written by the harness after `lake build` and the `type_of%` check passed, not by the worker):"
+
+/// Write `statement` into `node`'s proof file, inside its `/-!` note, once
+/// the proof has verified. Nothing outside the note changes, and text that
+/// could open or close a comment is refused, so the file that was verified
+/// and the file on disk differ only inside one comment block.
+pub fn annotate(
+  repo_root: String,
+  node: dag.Node,
+  statement: String,
+) -> Result(Nil, String) {
+  let path = repo_root <> "/" <> dag.proof_path(node)
+  use source <- result.try(
+    simplifile.read(path)
+    |> result.map_error(fn(e) {
+      "could not read " <> path <> ": " <> simplifile.describe_error(e)
+    }),
+  )
+  use updated <- result.try(annotated(source, statement))
+  simplifile.write(path, updated)
+  |> result.map_error(fn(e) {
+    "could not write " <> path <> ": " <> simplifile.describe_error(e)
+  })
+}
+
+/// `source` with the harness's block as the last thing inside its first
+/// `/-!` note: `annotation_heading`, then `statement` in a fenced `lean`
+/// block. An existing block is replaced, so this is idempotent. Everything
+/// outside the note — imports, the theorem, the proof — comes back byte for
+/// byte.
+///
+/// `Error` rather than a guess for a file with no note, a note that is never
+/// closed, an empty statement (the parser found no `#check` line: a harness
+/// defect the file should not carry), and a statement containing `/-`, `-/`
+/// or a code fence — Lean's block comments nest, so any of those could move
+/// where the comment ends, and this write must never be able to change what
+/// the file means.
+pub fn annotated(source: String, statement: String) -> Result(String, String) {
+  use <- bool.guard(
+    string.trim(statement) == "",
+    Error("no statement to write: the check output had no #check line"),
+  )
+  use <- bool.guard(
+    string.contains(statement, "/-")
+      || string.contains(statement, "-/")
+      || string.contains(statement, "```"),
+    Error("the statement contains comment or fence delimiters; not written"),
+  )
+  use #(before, after) <- result.try(
+    string.split_once(source, "/-!")
+    |> result.replace_error("the proof file has no /-! note to annotate"),
+  )
+  use #(body, rest) <- result.try(
+    string.split_once(after, "-/")
+    |> result.replace_error("the proof file's /-! note is never closed"),
+  )
+  let worker_text = case string.split_once(body, annotation_heading) {
+    Ok(#(theirs, _)) -> theirs
+    Error(Nil) -> body
+  }
+  let block =
+    annotation_heading <> "\n```lean\n" <> string.trim(statement) <> "\n```\n"
+  Ok(
+    before
+    <> "/-!"
+    <> string.trim_end(worker_text)
+    <> "\n\n"
+    <> block
+    <> "-/"
+    <> rest,
+  )
 }

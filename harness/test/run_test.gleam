@@ -134,14 +134,18 @@ fn fixture_with_roster(
   Fixture(cfg:, dir:, index_path: dir <> "/indexed.txt")
 }
 
-/// An environment whose verifier always says `verdict` and whose index
-/// writer appends the node id to a file instead of touching the real
-/// `Rule30/Proofs.lean`.
+/// An environment whose verifier always says `verdict`, whose annotator
+/// writes nothing, and whose index writer appends the node id to a file
+/// instead of touching the real `Rule30/Proofs.lean`.
 fn env(f: Fixture, verdict: verify.Verdict) -> dispatch.Env {
-  dispatch.Env(verifier: fn(_lock) { fn(_node) { verdict } }, index: fn(node) {
-    simplifile.append(f.index_path, node.id <> "\n")
-    |> result.map_error(simplifile.describe_error)
-  })
+  dispatch.Env(
+    verifier: fn(_lock) { fn(_node) { verdict } },
+    annotate: fn(_node, _statement) { Ok(Nil) },
+    index: fn(node) {
+      simplifile.append(f.index_path, node.id <> "\n")
+      |> result.map_error(simplifile.describe_error)
+    },
+  )
 }
 
 fn init_line(session_id: String) -> String {
@@ -233,7 +237,14 @@ pub fn two_slots_take_both_leaves_and_a_close_opens_the_next_test() {
     dispatch.run_with(
       f.cfg,
       Plan(max_attempts: 3, concurrency: 2),
-      env(f, verify.Verified(["propext"], "'harness_check' depends on axioms")),
+      env(
+        f,
+        verify.Verified(
+          ["propext"],
+          "Statements.harness_probe : True",
+          "'harness_check' depends on axioms",
+        ),
+      ),
     )
   assert node_after(f, "probe_one").status == dag.Proved
   assert node_after(f, "probe_two").status == dag.Proved
@@ -404,7 +415,14 @@ pub fn a_second_persona_is_minted_when_the_only_one_is_busy_test() {
     dispatch.run_with(
       f.cfg,
       Plan(max_attempts: 2, concurrency: 2),
-      env(f, verify.Verified(["propext"], "'harness_check' depends on axioms")),
+      env(
+        f,
+        verify.Verified(
+          ["propext"],
+          "Statements.harness_probe : True",
+          "'harness_check' depends on axioms",
+        ),
+      ),
     )
   assert string.contains(text, "2 attempt(s)")
   // The roster grew by one, and the newcomer's notebook opened in its voice.
@@ -455,7 +473,14 @@ pub fn a_stop_file_starts_no_further_attempts_test() {
     dispatch.run_with(
       f.cfg,
       Plan(max_attempts: 3, concurrency: 2),
-      env(f, verify.Verified(["propext"], "'harness_check' depends on axioms")),
+      env(
+        f,
+        verify.Verified(
+          ["propext"],
+          "Statements.harness_probe : True",
+          "'harness_check' depends on axioms",
+        ),
+      ),
     )
   let _ = simplifile.delete(f.cfg.repo_root <> "/STOP")
   // Nothing started. The plan allowed three attempts and two leaves were
@@ -483,7 +508,14 @@ pub fn no_stop_file_means_the_run_proceeds_test() {
     dispatch.run_with(
       f.cfg,
       Plan(max_attempts: 1, concurrency: 1),
-      env(f, verify.Verified(["propext"], "'harness_check' depends on axioms")),
+      env(
+        f,
+        verify.Verified(
+          ["propext"],
+          "Statements.harness_probe : True",
+          "'harness_check' depends on axioms",
+        ),
+      ),
     )
   assert node_after(f, "probe_one").status == dag.Proved
 }
