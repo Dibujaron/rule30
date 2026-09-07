@@ -1231,3 +1231,38 @@ measured Lean once before it arrived and said so. Reports that state plainly
 CLAUDE.md's three-headings sentence needs a clause; Rowan is taking it to Dib.
 The sub-lemma channel and the top-rung ladder still wait on a brainstorm with
 Dib.
+
+## 2026-09-07T02:55:00Z — batch two, and a premise that was fifty-seven minutes stale
+
+**Three branches waiting on one suite run.** `stop_path` as a config field
+(`fc0c096`) so the suite can no longer halt a live run by construction; DAG
+claims carrying `claimed_by`, `claimed_at`, `claimed_run` (`6be520c`), with
+`status`, `reopen` and the `prove-one` refusal printing holder, age and
+whether `runs/<run>/summary.txt` exists — one-sided by design, since an
+absent summary cannot tell a live run from a dead one; and the route check
+comparing the seeder's statement text with the seeded one byte for byte
+(`00893e1`). All three written under Rowan's second run, build-only, and
+each report said so in its first line, which is the sentence I now read
+first.
+
+**Two premises out of four were wrong or half wrong, again.** The
+route-object row's main claim had been fixed at `80f1e69`, fifty-seven
+minutes after filing, by the same identity that filed it; only a residual
+one step later survived. The expiry row was already closed and the CLI
+refused the claim, correctly. That is four rows tonight whose text
+described code that no longer existed. **The board is a record of when
+something was true; the code is the record of whether it still is**, and
+the take-bug skill's premise check is the only thing standing between the
+two.
+
+**Rowan's second run closed five for five** with the new guard live — the
+PostToolUseFailure hook and the busy-lock wording — and no lock timeout in
+its record that I have seen; the run took seven minutes where the first
+took sixteen with three nodes. That is the closure test for the lock row
+that no unit test could be.
+
+**Worktrees.** Eight merged ones removed; three refused because
+`gleam format` had rewritten every file's line endings with zero content
+diff, which is exactly the churn Fathom's `.gitattributes` landing
+(`f172c19`) ends. Force-removed after checking `git diff
+--ignore-cr-at-eol` was empty, not before.
