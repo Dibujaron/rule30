@@ -6,6 +6,7 @@
 //// A worker writes only its one proof file; the notebook, the journal and
 //// the DAG are written here, from the worker's report, verbatim.
 
+import gleam/dynamic/decode
 import gleam/erlang/process.{type Pid, type Subject}
 import gleam/int
 import gleam/io
@@ -131,6 +132,7 @@ pub fn prove_one(
       g,
       l,
     )
+  let attempt = attribute(l, node_id, attempt)
   let d = dag.update(d, record(claimed, attempt))
   use _ <- result.try(dag.save(d, cfg.dag_path))
   use _ <- result.try(case attempt.outcome {
@@ -162,6 +164,13 @@ pub type Env {
   )
 }
 
+/// What the verifier says when it could not run at all because a sibling
+/// worker held the build lock for its whole wait. It is a `BuildFailed` only
+/// because that is the verdict that reaches the worker as text; the proof
+/// was never built. `attribute` matches this text in the attempt's `verify`
+/// events, so a change here must keep the two in step.
+pub const lock_held_message = "the build lock was held by another worker for ten minutes"
+
 /// The real thing: `verify.verify` under the build lock, `verify.annotate`
 /// outside it — it edits one comment block, and `lake` will re-elaborate
 /// that one module on its next build — and `Rule30/Proofs.lean`.
@@ -176,10 +185,7 @@ pub fn live_env(cfg: config.Config) -> Env {
             lock.release(build_lock, holder)
             verdict
           }
-          False ->
-            verify.BuildFailed(
-              "the build lock was held by another worker for ten minutes",
-            )
+          False -> verify.BuildFailed(lock_held_message)
         }
       }
     },
@@ -571,6 +577,7 @@ fn returned(
     dag.get(state.d, flight.node_id)
     |> result.replace_error("`" <> flight.node_id <> "` vanished from the DAG"),
   )
+  let attempt = attribute(flight.attempt_log, node.id, attempt)
   let recorded = record(node, attempt)
   let d = dag.update(state.d, recorded)
   use _ <- result.try(dag.save(d, cfg.dag_path))
@@ -654,6 +661,30 @@ fn crashed(
       skip: [node.id, ..state.skip],
     ),
   )
+}
+
+/// The tail of a status row: which models have failed at this node, and
+/// which attempts the harness broke, e.g. ` failed=haiku,sonnet
+/// harness=opus`. Empty when there is nothing to say. `attempts=3` alone
+/// reads as three verdicts on the node; with the rungs beside it a reader
+/// can see that two of them were the ladder's cheap probes and discount
+/// them by eye.
+pub fn rungs_tried(n: dag.Node) -> String {
+  let models = fn(label: String, keep: fn(dag.Outcome) -> Bool) {
+    case
+      list.filter_map(n.attempts, fn(a) {
+        case keep(a.outcome) {
+          True -> Ok(a.model)
+          False -> Error(Nil)
+        }
+      })
+    {
+      [] -> ""
+      ms -> " " <> label <> "=" <> string.join(ms, ",")
+    }
+  }
+  models("failed", burns_a_rung)
+  <> models("harness", fn(o) { o == dag.HarnessFailed })
 }
 
 fn run_summary(state: RunState) -> String {
@@ -845,6 +876,7 @@ pub fn status(cfg: config.Config) -> Result(String, String) {
       <> string.pad_end(n.region, 5, " ")
       <> "attempts="
       <> int.to_string(list.length(n.attempts))
+      <> rungs_tried(n)
     })
   let leaf_line = fn(n: dag.Node) {
     "  "
@@ -1401,15 +1433,128 @@ fn summary(
 /// A `RateLimited` or `TimedOut` attempt is a pause, not a verdict on the
 /// model — the spec's line is that nothing is lost to a rate limit. Counting
 /// one would escalate the ladder for free and, at an `L` node whose ladder
-/// is one rung long, abandon the node outright.
+/// is one rung long, abandon the node outright. A `HarnessFailed` attempt is
+/// not a verdict on anything: the harness broke it, and escalating on it
+/// would manufacture the very evidence of difficulty it does not carry.
 pub fn failed_attempts(node: dag.Node) -> Int {
-  node.attempts
-  |> list.count(fn(a) {
-    case a.outcome {
-      dag.GaveUp | dag.BudgetExhausted -> True
-      dag.Closed | dag.Reduced | dag.RateLimited | dag.TimedOut -> False
+  list.count(node.attempts, fn(a) { burns_a_rung(a.outcome) })
+}
+
+fn burns_a_rung(o: dag.Outcome) -> Bool {
+  case o {
+    dag.GaveUp | dag.BudgetExhausted -> True
+    dag.Closed
+    | dag.Reduced
+    | dag.RateLimited
+    | dag.TimedOut
+    | dag.HarnessFailed -> False
+  }
+}
+
+/// Re-read a finished attempt against what the harness's own components
+/// wrote about it, and mark it `HarnessFailed` if the harness is the reason
+/// it failed. Called once per attempt end, before the attempt is folded into
+/// the DAG, so the ladder and the scorecard never see the original outcome.
+///
+/// The guard and the verifier are the witnesses, not the worker: a worker
+/// beaten by a harness defect it mistook for a rule files no complaint, so
+/// the signal has to be derived from outside the session. Exactly these
+/// count, and each is read from the attempt's `events.jsonl`:
+///
+/// - a `guard` row whose denial means contention
+///   (`guard_event.BuildLockTimeout`, read back through `guard_contention`)
+///   — the worker's one permitted build was refused because a sibling held
+///   the lock, which is not a rule and not the worker's doing;
+/// - the attempt's last `verify` row carrying `lock_held_message` — the
+///   verifier never built the proof, so its "failed" verdict, and the
+///   rounds the worker spent answering it, were about the lock.
+///
+/// Only a `GaveUp` or `BudgetExhausted` attempt is re-read: those are the
+/// two outcomes that spend a rung and score calibration, so they are the
+/// two a harness defect can corrupt. A `Closed` attempt with a lock timeout
+/// in its history closed anyway; a pause stays a pause. Anything not listed
+/// above — a `not_permitted` or `not_writable` denial, a real build error,
+/// a worker that stopped reporting — is scored as difficulty by default,
+/// because it is either the worker's doing or indistinguishable from it.
+pub fn attribute(
+  l: log.Log,
+  node_id: String,
+  attempt: dag.Attempt,
+) -> dag.Attempt {
+  case burns_a_rung(attempt.outcome) {
+    False -> attempt
+    True ->
+      case harness_fault(l, node_id) {
+        None -> attempt
+        Some(reason) ->
+          dag.Attempt(
+            ..attempt,
+            outcome: dag.HarnessFailed,
+            notes: "harness failed: "
+              <> reason
+              <> ". This attempt says nothing about the node; the worker's own ending was "
+              <> dag.outcome_to_string(attempt.outcome)
+              <> ".\n"
+              <> attempt.notes,
+          )
+      }
+  }
+}
+
+/// The first harness-side signal on record for this attempt, as a phrase
+/// for the attempt's notes, or `None` if the log holds nothing that counts.
+fn harness_fault(l: log.Log, node_id: String) -> Option(String) {
+  case list.first(guard_contention(l, node_id)) {
+    Ok(d) ->
+      Some(
+        "the guard refused `"
+        <> d.attempted
+        <> "` with "
+        <> guard_event.denial_slug(d.denial),
+      )
+    Error(Nil) ->
+      case list.last(verify_verdicts(l, node_id)) {
+        Ok(verdict) ->
+          case string.contains(verdict, lock_held_message) {
+            True ->
+              Some("the verifier's last verdict was that " <> lock_held_message)
+            False -> None
+          }
+        Error(Nil) -> None
+      }
+  }
+}
+
+/// The verdict text of every `verify` row the worker logged for this node,
+/// in the order they happened. Every line is decoded and the `kind` and
+/// `node` fields are compared as values, not scanned for as text, for the
+/// reason `guard_denials` gives. Empty when the log does not exist.
+pub fn verify_verdicts(l: log.Log, node_id: String) -> List(String) {
+  case simplifile.read(l.dir <> "/events.jsonl") {
+    Error(_) -> []
+    Ok(text) ->
+      text
+      |> string.split("\n")
+      |> list.filter_map(fn(line) {
+        json.parse(line, verify_row_decoder(node_id))
+        |> result.replace_error(Nil)
+        |> result.try(option.to_result(_, Nil))
+      })
+  }
+}
+
+/// `Some(verdict)` for a `verify` row about `node_id`; `None` for a row of
+/// any other kind or about any other node.
+fn verify_row_decoder(node_id: String) -> decode.Decoder(Option(String)) {
+  use kind <- decode.field(log.kind_key, decode.string)
+  use node <- decode.optional_field("node", "", decode.string)
+  case kind == "verify" && node == node_id {
+    True -> {
+      use verdict <- decode.field("verdict", decode.string)
+      decode.success(Some(verdict))
     }
-  })
+    False -> decode.success(None)
+  }
 }
 
 /// The stated reason a node was dispatched, for the event log — the spec

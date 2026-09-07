@@ -15,6 +15,7 @@ import harness/guard
 import harness/guard_event
 import harness/log
 import harness/roster
+import harness/verify
 import harness/worker
 import simplifile
 
@@ -120,6 +121,27 @@ pub fn status_lists_a_walled_ready_node_separately_from_open_leaves_test() {
   assert !string.contains(leaves, "walled_probe")
   assert string.contains(text, "walled_probe")
   assert string.contains(text, "decompos")
+}
+
+pub fn status_names_the_rungs_that_failed_and_the_ones_the_harness_broke_test() {
+  let d =
+    Dag([
+      Node(..node("harness_probe", "harness_probe", dag.S, []), attempts: [
+        attempt(dag.BudgetExhausted),
+        Attempt(..attempt(dag.GaveUp), model: "sonnet"),
+        Attempt(..attempt(dag.HarnessFailed), model: "opus"),
+        Attempt(..attempt(dag.RateLimited), model: "opus"),
+      ]),
+      node("ghost_lemma", "not_a_theorem_anywhere", dag.S, []),
+    ])
+  let assert Ok(text) = dispatch.status(cfg_for(d))
+  // Four attempts, but a reader must be able to see that two of them were
+  // the ladder's cheap rungs and one was the harness's own doing; a pause
+  // is listed under neither.
+  assert string.contains(text, "attempts=4 failed=haiku,sonnet harness=opus")
+  // A node with nothing to say says nothing after the count.
+  assert dispatch.rungs_tried(node("ghost_lemma", "ghost_lemma", dag.S, []))
+    == ""
 }
 
 pub fn status_pads_the_id_column_to_the_longest_id_present_test() {
@@ -253,6 +275,171 @@ pub fn a_closed_attempt_is_not_a_failure_test() {
       attempt(dag.Reduced),
     ])
   assert dispatch.failed_attempts(n) == 0
+}
+
+pub fn a_harness_failure_does_not_burn_a_ladder_rung_test() {
+  // An `L` node has a one-rung ladder. Two attempts the harness broke must
+  // leave it on that rung, not abandon the node — this is the case where
+  // the verifier could not build and the record used to say the node was
+  // hard.
+  let n =
+    Node(..node("l_node", "l_node", dag.L, []), attempts: [
+      attempt(dag.HarnessFailed),
+      attempt(dag.HarnessFailed),
+    ])
+  assert dispatch.failed_attempts(n) == 0
+  assert config.model_for(n.size, dispatch.failed_attempts(n)) == Ok("opus")
+}
+
+// --- attributing a failure to the harness ------------------------------------
+
+fn prover_rules(node_id: String) -> guard.Rules {
+  guard.Rules(
+    repo_root: "C:\\r",
+    role: guard.Prover(allowed_write: "C:\\r\\Rule30\\Proofs\\X.lean"),
+    holder: node_id,
+  )
+}
+
+/// A log holding what the guard and the worker would have written during an
+/// attempt at `node_id`: one guard row per denial, one `verify` row per
+/// verdict, both built by the real producers so a renamed field fails here.
+fn attempt_log(
+  dir: String,
+  node_id: String,
+  denials: List(guard.Decision),
+  verdicts: List(verify.Verdict),
+) -> log.Log {
+  let _ = simplifile.delete(dir)
+  let assert Ok(l) = log.open(dir, "run")
+  list.each(denials, fn(decision) {
+    guard_event.write(
+      l,
+      guard.event(
+        prover_rules(node_id),
+        "PreToolUse",
+        "Bash",
+        "lake build Rule30",
+        decision,
+      ),
+    )
+  })
+  list.each(verdicts, fn(v) {
+    log.event(l, "verify", [
+      #("node", json.string(node_id)),
+      #("verified", json.bool(verify.is_verified(v))),
+      #("verdict", json.string(verify.verdict_text(v))),
+    ])
+  })
+  l
+}
+
+const lock_timeout = guard.Deny(
+  guard_event.BuildLockTimeout,
+  "build lock timeout",
+)
+
+const grammar = guard.Deny(guard_event.NotPermitted, "shell operators")
+
+pub fn a_build_lock_timeout_from_the_guard_makes_a_harness_failure_test() {
+  let l =
+    attempt_log(
+      "build/test-runs/attribute-guard",
+      "probe_one",
+      [lock_timeout],
+      [],
+    )
+  let a = dispatch.attribute(l, "probe_one", attempt(dag.GaveUp))
+  assert a.outcome == dag.HarnessFailed
+  assert string.contains(a.notes, "build_lock_timeout")
+  assert string.contains(a.notes, "lake build Rule30")
+}
+
+pub fn a_policy_denial_is_still_the_workers_failure_test() {
+  // `not_permitted` is the guard doing its job. A worker that ran into the
+  // grammar and then gave up was beaten by the rules, not by the harness.
+  let l =
+    attempt_log("build/test-runs/attribute-policy", "probe_one", [grammar], [])
+  let a = dispatch.attribute(l, "probe_one", attempt(dag.GaveUp))
+  assert a.outcome == dag.GaveUp
+}
+
+pub fn a_lock_held_last_verdict_makes_a_harness_failure_test() {
+  let l =
+    attempt_log("build/test-runs/attribute-verify", "probe_one", [], [
+      verify.BuildFailed("error: unsolved goals"),
+      verify.BuildFailed(dispatch.lock_held_message),
+    ])
+  let a = dispatch.attribute(l, "probe_one", attempt(dag.BudgetExhausted))
+  assert a.outcome == dag.HarnessFailed
+  assert string.contains(a.notes, dispatch.lock_held_message)
+}
+
+pub fn a_real_verdict_after_a_lock_timeout_is_still_the_workers_failure_test() {
+  // The verifier timed out once, then actually built the proof and found it
+  // wrong. The last word was about the proof, so the failure is the
+  // worker's; the earlier timeout cost it a round, not the attempt.
+  let l =
+    attempt_log("build/test-runs/attribute-verify-then-real", "probe_one", [], [
+      verify.BuildFailed(dispatch.lock_held_message),
+      verify.BuildFailed("error: unsolved goals"),
+    ])
+  let a = dispatch.attribute(l, "probe_one", attempt(dag.BudgetExhausted))
+  assert a.outcome == dag.BudgetExhausted
+}
+
+pub fn only_a_rung_burning_outcome_is_re_read_test() {
+  // A proof that closed despite a lock timeout closed; a pause is a pause.
+  let l =
+    attempt_log(
+      "build/test-runs/attribute-closed",
+      "probe_one",
+      [lock_timeout],
+      [
+        verify.BuildFailed(dispatch.lock_held_message),
+      ],
+    )
+  assert dispatch.attribute(l, "probe_one", attempt(dag.Closed)).outcome
+    == dag.Closed
+  assert dispatch.attribute(l, "probe_one", attempt(dag.RateLimited)).outcome
+    == dag.RateLimited
+  assert dispatch.attribute(l, "probe_one", attempt(dag.TimedOut)).outcome
+    == dag.TimedOut
+}
+
+pub fn a_signal_about_the_node_next_door_does_not_count_test() {
+  let l =
+    attempt_log(
+      "build/test-runs/attribute-neighbour",
+      "probe_two",
+      [lock_timeout],
+      [
+        verify.BuildFailed(dispatch.lock_held_message),
+      ],
+    )
+  assert dispatch.attribute(l, "probe_one", attempt(dag.GaveUp)).outcome
+    == dag.GaveUp
+}
+
+pub fn attribute_is_a_no_op_without_a_log_test() {
+  let missing = log.Log(dir: "build/test-runs/no-such-attempt", run_id: "run")
+  let a = attempt(dag.GaveUp)
+  assert dispatch.attribute(missing, "probe_one", a) == a
+}
+
+pub fn harness_failed_round_trips_through_the_dag_test() {
+  assert dag.outcome_to_string(dag.HarnessFailed) == "harness_failed"
+  let dir = "build/test-runs/harness-failed-json"
+  let assert Ok(_) = simplifile.create_directory_all(dir)
+  let d =
+    Dag([
+      Node(..node("s_node", "s_node", dag.S, []), attempts: [
+        attempt(dag.HarnessFailed),
+      ]),
+    ])
+  let assert Ok(_) = dag.save(d, dir <> "/dag.json")
+  let assert Ok(loaded) = dag.load(dir <> "/dag.json")
+  assert loaded == d
 }
 
 pub fn worth_filing_drops_a_bug_that_lost_its_title_test() {
