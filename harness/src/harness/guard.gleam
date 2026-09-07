@@ -79,6 +79,25 @@ pub type Role {
   /// `blueprint/dag.json`. A seeder proposes; Rowan reviews and lands, because
   /// direction should not change while nobody is watching.
   Seeder(proposal_path: String)
+  /// Two files, and the seeder's commands: `attack_path` — the one attack
+  /// document the session exists to write, `docs/attacks/<date>-<topic>.md`
+  /// — and `obstructions_path`, `docs/obstructions.md`, the shared list of
+  /// known dead ends a theorist may add to. Plus `node <script>` under
+  /// `explorer/` and the `lake` grammar, for falsification runs. Nothing
+  /// under `explorer/` is writable: a theorist's deliverable is an argument,
+  /// and its scripts stay in the attack document as text rather than in the
+  /// tree. It cannot reach `blueprint/proposals/next.json`: that is the
+  /// seeder's file, and a theorist that could write it would be a seeder
+  /// with a longer brief.
+  ///
+  /// **On `obstructions_path`, the spec says "append access" and this guard
+  /// cannot grant that.** A hook sees a `Write` or `Edit` tool call with a
+  /// path; it does not see whether the edit adds at the end or rewrites the
+  /// middle, so the file is simply writable here. Append-only is a rule the
+  /// brief states in words, and the check that it was obeyed is a captain's
+  /// `git diff` of the file after the session — the same shape of check as a
+  /// prover's proof file getting a diff, and not a property the fence holds.
+  Theorist(attack_path: String, obstructions_path: String)
 }
 
 /// A running guard: the port it listens on, the token hooks must present,
@@ -218,7 +237,8 @@ fn decide_pre(rules: Rules, hi: HookInput) -> Decision {
 /// message would go unrecorded, because the session cannot act on that.
 fn decide_message(rules: Rules) -> Decision {
   case rules.role {
-    Prover(..) | Seeder(..) -> Deny(NotPermitted, message_deny_reason)
+    Prover(..) | Seeder(..) | Theorist(..) ->
+      Deny(NotPermitted, message_deny_reason)
   }
 }
 
@@ -249,6 +269,21 @@ fn decide_write(rules: Rules, file_path: String) -> Decision {
               <> explorer_dir(rules.repo_root)
               <> " or the proposal file "
               <> proposal_path,
+          )
+      }
+    Theorist(attack_path:, obstructions_path:) ->
+      case
+        normalise_path(file_path) == normalise_path(attack_path)
+        || normalise_path(file_path) == normalise_path(obstructions_path)
+      {
+        True -> Allow
+        False ->
+          Deny(
+            NotWritable,
+            "harness guard: a theorist may only write its attack document "
+              <> attack_path
+              <> " or add to "
+              <> obstructions_path,
           )
       }
   }
@@ -314,23 +349,37 @@ fn decide_bash_for(rules: Rules, command: String) -> Decision {
     True -> bash_deny()
     False -> {
       let trimmed = string.trim(command)
-      // The `node` arm is reachable ONLY under `Seeder`. A prover falls through
-      // to the same `lake` grammar it has always had, and
+      // The `node` arm is reachable ONLY under `Seeder` and `Theorist`, each
+      // named here rather than matched by `_`, so a fourth role has to say
+      // which side of this line it is on before it compiles. A prover falls
+      // through to the same `lake` grammar it has always had, and
       // `a_prover_still_cannot_run_node_test` exists to fail loudly if that
       // ever stops being true.
       case rules.role, node_script(trimmed) {
-        Seeder(..), Ok(script) ->
+        Seeder(..), Ok(script) | Theorist(..), Ok(script) ->
           case under_explorer(rules.repo_root, script) {
             True -> Allow
             False ->
               Deny(
                 NotPermitted,
-                "harness guard: a seeder may only run scripts under explorer/",
+                "harness guard: "
+                  <> role_word(rules.role)
+                  <> " may only run scripts under explorer/",
               )
           }
-        _, _ -> match_bash_grammar(trimmed)
+        Prover(..), _ | Seeder(..), Error(Nil) | Theorist(..), Error(Nil) ->
+          match_bash_grammar(trimmed)
       }
     }
+  }
+}
+
+/// The role as a denial reason names it.
+fn role_word(role: Role) -> String {
+  case role {
+    Prover(..) -> "a prover"
+    Seeder(..) -> "a seeder"
+    Theorist(..) -> "a theorist"
   }
 }
 
