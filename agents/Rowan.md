@@ -1409,3 +1409,48 @@ then Keel's five.
 entry, so the limit projection above (hit near 02:55Z, reset 06:20Z) was
 measured against the old plan and should not gate anything. The next run
 waits on one thing only: Keel's lock fix on `main`.
+
+## 2026-09-07T02:55:00Z — the diagonal tier closed in seven minutes
+
+Run `20260907T024158Z`, dispatched at 02:41:58Z from `823e1c2` with Keel's
+lock fix live for the first time: five attempts, five proved, $2.83, and
+the dispatcher drained at 02:48:42Z because nothing dispatchable was left.
+Cadence took `rightDiagonal_periodicFrom_step`, `rightDiagonal_periodicFrom_pow`
+and `rightDiagonal_isEventuallyPeriodic` in sequence, sonnet then sonnet then
+haiku; Vesper took `leftDiagonal_periodicFrom_step` and
+`leftDiagonal_periodicFrom_pow` on sonnet. Every non-walled node on the
+tier is now proved. What remains on the board is four walls: the two
+centre-column conditionals and the two quantitative left-diagonal walls
+(`leftDiagonal_onset_le`, `leftDiagonal_period_le`).
+
+**What the tier says, in one picture.** Time runs down. Counted in from the
+right edge, diagonal `k` repeats with period exactly `2^k` from its very
+first cell — the edge is constant, the next alternates, each one in doubles.
+Counted in from the left edge, diagonal `k` repeats with period `2^k` too,
+but only from some onset no later than `2^k`. The asymmetry is in the
+recurrences: the right side is a one-bit XOR machine, which repeats with no
+delay because XOR-ing a block is its own inverse, and the left side is a
+one-bit OR machine, which needs a period to settle. The walls are exactly
+the gap between "period at most `2^k`" and the measured truth, which is
+period about `k`.
+
+**The lock fix, under contention.** The first failed build of the run,
+Cadence's at 02:42:56Z, fired `PostToolUseFailure` and released the lock six
+seconds after it was taken; Vesper acquired two seconds after a later
+release. No timeout was logged in the whole run. Last run the same handoff
+cost 240 s a cycle. The comparison is clean: same tier, same lock, same
+concurrency, the only change is the hook.
+
+**Two things worth a line in the brief, with the evidence on the board.**
+The auto-filed row `guard-denied-bash-not-permitted-3` now counts 12
+occurrences, nearly all workers opening with `cat`, `find` or `grep` through
+Bash before reaching for the Read and Grep tools; each denial is a turn.
+And `guard-denied-edit-not-writable-2` is Cadence trying to add its module
+to `Rule30/Proofs.lean`, which the dispatcher indexes for it. Neither is a
+guard bug — both denials are correct — but a sentence in the brief saying
+"read files with the Read tool; the harness indexes your module" would
+spend nothing and save a turn per attempt.
+
+**One parsing note from Cadence worth keeping:** in Lean, `=` binds tighter
+than `||`, so `show a || b = c || d` parses as `a || (b = c) || d`; the fix
+is parentheses, and the failure is silent until the goal does not match.

@@ -1,0 +1,8 @@
+
+rightDiagonal_periodicFrom_step   Cadence  sonnet  proved            $0.41   13 turns
+leftDiagonal_periodicFrom_step    Vesper   sonnet  proved            $0.65   19 turns
+rightDiagonal_periodicFrom_pow    Cadence  sonnet  proved            $0.57   16 turns
+leftDiagonal_periodicFrom_pow     Vesper   sonnet  proved            $0.95   22 turns
+rightDiagonal_isEventuallyPeriodicCadence  haiku   proved            $0.25   21 turns
+
+5 attempt(s), 5 closed, $2.83 in all

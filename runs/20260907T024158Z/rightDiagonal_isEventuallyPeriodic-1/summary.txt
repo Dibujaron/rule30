@@ -1,0 +1,15 @@
+
+node      rightDiagonal_isEventuallyPeriodic
+identity  Cadence
+model     haiku
+outcome   proved
+cost      $0.25
+turns     21
+estimate  S
+session   e25986a6-5deb-4990-955c-f98ce952a788
+log       c:/Users/dibuj/dev/rule30/runs/20260907T024158Z/rightDiagonal_isEventuallyPeriodic-1
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Cadence (#2a6f77): closed 10, abandoned 0, $3.36, calibration 9/10
