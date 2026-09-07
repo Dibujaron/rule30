@@ -8,7 +8,10 @@
 ////
 //// Nothing here spends the subscription, writes the real DAG, or runs Lean:
 //// the fixture's proposal path is never written, so the check refuses to
-//// read it before any `lake` is reached.
+//// read it before any `lake` is reached. The check does look for a built
+//// `.lake` under `repo_root` before it reads anything, so the fixture's
+//// `repo_root` is the Mathlib-free fixture project (see `lean_fixture`),
+//// not this checkout — which may be a worktree with no `.lake` at all.
 
 import envoy
 import gleam/dynamic/decode
@@ -23,6 +26,7 @@ import harness/guard
 import harness/seeder
 import harness/shell
 import harness/worker
+import lean_fixture
 import ports
 import simplifile
 
@@ -56,7 +60,10 @@ type Fixture {
 /// A fresh test directory holding the board and the runs root, with the
 /// fake shim scripted to play `script`. The proposal path is under the
 /// fixture too, so the guard fences the session to a file this test owns
-/// and the check reads nothing from the live checkout's `blueprint/`.
+/// and the check reads nothing from the live checkout's `blueprint/`. The
+/// `repo_root` is the fixture project, which has the `.lake` the check
+/// requires before it reads the proposal; the shim stays under this
+/// harness, where the fake one lives.
 fn fixture(name: String, script: List(List(String))) -> Fixture {
   let dir = "build/test-runs/seeder/" <> name
   let _ = simplifile.delete(dir)
@@ -77,6 +84,7 @@ fn fixture(name: String, script: List(List(String))) -> Fixture {
   let cfg =
     config.Config(
       ..base,
+      repo_root: lean_fixture.built(),
       shim: base.repo_root <> "/harness/test/fake_shim.mjs",
       dag_path: dir <> "/dag.json",
       bugs_path: dir <> "/bugs.json",
