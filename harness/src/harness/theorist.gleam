@@ -314,11 +314,62 @@ fn trim_dashes(s: String) -> String {
   }
 }
 
-/// Where the attack document goes: `docs/attacks/<date>-<slug>.md` under
-/// the repository root, `date` as `YYYY-MM-DD`. The one file outside
-/// `docs/obstructions.md` the guard lets the session write.
+/// Where the attack document goes when nothing is there yet:
+/// `docs/attacks/<date>-<slug>.md` under the repository root, `date` as
+/// `YYYY-MM-DD`. Pure; `free_attack_path` is what a session is actually
+/// fenced to, because this path is taken by the first session of the day
+/// on a topic and a second must not be fenced to a file that exists.
 pub fn attack_path(repo_root: String, date: String, topic: String) -> String {
-  repo_root <> "/docs/attacks/" <> date <> "-" <> slug(topic) <> ".md"
+  numbered_attack_path(repo_root, date, topic, 1)
+}
+
+/// `attack_path` with an ordinal: `1` is the bare path, `2` and up carry
+/// `-2`, `-3`, ... before `.md`. So the second session on `the transients`
+/// on 2026-09-07 writes `2026-09-07-the-transients-2.md`.
+pub fn numbered_attack_path(
+  repo_root: String,
+  date: String,
+  topic: String,
+  n: Int,
+) -> String {
+  let ordinal = case n {
+    1 -> ""
+    _ -> "-" <> int.to_string(n)
+  }
+  repo_root
+  <> "/docs/attacks/"
+  <> date
+  <> "-"
+  <> slug(topic)
+  <> ordinal
+  <> ".md"
+}
+
+/// The first attack path for `topic` today that nothing is at: the bare
+/// path, else `-2`, else `-3`, and so on. Read off the disk at session
+/// start, once, and then fixed for the session's life — the guard, the
+/// brief, the first message, the dispatch row and the summary all name
+/// the one path this returns.
+///
+/// Two sessions on one topic in one day are the design's intended use
+/// (several independent attacks, then a comparison), and before this they
+/// resolved to the same path: the second was fenced to the file the first
+/// had written, and its Write overwrote it. Anything at the path counts as
+/// taken, a directory included, since a Write there would fail anyway.
+pub fn free_attack_path(
+  repo_root: String,
+  date: String,
+  topic: String,
+) -> String {
+  free_from(repo_root, date, topic, 1)
+}
+
+fn free_from(repo_root: String, date: String, topic: String, n: Int) -> String {
+  let path = numbered_attack_path(repo_root, date, topic, n)
+  case simplifile.file_info(path) {
+    Ok(_) -> free_from(repo_root, date, topic, n + 1)
+    Error(_) -> path
+  }
 }
 
 /// Where the shared list of dead ends lives, which the session may add to.
@@ -673,8 +724,11 @@ pub type Session {
 ///
 /// The order is the contract: the topic (from the flags or the board) and
 /// who runs (from the flags or the roster) are settled before anything is
-/// written, so a bad `--as` costs nothing; then the record directory, the
-/// guard and its settings; then the ceremony if a persona is being minted,
+/// written, so a bad `--as` costs nothing; then the attack path, chosen
+/// once as the first free `<date>-<slug>[-n].md` so a second session on
+/// the topic today gets its own file rather than the first session's;
+/// then the record directory, the guard and its settings — fenced to that
+/// path; then the ceremony if a persona is being minted,
 /// which needs the guard's settings and writes its `naming` row into the
 /// session's own log; then the brief (no brief, no session) and the
 /// session — and only once the session is closed, the notebook and journal
@@ -690,7 +744,7 @@ pub fn run(cfg: config.Config, options: Options) -> Result(Session, String) {
   })
   use roster_ <- result.try(roster.load(cfg.roster_path))
   use who_ <- result.try(who(roster_, options.persona))
-  let attack = attack_path(cfg.repo_root, today(), topic)
+  let attack = free_attack_path(cfg.repo_root, today(), topic)
   let obstructions = obstructions_path(cfg.repo_root)
   use run_log <- result.try(log.open(cfg.runs_root, log.new_run_id()))
   use l <- result.try(log.open(run_log.dir, session_name))

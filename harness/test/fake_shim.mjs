@@ -26,14 +26,21 @@
 //                         so a test can drive the harness's escalation from
 //                         "close politely" to "kill".
 //
-// Two sentinels may appear inside a turn's lines:
+// Three sentinels may appear inside a turn's lines:
 //
 //   __EXIT__      exit 0 after flushing what came before it
 //   __EXIT__ <n>  exit with status <n>
+//   __WRITE__ <path>\t<content>
+//                 write <content> to <path> (creating its directory) and
+//                 emit nothing — a session writing the one file it is
+//                 fenced to, at the moment in the conversation it would
 //
-// which is how a test scripts a CLI that dies mid-conversation.
+// which is how a test scripts a CLI that dies mid-conversation, or a
+// theorist that writes its attack document during the session rather than
+// before it — where a file already at the path would move the fence.
 
-import { readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname } from "node:path";
 import { createInterface } from "node:readline";
 
 const scriptPath = process.env.HARNESS_FAKE_SCRIPT;
@@ -89,6 +96,14 @@ lines.on("line", (line) => {
       const status = out === "__EXIT__" ? 0 : Number(out.slice(9).trim());
       leave(Number.isFinite(status) ? status : 0);
       return;
+    }
+    if (out.startsWith("__WRITE__ ")) {
+      const tab = out.indexOf("\t");
+      const path = tab < 0 ? out.slice(10) : out.slice(10, tab);
+      const content = tab < 0 ? "" : out.slice(tab + 1);
+      mkdirSync(dirname(path), { recursive: true });
+      writeFileSync(path, content);
+      continue;
     }
     process.stdout.write(out + "\n");
   }

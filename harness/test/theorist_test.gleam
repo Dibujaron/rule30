@@ -279,19 +279,29 @@ fn ask_to_write(g: guard.Guard, path: String) -> String {
 // --- the verb -----------------------------------------------------------------------
 
 pub fn theorise_starts_one_fenced_session_and_reports_its_document_test() {
+  // The document is written by the scripted session, mid-turn, the way a
+  // theorist writes it — not by the test beforehand, because a file already
+  // at the path at session start is a first session's, and the fence moves
+  // to `-2`. What is under test is that the summary reads the file that is
+  // there when the session ends.
+  let assert Ok(cwd) = simplifile.current_directory()
+  let repo =
+    string.replace(cwd, "\\", "/") <> "/build/test-runs/theorist/attacked/repo"
+  let attack = theorist.attack_path(repo, theorist.today(), "the transients")
   let f =
     fixture(
       "attacked",
-      [[init_line("th-s"), result_line("th-s", "attacked")]],
+      [
+        [
+          init_line("th-s"),
+          "__WRITE__ " <> attack <> "\t# Attack\n\ntwenty-three",
+          result_line("th-s", "attacked"),
+        ],
+      ],
       peopled(),
     )
+  assert f.repo == repo
   put(f, "docs/theorist-brief.md", "# The theorist's task\n\nfixture task text")
-  // The document is written before the session because the shim is a
-  // script, not a theorist; what is under test is that the summary reads
-  // the file that is there.
-  let attack = theorist.attack_path(f.repo, theorist.today(), "the transients")
-  let assert Ok(_) = simplifile.create_directory_all(f.repo <> "/docs/attacks")
-  let assert Ok(_) = simplifile.write(attack, "# Attack\n\ntwenty-three")
   let port = ports.span(1)
   let args_path = f.dir <> "/args.json"
   envoy.set("HARNESS_FAKE_ARGS", args_path)
@@ -581,9 +591,97 @@ pub fn the_attack_path_is_dated_and_slugged_test() {
     == "the-transients-of-the-left-diagonals"
   assert theorist.attack_path("C:/r", "2026-09-07", "Onset & period")
     == "C:/r/docs/attacks/2026-09-07-onset-period.md"
+  assert theorist.numbered_attack_path(
+      "C:/r",
+      "2026-09-07",
+      "Onset & period",
+      1,
+    )
+    == "C:/r/docs/attacks/2026-09-07-onset-period.md"
+  assert theorist.numbered_attack_path(
+      "C:/r",
+      "2026-09-07",
+      "Onset & period",
+      2,
+    )
+    == "C:/r/docs/attacks/2026-09-07-onset-period-2.md"
   let today = theorist.today()
   assert string.length(today) == 10
   assert string.starts_with(today, "20")
+}
+
+/// The path a session is fenced to is the first free one: bare when
+/// nothing is there, `-2` when the bare file exists, `-3` when both do — a
+/// directory at the path counts as taken too.
+pub fn the_free_attack_path_is_the_first_not_taken_test() {
+  let f = fixture("free-path", [], roster.Roster([]))
+  let bare = theorist.attack_path(f.repo, "2026-09-07", "the seam")
+  let second =
+    theorist.numbered_attack_path(f.repo, "2026-09-07", "the seam", 2)
+  let third = theorist.numbered_attack_path(f.repo, "2026-09-07", "the seam", 3)
+  assert theorist.free_attack_path(f.repo, "2026-09-07", "the seam") == bare
+  let assert Ok(_) = simplifile.create_directory_all(f.repo <> "/docs/attacks")
+  let assert Ok(_) = simplifile.write(bare, "first")
+  assert theorist.free_attack_path(f.repo, "2026-09-07", "the seam") == second
+  let assert Ok(_) = simplifile.create_directory(second)
+  assert theorist.free_attack_path(f.repo, "2026-09-07", "the seam") == third
+  // Another topic, or another day, is untouched by the seam's files.
+  assert theorist.free_attack_path(f.repo, "2026-09-07", "the onset")
+    == theorist.attack_path(f.repo, "2026-09-07", "the onset")
+  assert theorist.free_attack_path(f.repo, "2026-09-08", "the seam")
+    == theorist.attack_path(f.repo, "2026-09-08", "the seam")
+}
+
+/// The case the design intends — several independent sessions on one
+/// topic, then a comparison — and the case that collided: with the first
+/// session's document on disk, the second session is fenced to `-2`, every
+/// record names that path, and the guard denies the first session's file.
+pub fn a_second_attack_on_one_topic_in_a_day_gets_its_own_file_test() {
+  let assert Ok(cwd) = simplifile.current_directory()
+  let repo =
+    string.replace(cwd, "\\", "/") <> "/build/test-runs/theorist/second/repo"
+  let first = theorist.attack_path(repo, theorist.today(), "the transients")
+  let second =
+    theorist.numbered_attack_path(repo, theorist.today(), "the transients", 2)
+  let f =
+    fixture(
+      "second",
+      [
+        [
+          init_line("th-2"),
+          "__WRITE__ " <> second <> "\t# Second attack",
+          result_line("th-2", "attacked"),
+        ],
+      ],
+      peopled(),
+    )
+  assert f.repo == repo
+  let assert Ok(_) = simplifile.create_directory_all(repo <> "/docs/attacks")
+  let assert Ok(_) = simplifile.write(first, "# First attack, Vesper's")
+  let assert Ok(session) =
+    theorist.run(f.cfg, options(ports.span(1), "the transients"))
+  assert session.attack_path == second
+  assert string.ends_with(second, "-the-transients-2.md")
+
+  // The brief, the first message, the dispatch row and the summary all name
+  // the second path and never the first.
+  let brief = read(session.dir <> "/briefs/theorist-1.md")
+  assert string.contains(brief, "Attack document: " <> second)
+  assert !string.contains(brief, first)
+  let events = read(session.dir <> "/events.jsonl")
+  assert string.contains(events, "\"attack\":\"" <> second <> "\"")
+  assert !string.contains(events, "\"attack\":\"" <> first <> "\"")
+  assert string.contains(events, "attack document to `" <> second <> "`")
+  assert string.contains(session.summary, "attack    " <> second)
+  assert string.contains(session.summary, "document  exists, 15 bytes")
+
+  // The guard allows exactly the second path and denies the first.
+  assert ask_to_write(session.guard, second) == "{}"
+  let refused = ask_to_write(session.guard, first)
+  assert string.contains(refused, "deny")
+  assert string.contains(refused, second)
+  // And the first session's document is as it was.
+  assert read(first) == "# First attack, Vesper's"
 }
 
 // --- flags -------------------------------------------------------------------------------
