@@ -112,13 +112,23 @@ boundary). Three statements, in Cairn's words with Rowan's numbering:
     at least `n + 1` black cells; row `2^n` ends in a black cell preceded by
     at least `n` white cells. Rowland 2006 Theorem 1 and §3 (mirror
     orientation). *Proved*; induction over `rightDiagonal_periodicFrom_pow`
-    plus `rightDiagonal k 0 = false` for `k ≥ 1`. Verified `n = 1..9`.
+    plus the per-diagonal fact `rightDiagonal j (2^j - j) = false` for every
+    `j ≥ 1` (row `2^n` is `≡ 0 mod 2^j` on every diagonal `j ≤ n`, so it
+    reads that cell on each). That second ingredient is Rowland's own
+    induction, not a finite check. An earlier draft of this row cited
+    `rightDiagonal k 0 = false` instead; that cell is the centre column at
+    time `k`, black at `k = 1, 3, 4, 5, 8`, and Cairn caught it on
+    2026-09-07 before it was seeded. Conclusion verified `n = 1..9` (Rowan)
+    and `n = 1..7` (Cairn, independently).
 12. **The rightmost black run of row `t` depends only on `ord₂(t + 1)`**, and
     is strictly increasing in it: runs 1, 3, 4, 6, 7, 9, 15, 16, 24, 25, 27.
     Rowland §1, §3; OEIS A094603 (which lists the formula only as a
     conjecture, though Rowland proves it). *Proved*; weak form (`run (t + 2^k) ≥ k+1 ↔ run t ≥ k+1`)
     is induction, full form is real math (orbit of a permutation of
     `{0,1}^(k+1)`, about a page). The exact values have no formula.
+    Mirror measurement (Cairn, 2026-09-07, to `t = 1100`): the white void
+    touching the right edge at row `t` is a function of `ord₂(t)` alone,
+    `ord₂ = 0..10 ↦ 0, 2, 3, 5, 6, 8, 14, 15, 23, 24, 26`. *Computed*.
 13. **Rowland's period-doubling criterion for the left diagonals.** With
     diagonals `k-2, k-1` periodic from `t0` with periods `2^a, 2^b`,
     `α = max a b`: diagonal `k` has period `2^α` or `2^(α+1)`, and it doubles
