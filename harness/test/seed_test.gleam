@@ -763,16 +763,163 @@ fn closed_node(
   )
 }
 
+/// An open node, the shape the seeder is aiming at. The description is
+/// multi-line on purpose: a wall's description runs to a paragraph or two
+/// and the brief must carry all of it.
+fn open_node(id: String, size: dag.Size, deps: List(String)) -> dag.Node {
+  dag.Node(
+    ..closed_node(id, size, "-", 0.0),
+    description: "WALL. What a decomposition must imply.\nAnd what was measured: periods 1, 1, 2 to k = 400.",
+    deps:,
+    status: dag.Open,
+    proof_file: option.None,
+    attempts: [],
+  )
+}
+
 fn brief() -> String {
   seed.brief(
+    open: [
+      open_node("leftDiagonal_period_le", dag.Wall, []),
+      open_node("some_leaf", dag.S, ["evolve_left_edge", "centerColumn_zero"]),
+    ],
     closed: [
       closed_node("evolve_left_edge", dag.M, "sonnet", 0.36),
       closed_node("centerColumn_zero", dag.S, "haiku", 0.1),
     ],
     notes: [#("EvolveLeftEdge.lean", "**What this says.** The left edge is 1.")],
+    crystals: Ok("# Seed crystals\n\nCandidate statements for future tiers."),
     explorer_readme: "the BigInt engine",
     proposal_path: "C:/r/blueprint/proposals/next.json",
   )
+}
+
+/// The text under one `## ` heading of the brief, up to the next one. The
+/// open and closed sections both name node ids, so a test about what ONE of
+/// them lists has to look inside that one section and not the whole brief.
+fn section(brief: String, heading: String) -> String {
+  let assert Ok(#(_, after)) = string.split_once(brief, "\n" <> heading <> "\n")
+  case string.split_once(after, "\n## ") {
+    Ok(#(body, _)) -> body
+    Error(Nil) -> after
+  }
+}
+
+/// **The brief names what to aim at.** Rowan, about to hand-start the first
+/// seeder against the four walls, found that the brief said "aim at what a
+/// prize residual would need" and then listed 42 closed proofs and nothing
+/// open — a target described and never named. The open nodes ARE the
+/// residuals, and a wall's description is the specification of the tier, so
+/// it is carried verbatim: id, size, deps, and every line of the description.
+pub fn the_brief_lists_every_open_node_verbatim_test() {
+  let open = section(brief(), "## What is open")
+  assert string.contains(open, "leftDiagonal_period_le")
+  assert string.contains(open, "size=wall")
+  assert string.contains(open, "deps=(none)")
+  assert string.contains(open, "deps=evolve_left_edge, centerColumn_zero")
+  // The whole description, newline included — not a first line, not a
+  // truncation.
+  assert string.contains(
+    open,
+    "WALL. What a decomposition must imply.\nAnd what was measured: periods 1, 1, 2 to k = 400.",
+  )
+  assert string.contains(open, "2 open")
+}
+
+/// Closed nodes have their own table. One that leaked into the open section
+/// would read as a target already met.
+pub fn the_open_section_omits_what_has_closed_test() {
+  let open = section(brief(), "## What is open")
+  assert !string.contains(open, "### evolve_left_edge")
+  assert !string.contains(open, "### centerColumn_zero")
+  // And the ids still appear elsewhere — the negative above is about the
+  // section, not about the brief losing the closed table.
+  assert string.contains(brief(), "evolve_left_edge  size=M")
+}
+
+/// An empty section reads as a section somebody forgot to fill. The brief
+/// says in words that nothing is open, which is a fact the seeder should
+/// react to rather than a gap it should skip.
+pub fn the_brief_says_when_nothing_is_open_test() {
+  let b =
+    seed.brief(
+      open: [],
+      closed: [closed_node("a", dag.S, "haiku", 0.1)],
+      notes: [],
+      crystals: Error(Nil),
+      explorer_readme: "",
+      proposal_path: "p",
+    )
+  assert string.contains(b, "## What is open")
+  assert string.contains(section(b, "## What is open"), "(nothing is open)")
+}
+
+/// `blueprint/crystals.md` is the literature ranked by hand, and the seeder
+/// is told to read it BEFORE proposing. Inlined rather than pointed at, for
+/// the reason the proof notes are: a pointer is a file the session may not
+/// open, and the brief is the one artifact it is guaranteed to have read.
+pub fn the_brief_inlines_the_literature_seeds_test() {
+  let seeds = section(brief(), "## Literature seeds (blueprint/crystals.md)")
+  assert string.contains(seeds, "# Seed crystals")
+  assert string.contains(seeds, "Candidate statements for future tiers.")
+  assert string.contains(string.lowercase(seeds), "before proposing")
+}
+
+pub fn the_brief_says_when_the_literature_seeds_are_absent_test() {
+  let b =
+    seed.brief(
+      open: [],
+      closed: [],
+      notes: [],
+      crystals: Error(Nil),
+      explorer_readme: "",
+      proposal_path: "p",
+    )
+  let seeds = section(b, "## Literature seeds (blueprint/crystals.md)")
+  assert string.contains(seeds, "(no blueprint/crystals.md in this checkout)")
+  assert !string.contains(seeds, "# Seed crystals")
+}
+
+/// **The shape, not just the field names.** The brief used to name the
+/// fields in prose and never the document they sit in, and a file with the
+/// wrong shape is refused by the decoder before any check runs — the one
+/// failure a seeder cannot learn from, because nothing it wrote was looked
+/// at. The example must sit in the section that says where to write, and
+/// must name every field the decoder knows, required and optional alike.
+pub fn the_brief_shows_the_proposal_shape_where_it_says_where_to_write_test() {
+  let format = section(brief(), "## The proposal format")
+  assert string.contains(format, "C:/r/blueprint/proposals/next.json")
+  assert string.contains(format, "{\"proposals\": [")
+  assert string.contains(format, "\"id\"")
+  assert string.contains(format, "\"lean_name\"")
+  assert string.contains(format, "\"statement\"")
+  assert string.contains(format, "\"reason\"")
+  assert string.contains(format, "\"disclaims\"")
+  assert string.contains(format, "\"route\"")
+  assert string.contains(format, "\"tactics\"")
+  assert string.contains(format, "\"witness\"")
+  assert string.contains(format, "\"expression\"")
+  assert string.contains(format, "\"range\"")
+  assert string.contains(format, "\"imports\"")
+  assert string.contains(
+    format,
+    "Required: `id`, `lean_name`, `statement`, `reason`",
+  )
+}
+
+/// The example is the decoder's twin, so it is decoded by the decoder. Every
+/// optional claim must come back CLAIMED: an example that decoded only
+/// because its optional halves were ignored would be teaching the wrong
+/// spelling for exactly the fields a seeder is most likely to get wrong.
+pub fn the_proposal_shape_decodes_test() {
+  let assert Ok([p]) = seed.decode_proposals(seed.proposal_shape())
+  assert p.disclaims != ""
+  let assert Claimed(Route(tactics: _, imports: [_])) = p.route
+  let assert seed.Claims(seed.Witness(expression: _, imports: [], range: _)) =
+    p.witness
+  // The statement placeholder carries the escaped newline before `sorry`,
+  // which is the one byte of the shape that JSON makes easy to get wrong.
+  assert string.contains(p.statement, ":= by\n  sorry")
 }
 
 /// **What closed cheaply, and on which model.** The captain who seeded well had
@@ -899,11 +1046,13 @@ pub fn the_report_shows_what_a_proposal_disclaims_test() {
 pub fn the_brief_derives_its_counts_rather_than_stating_them_test() {
   let two =
     seed.brief(
+      open: [],
       closed: [
         closed_node("a", dag.S, "haiku", 0.1),
         closed_node("b", dag.S, "haiku", 0.1),
       ],
       notes: [],
+      crystals: Error(Nil),
       explorer_readme: "",
       proposal_path: "p",
     )
@@ -914,12 +1063,14 @@ pub fn the_brief_derives_its_counts_rather_than_stating_them_test() {
 
   let three =
     seed.brief(
+      open: [],
       closed: [
         closed_node("a", dag.S, "haiku", 0.1),
         closed_node("b", dag.S, "haiku", 0.1),
         closed_node("c", dag.S, "haiku", 0.1),
       ],
       notes: [],
+      crystals: Error(Nil),
       explorer_readme: "",
       proposal_path: "p",
     )
@@ -970,8 +1121,10 @@ pub fn an_unterminated_note_is_not_a_note_test() {
 pub fn costs_are_rendered_as_money_test() {
   let b =
     seed.brief(
+      open: [],
       closed: [closed_node("a", dag.M, "sonnet", 0.7975254000000002)],
       notes: [],
+      crystals: Error(Nil),
       explorer_readme: "",
       proposal_path: "p",
     )
@@ -982,8 +1135,10 @@ pub fn costs_are_rendered_as_money_test() {
 pub fn a_small_cost_keeps_both_places_test() {
   let b =
     seed.brief(
+      open: [],
       closed: [closed_node("a", dag.S, "haiku", 0.0709461)],
       notes: [],
+      crystals: Error(Nil),
       explorer_readme: "",
       proposal_path: "p",
     )

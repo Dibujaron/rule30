@@ -693,6 +693,31 @@ fn witness_claim_decoder() -> decode.Decoder(WitnessClaim) {
   decode.success(Claims(Witness(expression:, imports:, range:)))
 }
 
+/// The shape `decode_proposals` accepts, as one complete example the brief
+/// hands the seeder.
+///
+/// This is the decoder above written out as JSON, and it is the decoder's
+/// twin rather than its documentation: `the_proposal_shape_decodes_test`
+/// runs it through `decode_proposals` and requires every optional claim to
+/// come back claimed, so a field added to the decoder and not here fails a
+/// test rather than a seeder. It exists because the brief used to name the
+/// fields in prose and never the shape, and a file that gets the shape wrong
+/// is refused before any check runs — the one failure a seeder cannot learn
+/// from, since nothing it wrote was ever looked at.
+pub fn proposal_shape() -> String {
+  "{\"proposals\": [\n"
+  <> "  {\n"
+  <> "    \"id\": \"<node id, snake_case, unique on the board>\",\n"
+  <> "    \"lean_name\": \"<the theorem's name, usually the same as id>\",\n"
+  <> "    \"statement\": \"theorem <lean_name> ... := by\\n  sorry\",\n"
+  <> "    \"reason\": \"<why a proof of an open node would cite this>\",\n"
+  <> "    \"disclaims\": \"<what this does NOT prove; omit when nothing>\",\n"
+  <> "    \"route\": {\"tactics\": \"<tactic script>\", \"imports\": [\"Rule30.Proofs.EvolveLeftEdge\"]},\n"
+  <> "    \"witness\": {\"expression\": \"<Bool-valued Lean over the range>\", \"imports\": [], \"range\": \"t < 12\"}\n"
+  <> "  }\n"
+  <> "]}"
+}
+
 /// Run both checks over one proposal.
 ///
 /// `statements_source` is the text of `Rule30/Statements.lean` as it stands.
@@ -910,8 +935,10 @@ fn is_holding(v: WitnessVerdict) -> Bool {
 /// because leaving it out costs a worse tier a day later rather than an error
 /// today. That is the least checkable failure this project has.
 pub fn brief(
+  open open: List(dag.Node),
   closed closed: List(dag.Node),
   notes notes: List(#(String, String)),
+  crystals crystals: Result(String, Nil),
   explorer_readme explorer_readme: String,
   proposal_path proposal_path: String,
 ) -> String {
@@ -922,16 +949,27 @@ pub fn brief(
       "formalisation of Rule 30. You PROPOSE; a captain reviews and lands.",
       "",
       "Aim at what a proof of a prize conjecture's residual would NEED, not at",
-      "what is merely true and provable. **A tier of true, cheap, unconnected",
-      "lemmas is the failure mode here, and it looks like progress while it",
-      "happens.**",
+      "what is merely true and provable. The residuals are not abstract: they",
+      "are the open nodes in the next section, and a proposal is worth landing",
+      "exactly when a proof of one of them would cite it. **A tier of true,",
+      "cheap, unconnected lemmas is the failure mode here, and it looks like",
+      "progress while it happens.**",
       "",
-      "The table below is the whole record of what has closed, "
+      "The closed table further down is the whole record of what has closed, "
         <> int.to_string(list.length(closed))
         <> " closed as it",
-      "stands. Read it and ask which of them a proof of a prize residual would",
+      "stands. Read it and ask which of them a proof of an open node would",
       "actually cite. If the honest answer is none, that is the problem you are",
       "being asked to fix.",
+      "",
+      "## What is open",
+      "Every node on the board nobody has closed, " <> open_count(open) <> ".",
+      "A `wall` is a node the scheduler never dispatches: it is not a task, it",
+      "is a target, and its description says what a decomposition must imply",
+      "and what has been measured. Read those descriptions as the",
+      "specification of the tier you are proposing.",
+      "",
+      open_section(open),
       "",
       "## What you may write and run",
       "  write   anything under explorer/",
@@ -945,6 +983,18 @@ pub fn brief(
       "and a captain lands it. Nothing else you do is checked by anything.",
       "",
       "## The proposal format",
+      "The file at " <> proposal_path,
+      "must be exactly this shape, or the decoder refuses it before any check",
+      "runs and nothing you wrote is looked at:",
+      "",
+      proposal_shape(),
+      "",
+      "Required: `id`, `lean_name`, `statement`, `reason`. Optional, and to be",
+      "OMITTED rather than filled with a placeholder: `disclaims` (defaults to",
+      "empty), `route` (then `tactics` is required and `imports` optional), and",
+      "`witness` (then `expression` and `range` are required and `imports`",
+      "optional). One `{\"proposals\": [...]}` document, any number of entries.",
+      "",
       "Each proposal carries an id, a lean_name, the statement text, and a",
       "`reason`. The statement text is the declaration EXACTLY as it should",
       "land in Rule30/Statements.lean — `theorem <lean_name> ... := by` with",
@@ -992,11 +1042,64 @@ pub fn brief(
       "## Why those proofs worked, in the provers' own words",
       notes_section(notes),
       "",
+      "## Literature seeds (blueprint/crystals.md)",
+      crystals_section(crystals),
+      "",
       "## The engine",
       explorer_readme,
     ],
     "\n",
   )
+}
+
+fn open_count(open: List(dag.Node)) -> String {
+  case list.length(open) {
+    1 -> "1 open"
+    n -> int.to_string(n) <> " open"
+  }
+}
+
+/// One entry per open node, with its description VERBATIM. A wall's
+/// description is the specification of what a decomposition must imply and
+/// what has been measured, so cutting it would cut the only part of this
+/// brief that says what to aim at.
+fn open_section(open: List(dag.Node)) -> String {
+  case open {
+    [] -> "(nothing is open)"
+    nodes ->
+      nodes
+      |> list.map(fn(n) {
+        let deps = case n.deps {
+          [] -> "(none)"
+          deps -> string.join(deps, ", ")
+        }
+        "### "
+        <> n.id
+        <> "  size="
+        <> dag.size_to_string(n.size)
+        <> "  deps="
+        <> deps
+        <> "\n"
+        <> n.description
+      })
+      |> string.join("\n\n")
+  }
+}
+
+/// `blueprint/crystals.md` inlined, or one line saying it is absent. The
+/// file is the literature ranked by hand — the part of a seeder's
+/// preparation that no amount of reading the closed proofs supplies — so it
+/// is carried whole rather than pointed at, for the same reason the proof
+/// notes are.
+fn crystals_section(crystals: Result(String, Nil)) -> String {
+  case crystals {
+    Ok(text) ->
+      "Read this before proposing: it is the literature on Rule 30 gathered\n"
+      <> "and ranked, and a proposal that ignores it re-derives what a paper\n"
+      <> "already settled or proposes what one already refuted.\n\n"
+      <> text
+    Error(Nil) -> "(no blueprint/crystals.md in this checkout)"
+  }
 }
 
 fn closed_table(closed: List(dag.Node)) -> String {
@@ -1082,14 +1185,20 @@ pub fn brief_at(
   proposal_path: String,
 ) -> Result(String, String) {
   use d <- result.try(dag.load(cfg.dag_path))
+  let open = list.filter(d.nodes, fn(n) { n.status == dag.Open })
   let closed = list.filter(d.nodes, fn(n) { n.status == dag.Proved })
   let notes = proof_notes(cfg.repo_root)
+  let crystals =
+    simplifile.read(cfg.repo_root <> "/blueprint/crystals.md")
+    |> result.replace_error(Nil)
   let readme =
     simplifile.read(cfg.repo_root <> "/explorer/README.md")
     |> result.unwrap("(no explorer/README.md)")
   Ok(brief(
+    open: open,
     closed: closed,
     notes: notes,
+    crystals: crystals,
     explorer_readme: readme,
     proposal_path: proposal_path,
   ))
