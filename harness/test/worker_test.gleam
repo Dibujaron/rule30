@@ -90,6 +90,7 @@ pub fn a_full_report_decodes_test() {
         notebook: "simp [centerColumn] closed it.",
         journal: "Short and clean.",
         bugs: [],
+        proposals: [],
         summary: "done",
         discarded: [],
       ),
@@ -742,4 +743,63 @@ pub fn an_object_valued_bugs_field_does_not_poison_the_report_test() {
   let assert Ok(report) = worker.report_from_dynamic(dyn)
   assert report.outcome == "proved"
   assert report.bugs == []
+}
+
+// --- decoding proposals --------------------------------------------------------
+
+pub fn a_report_with_no_proposals_field_has_none_test() {
+  let assert Ok(dyn) =
+    json.parse(
+      "{\"outcome\":\"in_progress\",\"estimate\":\"M\",\"summary\":\"\",\"notebook\":\"\",\"journal\":\"\"}",
+      decode.dynamic,
+    )
+  let assert Ok(r) = worker.report_from_dynamic(dyn)
+  assert r.proposals == []
+  assert r.discarded == []
+}
+
+pub fn a_proposal_decodes_with_its_optional_parts_test() {
+  let assert Ok(dyn) =
+    json.parse(
+      "{\"outcome\":\"abandoned\",\"estimate\":\"L\",\"summary\":\"\",\"notebook\":\"\",\"journal\":\"\",\"proposals\":[{\"name\":\"evolve_left_sixth_diagonal\",\"statement\":\"theorem evolve_left_sixth_diagonal (t : ℕ) : evolve (t + 5) (-(t : ℤ)) = false := by\\n  sorry\",\"reason\":\"the recurrence needs the sixth diagonal before it can close the seventh\",\"size\":\"S\",\"witness\":{\"expression\":\"evolve (t + 5) (-(t : ℤ)) = false\",\"range\":\"t < 12\"}},{\"name\":\"bare\",\"statement\":\"theorem bare : True := by\\n  sorry\",\"reason\":\"a minimal proposal\"}]}",
+      decode.dynamic,
+    )
+  let assert Ok(r) = worker.report_from_dynamic(dyn)
+  let assert [first, second] = r.proposals
+  assert first.name == "evolve_left_sixth_diagonal"
+  assert first.size == dag.S
+  assert first.witness
+    == Some(#("evolve (t + 5) (-(t : ℤ)) = false", [], "t < 12"))
+  assert first.route == None
+  assert first.disclaims == ""
+  // `size` defaults to M, like the ladder's own default, when the worker
+  // leaves it out; `route`, `witness` and `disclaims` default to nothing.
+  assert second.size == dag.M
+  assert second.witness == None
+  assert r.discarded == []
+}
+
+pub fn a_proposal_without_a_reason_is_dropped_and_named_test() {
+  let assert Ok(dyn) =
+    json.parse(
+      "{\"outcome\":\"abandoned\",\"estimate\":\"L\",\"summary\":\"\",\"notebook\":\"\",\"journal\":\"\",\"proposals\":[{\"name\":\"kept\",\"statement\":\"theorem kept : True := by\\n  sorry\",\"reason\":\"r\"},{\"name\":\"no_reason\",\"statement\":\"theorem no_reason : True := by\\n  sorry\"}]}",
+      decode.dynamic,
+    )
+  let assert Ok(r) = worker.report_from_dynamic(dyn)
+  let assert [kept] = r.proposals
+  assert kept.name == "kept"
+  let assert [reason] = r.discarded
+  assert string.starts_with(reason, "proposals[1]")
+}
+
+pub fn a_proposals_field_that_is_not_an_array_costs_nothing_but_is_named_test() {
+  let assert Ok(dyn) =
+    json.parse(
+      "{\"outcome\":\"proved\",\"estimate\":\"S\",\"summary\":\"\",\"notebook\":\"\",\"journal\":\"\",\"proposals\":\"none\"}",
+      decode.dynamic,
+    )
+  let assert Ok(r) = worker.report_from_dynamic(dyn)
+  assert r.outcome == "proved"
+  assert r.proposals == []
+  assert r.discarded == ["proposals: not an array"]
 }

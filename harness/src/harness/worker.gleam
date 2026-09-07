@@ -47,16 +47,41 @@ pub type ReportedBug {
   ReportedBug(title: String, area: String, severity: String, body: String)
 }
 
+/// One sub-lemma a worker proposes, exactly as it would be seeded: the
+/// statement is the full `theorem <name> ... := by\n  sorry` text. `reason`
+/// is required, as it is for a seeder's proposal — a proposal without one is
+/// not a proposal. `route` and `witness` are the seeder's optional claims,
+/// passed through untouched so `seed check` can adjudicate them; a worker in
+/// a Lean session can supply both, and one that supplies neither gets the
+/// verdict "none claimed / no witness supplied", which is a report and not a
+/// pass.
+pub type ProposedLemma {
+  ProposedLemma(
+    name: String,
+    statement: String,
+    reason: String,
+    size: dag.Size,
+    disclaims: String,
+    route: Option(#(String, List(String))),
+    witness: Option(#(String, List(String), String)),
+  )
+}
+
 /// What a worker reports at the end of every turn. `outcome` is the worker's
 /// claim, not the harness's finding.
 ///
-/// `discarded` is the decoder's own confession: one short line per `bugs`
-/// entry it could not read and therefore left out, and one line for the
-/// field written as something other than an array. It is empty
-/// for a clean report. The worker never writes it — it is what the harness
-/// knows about the gap between what the worker sent and what survived, and
-/// the dispatcher logs it into the attempt so a clean `bugs: []` can be told
-/// apart from a bug report that was dropped on the floor.
+/// `proposals` is the worker's decomposition of its node into sub-lemmas it
+/// would like seeded — optional, and, like `bugs`, never able to cost the
+/// outcome.
+///
+/// `discarded` is the decoder's own confession: one short line per `bugs` or
+/// `proposals` entry it could not read and therefore left out, and one line
+/// for each of those fields written as something other than an array. It is
+/// empty for a clean report. The worker never writes it — it is what the
+/// harness knows about the gap between what the worker sent and what
+/// survived, and the dispatcher logs it into the attempt so a clean
+/// `bugs: []` can be told apart from a bug report that was dropped on the
+/// floor.
 pub type Report {
   Report(
     outcome: String,
@@ -64,6 +89,7 @@ pub type Report {
     notebook: String,
     journal: String,
     bugs: List(ReportedBug),
+    proposals: List(ProposedLemma),
     summary: String,
     discarded: List(String),
   )
@@ -105,13 +131,23 @@ fn report_decoder() -> decode.Decoder(Report) {
   // either route is named in `discarded`, so a report that reached the
   // dispatcher with fewer bugs than the worker wrote says so.
   use raw_bugs <- decode.optional_field("bugs", Ok([]), dynamic_list())
-  let #(bugs, discarded) = survivors("bugs", raw_bugs, reported_bug_decoder())
+  let #(bugs, discarded_bugs) =
+    survivors("bugs", raw_bugs, reported_bug_decoder())
+  use raw_proposals <- decode.optional_field(
+    "proposals",
+    Ok([]),
+    dynamic_list(),
+  )
+  let #(proposals, discarded_proposals) =
+    survivors("proposals", raw_proposals, proposed_lemma_decoder())
+  let discarded = list.append(discarded_bugs, discarded_proposals)
   decode.success(Report(
     outcome:,
     estimate:,
     notebook:,
     journal:,
     bugs:,
+    proposals:,
     summary:,
     discarded:,
   ))
@@ -192,6 +228,53 @@ fn reported_bug_decoder() -> decode.Decoder(ReportedBug) {
   use severity <- decode.optional_field("severity", "friction", decode.string)
   use body <- decode.optional_field("body", "", decode.string)
   decode.success(ReportedBug(title:, area:, severity:, body:))
+}
+
+/// One proposed sub-lemma, decoded on its own by `report_decoder` for the
+/// same reason `reported_bug_decoder` is: a failure here must cost only this
+/// one entry, never the whole `proposals` array or the report around it.
+fn proposed_lemma_decoder() -> decode.Decoder(ProposedLemma) {
+  use name <- decode.field("name", decode.string)
+  use statement <- decode.field("statement", decode.string)
+  use reason <- decode.field("reason", decode.string)
+  use size <- decode.optional_field("size", dag.M, size_decoder())
+  use disclaims <- decode.optional_field("disclaims", "", decode.string)
+  use route <- decode.optional_field("route", None, route_decoder())
+  use witness <- decode.optional_field("witness", None, witness_decoder())
+  decode.success(ProposedLemma(
+    name:,
+    statement:,
+    reason:,
+    size:,
+    disclaims:,
+    route:,
+    witness:,
+  ))
+}
+
+/// The seeder's `route` claim: tactics plus the imports they need, both
+/// passed through untouched for `seed check` to adjudicate.
+fn route_decoder() -> decode.Decoder(Option(#(String, List(String)))) {
+  use tactics <- decode.field("tactics", decode.string)
+  use imports <- decode.optional_field(
+    "imports",
+    [],
+    decode.list(decode.string),
+  )
+  decode.success(Some(#(tactics, imports)))
+}
+
+/// The seeder's `witness` claim: an expression, the imports it needs, and
+/// the range it was checked over.
+fn witness_decoder() -> decode.Decoder(Option(#(String, List(String), String))) {
+  use expression <- decode.field("expression", decode.string)
+  use imports <- decode.optional_field(
+    "imports",
+    [],
+    decode.list(decode.string),
+  )
+  use range <- decode.field("range", decode.string)
+  decode.success(Some(#(expression, imports, range)))
 }
 
 fn size_decoder() -> decode.Decoder(dag.Size) {
