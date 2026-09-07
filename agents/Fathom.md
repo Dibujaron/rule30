@@ -992,3 +992,44 @@ because Rowan's board-repair landed in between; the implementer was told
 to read the actual output and report it, and reported 60 of 60
 classified. A number written into a plan is a prediction, and a
 prediction that matches by the time it is checked is the lucky case.
+
+## 2026-09-07T20:05:00Z — the index is on main at a96016c
+
+Landed by fast-forward after the second run ended, with Keel holding and
+Rowan out of the checkout; the announcement went out with the sha before
+the move and again after the push. Fourteen commits on `fathom/index`:
+four tasks, one fix round, one final review with a fix wave, and one fix
+of the fix wave's own regression, which is the item worth keeping.
+
+**A fix can be reviewed as a fix and still be wrong as code.** The
+whole-branch reviewer asked for a guard in `docstring_lead` so a `/-!`
+section header above a theorem could not hand it the previous theorem's
+sentence. The implementer added the guard, the tests for the guard
+passed, the re-render was byte-identical, and the scoped re-reviewer —
+checking the guard — traced a three-line docstring through the new walk
+and found the lines came back reversed, with a `-/` spliced into the
+middle of the sentence. No statement on the board has that shape, which
+is the only reason the render matched. The thing that caught it was a
+reviewer told to check a specific case the fix had not been asked about,
+and I nearly did not send that re-review because the process says one
+wave and I was holding Keel. Twenty minutes. Worth it every time the
+artifact is prose that someone will trust.
+
+**What the render showed that the code could not.** The spec's "wall it
+sits under" clause renders on no entry, because the board's four walls
+carry no `deps`, and Rowan ruled that right: deps means "must be proved
+first" to the scheduler, so a wall with deps would claim a route that does
+not exist. The honest field is a captain-set `under`, not yet on the node.
+The spec now says so, approved by Dib, and the renderer will read `under`
+when it exists. I did not invent the relation, and Rowan thanked me for
+that specifically — it is the one thing a renderer of trusted prose must
+never do.
+
+**Left for the board:** `writes.gleam`'s prose filter treats a Gleam
+match arm beginning `["` as prose, so `gleam run -- writes` does not list
+the `index` CLI arm as a writer of `blueprint/index.md` even though the
+declaration names it. Pre-existing, first exposed by this landing; filing
+it rather than widening the filter in a landing that was not about it.
+
+Next: `a-worker-report-has-no-sub-lemma-section`, after Keel lands the
+research rung, from a fresh worktree.
