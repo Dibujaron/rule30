@@ -11,6 +11,7 @@ import harness/config
 import harness/dag.{Attempt, Dag, Node}
 import harness/dispatch
 import harness/guard
+import harness/guard_event
 import harness/log
 import harness/worker
 import simplifile
@@ -274,6 +275,8 @@ pub fn worth_filing_drops_a_bug_that_lost_its_title_test() {
 /// Build the rows with the real producer rather than by hand, so a rename on
 /// either side fails here — a hand-written fixture would keep passing while
 /// the harness quietly filed nothing for the rest of the project's life.
+/// (`guard_test.a_denial_over_the_wire_reaches_dispatch_test` goes one step
+/// further and produces the row over HTTP.)
 pub fn guard_denials_reads_the_rows_the_guard_actually_writes_test() {
   let dir = "build/test-runs/denied-tools"
   let _ = simplifile.delete(dir)
@@ -286,10 +289,9 @@ pub fn guard_denials_reads_the_rows_the_guard_actually_writes_test() {
     )
   }
   let write = fn(node_id, tool, attempted, decision) {
-    log.event(
+    guard_event.write(
       l,
-      "guard",
-      guard.event_fields(at(node_id), "PreToolUse", tool, attempted, decision),
+      guard.event(at(node_id), "PreToolUse", tool, attempted, decision),
     )
   }
   let grammar = guard.Deny(guard.NotPermitted, "shell operators")
@@ -339,10 +341,9 @@ pub fn two_denials_of_one_tool_stay_apart_test() {
       holder: "probe_one",
     )
   let write = fn(attempted, decision) {
-    log.event(
+    guard_event.write(
       l,
-      "guard",
-      guard.event_fields(at, "PreToolUse", "Bash", attempted, decision),
+      guard.event(at, "PreToolUse", "Bash", attempted, decision),
     )
   }
   write("lake build ; rm -rf /", guard.Deny(guard.NotPermitted, "grammar"))
@@ -371,10 +372,9 @@ pub fn a_denial_survives_a_command_full_of_json_test() {
       holder: "probe_one",
     )
   let nasty = "lake build \"x\",\"denial\":\"build_lock_timeout\""
-  log.event(
+  guard_event.write(
     l,
-    "guard",
-    guard.event_fields(
+    guard.event(
       at,
       "PreToolUse",
       "Bash",
@@ -394,12 +394,14 @@ pub fn a_denial_survives_a_command_full_of_json_test() {
 
 /// A row written by an older guard has no `denial` field. It must still
 /// reach the board — a change that made denials silently stop being filed
-/// would be the very defect this one removes.
+/// would be the very defect this one removes. The keys are spelled out by
+/// hand because this is a fixture of the old format, not a use of the
+/// current producer.
 pub fn a_row_without_a_denial_field_still_files_test() {
   let dir = "build/test-runs/denial-legacy"
   let _ = simplifile.delete(dir)
   let assert Ok(l) = log.open(dir, "run")
-  log.event(l, "guard", [
+  log.event(l, guard_event.kind, [
     #("node", json.string("probe_one")),
     #("event", json.string("PreToolUse")),
     #("tool", json.string("Bash")),
@@ -407,6 +409,38 @@ pub fn a_row_without_a_denial_field_still_files_test() {
   ])
   assert dispatch.guard_denials(l, "probe_one")
     == [dispatch.GuardDenial(tool: "Bash", denial: "unknown", attempted: "")]
+}
+
+/// A row is a denial because of what it *is*, not because of what it
+/// contains. A `dispatch` row that happens to carry every guard key, and a
+/// raw stream line whose text is a guard row, must both read as nothing:
+/// the old reader selected by substring, and would have filed the first.
+pub fn a_row_of_another_kind_is_not_a_denial_test() {
+  let dir = "build/test-runs/denial-other-kinds"
+  let _ = simplifile.delete(dir)
+  let assert Ok(l) = log.open(dir, "run")
+  let at =
+    guard.Rules(
+      repo_root: "C:\\r",
+      role: guard.Prover(allowed_write: "C:\\r\\Rule30\\Proofs\\X.lean"),
+      holder: "probe_one",
+    )
+  let refused =
+    guard.event(
+      at,
+      "PreToolUse",
+      "Bash",
+      "rm -rf /",
+      guard.Deny(guard.NotPermitted, "grammar"),
+    )
+  log.event(l, "dispatch", guard_event.fields(refused))
+  let as_a_line =
+    json.object([
+      #("kind", json.string(guard_event.kind)),
+      ..guard_event.fields(refused)
+    ])
+  log.raw(l, "stream", json.to_string(as_a_line))
+  assert dispatch.guard_denials(l, "probe_one") == []
 }
 
 /// An attempt that died before its log existed files nothing rather than

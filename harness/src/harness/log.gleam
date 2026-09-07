@@ -41,6 +41,11 @@ fn touch(path: String) -> Result(Nil, String) {
   }
 }
 
+/// The key every row carries naming what wrote it. A reader that selects
+/// rows by kind (`guard_event.read`) keys on this name rather than on its
+/// own copy of the string, so the two cannot drift apart.
+pub const kind_key = "kind"
+
 /// Append one structured event: `{"ts": now_iso(), "kind": kind, ...fields}`.
 pub fn event(
   log: Log,
@@ -50,7 +55,7 @@ pub fn event(
   let obj =
     json.object([
       #("ts", json.string(now_iso())),
-      #("kind", json.string(kind)),
+      #(kind_key, json.string(kind)),
       ..fields
     ])
   append_line(log, json.to_string(obj))
@@ -62,7 +67,7 @@ pub fn raw(log: Log, kind: String, raw_line: String) -> Nil {
   let obj =
     json.object([
       #("ts", json.string(now_iso())),
-      #("kind", json.string(kind)),
+      #(kind_key, json.string(kind)),
       #("raw", json.string(raw_line)),
     ])
   append_line(log, json.to_string(obj))

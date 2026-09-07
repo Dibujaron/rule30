@@ -1,8 +1,9 @@
 import gleam/erlang/process.{type Subject}
-import gleam/json
 import gleam/list
 import gleam/string
+import harness/dispatch
 import harness/guard.{Rules}
+import harness/guard_event
 import harness/lock
 import harness/log
 import harness/shell
@@ -211,20 +212,20 @@ pub fn guard_events_name_the_node_test() {
       role: guard.Prover(allowed_write: "C:\\r\\Rule30\\Proofs\\X.lean"),
       holder: "evolve_left_edge",
     )
-  let fields =
-    guard.event_fields(
+  let e =
+    guard.event(
       at_node,
       "PreToolUse",
       "Bash",
       "lake clean",
       guard.Deny(guard.NotPermitted, "nope"),
     )
-  let assert Ok(#(_, node)) = list.find(fields, fn(f) { f.0 == "node" })
-  assert json.to_string(node) == "\"evolve_left_edge\""
+  assert e.node == "evolve_left_edge"
 }
 
 pub fn guard_events_still_carry_event_tool_and_decision_test() {
-  let fields = guard.event_fields(rules, "PreToolUse", "Bash", "", guard.Allow)
+  let fields =
+    guard_event.fields(guard.event(rules, "PreToolUse", "Bash", "", guard.Allow))
   let keys = list.map(fields, fn(f) { f.0 })
   assert list.contains(keys, "event")
   assert list.contains(keys, "tool")
@@ -236,29 +237,26 @@ pub fn guard_events_still_carry_event_tool_and_decision_test() {
 /// appeared nowhere, so a bug filed from it could not be acted on without the
 /// transcript — which the board does not have.
 pub fn a_denial_row_carries_the_command_and_the_kind_test() {
-  let fields =
-    guard.event_fields(
+  let e =
+    guard.event(
       rules,
       "PreToolUse",
       "Bash",
       "rm -rf /",
       guard.Deny(guard.NotPermitted, "nope"),
     )
-  let assert Ok(#(_, attempted)) =
-    list.find(fields, fn(f) { f.0 == "attempted" })
-  let assert Ok(#(_, denial)) = list.find(fields, fn(f) { f.0 == "denial" })
-  assert json.to_string(attempted) == "\"rm -rf /\""
-  assert json.to_string(denial) == "\"not_permitted\""
+  assert e.attempted == "rm -rf /"
+  assert e.denial == "not_permitted"
+  assert guard_event.is_denial(e)
 }
 
 /// The field is empty for anything that was not a denial, which is what
 /// `dispatch.guard_denials` keys on. If this ever became the slug of some
 /// non-denial, every allowed call in a run would be filed as a bug.
 pub fn a_non_denial_row_carries_an_empty_denial_test() {
-  let fields =
-    guard.event_fields(rules, "PreToolUse", "Bash", "lake build", guard.Allow)
-  let assert Ok(#(_, denial)) = list.find(fields, fn(f) { f.0 == "denial" })
-  assert json.to_string(denial) == "\"\""
+  let e = guard.event(rules, "PreToolUse", "Bash", "lake build", guard.Allow)
+  assert e.denial == ""
+  assert !guard_event.is_denial(e)
 }
 
 /// The two denials that a worker cannot tell apart from the outside, and
@@ -274,17 +272,15 @@ pub fn a_lock_timeout_and_a_grammar_refusal_have_different_slugs_test() {
 /// command is a well-formed log row that is wrong.
 pub fn a_very_long_command_is_truncated_and_says_so_test() {
   let long = string.repeat("lake build Rule30.Proofs.X ", 100)
-  let fields =
-    guard.event_fields(
+  let e =
+    guard.event(
       rules,
       "PreToolUse",
       "Bash",
       long,
       guard.Deny(guard.NotPermitted, "nope"),
     )
-  let assert Ok(#(_, attempted)) =
-    list.find(fields, fn(f) { f.0 == "attempted" })
-  assert string.contains(json.to_string(attempted), "truncated")
+  assert string.contains(e.attempted, "truncated")
 }
 
 /// Start a guard on a port the OS says is free, retrying on a bind collision.
@@ -340,4 +336,47 @@ pub fn guard_http_denies_rm_over_hook_endpoint_test() {
     )
   assert string.contains(r.output, "deny")
   let assert Ok(_) = simplifile.delete("build/test-runs")
+}
+
+/// The whole channel, end to end: a hook call arrives over HTTP, the guard
+/// refuses it and writes its row through its real code path, and the
+/// dispatcher reads that row back through *its* real code path. Nothing in
+/// this test names the row's kind or a key, so it is the one place a rename
+/// on either side — or a guard that starts writing rows some other way —
+/// fails instead of leaving the board quiet. Before it, the only round trip
+/// wrote the kind by hand in the test and would have stayed green.
+pub fn a_denial_over_the_wire_reaches_dispatch_test() {
+  let dir = "build/test-runs/guard-wire"
+  let _ = simplifile.delete(dir)
+  let assert Ok(lock_actor) = lock.start(60_000)
+  let assert Ok(run_log) = log.open(dir, "run")
+  let started = start_on_free_port(lock_actor, run_log, 8)
+  let assert Ok(curl) = shell.which("curl")
+  let body =
+    "{\"hook_event_name\":\"PreToolUse\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"rm -rf /\"}}"
+  let assert Ok(_) =
+    shell.run(
+      curl,
+      [
+        "-s",
+        "-X",
+        "POST",
+        "-H",
+        "x-harness-token: " <> started.token,
+        "--data",
+        body,
+        "http://127.0.0.1:" <> string.inspect(started.port) <> "/hook",
+      ],
+      ".",
+      5000,
+    )
+  assert dispatch.guard_denials(run_log, rules.holder)
+    == [
+      dispatch.GuardDenial(
+        tool: "Bash",
+        denial: "not_permitted",
+        attempted: "rm -rf /",
+      ),
+    ]
+  let assert Ok(_) = simplifile.delete(dir)
 }

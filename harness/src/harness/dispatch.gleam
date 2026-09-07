@@ -6,7 +6,6 @@
 //// A worker writes only its one proof file; the notebook, the journal and
 //// the DAG are written here, from the worker's report, verbatim.
 
-import gleam/dynamic/decode
 import gleam/erlang/process.{type Pid, type Subject}
 import gleam/int
 import gleam/io
@@ -19,6 +18,7 @@ import harness/bugs
 import harness/config
 import harness/dag
 import harness/guard
+import harness/guard_event
 import harness/lock
 import harness/log
 import harness/roster
@@ -1184,39 +1184,19 @@ fn auto_file(
 /// The distinct tools this attempt was denied, read back from the guard's
 /// own rows in the attempt's event log.
 ///
-/// The `node` filter is belt and braces rather than what makes a denial
-/// attributable: `run` gives every attempt its own
-/// `runs/<run-id>/<node>-<n>/events.jsonl` and hands that same log to that
-/// attempt's guard, so the directory already says whose denial it was. The
-/// filter keeps this correct if a guard is ever pointed at a log it shares.
-///
-/// Candidate lines are found by substring and then **decoded**, rather than
-/// scraped. The cheap filter is what keeps this affordable over a log that
-/// may hold thousands of rows; the decode is not optional, because
-/// `attempted` is a string the *worker* chose. Pulling it out with
-/// `split_once` on a quote would truncate any command containing an escaped
-/// quote, and a command containing the text `","denial":"` would forge a
-/// field. A scrape is safe for values the guard controls and unsafe the
-/// moment one of them is someone else's.
+/// The rows are read through `guard_event`, the module the guard wrote them
+/// through, and classified by their decoded `denial` field — never by
+/// searching the line for a word. A row is a denial exactly when its slug
+/// is non-empty, so a new kind of refusal reaches the board by getting a
+/// slug, and a row that merely mentions a denial (a worker's command can
+/// contain any text it likes) does not.
 pub fn guard_denials(l: log.Log, node_id: String) -> List(GuardDenial) {
-  case simplifile.read(l.dir <> "/events.jsonl") {
-    Error(_) -> []
-    Ok(text) ->
-      text
-      |> string.split(
-        "
-",
-      )
-      |> list.filter(fn(line) {
-        string.contains(line, "\"kind\":\"guard\"")
-        && string.contains(line, "\"node\":\"" <> node_id <> "\"")
-      })
-      |> list.filter_map(fn(line) {
-        json.parse(line, guard_denial_decoder()) |> result.replace_error(Nil)
-      })
-      |> list.filter(fn(d) { d.denial != "" })
-      |> list.unique
-  }
+  guard_event.read(l, node_id)
+  |> list.filter(guard_event.is_denial)
+  |> list.map(fn(e) {
+    GuardDenial(tool: e.tool, denial: e.denial, attempted: e.attempted)
+  })
+  |> list.unique
 }
 
 /// One denial as the board needs to read it: which tool, why it was refused,
@@ -1228,26 +1208,6 @@ pub fn guard_denials(l: log.Log, node_id: String) -> List(GuardDenial) {
 /// its two meanings.
 pub type GuardDenial {
   GuardDenial(tool: String, denial: String, attempted: String)
-}
-
-/// Reads the row `guard.event_fields` writes.
-///
-/// `denial` and `attempted` are optional so that a log written by an older
-/// guard still yields bugs rather than silently yielding none — a run whose
-/// denials stop reaching the board without anything failing is the shape of
-/// defect this change exists to remove, and it would be perverse to
-/// introduce it here. Such a row falls back to `"unknown"`, which is a worse
-/// signature than the real slug and a much better one than no bug at all.
-fn guard_denial_decoder() -> decode.Decoder(GuardDenial) {
-  use tool <- decode.field("tool", decode.string)
-  use decision <- decode.field("decision", decode.string)
-  use denial <- decode.optional_field("denial", "", decode.string)
-  use attempted <- decode.optional_field("attempted", "", decode.string)
-  let denial = case denial, string.starts_with(decision, "Deny(") {
-    "", True -> "unknown"
-    other, _ -> other
-  }
-  decode.success(GuardDenial(tool:, denial:, attempted:))
 }
 
 /// The two auto-filed signals in scope this round: a rate-limited outcome,
