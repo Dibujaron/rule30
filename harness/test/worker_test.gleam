@@ -754,10 +754,15 @@ pub fn a_bug_items_required_matches_what_the_decoder_actually_requires_test() {
 pub fn schema_offers_proposals_without_requiring_them_test() {
   let schema = brief.report_schema()
   assert string.contains(schema, "\"proposals\"")
-  assert string.contains(
-    schema,
-    "\"required\":[\"name\",\"statement\",\"reason\"]",
-  )
+  let assert Ok(required) =
+    json.parse(
+      schema,
+      decode.at(
+        ["properties", "proposals", "items", "required"],
+        decode.list(decode.string),
+      ),
+    )
+  assert required == ["name", "statement", "reason"]
   // Top-level required is unchanged: the turn's work, not its extras.
   assert string.contains(
     schema,
@@ -771,6 +776,7 @@ pub fn the_brief_explains_proposals_test() {
   assert string.contains(text, "exactly as it would be seeded")
   assert string.contains(text, "not a claim that the node is hard")
   assert string.contains(text, "restates")
+  assert string.contains(text, "report that ends your attempt")
 }
 
 pub fn a_malformed_bug_does_not_poison_the_whole_report_test() {

@@ -145,17 +145,19 @@ pub fn prove_one(
 
   let pending =
     write_channels(cfg, l, l, identity, claimed, model, attempt, report)
-  // Run inline, unlike `returned`'s: a single `prove_one` has nothing else
-  // waiting on this process, so there is no sibling slot to stall.
+  auto_file_signals(cfg, l, node_id, identity, attempt)
+  let text = summary(d, l, identity, attempt, node_id)
+  log.summary(l, text)
+  io.println(text)
+  // Only now, with the attempt's whole record already written — board
+  // saved, channels written, signals auto-filed, summary logged and
+  // printed: see `run_check`'s doc comment for why this cannot run any
+  // earlier.
   case pending {
     None -> Nil
     Some(p) ->
       run_check(fn(path) { seed.check_file_in(cfg.repo_root, path) }, p)
   }
-  auto_file_signals(cfg, l, node_id, identity, attempt)
-  let text = summary(d, l, identity, attempt, node_id)
-  log.summary(l, text)
-  io.println(text)
   Ok(attempt.outcome)
 }
 
@@ -311,7 +313,7 @@ fn run_with_log(
       io.println(
         "checking "
         <> int.to_string(list.length(pending))
-        <> " proposal file(s) from this run",
+        <> " proposal file(s) from this run; a proposal with a route or witness can take minutes each",
       )
       list.each(list.reverse(pending), fn(p) {
         run_check(env.check_proposals, p)
@@ -378,6 +380,12 @@ type RunState {
     /// `.lake` (which would take the whole run down rather than fail one
     /// attempt). `run_with_log` runs these only after `loop` returns and
     /// the run's own record is already written.
+    ///
+    /// A run whose loop errors or is killed before reaching this sweep
+    /// leaves a `proposals.json` with a `proposals` event in its
+    /// attempt's log and no `proposals_checked` event: the file sits
+    /// inert rather than dangerous, and `gleam run -- seed check
+    /// <attempt-dir>/proposals.json` is the manual re-run to finish it.
     pending_checks: List(PendingCheck),
   )
 }
@@ -1354,6 +1362,10 @@ pub fn write_proposals(
             #("from", json.string(identity.name)),
             #("file", json.string(path)),
             #("count", json.int(list.length(survivors))),
+            #(
+              "names",
+              json.array(list.map(survivors, fn(p) { p.name }), json.string),
+            ),
           ])
           case simplifile.write(path, text) {
             Error(e) -> {
@@ -1386,8 +1398,9 @@ pub fn write_proposals(
 /// reason, never a crash.
 ///
 /// Takes the checker as an argument rather than calling `seed.check_file_in`
-/// directly so its caller controls WHEN this runs. `prove_one` runs it
-/// immediately — nothing else is waiting on that process. A run's `returned`
+/// directly so its caller controls WHEN this runs. `prove_one` runs it once
+/// the attempt's whole record is written, so nothing of the attempt's is
+/// waiting on it. A run's `returned`
 /// never calls this: it happens on the scheduler's own process with sibling
 /// attempts still claimed, and the real checker can block up to 600s per
 /// route claim and 180s per witness, and has its own `let assert` writes

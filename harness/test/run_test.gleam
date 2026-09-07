@@ -340,11 +340,19 @@ pub fn two_slots_take_both_leaves_and_a_close_opens_the_next_test() {
 }
 
 /// A worker's proposal is checked only after the run's own summary is
-/// written, not inline in `returned`: `env.check_proposals` here is the
-/// stub `env()` supplies, so this proves the deferred sweep in
-/// `run_with_log` runs at all and writes into the ATTEMPT's own
-/// `events.jsonl` (not the run log), rather than proving anything about
-/// the real `seed.check_file_in` — that is `dispatch_test.gleam`'s job.
+/// written, not inline in `returned`: the stubbed `check_proposals` here
+/// reads `summary.txt` out of the run directory it is handed (derived from
+/// the proposals file's own path, two segments up) and copies it into a
+/// marker file — a read that can only succeed if `summary.txt` is already
+/// on disk when the check runs. Asserting the marker equals `text`, the
+/// exact string `run_with` returned (and the one written to `summary.txt`,
+/// trailing newline and all, and printed before the sweep — see
+/// `run_with_log`), proves the ordering rather than merely a coincidence
+/// of timing. This also proves the
+/// deferred sweep in `run_with_log` runs at all and writes into the
+/// ATTEMPT's own `events.jsonl` (not the run log), rather than proving
+/// anything about the real `seed.check_file_in` — that is
+/// `dispatch_test.gleam`'s job.
 pub fn a_proposal_is_checked_after_the_run_summary_test() {
   let f =
     fixture(
@@ -352,11 +360,10 @@ pub fn a_proposal_is_checked_after_the_run_summary_test() {
       [[init_line("s"), result_line_with_proposal("s", "abandoned")]],
       ports.span(16),
     )
-  let assert Ok(text) =
-    dispatch.run_with(
-      f.cfg,
-      Plan(max_attempts: 1, concurrency: 1),
-      env(
+  let marker_path = f.dir <> "/marker.txt"
+  let env_ =
+    dispatch.Env(
+      ..env(
         f,
         verify.Verified(
           ["propext"],
@@ -364,8 +371,23 @@ pub fn a_proposal_is_checked_after_the_run_summary_test() {
           "'harness_check' depends on axioms",
         ),
       ),
+      check_proposals: fn(path) {
+        // `path` is `<run_dir>/<attempt_dir>/proposals.json`.
+        let run_dir =
+          string.split(path, "/")
+          |> list.reverse
+          |> list.drop(2)
+          |> list.reverse
+          |> string.join("/")
+        let summary = read(run_dir <> "/summary.txt")
+        let _ = simplifile.write(marker_path, summary)
+        Ok("stubbed check")
+      },
     )
+  let assert Ok(text) =
+    dispatch.run_with(f.cfg, Plan(max_attempts: 1, concurrency: 1), env_)
   assert string.contains(text, "1 attempt(s)")
+  assert read(marker_path) == text <> "\n"
   let dirs = run_dirs(f)
   assert list.contains(dirs, "probe_one-1")
   let assert Ok(runs) = simplifile.read_directory(f.cfg.runs_root)

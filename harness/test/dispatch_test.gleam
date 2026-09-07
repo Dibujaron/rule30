@@ -976,6 +976,9 @@ pub fn write_proposals_writes_the_seeder_shape_and_discards_either_name_test() {
   let assert Ok(events) = simplifile.read(l.dir <> "/events.jsonl")
   assert string.contains(events, "\"kind\":\"proposals\"")
   assert string.contains(events, "\"count\":1")
+  // The survivor's name is logged beside the count, so a failed file write
+  // still leaves it in the record.
+  assert string.contains(events, "evolve_left_sixth_diagonal")
   assert string.contains(events, "\"kind\":\"proposals_discarded\"")
   assert string.contains(events, "evolve_left_seventh_diagonal")
   assert string.contains(
@@ -1146,9 +1149,9 @@ pub fn run_check_writes_the_report_on_a_successful_check_test() {
 /// report on disk, saying "none claimed" and "no witness supplied" rather
 /// than a refusal. Routed through `run_check` exactly as `prove_one` routes
 /// it, rather than calling `seed.check_file_in` from the test directly.
-/// Scratch `seed.check_file_in` writes lands under
-/// `harness/test/fixture-project/harness/`, which `.gitignore` already
-/// lists, and this test's own report says whether `git status` agreed.
+/// This proposal claims neither route nor witness, so nothing is written
+/// under the gitignored scratch `seed.check_file_in` otherwise uses at
+/// `harness/test/fixture-project/harness/`.
 pub fn write_proposals_records_a_check_that_ran_test() {
   let repo_root = lean_fixture.built()
   let root = "build/test-runs/write-proposals-fixture"
