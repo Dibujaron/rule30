@@ -69,6 +69,7 @@ fn node(
     claimed_by: None,
     claimed_at: None,
     claimed_run: None,
+    object: None,
   )
 }
 
