@@ -678,6 +678,90 @@ theorem leftDiagonal_step_period_dichotomy (m q N : ℕ)
       ∀ j ≥ N + 1, leftDiagonal (m + 1) j = false := by
   sorry
 
+/-! ## Configurations and the row model
+
+The picture grown from an arbitrary row, and the bit-level model of the
+single-seed picture. Sourced from `blueprint/crystals.md` items 1–4, A1, A2,
+20 and 34, under `docs/superpowers/specs/2026-09-07-connections-design.md`. -/
+
+/-- **Flipping the left neighbour always flips the output.** Rule 30 is
+`left XOR (centre OR right)`, so with centre and right held fixed the output
+is the left cell up to a constant. Left-permutivity for one step, in the
+form crystal A1 gives it. -/
+theorem rule30_ne_of_left_ne (c d : Config) (i : ℤ)
+    (hl : c (i - 1) ≠ d (i - 1)) (hc : c i = d i) (hr : c (i + 1) = d (i + 1)) :
+    rule30 c i ≠ rule30 d i := by
+  sorry
+
+/-- **The exact local law of the left front.** Two rows agree at `i - 2` and
+`i - 1` and differ at `i`; then the outputs at `i - 1` differ exactly when
+the cell at `i - 1` is white. The difference front advances left when the
+cell beside it is white and can retreat when it is black, which is the
+deterministic content behind the measured left speed near a quarter. -/
+theorem rule30_left_local_law (c d : Config) (i : ℤ)
+    (h2 : c (i - 2) = d (i - 2)) (h1 : c (i - 1) = d (i - 1)) (h0 : c i ≠ d i) :
+    (rule30 c (i - 1) ≠ rule30 d (i - 1)) ↔ c (i - 1) = false := by
+  sorry
+
+/-- **The sideways inverse.** Any row is recovered one cell to the left from
+its successor and its own cells to the right: `c (i-1) = xor (rule30 c i) (c i || c (i+1))`.
+The general-row form of the closed `evolve_sub_one_eq_xor`. -/
+theorem sideways_inverse (c : Config) (i : ℤ) :
+    c (i - 1) = xor (rule30 c i) (c i || c (i + 1)) := by
+  sorry
+
+/-- **The cone lemma for an arbitrary row.** After `t` steps the origin cell
+depends only on the starting cells at positions `-t .. t`: two rows that
+agree there grow the same origin cell. Induction on `t`; the single-seed
+`evolve_eq_false_of_outside_cone` is the case where the second row is all
+white, read away from the origin. -/
+theorem evolveFrom_eq_of_agree_on_window (c d : Config) (t : ℕ)
+    (h : ∀ j : ℤ, -(t : ℤ) ≤ j → j ≤ t → c j = d j) :
+    evolveFrom c t 0 = evolveFrom d t 0 := by
+  sorry
+
+/-- **One step of rule 30 is left-permutive with radius 1.** The
+`LeftPermutive` form of `rule30_ne_of_left_ne`. -/
+theorem rule30_leftPermutive : LeftPermutive rule30 1 := by
+  sorry
+
+/-- **`t` steps of rule 30 are left-permutive with radius `t`.** Flipping the
+cell at `i - t` while holding `i - t + 1 .. i + t` fixed flips the output at
+`i` after `t` steps. Induction on `t` over one step; the flipped cell's
+influence moves right by exactly one per step and is never cancelled,
+because each step is left-permutive. -/
+theorem evolveFrom_leftPermutive (t : ℕ) :
+    LeftPermutive (fun c => evolveFrom c t) t := by
+  sorry
+
+/-- **The rightmost difference moves right at speed exactly one.** If two
+rows agree everywhere to the right of `i` and differ at `i`, then after `t`
+steps they differ at `i + t` and agree everywhere to its right. Kůrka's
+right Lyapunov exponent, in its finite form. Induction on `t`. -/
+theorem rightmost_difference_moves_right (c d : Config) (i : ℤ) (t : ℕ)
+    (hagree : ∀ j : ℤ, i < j → c j = d j) (hdiff : c i ≠ d i) :
+    evolveFrom c t (i + t) ≠ evolveFrom d t (i + t) ∧
+      ∀ j : ℤ, i + t < j → evolveFrom c t j = evolveFrom d t j := by
+  sorry
+
+/-- **After `t` steps, exactly half of all windows grow a black centre cell.**
+Of the `2 ^ (2t + 1)` assignments to positions `-t .. t`, exactly `2 ^ (2t)`
+make the origin black at time `t`. Left-permutivity with radius `t` pairs
+each window with the one whose leftmost cell is flipped, and the pair has
+one black and one white outcome. This is the finite form of "a random row
+stays random", and the reason one half is the expected density; it says
+nothing about the single-seed row, which is one window in `2 ^ (2t + 1)`. -/
+theorem window_count_half (t : ℕ) : blackWindowCount t = 2 ^ (2 * t) := by
+  sorry
+
+/-- **The row model agrees with the automaton.** `rowCell t x = evolve t x`
+for every `t` and `x`. Induction on `t`; the step case reads the three
+neighbouring bits out of `(4 * r) ^^^ ((2 * r) ||| r)` with `Nat.testBit`
+lemmas and matches them to `rule30_eq`. After this, any concrete fact about
+any row to depth in the thousands is a theorem by `decide`. -/
+theorem rowCell_eq_evolve (t : ℕ) (x : ℤ) : rowCell t x = evolve t x := by
+  sorry
+
 /-- A trivially true statement that exists only so the harness's verifier
 tests have something to prove without touching a real node's proof file. It
 is deliberately absent from `blueprint/dag.json`. -/
