@@ -255,7 +255,7 @@ fn attempt(
   estimate: dag.Size,
   cost: Float,
 ) -> dag.Attempt {
-  at_rung("opus", who, outcome, estimate, cost)
+  at_rung("fable", who, outcome, estimate, cost)
 }
 
 fn at_rung(
@@ -300,6 +300,7 @@ fn node_with(
     claimed_at: None,
     claimed_run: None,
     object: None,
+    research: False,
   )
 }
 
@@ -369,6 +370,23 @@ pub fn a_lower_rung_attempt_is_not_calibration_evidence_test() {
   // Only the opus attempt on `a` is evidence, and it was a hit.
   assert s.calibration_hits == 1
   assert s.calibration_total == 1
+}
+
+pub fn the_two_strongest_rungs_are_calibration_evidence_test() {
+  // Fable now tops every ladder, and opus attempts were made when opus did.
+  // The strongest two rungs count, so an opus failure on an `S` node is
+  // still evidence — a miss here — and a sonnet one still is not.
+  let d =
+    Dag([
+      node_with("a", dag.S, [
+        at_rung("sonnet", "Thessaly", dag.GaveUp, dag.L, 1.0),
+        at_rung("opus", "Thessaly", dag.GaveUp, dag.L, 2.0),
+        at_rung("fable", "Thessaly", dag.GaveUp, dag.S, 4.0),
+      ]),
+    ])
+  let s = roster.scorecard(d, "Thessaly")
+  assert s.calibration_hits == 1
+  assert s.calibration_total == 2
 }
 
 pub fn a_close_on_a_cheap_rung_is_calibration_evidence_test() {

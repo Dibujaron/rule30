@@ -1,32 +1,149 @@
+import gleam/option.{None}
 import harness/config
-import harness/dag
+import harness/dag.{type Node, Attempt, Node}
 
-pub fn ladder_starts_cheap_and_ends_on_opus_test() {
-  assert config.ladder(dag.S) == ["haiku", "sonnet", "opus"]
-  assert config.ladder(dag.M) == ["sonnet", "opus"]
-  assert config.ladder(dag.L) == ["opus"]
+fn node(size: dag.Size, research: Bool, attempts: List(dag.Attempt)) -> Node {
+  Node(
+    id: "n",
+    region: "P2",
+    lean_name: "n",
+    description: "a fixture node",
+    deps: [],
+    status: dag.Open,
+    size:,
+    proof_file: None,
+    attempts:,
+    verified: None,
+    claimed_by: None,
+    claimed_at: None,
+    claimed_run: None,
+    object: None,
+    research:,
+  )
+}
+
+fn attempt(outcome: dag.Outcome) -> dag.Attempt {
+  Attempt(
+    identity: "Scripted",
+    session_id: "s",
+    model: "opus",
+    started: "t0",
+    ended: "t1",
+    outcome:,
+    estimate: dag.S,
+    reported: True,
+    cost_usd: 0.0,
+    turns: 1,
+    notes: "",
+  )
+}
+
+pub fn ladder_starts_cheap_and_ends_on_fable_test() {
+  assert config.ladder(dag.S) == ["haiku", "sonnet", "opus", "fable"]
+  assert config.ladder(dag.M) == ["sonnet", "opus", "fable"]
+  assert config.ladder(dag.L) == ["opus", "fable"]
   assert config.ladder(dag.Wall) == []
 }
 
 pub fn model_for_escalates_on_each_failure_test() {
-  assert config.model_for(dag.S, 0) == Ok("haiku")
-  assert config.model_for(dag.S, 1) == Ok("sonnet")
-  assert config.model_for(dag.S, 2) == Ok("opus")
-  assert config.model_for(dag.M, 0) == Ok("sonnet")
-  assert config.model_for(dag.M, 1) == Ok("opus")
-  assert config.model_for(dag.L, 0) == Ok("opus")
+  assert config.model_for(dag.S, 0, research: False) == Ok("haiku")
+  assert config.model_for(dag.S, 1, research: False) == Ok("sonnet")
+  assert config.model_for(dag.S, 2, research: False) == Ok("opus")
+  assert config.model_for(dag.S, 3, research: False) == Ok("fable")
+  assert config.model_for(dag.M, 0, research: False) == Ok("sonnet")
+  assert config.model_for(dag.M, 1, research: False) == Ok("opus")
+  assert config.model_for(dag.M, 2, research: False) == Ok("fable")
+  assert config.model_for(dag.L, 0, research: False) == Ok("opus")
+  assert config.model_for(dag.L, 1, research: False) == Ok("fable")
 }
 
 pub fn model_for_exhausts_the_ladder_test() {
-  assert config.model_for(dag.S, 3) == Error(Nil)
-  assert config.model_for(dag.M, 2) == Error(Nil)
-  assert config.model_for(dag.L, 1) == Error(Nil)
+  assert config.model_for(dag.S, 4, research: False) == Error(Nil)
+  assert config.model_for(dag.M, 3, research: False) == Error(Nil)
+  assert config.model_for(dag.L, 2, research: False) == Error(Nil)
 }
 
-/// `wall` is never dispatched, at any attempt count.
+/// `wall` is never dispatched, at any attempt count — research or not.
 pub fn model_for_never_dispatches_a_wall_test() {
-  assert config.model_for(dag.Wall, 0) == Error(Nil)
-  assert config.model_for(dag.Wall, 5) == Error(Nil)
+  assert config.model_for(dag.Wall, 0, research: False) == Error(Nil)
+  assert config.model_for(dag.Wall, 5, research: False) == Error(Nil)
+  assert config.model_for(dag.Wall, 0, research: True) == Error(Nil)
+  assert config.model_for(dag.Wall, 5, research: True) == Error(Nil)
+}
+
+/// Below the top rung a research node climbs the ladder like any other;
+/// at the top it stays there, however many attempts have failed.
+pub fn a_research_node_climbs_the_ladder_then_repeats_its_top_rung_test() {
+  assert config.model_for(dag.L, 0, research: True) == Ok("opus")
+  assert config.model_for(dag.L, 1, research: True) == Ok("fable")
+  assert config.model_for(dag.L, 2, research: True) == Ok("fable")
+  assert config.model_for(dag.L, 9, research: True) == Ok("fable")
+  assert config.model_for(dag.S, 2, research: True) == Ok("opus")
+  assert config.model_for(dag.S, 3, research: True) == Ok("fable")
+  assert config.model_for(dag.S, 40, research: True) == Ok("fable")
+  assert config.model_for(dag.M, 7, research: True) == Ok("fable")
+}
+
+pub fn a_research_node_is_on_its_research_rung_once_the_cheap_rungs_are_spent_test() {
+  // An `L` research node: opus first, and every attempt after one failure
+  // is at the top rung.
+  assert !config.on_research_rung(node(dag.L, True, []))
+  assert config.on_research_rung(node(dag.L, True, [attempt(dag.GaveUp)]))
+  assert config.on_research_rung(
+    node(dag.L, True, [
+      attempt(dag.GaveUp),
+      attempt(dag.BudgetExhausted),
+      attempt(dag.GaveUp),
+    ]),
+  )
+  // A pause and a harness failure spend no rung, so they do not lift a
+  // research node onto its top rung either.
+  assert !config.on_research_rung(
+    node(dag.L, True, [attempt(dag.RateLimited), attempt(dag.HarnessFailed)]),
+  )
+  // An ordinary node is never on a research rung, however many failures.
+  assert !config.on_research_rung(
+    node(dag.L, False, [attempt(dag.GaveUp), attempt(dag.GaveUp)]),
+  )
+  // A wall has no ladder, so it has no top rung to be on.
+  assert !config.on_research_rung(node(dag.Wall, True, [attempt(dag.GaveUp)]))
+}
+
+pub fn for_attempt_swaps_in_the_research_ceilings_only_at_the_research_rung_test() {
+  let assert Ok(base) = config.load()
+  let cfg =
+    config.Config(
+      ..base,
+      max_turns: 40,
+      max_budget_usd: 4.0,
+      research_max_turns: 120,
+      research_max_budget_usd: 20.0,
+    )
+  let ordinary = config.for_attempt(cfg, node(dag.L, False, []))
+  assert ordinary == cfg
+  let climbing = config.for_attempt(cfg, node(dag.L, True, []))
+  assert climbing == cfg
+  let research =
+    config.for_attempt(cfg, node(dag.L, True, [attempt(dag.GaveUp)]))
+  assert research.max_turns == 120
+  assert research.max_budget_usd == 20.0
+  // Nothing but the two ceilings changes.
+  assert config.Config(..research, max_turns: 40, max_budget_usd: 4.0) == cfg
+}
+
+pub fn failed_attempts_counts_only_the_outcomes_that_burn_a_rung_test() {
+  assert config.failed_attempts(
+      node(dag.S, False, [
+        attempt(dag.GaveUp),
+        attempt(dag.BudgetExhausted),
+        attempt(dag.RateLimited),
+        attempt(dag.TimedOut),
+        attempt(dag.HarnessFailed),
+        attempt(dag.Reduced),
+        attempt(dag.Closed),
+      ]),
+    )
+    == 2
 }
 
 pub fn load_derives_every_path_from_the_repo_root_test() {
@@ -40,6 +157,16 @@ pub fn load_derives_every_path_from_the_repo_root_test() {
   assert cfg.max_turns == 40
   assert cfg.max_verify_rounds == 4
   assert cfg.lake != ""
+}
+
+/// The research ceilings: three times the turns of an ordinary attempt,
+/// and a dollar ceiling sized so the turn ceiling is the one that binds.
+pub fn research_ceilings_default_to_120_turns_and_20_dollars_test() {
+  let assert Ok(cfg) = config.load()
+  assert cfg.research_max_turns == 120
+  assert cfg.research_max_budget_usd == 20.0
+  assert cfg.research_max_turns > cfg.max_turns
+  assert cfg.research_max_budget_usd >. cfg.max_budget_usd
 }
 
 pub fn bugs_path_sits_beside_the_dag_test() {

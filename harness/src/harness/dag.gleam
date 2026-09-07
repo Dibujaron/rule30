@@ -97,6 +97,16 @@ pub type Attempt {
 /// harness never sets it and never checks the value: it only carries it,
 /// so that a run's `save` gives back exactly what the captain wrote. `None`
 /// is a node nobody has classified yet, and the file carries no key for it.
+///
+/// `research` marks a task the scheduler keeps retrying at full strength: a
+/// node where nobody knows the proof, so an attempt is a search rather than
+/// a probe. The model ladder is a cost optimiser and below its top rung a
+/// research node climbs it like any other; at the top rung it is never
+/// exhausted (`config.model_for`), runs under the research budget
+/// (`config.for_attempt`), and is offered only when nothing cheaper is
+/// startable (`schedule.startable`). Set by hand on the board by the
+/// captain; the harness never sets it. Absent from the file means `False`,
+/// and a save writes the key only when it is `True`.
 pub type Node {
   Node(
     id: String,
@@ -113,6 +123,7 @@ pub type Node {
     claimed_at: Option(String),
     claimed_run: Option(String),
     object: Option(String),
+    research: Bool,
   )
 }
 
@@ -489,6 +500,8 @@ fn node_decoder() -> decode.Decoder(Node) {
     None,
     decode.optional(decode.string),
   )
+  // Absent on every node the captain has not marked; an ordinary node.
+  use research <- decode.optional_field("research", False, decode.bool)
   decode.success(Node(
     id:,
     region:,
@@ -504,6 +517,7 @@ fn node_decoder() -> decode.Decoder(Node) {
     claimed_at:,
     claimed_run:,
     object:,
+    research:,
   ))
 }
 
@@ -528,33 +542,41 @@ fn attempt_to_json(attempt: Attempt) -> json.Json {
   ])
 }
 
-/// `object` is the one field written only when it is `Some`: a node the
-/// captain has not classified carries no `object` key on disk, and a save
-/// must not invent one — `null` would put a key on every unclassified node
-/// that the hand-written board does not have.
+/// `object` and `research` are written only when they say something: a
+/// node the captain has not classified carries no `object` key on disk and
+/// an ordinary node no `research` key, and a save must not invent either —
+/// `null` or `false` would put a key on every node that the hand-written
+/// board does not have.
 fn node_to_json(node: Node) -> json.Json {
   let object = case node.object {
     Some(o) -> [#("object", json.string(o))]
     None -> []
   }
-  json.object(list.append(
-    [
-      #("id", json.string(node.id)),
-      #("region", json.string(node.region)),
-      #("lean_name", json.string(node.lean_name)),
-      #("description", json.string(node.description)),
-      #("deps", json.array(node.deps, json.string)),
-      #("status", json.string(status_to_string(node.status))),
-      #("size", json.string(size_to_string(node.size))),
-      #("proof_file", json.nullable(node.proof_file, json.string)),
-      #("attempts", json.array(node.attempts, attempt_to_json)),
-      #("verified", json.nullable(node.verified, json.string)),
-      #("claimed_by", json.nullable(node.claimed_by, json.string)),
-      #("claimed_at", json.nullable(node.claimed_at, json.string)),
-      #("claimed_run", json.nullable(node.claimed_run, json.string)),
-    ],
-    object,
-  ))
+  let research = case node.research {
+    True -> [#("research", json.bool(True))]
+    False -> []
+  }
+  json.object(
+    list.flatten([
+      [
+        #("id", json.string(node.id)),
+        #("region", json.string(node.region)),
+        #("lean_name", json.string(node.lean_name)),
+        #("description", json.string(node.description)),
+        #("deps", json.array(node.deps, json.string)),
+        #("status", json.string(status_to_string(node.status))),
+        #("size", json.string(size_to_string(node.size))),
+        #("proof_file", json.nullable(node.proof_file, json.string)),
+        #("attempts", json.array(node.attempts, attempt_to_json)),
+        #("verified", json.nullable(node.verified, json.string)),
+        #("claimed_by", json.nullable(node.claimed_by, json.string)),
+        #("claimed_at", json.nullable(node.claimed_at, json.string)),
+        #("claimed_run", json.nullable(node.claimed_run, json.string)),
+      ],
+      object,
+      research,
+    ]),
+  )
 }
 
 fn dag_to_json(dag: Dag) -> json.Json {

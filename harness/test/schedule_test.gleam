@@ -1,8 +1,9 @@
 //// The scheduler's pure half: what `run` is allowed to start next, and how
 //// its flags are read. No sessions, no files.
 
+import gleam/list
 import gleam/option.{None, Some}
-import harness/dag.{Dag, Node}
+import harness/dag.{Attempt, Dag, Node}
 import harness/roster.{type Identity, type Roster, Identity, Roster}
 import harness/schedule.{Assignment, Existing, Mint, Plan}
 
@@ -22,6 +23,7 @@ fn node(id: String, status: dag.Status, deps: List(String)) -> dag.Node {
     claimed_at: None,
     claimed_run: None,
     object: None,
+    research: False,
   )
 }
 
@@ -276,4 +278,134 @@ pub fn a_non_wall_leaf_is_still_selected_normally_test() {
     )
   assert n.id == "a"
   assert n.size == dag.S
+}
+
+// --- research nodes -----------------------------------------------------------
+
+fn research_node(id: String, deps: List(String)) -> dag.Node {
+  Node(..node(id, dag.Open, deps), research: True)
+}
+
+fn failed(who: String, model: String) -> dag.Attempt {
+  Attempt(
+    identity: who,
+    session_id: "s",
+    model:,
+    started: "t0",
+    ended: "t1",
+    outcome: dag.GaveUp,
+    estimate: dag.S,
+    reported: True,
+    cost_usd: 0.0,
+    turns: 1,
+    notes: "",
+  )
+}
+
+/// An `S` research node whose four rungs are spent, all by `who`: its next
+/// attempt is at the repeatable top rung.
+fn spent_research_node(id: String, who: String) -> dag.Node {
+  Node(..research_node(id, []), attempts: [
+    failed(who, "haiku"),
+    failed(who, "sonnet"),
+    failed(who, "opus"),
+    failed(who, "fable"),
+  ])
+}
+
+pub fn a_research_leaf_starts_after_every_ordinary_leaf_test() {
+  // `r` unblocks `c`, so `dag.open_leaves` ranks it first; it is research,
+  // so the scheduler takes `b` first and `r` only when `b` is not startable.
+  let d =
+    Dag([
+      research_node("r", []),
+      node("b", dag.Open, []),
+      node("c", dag.Open, ["r"]),
+    ])
+  assert list.map(dag.open_leaves(d), fn(n) { n.id }) == ["r", "b"]
+  assert list.map(schedule.startable(d), fn(n) { n.id }) == ["b", "r"]
+  let assert Some(Assignment(node: first, ..)) =
+    schedule.next_to_start(
+      d,
+      one_persona(),
+      Plan(3, 2),
+      running: 0,
+      busy: [],
+      dispatched: 0,
+      skip: [],
+    )
+  assert first.id == "b"
+  let assert Some(Assignment(node: then, ..)) =
+    schedule.next_to_start(
+      d,
+      one_persona(),
+      Plan(3, 2),
+      running: 0,
+      busy: [],
+      dispatched: 0,
+      skip: ["b"],
+    )
+  assert then.id == "r"
+}
+
+pub fn a_research_leaf_alone_is_started_test() {
+  let d = Dag([research_node("r", [])])
+  let assert Some(Assignment(node: n, ..)) =
+    schedule.next_to_start(
+      d,
+      one_persona(),
+      Plan(3, 2),
+      running: 0,
+      busy: [],
+      dispatched: 0,
+      skip: [],
+    )
+  assert n.id == "r"
+}
+
+pub fn the_top_rung_of_a_research_node_prefers_a_persona_that_has_not_tried_it_test() {
+  // Ada spent every rung. Ada is idle and the eldest, and would be chosen
+  // for any other node; at this one the point of another attempt is a
+  // different notebook, so Bea goes.
+  let n = spent_research_node("r", "Ada")
+  assert schedule.who_for_node(two_personas(), n, busy: [])
+    == Existing(persona("Bea", "P2"))
+  // The same node from the scheduler's own entry point.
+  let assert Some(Assignment(who: Existing(who), ..)) =
+    schedule.next_to_start(
+      Dag([n]),
+      two_personas(),
+      Plan(3, 2),
+      running: 0,
+      busy: [],
+      dispatched: 0,
+      skip: [],
+    )
+  assert who.name == "Bea"
+}
+
+pub fn a_persona_that_tried_the_node_goes_again_rather_than_minting_test() {
+  // Only Ada is idle, and Ada has tried it. The region's rule mints only
+  // when nobody is idle, and that rule does not change here: Ada goes.
+  let n = spent_research_node("r", "Ada")
+  assert schedule.who_for_node(two_personas(), n, busy: ["Bea"])
+    == Existing(persona("Ada", "P2"))
+  assert schedule.who_for_node(one_persona(), n, busy: [])
+    == Existing(persona("Ada", "P2"))
+  // Nobody idle: a mint, exactly as for any node.
+  assert schedule.who_for_node(one_persona(), n, busy: ["Ada"])
+    == Mint(region: "P2", busy: ["Ada"])
+}
+
+pub fn below_the_top_rung_a_research_node_keeps_the_eldest_idle_persona_test() {
+  // One failure on a four-rung ladder: the next attempt is sonnet, a climb,
+  // and the notebook that started the climb continues it.
+  let climbing =
+    Node(..research_node("r", []), attempts: [failed("Ada", "haiku")])
+  assert schedule.who_for_node(two_personas(), climbing, busy: [])
+    == Existing(persona("Ada", "P2"))
+  // An ordinary node with its ladder spent by Ada: still Ada.
+  let ordinary = Node(..spent_research_node("o", "Ada"), research: False)
+  assert schedule.who_for_node(two_personas(), ordinary, busy: [])
+    == Existing(persona("Ada", "P2"))
 }

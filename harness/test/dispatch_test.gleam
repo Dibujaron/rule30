@@ -70,6 +70,7 @@ fn node(
     claimed_at: None,
     claimed_run: None,
     object: None,
+    research: False,
   )
 }
 
@@ -150,6 +151,43 @@ pub fn status_names_the_rungs_that_failed_and_the_ones_the_harness_broke_test() 
   // A node with nothing to say says nothing after the count.
   assert dispatch.rungs_tried(node("ghost_lemma", "ghost_lemma", dag.S, []))
     == ""
+}
+
+pub fn status_marks_a_research_node_and_lists_it_last_test() {
+  // `deep_probe` unblocks a node and would lead the leaf list by rank; it is
+  // research, so the row says so and the leaf list puts it behind the
+  // ordinary leaf the scheduler would take first.
+  let d =
+    Dag([
+      Node(..node("deep_probe", "harness_probe", dag.L, []), research: True),
+      node("deep_corollary", "harness_probe", dag.M, ["deep_probe"]),
+      node("harness_probe", "harness_probe", dag.S, []),
+    ])
+  let assert Ok(text) = dispatch.status(cfg_for(d))
+  assert string.contains(text, "L research")
+  let assert Ok(#(_, leaves)) =
+    string.split_once(text, "Open leaves, in dispatch order:\n")
+  let assert Ok(#(before, after)) = string.split_once(leaves, "deep_probe")
+  assert string.contains(before, "harness_probe")
+  assert string.contains(after, "size L research")
+}
+
+pub fn a_research_node_always_has_a_model_left_test() {
+  // Six failures on a four-rung ladder: an ordinary node is exhausted, a
+  // research node is at its top rung again.
+  let attempts = [
+    attempt(dag.GaveUp),
+    attempt(dag.BudgetExhausted),
+    attempt(dag.GaveUp),
+    attempt(dag.GaveUp),
+    attempt(dag.GaveUp),
+    attempt(dag.GaveUp),
+  ]
+  let ordinary = Node(..node("s_node", "s_node", dag.S, []), attempts:)
+  let research = Node(..ordinary, research: True)
+  assert dispatch.failed_attempts(research) == 6
+  assert config.model_for(ordinary.size, 6, research: False) == Error(Nil)
+  assert config.model_for(research.size, 6, research: True) == Ok("fable")
 }
 
 pub fn status_pads_the_id_column_to_the_longest_id_present_test() {
@@ -340,9 +378,10 @@ pub fn a_pause_does_not_burn_a_ladder_rung_test() {
       attempt(dag.RateLimited),
       attempt(dag.TimedOut),
     ])
-  // An `L` node has a one-rung ladder. Two pauses must still leave it there.
+  // An `L` node starts on opus. Two pauses must still leave it there.
   assert dispatch.failed_attempts(n) == 0
-  assert config.model_for(n.size, dispatch.failed_attempts(n)) == Ok("opus")
+  assert config.model_for(n.size, dispatch.failed_attempts(n), research: False)
+    == Ok("opus")
 }
 
 pub fn giving_up_and_exhausting_the_budget_burn_a_rung_test() {
@@ -352,7 +391,8 @@ pub fn giving_up_and_exhausting_the_budget_burn_a_rung_test() {
       attempt(dag.BudgetExhausted),
     ])
   assert dispatch.failed_attempts(n) == 2
-  assert config.model_for(n.size, dispatch.failed_attempts(n)) == Ok("opus")
+  assert config.model_for(n.size, dispatch.failed_attempts(n), research: False)
+    == Ok("opus")
 }
 
 pub fn a_closed_attempt_is_not_a_failure_test() {
@@ -365,17 +405,17 @@ pub fn a_closed_attempt_is_not_a_failure_test() {
 }
 
 pub fn a_harness_failure_does_not_burn_a_ladder_rung_test() {
-  // An `L` node has a one-rung ladder. Two attempts the harness broke must
-  // leave it on that rung, not abandon the node — this is the case where
-  // the verifier could not build and the record used to say the node was
-  // hard.
+  // An `L` node starts on opus. Two attempts the harness broke must leave
+  // it on that rung, not escalate the node — this is the case where the
+  // verifier could not build and the record used to say the node was hard.
   let n =
     Node(..node("l_node", "l_node", dag.L, []), attempts: [
       attempt(dag.HarnessFailed),
       attempt(dag.HarnessFailed),
     ])
   assert dispatch.failed_attempts(n) == 0
-  assert config.model_for(n.size, dispatch.failed_attempts(n)) == Ok("opus")
+  assert config.model_for(n.size, dispatch.failed_attempts(n), research: False)
+    == Ok("opus")
 }
 
 // --- attributing a failure to the harness ------------------------------------
