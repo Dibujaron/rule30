@@ -6,9 +6,9 @@
 end by self-named identities.
 
 This is task 4 from the main design: `harness/` — the dispatcher, the worker
-loop, and the identity substrate the messageboard design assumes but never
-wrote down. The messageboard itself stays a separate, later spec; this
-document builds the thing it is blocked on.
+loop, and the identity substrate that gives sessions names to reach each
+other by. Peer messaging itself is not a harness component: it is the
+sessions' own `SendMessage`, described under Identities below.
 
 Two decisions made in review supersede the main design:
 
@@ -88,9 +88,9 @@ Two conclusions shape this design:
 
 The problem is a supervisor over long-running worker processes that exchange
 messages, and that is what OTP is. Each worker is a process owning one
-`claude -p` port; the dispatcher is a process owning the DAG; identities are
-addressable by name; and the messageboard, when it arrives, is process
-mailboxes with the dispatcher deciding what gets forwarded. A crashed port
+`claude -p` port; the dispatcher is a process owning the DAG; and identities
+are addressable by name, though a peer message goes session to session by
+`SendMessage` rather than through the dispatcher's mailbox. A crashed port
 takes down one worker, not the run, and the supervisor restarts it by
 resuming the same Claude session. Gleam gives this a typed surface.
 
@@ -194,11 +194,10 @@ Outbound, it reads `system/init` (session id, model), `assistant` and `user`
 messages (logged verbatim), `system/api_retry` (rate limiting), and one
 `result` per turn (cost, usage, turns, `structured_output`). The process
 stays open until the harness closes stdin, so a session is a **conversation
-the dispatcher controls turn by turn**. That is the primitive the messageboard
-needs, and it is also how verification is enforced: the dispatcher reads a
-turn's result, runs the verifier, and if the proof does not build it sends
-the build error back as the next message. No agent gets to declare itself
-done; the verifier does.
+the dispatcher controls turn by turn**. That is the primitive verification
+rests on: the dispatcher reads a turn's result, runs the verifier, and if
+the proof does not build it sends the build error back as the next message.
+No agent gets to declare itself done; the verifier does.
 
 ### The worker (`worker.gleam`)
 
@@ -212,7 +211,8 @@ One attempt at one node. The brief appended to the system prompt contains:
   name, so results are imported rather than reproved. This is the local
   answer to the Fermat run's duplication problem;
 - the report schema, requested with `--json-schema`: outcome, own size
-  estimate, notebook entry, journal entry, posts for peers.
+  estimate, notebook entry, journal entry, and any bugs to file against the
+  harness.
 
 The turn loop: send the task; on `result`, verify; if verified, accept the
 report; if not and budget remains, send the verifier's output and loop; on
@@ -270,7 +270,7 @@ Nothing is lost to a rate limit; it is paused.
 
 ### Identities (`roster.gleam`, `agents/<name>.md`)
 
-The identity system the messageboard spec refers to, now written down.
+How a name is bound to a region, and how one named session reaches another.
 
 - **An identity is a notebook bound to a region of the DAG.** Regions are
   few and stable (P1, P2; P3 gets no identity because it must not be
@@ -307,6 +307,14 @@ The identity system the messageboard spec refers to, now written down.
 - **The amnesiac control.** `--control fresh` runs a node with no notebook
   under a control identity. If the amnesiac beats the veteran, the notebook
   has gone stale.
+- **Peers reach each other by `SendMessage`.** A hand-started session — the
+  overseer, a framework agent — messages another by identity, found through
+  `agents/sessions.json`. Every send from a session in this repo is logged
+  to `runs/messages.jsonl` by a project hook, on the sender's side, so the
+  record does not depend on the recipient being alive to receive it. A
+  dispatched session — a prover, a seeder — is denied the tool: its only
+  voice outside its session is the notebook and journal fields of its
+  end-of-turn report, which the dispatcher writes to disk verbatim.
 
 ### Three memory layers
 
@@ -324,8 +332,10 @@ Dib's reasoning: personality is relational, the overlap across relationships
 is small, and he would rather agents know he reads their journals than
 suspect it. The experiment is about identities interacting with each other,
 so one shared memory of him is right. Consequences: overseer memories are
-written team-facing; identities cannot yet write to the collective layer,
-which is the gap the messageboard fills.
+written team-facing, and identities do not write to the collective layer at
+all — a prover's voice is its notebook and journal, and what one identity
+learned reaches another only through the served list and a node's
+prior-attempt notes.
 
 ### Three channels, three audiences
 
@@ -336,7 +346,7 @@ different readers, and recording all of them verbatim:
 |---|---|---|---|
 | notebook | the identity's future instances | node close | `agents/<name>.md` |
 | journal | Dib | node close, in the agent's own words | `runs/<id>/journal.md` |
-| board | named peers | any time (posting free, delivery curated) | messageboard spec |
+| message | a named peer | any time, from a hand-started session; never from a dispatched one | `runs/messages.jsonl`, written by the sender's hook |
 
 The Fermat "written updates" are the model for the journal. Comparing voice
 across the three channels is one of the cheaper ways to tell genuine
@@ -354,7 +364,8 @@ two identities to disagree on the record.
 
 `runs/<run-id>/events.jsonl`, one event per line: dispatch decisions with
 the stated reason, every stream message from every session, hook decisions,
-verifier output, worker reports, and every post. Nothing an agent wrote is
+verifier output, and worker reports. Peer messages are logged separately, in
+`runs/messages.jsonl`, by the sender's hook. Nothing an agent wrote is
 summarised anywhere in the harness.
 
 ## The seed problem
@@ -396,9 +407,8 @@ parked-attempt resume. `run --max-attempts N --concurrency K` shipped
 bounds is spend, and a node re-dispatched up its ladder is a second
 attempt at the same node).
 
-**v2.** The messageboard per its spec, as OTP mailboxes; an explorer-driven
-conjecture loop in which `explorer/` finds empirical regularities and the
-captain turns them into statements.
+**v2.** An explorer-driven conjecture loop in which `explorer/` finds
+empirical regularities and the captain turns them into statements.
 
 ## Boundaries
 

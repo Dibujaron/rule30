@@ -181,7 +181,6 @@ fn result_line(session_id: String, outcome: String) -> String {
         #("summary", json.string("scripted " <> outcome)),
         #("notebook", json.string("scripted notebook entry")),
         #("journal", json.string("scripted journal entry")),
-        #("posts", json.array([], json.string)),
       ]),
     ),
   ])
@@ -451,7 +450,6 @@ fn naming_and_report_line(session_id: String) -> String {
         #("summary", json.string("scripted proved")),
         #("notebook", json.string("scripted notebook entry")),
         #("journal", json.string("scripted journal entry")),
-        #("posts", json.array([], json.string)),
       ]),
     ),
   ])

@@ -1073,13 +1073,13 @@ fn record(node: dag.Node, attempt: dag.Attempt) -> dag.Node {
   }
 }
 
-/// The three channels, each written from the report exactly as the worker
-/// wrote it. Posts are logged, not delivered — routing is v2.
+/// The worker's channels — notebook, journal, bugs — each written from the
+/// report exactly as the worker wrote it.
 ///
 /// One more row when the decoder had to leave something out: a single
-/// `report_discarded` event naming the entries of `posts` or `bugs` that
-/// did not decode. Without it an attempt whose bug report was dropped
-/// reads exactly like an attempt with nothing to report.
+/// `report_discarded` event naming the entries of `bugs` that did not
+/// decode. Without it an attempt whose bug report was dropped reads
+/// exactly like an attempt with nothing to report.
 fn write_channels(
   cfg: config.Config,
   l: log.Log,
@@ -1121,13 +1121,6 @@ fn write_channels(
         "" -> Nil
         _ -> log.journal(l, identity.name, node_id, r.journal)
       }
-      list.each(r.posts, fn(post) {
-        log.event(l, "post", [
-          #("from", json.string(identity.name)),
-          #("node", json.string(node_id)),
-          #("text", json.string(post)),
-        ])
-      })
       case r.discarded {
         [] -> Nil
         reasons ->

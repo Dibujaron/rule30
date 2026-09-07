@@ -101,10 +101,10 @@ not finish. *Friction* — it cost turns or produced a wrong belief.
 *Papercut* — merely ugly. Severity is the reporter's claim, not a verdict;
 A framework agent may correct it when working the bug.
 
-**`body`** is verbatim and never summarised, following the messageboard
-spec's rule for the same reason: the words an agent chose for its own
-obstacle are the observational product, and a paraphrase throws away the part
-Dib is actually reading for.
+**`body`** is verbatim and never summarised, for the same reason nothing an
+agent writes is summarised anywhere in the harness: the words an agent chose
+for its own obstacle are the observational product, and a paraphrase throws
+away the part Dib is actually reading for.
 
 **Provenance is written by the harness, never by the reporting agent.**
 `reported_by`, `source`, `node`, `run`, `session_id`, `filed` are stamped by
@@ -123,15 +123,14 @@ is what says which, and `source` says only that no dispatcher stamped it.
 numeric suffix on collision. Slugs rather than counters so a bug can be
 referred to in a commit message and stay legible.
 
-### Why this board is durable and the messageboard is not
+### Why this board is durable
 
-`2026-09-05-messageboard-design.md` rules that posts are per-run, not
-persisted, and never browsed by agents. The bug board is the opposite on both
-counts: it persists across runs and is read at the start of every framework
-session. This is not an inconsistency. A post is communication, valuable
-mostly at the moment it is routed; a bug is a work item, and a work item that
-evaporates when the run ends is the exact failure the board exists to fix.
-The two share a file format and nothing else.
+A run's record — its events, its journal — is per-run and never browsed by
+agents. The bug board is the opposite on both counts: it persists across runs
+and is read at the start of every framework session. This is not an
+inconsistency. A journal entry is an account of one attempt, complete when
+it is written; a bug is a work item, and a work item that evaporates when
+the run ends is the exact failure the board exists to fix.
 
 ## Filing: four paths, one writer
 
@@ -174,9 +173,9 @@ reopening the old one, so a regression is visibly a regression.
 ## The report schema change
 
 `brief.gleam`'s `report_schema()` gains a `bugs` array — required, empty
-allowed — with objects of `{title, area, severity, body}`. Same treatment
-`posts` already gets. This is the one change that touches every prover, so
-`how_to_report()` gains a paragraph drawing the line hard:
+allowed — with objects of `{title, area, severity, body}`. This is the one
+change that touches every prover, so `how_to_report()` gains a paragraph
+drawing the line hard:
 
 > A bug is the **harness** getting in your way: a command the guard refused
 > that you needed, a brief that told you something untrue, a verifier message

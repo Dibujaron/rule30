@@ -77,7 +77,7 @@ pub fn report_schema_is_valid_json_with_the_agreed_shape_test() {
 pub fn a_full_report_decodes_test() {
   let assert Ok(dyn) =
     json.parse(
-      "{\"outcome\":\"proved\",\"estimate\":\"M\",\"summary\":\"done\",\"notebook\":\"simp [centerColumn] closed it.\",\"journal\":\"Short and clean.\",\"posts\":[\"Thessaly: the cone lemma helped\"]}",
+      "{\"outcome\":\"proved\",\"estimate\":\"M\",\"summary\":\"done\",\"notebook\":\"simp [centerColumn] closed it.\",\"journal\":\"Short and clean.\",\"bugs\":[]}",
       decode.dynamic,
     )
   assert worker.report_from_dynamic(dyn)
@@ -87,7 +87,6 @@ pub fn a_full_report_decodes_test() {
         estimate: dag.M,
         notebook: "simp [centerColumn] closed it.",
         journal: "Short and clean.",
-        posts: ["Thessaly: the cone lemma helped"],
         bugs: [],
         summary: "done",
         discarded: [],
@@ -98,19 +97,19 @@ pub fn a_full_report_decodes_test() {
 pub fn a_minimal_in_progress_report_decodes_test() {
   let assert Ok(dyn) =
     json.parse(
-      "{\"outcome\":\"in_progress\",\"estimate\":\"wall\",\"summary\":\"stuck\",\"notebook\":\"\",\"journal\":\"\",\"posts\":[]}",
+      "{\"outcome\":\"in_progress\",\"estimate\":\"wall\",\"summary\":\"stuck\",\"notebook\":\"\",\"journal\":\"\"}",
       decode.dynamic,
     )
   let assert Ok(r) = worker.report_from_dynamic(dyn)
   assert r.outcome == "in_progress"
   assert r.estimate == dag.Wall
-  assert r.posts == []
+  assert r.bugs == []
 }
 
 pub fn a_report_with_an_unknown_size_is_rejected_test() {
   let assert Ok(dyn) =
     json.parse(
-      "{\"outcome\":\"proved\",\"estimate\":\"XL\",\"summary\":\"\",\"notebook\":\"\",\"journal\":\"\",\"posts\":[]}",
+      "{\"outcome\":\"proved\",\"estimate\":\"XL\",\"summary\":\"\",\"notebook\":\"\",\"journal\":\"\"}",
       decode.dynamic,
     )
   let assert Error(_) = worker.report_from_dynamic(dyn)
@@ -351,13 +350,13 @@ pub fn brief_explains_the_report_test() {
 
 // --- the two blockers ---------------------------------------------------------
 
-pub fn schema_does_not_require_posts_test() {
+pub fn schema_has_no_posts_field_test() {
+  // The messageboard's write side is gone: a report has no `posts`, neither
+  // offered nor required. `outcome` is still the one thing that is.
+  let schema = brief.report_schema()
+  assert !string.contains(does: schema, contain: "\"posts\"")
   let assert Ok(required) =
-    json.parse(
-      brief.report_schema(),
-      decode.at(["required"], decode.list(decode.string)),
-    )
-  assert !list.contains(required, "posts")
+    json.parse(schema, decode.at(["required"], decode.list(decode.string)))
   assert list.contains(required, "outcome")
 }
 
@@ -464,7 +463,7 @@ pub fn a_rate_limit_event_with_no_status_still_decodes_test() {
 
 pub fn report_decodes_bugs_test() {
   let json_text =
-    "{\"outcome\":\"proved\",\"estimate\":\"M\",\"summary\":\"s\",\"notebook\":\"n\",\"journal\":\"j\",\"posts\":[],\"bugs\":[{\"title\":\"Guard refused lake env lean\",\"area\":\"guard\",\"severity\":\"blocks\",\"body\":\"I needed it to check one file.\"}]}"
+    "{\"outcome\":\"proved\",\"estimate\":\"M\",\"summary\":\"s\",\"notebook\":\"n\",\"journal\":\"j\",\"bugs\":[{\"title\":\"Guard refused lake env lean\",\"area\":\"guard\",\"severity\":\"blocks\",\"body\":\"I needed it to check one file.\"}]}"
   let assert Ok(dyn) = json.parse(json_text, decode.dynamic)
   let assert Ok(report) = worker.report_from_dynamic(dyn)
   assert report.bugs
@@ -484,7 +483,7 @@ pub fn a_dropped_bug_entry_is_recorded_as_discarded_test() {
   // this test — the report says so: one line, naming the position, so the
   // attempt record can tell "nothing to report" from "one report lost".
   let json_text =
-    "{\"outcome\":\"proved\",\"estimate\":\"M\",\"summary\":\"s\",\"notebook\":\"n\",\"journal\":\"j\",\"posts\":[],\"bugs\":[{\"title\":\"first\"},{\"area\":\"guard\",\"body\":\"no title here\"},{\"title\":\"third\"}]}"
+    "{\"outcome\":\"proved\",\"estimate\":\"M\",\"summary\":\"s\",\"notebook\":\"n\",\"journal\":\"j\",\"bugs\":[{\"title\":\"first\"},{\"area\":\"guard\",\"body\":\"no title here\"},{\"title\":\"third\"}]}"
   let assert Ok(dyn) = json.parse(json_text, decode.dynamic)
   let assert Ok(report) = worker.report_from_dynamic(dyn)
   assert list.map(report.bugs, fn(b) { b.title }) == ["first", "third"]
@@ -493,23 +492,23 @@ pub fn a_dropped_bug_entry_is_recorded_as_discarded_test() {
   assert string.contains(reason, "title")
 }
 
-pub fn a_non_array_posts_field_is_recorded_as_discarded_test() {
-  // The per-field route. `posts` written as a bare string degrades to no
-  // posts, as before, but no longer to *silently* no posts.
+pub fn a_non_array_bugs_field_is_recorded_as_discarded_test() {
+  // The per-field route. `bugs` written as a bare string degrades to no
+  // bugs, as before, but no longer to *silently* no bugs.
   let json_text =
-    "{\"outcome\":\"proved\",\"estimate\":\"M\",\"summary\":\"s\",\"notebook\":\"n\",\"journal\":\"j\",\"posts\":\"Thessaly: the cone lemma helped\"}"
+    "{\"outcome\":\"proved\",\"estimate\":\"M\",\"summary\":\"s\",\"notebook\":\"n\",\"journal\":\"j\",\"bugs\":\"the guard refused lake env lean\"}"
   let assert Ok(dyn) = json.parse(json_text, decode.dynamic)
   let assert Ok(report) = worker.report_from_dynamic(dyn)
-  assert report.posts == []
-  assert report.discarded == ["posts: not an array"]
+  assert report.bugs == []
+  assert report.discarded == ["bugs: not an array"]
 }
 
 pub fn a_clean_report_records_no_discards_test() {
-  // Both optional fields present and well-formed, one entry each: the
-  // confession is empty, so the dispatcher writes no `report_discarded`
-  // row. An absent field counts as clean too, not as discarded.
+  // The optional field present and well-formed, one entry: the confession
+  // is empty, so the dispatcher writes no `report_discarded` row. An absent
+  // field counts as clean too, not as discarded.
   let json_text =
-    "{\"outcome\":\"proved\",\"estimate\":\"M\",\"summary\":\"s\",\"notebook\":\"n\",\"journal\":\"j\",\"posts\":[\"Thessaly: the cone lemma helped\"],\"bugs\":[{\"title\":\"Guard refused lake env lean\"}]}"
+    "{\"outcome\":\"proved\",\"estimate\":\"M\",\"summary\":\"s\",\"notebook\":\"n\",\"journal\":\"j\",\"bugs\":[{\"title\":\"Guard refused lake env lean\"}]}"
   let assert Ok(dyn) = json.parse(json_text, decode.dynamic)
   let assert Ok(report) = worker.report_from_dynamic(dyn)
   assert report.discarded == []
@@ -524,7 +523,7 @@ pub fn a_clean_report_records_no_discards_test() {
 
 pub fn report_without_bugs_decodes_to_empty_test() {
   let json_text =
-    "{\"outcome\":\"proved\",\"estimate\":\"M\",\"summary\":\"s\",\"notebook\":\"\",\"journal\":\"\",\"posts\":[]}"
+    "{\"outcome\":\"proved\",\"estimate\":\"M\",\"summary\":\"s\",\"notebook\":\"\",\"journal\":\"\"}"
   let assert Ok(dyn) = json.parse(json_text, decode.dynamic)
   let assert Ok(report) = worker.report_from_dynamic(dyn)
   assert report.bugs == []
@@ -565,7 +564,7 @@ pub fn a_malformed_bug_does_not_poison_the_whole_report_test() {
   // `journal` surviving regardless, the same blast radius as
   // `posts-required-in-schema-not-in-decoder` reached by a different route.
   let json_text =
-    "{\"outcome\":\"proved\",\"estimate\":\"M\",\"summary\":\"s\",\"notebook\":\"n\",\"journal\":\"j\",\"posts\":[],\"bugs\":[{\"title\":\"Guard refused lake env lean\",\"area\":\"guard\",\"severity\":\"blocks\",\"body\":\"I needed it to check one file.\"},{\"title\":123,\"area\":\"guard\"},{\"title\":\"body is a number\",\"body\":7},{\"area\":\"guard\"}]}"
+    "{\"outcome\":\"proved\",\"estimate\":\"M\",\"summary\":\"s\",\"notebook\":\"n\",\"journal\":\"j\",\"bugs\":[{\"title\":\"Guard refused lake env lean\",\"area\":\"guard\",\"severity\":\"blocks\",\"body\":\"I needed it to check one file.\"},{\"title\":123,\"area\":\"guard\"},{\"title\":\"body is a number\",\"body\":7},{\"area\":\"guard\"}]}"
   let assert Ok(dyn) = json.parse(json_text, decode.dynamic)
   let assert Ok(report) = worker.report_from_dynamic(dyn)
   // The promise: nothing in `bugs`, malformed or not, touches the rest of
@@ -599,7 +598,7 @@ pub fn a_non_array_bugs_field_does_not_poison_the_report_test() {
   // A worker that proved a theorem and wrote a string where an array was
   // expected loses the proof.
   let json_text =
-    "{\"outcome\":\"proved\",\"estimate\":\"M\",\"summary\":\"s\",\"notebook\":\"n\",\"journal\":\"j\",\"posts\":[],\"bugs\":\"the guard refused lake env lean\"}"
+    "{\"outcome\":\"proved\",\"estimate\":\"M\",\"summary\":\"s\",\"notebook\":\"n\",\"journal\":\"j\",\"bugs\":\"the guard refused lake env lean\"}"
   let assert Ok(dyn) = json.parse(json_text, decode.dynamic)
   let assert Ok(report) = worker.report_from_dynamic(dyn)
   assert report.outcome == "proved"
@@ -615,37 +614,9 @@ pub fn an_object_valued_bugs_field_does_not_poison_the_report_test() {
   // The other shape of the same mistake, and the likelier one: a single bug
   // written bare instead of wrapped in an array.
   let json_text =
-    "{\"outcome\":\"proved\",\"estimate\":\"M\",\"summary\":\"s\",\"notebook\":\"n\",\"journal\":\"j\",\"posts\":[],\"bugs\":{\"title\":\"Guard refused lake env lean\",\"area\":\"guard\"}}"
+    "{\"outcome\":\"proved\",\"estimate\":\"M\",\"summary\":\"s\",\"notebook\":\"n\",\"journal\":\"j\",\"bugs\":{\"title\":\"Guard refused lake env lean\",\"area\":\"guard\"}}"
   let assert Ok(dyn) = json.parse(json_text, decode.dynamic)
   let assert Ok(report) = worker.report_from_dynamic(dyn)
   assert report.outcome == "proved"
   assert report.bugs == []
-}
-
-pub fn a_non_array_posts_field_does_not_poison_the_report_test() {
-  // `posts` has the identical defect and nobody had filed it. Found while
-  // verifying the `bugs` premise: the two fields are read two lines apart
-  // in the same function, and two rounds of work fixed only one of them.
-  let json_text =
-    "{\"outcome\":\"proved\",\"estimate\":\"M\",\"summary\":\"s\",\"notebook\":\"n\",\"journal\":\"j\",\"posts\":\"Thessaly: the cone lemma helped\"}"
-  let assert Ok(dyn) = json.parse(json_text, decode.dynamic)
-  let assert Ok(report) = worker.report_from_dynamic(dyn)
-  assert report.outcome == "proved"
-  assert report.notebook == "n"
-  assert report.posts == []
-}
-
-pub fn a_malformed_post_does_not_poison_the_report_test() {
-  // And `posts` is the worse of the two, because `decode.list(decode.string)`
-  // fails on a well-formed array holding one wrong-typed element — a route
-  // `bugs` has been immune to since it moved to `decode.dynamic` plus
-  // `list.filter_map`. One number in an array of strings costs a proved
-  // outcome. The good posts must survive alongside.
-  let json_text =
-    "{\"outcome\":\"proved\",\"estimate\":\"M\",\"summary\":\"s\",\"notebook\":\"n\",\"journal\":\"j\",\"posts\":[\"Thessaly: the cone lemma helped\",7,\"Vesper: the recurrence closes it\"]}"
-  let assert Ok(dyn) = json.parse(json_text, decode.dynamic)
-  let assert Ok(report) = worker.report_from_dynamic(dyn)
-  assert report.outcome == "proved"
-  assert report.posts
-    == ["Thessaly: the cone lemma helped", "Vesper: the recurrence closes it"]
 }
