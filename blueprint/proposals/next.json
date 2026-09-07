@@ -1,83 +1,49 @@
-{
-  "_comment": [
-    "Rowan, 2026-09-07. The diagonal tier, chosen after flashcolor's two-bodies note and an engine scan to k = 1100.",
-    "Definitions leftDiagonal, rightDiagonal, PeriodicFrom were added to Rule30/Basic.lean for this tier.",
-    "Measured (explorer, N = 1200 rows): left onsets satisfy 2 * onset <= k for every k <= 722, max onset/k = 0.479 at k = 48;",
-    "left periods are <= 8 to k = 400 and 16 to k = 700. Right diagonals: onset 0 for every k <= 22, periods 1,2,2,4,8,8,16,32,32,64,...,256.",
-    "Both recurrences verified against the engine at 0 mismatches over ~16000 cells each."
-  ],
-  "proposals": [
-    {
-      "id": "periodicFrom_mul",
-      "lean_name": "periodicFrom_mul",
-      "statement": "theorem periodicFrom_mul (f : ℕ → Bool) (p N : ℕ) (h : PeriodicFrom f p N) (m : ℕ) :\n    PeriodicFrom f (m * p) N := by\n  sorry",
-      "reason": "A multiple of a period is a period, from the same starting index. Induction on m: m = 0 is f (n + 0) = f n; the step rewrites n + (m+1)*p as (n + m*p) + p, applies h at n + m*p (which is still >= N), then the induction hypothesis. Pure bookkeeping, but the two induction tiers above need it to put two diagonals with periods 2^m and 2^(m+1) onto the common period 2^(m+1) without invoking isEventuallyPeriodic_common_period, which loses the size of the period.",
-      "witness": {
-        "expression": "(List.range 5).all fun p => (List.range 4).all fun m => (List.range 10).all fun n => ((fun i => decide (i % (p+1) = 0)) (n + m * (p+1)) == (fun i => decide (i % (p+1) = 0)) n)",
-        "range": "f = (i % (p+1) = 0) for p < 5, m < 4, n < 10; no evolve, instant"
-      }
+{"proposals": [
+  {
+    "id": "leftDiagonal_recurrence",
+    "lean_name": "leftDiagonal_recurrence",
+    "statement": "theorem leftDiagonal_recurrence (m i : ℕ) :\n    leftDiagonal (m + 2) (i + 1)\n      = xor (leftDiagonal m (i + 2))\n          (leftDiagonal (m + 1) (i + 1) || leftDiagonal (m + 2) i) := by\n  sorry",
+    "reason": "The left-hand mirror of the closed `rightDiagonal_recurrence`, and the missing half of a dictionary the board already half owns. `evolve_left_diagonal_recurrence` states the same fact in `evolve` coordinates, so every left-diagonal node has to re-derive the translation itself: the prover of `leftDiagonal_periodicFrom_step` wrote that 'most of the proof is omega/push_cast bookkeeping showing they are all talking about the same three sequences'. Each of the three left-diagonal nodes below it in this tier needs exactly that translation, and with this node they each cite one lemma instead of repeating that bookkeeping. On the right the same node closed for $0.35.",
+    "route": {
+      "tactics": "  unfold leftDiagonal\n  rw [show i + 1 + (m + 2) = i + m + 3 by omega,\n      show i + 2 + m = i + m + 2 by omega,\n      show i + 1 + (m + 1) = i + m + 2 by omega,\n      show i + (m + 2) = i + m + 2 by omega]\n  push_cast\n  exact evolve_left_diagonal_recurrence m i",
+      "imports": ["Rule30.Proofs.EvolveLeftDiagonalRecurrence"]
     },
-    {
-      "id": "leftDiagonal_periodicFrom_step",
-      "lean_name": "leftDiagonal_periodicFrom_step",
-      "statement": "theorem leftDiagonal_periodicFrom_step (m q N : ℕ) (hq : 0 < q)\n    (h0 : PeriodicFrom (leftDiagonal m) q N)\n    (h1 : PeriodicFrom (leftDiagonal (m + 1)) q N) :\n    PeriodicFrom (leftDiagonal (m + 2)) (2 * q) (N + q) := by\n  sorry",
-      "reason": "The quantitative form of evolve_left_diagonal_isEventuallyPeriodic_step: the same induction step, but carrying the period and the onset instead of discarding them behind an existential. In diagonal coordinates evolve_left_diagonal_recurrence says leftDiagonal (m+2) (i+1) = xor (leftDiagonal m (i+2)) (leftDiagonal (m+1) (i+1) || leftDiagonal (m+2) i), which is exactly the driven form of bool_driven_eventually_two_periodic with a i = leftDiagonal m (i+2), b i = leftDiagonal (m+1) (i+1), x = leftDiagonal (m+2). Both drivers repeat with period q from N because their arguments only grow (i >= N gives i+2 >= N). That lemma then hands back period 2q from N + q, which is this statement's conclusion verbatim. Unfolding leftDiagonal is the only translation: leftDiagonal k j is evolve (j + k) (-(j : ℤ)) by definition, and the recurrence lemma is stated in that evolve form with the index sums written i + m + 3, i + m + 2 — expect to normalise addition order once."
-    },
-    {
-      "id": "leftDiagonal_periodicFrom_pow",
-      "lean_name": "leftDiagonal_periodicFrom_pow",
-      "statement": "theorem leftDiagonal_periodicFrom_pow (k : ℕ) :\n    ∃ N ≤ 2 ^ k, PeriodicFrom (leftDiagonal k) (2 ^ k) N := by\n  sorry",
-      "reason": "Every left diagonal repeats with period 2^k, and the repetition has begun by index 2^k. This is what the existence proof evolve_left_diagonals_isEventuallyPeriodic already knows but throws away: the first quantitative statement on the board about the regular region, and the proved bound that the wall leftDiagonal_onset_le says is exponentially loose. Strong induction on k. Base 0: leftDiagonal 0 j is evolve j (-j), constantly true by evolve_left_edge, so any period works from N = 0. Base 1: evolve (j+1) (-j), constantly true by evolve_left_second_diagonal. Step to m+2: the hypotheses for m and m+1 give periods 2^m from N_m and 2^(m+1) from N_(m+1); periodicFrom_mul with factor 2 lifts the first to period 2^(m+1), and raising an onset is free (PeriodicFrom f p N and N <= N' give PeriodicFrom f p N', straight from the definition), so both hold from max N_m N_(m+1) <= 2^(m+1). leftDiagonal_periodicFrom_step then gives period 2^(m+2) from max + 2^(m+1) <= 2^(m+2). The arithmetic is 2^(m+2) = 2 * 2^(m+1), pow_succ. Expect friction matching the base cases: the goal shows leftDiagonal 0 j and the served lemmas show evolve j (-(j : ℤ)); unfold leftDiagonal and rewrite the index j + 0 to j."
-    },
-    {
-      "id": "rightDiagonal_recurrence",
-      "lean_name": "rightDiagonal_recurrence",
-      "statement": "theorem rightDiagonal_recurrence (m i : ℕ) :\n    rightDiagonal (m + 2) (i + 1)\n      = xor (rightDiagonal (m + 2) i)\n          (rightDiagonal (m + 1) (i + 1) || rightDiagonal m (i + 2)) := by\n  sorry",
-      "reason": "One step of the rule in right-diagonal coordinates: the next cell along diagonal m+2 is its own previous term XOR (the diagonal one shallower OR the diagonal two shallower). This is the mirror of evolve_left_diagonal_recurrence, and the mirror is not symmetric: on the left the new cell's OWN previous term sits inside the OR, on the right it sits in the XOR slot. That single difference is why the right diagonals need a different driven lemma (bool_xor_driven_periodicFrom) and turn out periodic from the start rather than after a delay. Proof: unfold rightDiagonal, rewrite the outer evolve with evolve_succ then rule30_eq at position (i : ℤ) + 1, and the three neighbours (i+1)-1, i+1, (i+1)+1 are the three right-hand sides once the casts and the time index i + 1 + (m + 2) = (i + (m + 2)) + 1 are normalised. Checked against the engine at 15573 cells with no mismatch.",
-      "witness": {
-        "expression": "(List.range 4).all fun m => (List.range 6).all fun i => (rightDiagonal (m + 2) (i + 1) == xor (rightDiagonal (m + 2) i) (rightDiagonal (m + 1) (i + 1) || rightDiagonal m (i + 2)))",
-        "range": "m < 4, i < 6, so depth i + m + 3 <= 11"
-      }
-    },
-    {
-      "id": "bool_xor_driven_periodicFrom",
-      "lean_name": "bool_xor_driven_periodicFrom",
-      "statement": "theorem bool_xor_driven_periodicFrom (c x : ℕ → Bool) (p N : ℕ)\n    (hrec : ∀ i, x (i + 1) = xor (x i) (c i)) (hc : PeriodicFrom c p N) :\n    PeriodicFrom x (2 * p) N := by\n  sorry",
-      "reason": "A one-bit machine that XORs a repeating input into its state repeats with twice the input's period, and from the SAME index the input does — no delay, unlike bool_driven_eventually_two_periodic, because XOR-ing a constant is an involution. Walking p steps from i sends x i to x i XOR s i, where s i is the XOR of c over i, i+1, ..., i+p-1 (induction on the walk length). For i >= N that block sum is the same at i and at i + p, since every term shifts by one period. So x (i + 2p) = x i XOR s i XOR s i = x i. The auxiliary is the block sum, or equivalently the composite of the p update maps; a proof file may carry a private definition for it, as BoolDrivenEventuallyTwoPeriodic.lean did. No 0 < p hypothesis: p = 0 makes the conclusion trivial.",
-      "witness": {
-        "expression": "(List.range 4).all fun p => (List.range (2 ^ (p + 1))).all fun code => [true, false].all fun x0 => (List.range (4 * (p + 1))).all fun i => ((fun n => Nat.rec x0 (fun j xj => xor xj (decide ((code >>> (j % (p + 1))) % 2 = 1))) n : ℕ → Bool) (i + 2 * (p + 1)) == (fun n => Nat.rec x0 (fun j xj => xor xj (decide ((code >>> (j % (p + 1))) % 2 = 1))) n : ℕ → Bool) i)",
-        "range": "every periodic driver of period p <= 4 with N = 0, both start bits, i < 4p; no evolve, instant"
-      }
-    },
-    {
-      "id": "rightDiagonal_periodicFrom_step",
-      "lean_name": "rightDiagonal_periodicFrom_step",
-      "statement": "theorem rightDiagonal_periodicFrom_step (m q N : ℕ)\n    (h0 : PeriodicFrom (rightDiagonal m) q N)\n    (h1 : PeriodicFrom (rightDiagonal (m + 1)) q N) :\n    PeriodicFrom (rightDiagonal (m + 2)) (2 * q) N := by\n  sorry",
-      "reason": "Periodicity carries one right diagonal further in, with the period doubled and the onset unchanged. rightDiagonal_recurrence puts diagonal m+2 in the form x (i+1) = xor (x i) (c i) with c i = rightDiagonal (m+1) (i+1) || rightDiagonal m (i+2); c repeats with period q from N because both of its arguments do and i >= N gives i+1, i+2 >= N; bool_xor_driven_periodicFrom finishes it. The left-hand analogue evolve_left_diagonal_isEventuallyPeriodic_step needed a common-period lemma and a delay; this one needs neither, which is the whole content of the asymmetry at the level of proofs."
-    },
-    {
-      "id": "rightDiagonal_periodicFrom_pow",
-      "lean_name": "rightDiagonal_periodicFrom_pow",
-      "statement": "theorem rightDiagonal_periodicFrom_pow (k : ℕ) :\n    PeriodicFrom (rightDiagonal k) (2 ^ k) 0 := by\n  sorry",
-      "reason": "Every right diagonal is periodic from its first cell, with period 2^k. Not eventually periodic: periodic. Strong induction on k. Base 0: rightDiagonal 0 j is evolve j j, constantly true by evolve_right_edge. Base 1: evolve (j+1) j is decide (j % 2 = 0) by evolve_right_second_diagonal, which has period 2 = 2^1 because (j + 2) % 2 = j % 2. Step to m+2: lift the period-2^m hypothesis to 2^(m+1) with periodicFrom_mul, apply rightDiagonal_periodicFrom_step, and 2 * 2^(m+1) = 2^(m+2). The engine says the true periods are 1, 2, 2, 4, 8, 8, 16, 32, 32, 64, ..., 256 at k = 16 to 22, all dividing 2^k and all with onset 0, so nothing in this statement is slack about the onset; the period bound is loose by a factor that grows with k."
-    },
-    {
-      "id": "rightDiagonal_isEventuallyPeriodic",
-      "lean_name": "rightDiagonal_isEventuallyPeriodic",
-      "statement": "theorem rightDiagonal_isEventuallyPeriodic (k : ℕ) :\n    IsEventuallyPeriodic (rightDiagonal k) := by\n  sorry",
-      "reason": "The mirror of evolve_left_diagonals_isEventuallyPeriodic, stated so the two sides of the cone are on the board in the same words. Immediate from rightDiagonal_periodicFrom_pow with p = 2^k (positive by Nat.pos_pow_of_pos or positivity) and N = 0; IsEventuallyPeriodic unfolds to exactly ∃ p > 0, ∃ N, ∀ n ≥ N, f (n + p) = f n, which is PeriodicFrom spelled out."
-    },
-    {
-      "id": "leftDiagonal_onset_le",
-      "lean_name": "leftDiagonal_onset_le",
-      "statement": "theorem leftDiagonal_onset_le (k : ℕ) :\n    ∃ p > 0, ∃ N ≤ k, PeriodicFrom (leftDiagonal k) p N := by\n  sorry",
-      "reason": "WALL. The k-th left diagonal has settled into its repetition by index k. This is Wolfram's observation that the region of regularity on the left grows at about a quarter of a cell per step, in its weakest linear form: a diagonal that is periodic from index N is regular from time k + N at position -N, so onset <= c*k puts the boundary between the two bodies on a line of slope c/(1+c), and the measured slope 0.22 to 0.25 corresponds to c around 0.3. Measured over every k <= 722 the onset is at most k/2, with the worst ratio 0.479 at k = 48, so N <= k is comfortably true and N <= k/2 would be tight. The proved bound, leftDiagonal_periodicFrom_pow, is 2^k. Nobody has proved anything between 2^k and k. The gap is the whole content: the induction step accumulates one full input period per diagonal, and the true periods stay at 8 or 16 while the true onsets grow by about a third per diagonal, so the transients do NOT accumulate a period each step. A proof would have to say why.",
-      "disclaims": "This is not a prize conjecture and does not bear on one. It is a claim about the left edge of the cone, where periodicity is proved; the centre column never enters the region this statement describes, since at time t it sits on diagonal t, whose onset has not been reached. Nobody knows how to prove it. Never dispatch as an ordinary leaf; never weaken it. A proposal to attack it is a proposal for lemmas that would imply it."    },
-    {
-      "id": "leftDiagonal_period_le",
-      "lean_name": "leftDiagonal_period_le",
-      "statement": "theorem leftDiagonal_period_le (k : ℕ) :\n    ∃ p > 0, p ≤ k + 1 ∧ ∃ N, PeriodicFrom (leftDiagonal k) p N := by\n  sorry",
-      "reason": "WALL. The k-th left diagonal has a period of at most k + 1. The measured periods are 1, 1, 1, 2, 1, 2, 2, 1, 4, ... , at most 8 for every k to 400 and 16 from there to 700, so the truth is far below this line; this is the weakest statement that is already unproved, since the proved bound leftDiagonal_periodicFrom_pow is 2^k. Together with leftDiagonal_onset_le it says what flashcolor's eye saw: the left body is regular because its periods barely grow while the right body's double away (rightDiagonal_periodicFrom_pow is close to tight there). A proof would need to show that the XOR sum across a driver period is usually 0 — the induction doubles the period exactly when it is 1 — and no one knows why it should be.",
-      "disclaims": "Not a prize conjecture; a claim about the left edge only. Never dispatch as an ordinary leaf; never weaken it."    }
-  ]
-}
+    "witness": {
+      "expression": "((List.range 5).all fun m => (List.range 5).all fun i =>\n  leftDiagonal (m + 2) (i + 1) ==\n    xor (leftDiagonal m (i + 2)) (leftDiagonal (m + 1) (i + 1) || leftDiagonal (m + 2) i))",
+      "imports": [],
+      "range": "m < 5 and i < 5, so cells to depth t = 11"
+    }
+  },
+  {
+    "id": "bool_driven_periodicFrom_of_return",
+    "lean_name": "bool_driven_periodicFrom_of_return",
+    "statement": "theorem bool_driven_periodicFrom_of_return (a b x : ℕ → Bool) (p N M : ℕ)\n    (hrec : ∀ i, x (i + 1) = xor (a i) (b i || x i))\n    (ha : PeriodicFrom a p N) (hb : PeriodicFrom b p N) (hNM : N ≤ M)\n    (hret : x (M + p) = x M) :\n    PeriodicFrom x p M := by\n  sorry",
+    "reason": "This is the exact criterion the wall `leftDiagonal_period_le` asks for, and it makes the wall's own sentence into a theorem. The wall says: 'the induction doubles the period exactly when [the XOR sum across a driver period] is 1'. `bool_driven_eventually_two_periodic` — the lemma the whole left-diagonal induction runs on — always concludes period 2p, and that unconditional doubling is why the proved bound on the left is 2^k instead of the measured 8 or 16. This says the doubling is not forced: if the driven bit is back where it started after one driver period, it repeats with period p, not 2p, from that same point. It converts an open question about periods into a single Bool equality, which is the form the automaton-level nodes below can actually discharge. The proof is a one-step induction: x (n+1+p) rewrites through the recurrence to x (n+1) as soon as a, b and x all agree p apart at n.",
+    "disclaims": "A statement about a one-bit machine, not about rule 30: on its own it proves nothing about any diagonal. It also does not say the doubling never happens — it does happen, four times below k = 430 (`explorer/leftdoubling.mjs`).",
+    "route": {
+      "tactics": "  intro n hn\n  induction n, hn using Nat.le_induction with\n  | base => exact hret\n  | succ n hn ih =>\n    have hnN : n ≥ N := le_trans hNM hn\n    rw [show n + 1 + p = n + p + 1 by omega, hrec (n + p), hrec n, ih,\n        ha n hnN, hb n hnN]",
+      "imports": []
+    }
+  },
+  {
+    "id": "bool_driven_periodicFrom_of_reset",
+    "lean_name": "bool_driven_periodicFrom_of_reset",
+    "statement": "theorem bool_driven_periodicFrom_of_reset (a b x : ℕ → Bool) (p N j : ℕ)\n    (hrec : ∀ i, x (i + 1) = xor (a i) (b i || x i))\n    (ha : PeriodicFrom a p N) (hb : PeriodicFrom b p N) (hNj : N ≤ j)\n    (hbj : b j = true) :\n    PeriodicFrom x p (j + 1) := by\n  sorry",
+    "reason": "The previous node's hypothesis is about the state x; this one discharges it from the drivers alone, and it is what both left walls need. When b j is true the update x (i+1) = a i XOR (b i || x i) collapses to the constant `not (a j)` — the machine forgets its own history — so x (j+1) is fixed by a and b, and one driver period later it is fixed to the same value. Two things follow, and the second is the point. The period is p and not 2p, which is what `leftDiagonal_period_le` needs. And the onset is j+1, tied to where the driver went black, NOT to N + p: it does not accumulate a period. The wall `leftDiagonal_onset_le` says of the 2^k bound that 'the induction step accumulates one full input period per diagonal ... A proof would have to say why [the transients do not]'. This is the why, in the only place the accumulation was coming from. Prove it by applying `bool_driven_periodicFrom_of_return` at M = j + 1, after computing x (j+1+p) = x (j+1) from hbj — three rewrites through the recurrence and a `simp`. Verified end to end in `explorer/scratch_tier.lean`, which typechecks against these exact statements; no `route` is attached because its one import, the proof module of `bool_driven_periodicFrom_of_return`, does not exist until that node closes.",
+    "disclaims": "A statement about a one-bit machine, not about rule 30. It gives no bound on j — supplying an early j for each diagonal is a separate, unproved question, and is what remains of `leftDiagonal_onset_le` after this node."
+  },
+  {
+    "id": "leftDiagonal_periodicFrom_step_of_black",
+    "lean_name": "leftDiagonal_periodicFrom_step_of_black",
+    "statement": "theorem leftDiagonal_periodicFrom_step_of_black (m q N j : ℕ) (hNj : N ≤ j)\n    (h0 : PeriodicFrom (leftDiagonal m) q N)\n    (h1 : PeriodicFrom (leftDiagonal (m + 1)) q N)\n    (hblack : leftDiagonal (m + 1) (j + 1) = true) :\n    PeriodicFrom (leftDiagonal (m + 2)) q (j + 1) := by\n  sorry",
+    "reason": "The node an actual proof of either left wall would cite at every induction step, and the sharp companion to the closed `leftDiagonal_periodicFrom_step`. That lemma turns period q on diagonals m and m+1 into period 2q on diagonal m+2 at onset N+q, unconditionally; iterated, that is the 2^k bound both walls call exponentially loose. This one says: if diagonal m+1 is black anywhere at index j+1 with j at or past the common onset, then diagonal m+2 keeps period q and is periodic from j+1 — no doubling and no accumulated period. Measured by `explorer/leftdoubling.mjs` over 1500 generations and every m ≤ 428: such a black cell exists in 425 of the 429 steps, always within 8 indices of the common onset; in every one of those 425 the true period did not exceed q and the true onset did not exceed j+1, with zero violations. So the reduction is not vacuous — it is the generic case, and it gives onset growth of at most 8 per diagonal where the proved bound grows by a full period. Prove it by applying `bool_driven_periodicFrom_of_reset` with a i = leftDiagonal m (i+2), b i = leftDiagonal (m+1) (i+1), x = leftDiagonal (m+2), the recurrence supplied by `leftDiagonal_recurrence`; the two driver hypotheses are h0 and h1 read two and one index later. Verified end to end in `explorer/scratch_tier.lean`, which typechecks against these exact statements.",
+    "disclaims": "Does not prove `leftDiagonal_onset_le` or `leftDiagonal_period_le`: it is conditional on a black cell whose index is not bounded here. Neither wall is a prize conjecture and this bears on none of them. In particular it says nothing about the centre column, which at time t sits at index 0 of left diagonal t — before any onset this node produces."
+  },
+  {
+    "id": "leftDiagonal_step_period_dichotomy",
+    "lean_name": "leftDiagonal_step_period_dichotomy",
+    "statement": "theorem leftDiagonal_step_period_dichotomy (m q N : ℕ)\n    (h0 : PeriodicFrom (leftDiagonal m) q N)\n    (h1 : PeriodicFrom (leftDiagonal (m + 1)) q N) :\n    (∃ M, PeriodicFrom (leftDiagonal (m + 2)) q M) ∨\n      ∀ j ≥ N + 1, leftDiagonal (m + 1) j = false := by\n  sorry",
+    "reason": "The half of Rowland 2006 Proposition 2 that `leftDiagonal_period_le` actually needs, and the node that changes what the wall is asking. Rowland characterises when the period doubles; this states the consequence in the direction a bound uses — the period can only double at a diagonal whose predecessor is eventually white. Combined with the closed `leftDiagonal_periodicFrom_step` (which supplies 2q in the right branch) it is a complete dichotomy on every induction step, so `leftDiagonal_period_le` stops being 'bound the period' and becomes 'count the eventually-white left diagonals', which is a statement about where a diagonal is black rather than about periods. Measured by `explorer/leftdoubling.mjs` to k = 430: the only eventually-white left diagonals are 2, 7, 28 and 399, and the periods double at exactly k = 3, 8, 29 and 400 — which is NKS p. 871's table of first appearances (2 at 3, 4 at 8, 8 at 29, 16 at 400) reproduced by this criterion and nothing else. Prove it by `by_cases` on whether some j ≥ N has leftDiagonal (m+1) (j+1) = true: the yes branch is `leftDiagonal_periodicFrom_step_of_black` at M = j + 1, the no branch is the right disjunct after one index shift. Verified end to end in `explorer/scratch_tier.lean`.",
+    "disclaims": "Does not prove `leftDiagonal_period_le`. It leaves the residual 'the eventually-white left diagonals are sparse', which is measured (four below 430) and unproved — no one has proved a single left diagonal is eventually white, let alone counted them. Not a prize conjecture and no bearing on the centre column."
+  }
+]}

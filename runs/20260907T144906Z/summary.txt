@@ -1,0 +1,35 @@
+
+seeder    Seeder
+model     opus
+ended     finished — the seeder reported its proposal written; that is its claim about the file, and the check below is the only adjudication
+cost      $3.83
+turns     26
+session   b197c139-d3a4-498e-8bcc-c18fe2322ea4
+log       c:/Users/dibuj/dev/rule30/runs/20260907T144906Z/seed-1
+proposal  c:/Users/dibuj/dev/rule30/blueprint/proposals/next.json
+
+Five chained nodes proposed under the two left-diagonal walls, formalising Rowland's period-doubling criterion; all five typecheck against the exact seeded statements, and nothing was proposed for the P1 residual because the one decomposition I found turned out vacuous.
+
+check of c:/Users/dibuj/dev/rule30/blueprint/proposals/next.json:
+leftDiagonal_recurrence
+  route:   DOES NOT CLOSE — c:/Users/dibuj/dev/rule30/harness/build/checks/seed/leftDiagonal_recurrence.lean:6:70: error: unsolved goals
+  witness: holds over m < 5 and i < 5, so cells to depth t = 11
+bool_driven_periodicFrom_of_return
+  DOES NOT PROVE: A statement about a one-bit machine, not about rule 30: on its own it proves nothing about any diagonal. It also does not say the doubling never happens — it does happen, four times below k = 430 (`explorer/leftdoubling.mjs`).
+  route:   DOES NOT CLOSE — c:/Users/dibuj/dev/rule30/harness/build/checks/seed/bool_driven_periodicFrom_of_return.lean:6:26: error: unsolved goals
+  witness: unchecked — no witness supplied
+bool_driven_periodicFrom_of_reset
+  DOES NOT PROVE: A statement about a one-bit machine, not about rule 30. It gives no bound on j — supplying an early j for each diagonal is a separate, unproved question, and is what remains of `leftDiagonal_onset_le` after this node.
+  route:   none claimed
+  witness: unchecked — no witness supplied
+leftDiagonal_periodicFrom_step_of_black
+  DOES NOT PROVE: Does not prove `leftDiagonal_onset_le` or `leftDiagonal_period_le`: it is conditional on a black cell whose index is not bounded here. Neither wall is a prize conjecture and this bears on none of them. In particular it says nothing about the centre column, which at time t sits at index 0 of left diagonal t — before any onset this node produces.
+  route:   none claimed
+  witness: unchecked — no witness supplied
+leftDiagonal_step_period_dichotomy
+  DOES NOT PROVE: Does not prove `leftDiagonal_period_le`. It leaves the residual 'the eventually-white left diagonals are sparse', which is measured (four below 430) and unproved — no one has proved a single left diagonal is eventually white, let alone counted them. Not a prize conjecture and no bearing on the centre column.
+  route:   none claimed
+  witness: unchecked — no witness supplied
+
+4 unchecked, 1 holds
+
