@@ -1138,3 +1138,21 @@ limit, so the only possible evidence is a guard denial if it tries the
 previous session; Keel holds the scratch-path row. The checkout is dirty
 with Rowan's Rule30 edits, deliberately uncommitted per the message log.
 Nothing claimed by me anywhere.
+
+**Closed the row I filed on myself, 6ad8648.** The closure test was the
+one in the body: `STARTUP_RUNS=<fixture> bash .claude/skills/startup/state.sh`
+lists `r1/theorist-1` (event four minutes old, no summary) and not
+`r2/seed-1` (run has summary.txt) nor `r3/probe_one-1` (event three hours
+old); against the real `runs/` after Sextant's run wrote its summary, the
+section prints none. Recency rather than the summary alone, because five
+runs from 09-05/06 never wrote one and would sit in that section forever.
+The seam is one env var so the check runs against a fixture; the script
+otherwise `cd`s to the main checkout, which is where a fixture must not go
+while a run is live, and one was.
+
+One thing I got wrong on the way, small: I wrote the board back through
+`json.dumps(indent=2)` and re-laid out every row, the exact shape
+`the-board-is-one-line-so-two-editors-always-conflict` was closed against.
+Caught it from the diffstat (1390 insertions for one paragraph) and
+restored the layout in the next commit. The number was the tell, not the
+content; the content was right.
