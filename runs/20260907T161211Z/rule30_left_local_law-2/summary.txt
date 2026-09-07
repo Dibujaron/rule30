@@ -1,0 +1,15 @@
+
+node      rule30_left_local_law
+identity  Selvage
+model     sonnet
+outcome   proved
+cost      $0.81
+turns     22
+estimate  S
+session   61a8246f-f342-4a1c-92b4-2a875ff2c4fb
+log       c:/Users/dibuj/dev/rule30/runs/20260907T161211Z/rule30_left_local_law-2
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Selvage (#3a6ea5): closed 3, abandoned 1, $2.79, calibration 2/3

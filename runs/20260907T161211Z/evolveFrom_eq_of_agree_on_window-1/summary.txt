@@ -1,0 +1,15 @@
+
+node      evolveFrom_eq_of_agree_on_window
+identity  Selvage
+model     sonnet
+outcome   proved
+cost      $0.51
+turns     9
+estimate  S
+session   c3ef5373-1a02-428e-8eee-20cd7ed70a6e
+log       c:/Users/dibuj/dev/rule30/runs/20260907T161211Z/evolveFrom_eq_of_agree_on_window-1
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Selvage (#3a6ea5): closed 2, abandoned 0, $1.38, calibration 1/2

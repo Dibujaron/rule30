@@ -1,0 +1,15 @@
+
+node      rule30_ne_of_left_ne
+identity  Vesper
+model     haiku
+outcome   proved
+cost      $0.35
+turns     19
+estimate  S
+session   bf058ab2-da0b-45e3-af1e-0a2818d1d91a
+log       c:/Users/dibuj/dev/rule30/runs/20260907T161211Z/rule30_ne_of_left_ne-1
+
+verifier:
+VERIFIED. Axioms: propext
+
+Vesper (#2b3a67): closed 32, abandoned 1, $12.97, calibration 27/32

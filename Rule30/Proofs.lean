@@ -25,6 +25,8 @@ import Rule30.Proofs.CenterColumnNotEventuallyPeriodicOfRight
 import Rule30.Proofs.CenterColumnRightNotBothIsEventuallyPeriodic
 import Rule30.Proofs.CenterColumnZero
 import Rule30.Proofs.EvolveEqFalseOfOutsideCone
+import Rule30.Proofs.EvolveFromEqOfAgreeOnWindow
+import Rule30.Proofs.EvolveFromLeftPermutive
 import Rule30.Proofs.EvolveIsEventuallyPeriodicOfBetween
 import Rule30.Proofs.EvolveLeftDiagonalIsEventuallyPeriodicStep
 import Rule30.Proofs.EvolveLeftDiagonalRecurrence
@@ -57,5 +59,12 @@ import Rule30.Proofs.RightDiagonalIsEventuallyPeriodic
 import Rule30.Proofs.RightDiagonalPeriodicFromPow
 import Rule30.Proofs.RightDiagonalPeriodicFromStep
 import Rule30.Proofs.RightDiagonalRecurrence
+import Rule30.Proofs.RightmostDifferenceMovesRight
+import Rule30.Proofs.RowCellEqEvolve
+import Rule30.Proofs.Rule30LeftLocalLaw
+import Rule30.Proofs.Rule30LeftPermutive
+import Rule30.Proofs.Rule30NeOfLeftNe
+import Rule30.Proofs.SidewaysInverse
 import Rule30.Proofs.StripEventuallyPeriodic
 import Rule30.Proofs.StripSucc
+import Rule30.Proofs.WindowCountHalf

@@ -1,0 +1,16 @@
+
+node      rule30_left_local_law
+identity  Selvage
+model     haiku
+outcome   budget_exhausted
+cost      $0.60
+turns     41
+estimate  S
+session   26cad1cc-00c7-43cb-a839-4db2234deaa6
+log       c:/Users/dibuj/dev/rule30/runs/20260907T161211Z/rule30_left_local_law-1
+
+verifier:
+the CLI ended the session: {"duration_api_ms":243752,"stop_reason":"tool_use","session_id":"26cad1cc-00c7-43cb-a839-4db2234deaa6","total_cost_usd":0.6016187000000001,"usage":{"input_tokens":322,"cache_creation_input_tokens":85226,"cache_read_input_tokens":3096917,"output_tokens":23947,"output_tokens_details":{"thinking_tokens":8537},"server_tool_use":{"web_search_requests":0,"web_fetch_requests":0},"service_tier":"standard","cache_creation":{"ephemeral_1h_input_tokens":85226,"ephemeral_5m_input_tokens":0},"inference_geo":"not_available","iterations":[{"input_tokens":8,"output_tokens":108,"cache_read_input_tokens":102220,"cache_creation_input_tokens":1012,"cache_creation":{"ephemeral_5m_input_tokens":0,"ephemeral_1h_input_tokens":1012},"type":"message"}],"speed":"standard"},"modelUsage":{"claude-haiku-4-5-20251001":{"inputTokens":1655,"outputTokens":23964,"cacheReadInputTokens":3096917,"cacheCreationInputTokens":85226,"webSearchRequests":0,"costUSD":0.6016187000000001,"contextWindow":200000,"maxOutputTokens":3200
+… (clipped; the full text is in events.jsonl)
+
+Selvage (#3a6ea5): closed 2, abandoned 1, $1.98, calibration 1/2

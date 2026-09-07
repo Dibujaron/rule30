@@ -1,0 +1,20 @@
+{"ts":"2026-09-07T16:12:11Z","kind":"run","max_attempts":14,"concurrency":3}
+{"ts":"2026-09-07T16:12:11Z","kind":"dispatch","node":"rule30_ne_of_left_ne","identity":"Vesper","model":"haiku","reason":"open leaf; unblocks 3; ladder step 1","port":4130,"log":"c:/Users/dibuj/dev/rule30/runs/20260907T161211Z/rule30_ne_of_left_ne-1","in_flight":1}
+{"ts":"2026-09-07T16:12:11Z","kind":"dispatch","node":"sideways_inverse","identity":"Cadence","model":"haiku","reason":"open leaf; unblocks 0; ladder step 1","port":4131,"log":"c:/Users/dibuj/dev/rule30/runs/20260907T161211Z/sideways_inverse-1","in_flight":2}
+{"ts":"2026-09-07T16:12:11Z","kind":"dispatch","node":"evolveFrom_eq_of_agree_on_window","identity":"Selvage","model":"sonnet","reason":"open leaf; unblocks 0; ladder step 1","port":4132,"log":"c:/Users/dibuj/dev/rule30/runs/20260907T161211Z/evolveFrom_eq_of_agree_on_window-1","in_flight":3}
+{"ts":"2026-09-07T16:13:11Z","kind":"index","node":"sideways_inverse","module":"Rule30.Proofs.SidewaysInverse","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-07T16:13:11Z","kind":"dispatch","node":"rowCell_eq_evolve","identity":"Cadence","model":"opus","reason":"open leaf; unblocks 0; ladder step 1","port":4133,"log":"c:/Users/dibuj/dev/rule30/runs/20260907T161211Z/rowCell_eq_evolve-1","in_flight":3}
+{"ts":"2026-09-07T16:14:18Z","kind":"index","node":"evolveFrom_eq_of_agree_on_window","module":"Rule30.Proofs.EvolveFromEqOfAgreeOnWindow","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-07T16:14:38Z","kind":"index","node":"rule30_ne_of_left_ne","module":"Rule30.Proofs.Rule30NeOfLeftNe","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-07T16:14:39Z","kind":"dispatch","node":"rule30_leftPermutive","identity":"Vesper","model":"haiku","reason":"open leaf; unblocks 1; ladder step 1","port":4134,"log":"c:/Users/dibuj/dev/rule30/runs/20260907T161211Z/rule30_leftPermutive-1","in_flight":2}
+{"ts":"2026-09-07T16:14:39Z","kind":"dispatch","node":"rule30_left_local_law","identity":"Selvage","model":"haiku","reason":"open leaf; unblocks 0; ladder step 1","port":4135,"log":"c:/Users/dibuj/dev/rule30/runs/20260907T161211Z/rule30_left_local_law-1","in_flight":3}
+{"ts":"2026-09-07T16:15:54Z","kind":"index","node":"rule30_leftPermutive","module":"Rule30.Proofs.Rule30LeftPermutive","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-07T16:15:54Z","kind":"dispatch","node":"evolveFrom_leftPermutive","identity":"Vesper","model":"sonnet","reason":"open leaf; unblocks 1; ladder step 1","port":4136,"log":"c:/Users/dibuj/dev/rule30/runs/20260907T161211Z/evolveFrom_leftPermutive-1","in_flight":3}
+{"ts":"2026-09-07T16:19:52Z","kind":"index","node":"rowCell_eq_evolve","module":"Rule30.Proofs.RowCellEqEvolve","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-07T16:19:52Z","kind":"dispatch","node":"rightmost_difference_moves_right","identity":"Cadence","model":"sonnet","reason":"open leaf; unblocks 0; ladder step 1","port":4137,"log":"c:/Users/dibuj/dev/rule30/runs/20260907T161211Z/rightmost_difference_moves_right-1","in_flight":3}
+{"ts":"2026-09-07T16:20:29Z","kind":"dispatch","node":"rule30_left_local_law","identity":"Selvage","model":"sonnet","reason":"open leaf; unblocks 0; ladder step 2","port":4138,"log":"c:/Users/dibuj/dev/rule30/runs/20260907T161211Z/rule30_left_local_law-2","in_flight":3}
+{"ts":"2026-09-07T16:22:13Z","kind":"index","node":"rightmost_difference_moves_right","module":"Rule30.Proofs.RightmostDifferenceMovesRight","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-07T16:23:50Z","kind":"index","node":"evolveFrom_leftPermutive","module":"Rule30.Proofs.EvolveFromLeftPermutive","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-07T16:23:50Z","kind":"dispatch","node":"window_count_half","identity":"Vesper","model":"opus","reason":"open leaf; unblocks 0; ladder step 1","port":4139,"log":"c:/Users/dibuj/dev/rule30/runs/20260907T161211Z/window_count_half-1","in_flight":2}
+{"ts":"2026-09-07T16:24:34Z","kind":"index","node":"rule30_left_local_law","module":"Rule30.Proofs.Rule30LeftLocalLaw","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-07T16:29:23Z","kind":"index","node":"window_count_half","module":"Rule30.Proofs.WindowCountHalf","file":"Rule30/Proofs.lean"}

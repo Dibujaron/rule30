@@ -1,0 +1,15 @@
+
+node      rowCell_eq_evolve
+identity  Cadence
+model     opus
+outcome   proved
+cost      $2.31
+turns     14
+estimate  M
+session   7e8dbf14-d7c5-418f-8501-cdcda9691fe4
+log       c:/Users/dibuj/dev/rule30/runs/20260907T161211Z/rowCell_eq_evolve-1
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Cadence (#2a6f77): closed 13, abandoned 0, $6.13, calibration 11/13

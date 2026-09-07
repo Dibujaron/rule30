@@ -1,0 +1,15 @@
+
+node      window_count_half
+identity  Vesper
+model     opus
+outcome   proved
+cost      $2.48
+turns     20
+estimate  M
+session   e34e2cdb-f98a-4a82-a40e-3b5d552fcb7a
+log       c:/Users/dibuj/dev/rule30/runs/20260907T161211Z/window_count_half-1
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Vesper (#2b3a67): closed 35, abandoned 1, $17.08, calibration 29/35

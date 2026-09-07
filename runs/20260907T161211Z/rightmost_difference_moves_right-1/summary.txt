@@ -1,0 +1,15 @@
+
+node      rightmost_difference_moves_right
+identity  Cadence
+model     sonnet
+outcome   proved
+cost      $0.65
+turns     19
+estimate  M
+session   b966e396-f095-433a-ade7-34851bf392a3
+log       c:/Users/dibuj/dev/rule30/runs/20260907T161211Z/rightmost_difference_moves_right-1
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Cadence (#2a6f77): closed 14, abandoned 0, $6.78, calibration 12/14

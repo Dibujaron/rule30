@@ -1,0 +1,13 @@
+
+sideways_inverse                  Cadence  haiku   proved            $0.21   13 turns
+evolveFrom_eq_of_agree_on_window  Selvage  sonnet  proved            $0.51   9 turns
+rule30_ne_of_left_ne              Vesper   haiku   proved            $0.35   19 turns
+rule30_leftPermutive              Vesper   haiku   proved            $0.22   13 turns
+rowCell_eq_evolve                 Cadence  opus    proved            $2.31   14 turns
+rule30_left_local_law             Selvage  haiku   budget_exhausted  $0.60   41 turns
+rightmost_difference_moves_right  Cadence  sonnet  proved            $0.65   19 turns
+evolveFrom_leftPermutive          Vesper   sonnet  proved            $1.40   17 turns
+rule30_left_local_law             Selvage  sonnet  proved            $0.81   22 turns
+window_count_half                 Vesper   opus    proved            $2.48   20 turns
+
+10 attempt(s), 9 closed, $9.56 in all
