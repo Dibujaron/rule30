@@ -143,7 +143,15 @@ pub fn prove_one(
     _ -> Ok(Nil)
   })
 
-  write_channels(cfg, l, l, identity, node_id, model, attempt, report)
+  let pending =
+    write_channels(cfg, l, l, identity, claimed, model, attempt, report)
+  // Run inline, unlike `returned`'s: a single `prove_one` has nothing else
+  // waiting on this process, so there is no sibling slot to stall.
+  case pending {
+    None -> Nil
+    Some(p) ->
+      run_check(fn(path) { seed.check_file_in(cfg.repo_root, path) }, p)
+  }
   auto_file_signals(cfg, l, node_id, identity, attempt)
   let text = summary(d, l, identity, attempt, node_id)
   log.summary(l, text)
@@ -159,11 +167,21 @@ pub fn prove_one(
 /// writes a verified statement into its proof note, and the proofs-index
 /// writer. The last two both write under `Rule30/`, which is why a test
 /// must be able to replace them.
+///
+/// `check_proposals` is `seed.check_file_in` with `repo_root` closed over:
+/// path of a `proposals.json` in, the check's report text out. It is
+/// injected for the same reason `verifier` is — a test must be able to
+/// avoid the real thing — and for one more: the real one can block up to
+/// 600s per route claim and 180s per witness, and has its own `let assert`
+/// writes (`seed.gleam` ~245, ~537) that panic rather than return `Error`
+/// on a checkout with no `.lake`. Nothing here calls it on the scheduler's
+/// thread; see `run_check` and `run_with_log`'s closing sweep.
 pub type Env {
   Env(
     verifier: fn(Subject(lock.Msg)) -> fn(dag.Node) -> verify.Verdict,
     annotate: fn(dag.Node, String) -> Result(Nil, String),
     index: fn(dag.Node) -> Result(Nil, String),
+    check_proposals: fn(String) -> Result(String, String),
   )
 }
 
@@ -198,6 +216,7 @@ pub fn live_env(cfg: config.Config, l: log.Log) -> Env {
       verify.annotate(cfg.repo_root, node, statement)
     },
     index: fn(node) { write_index(cfg, l, node) },
+    check_proposals: fn(path) { seed.check_file_in(cfg.repo_root, path) },
   )
 }
 
@@ -276,11 +295,29 @@ fn run_with_log(
       halted: None,
       finished: [],
       next_port: cfg.guard_port,
+      pending_checks: [],
     )
   use state <- result.try(loop(run_, state))
   let text = run_summary(state)
   log.summary(run_log, text)
   io.println(text)
+  // Only now, with the run's own record already complete: see
+  // `pending_checks`'s doc comment for why this cannot run any earlier.
+  // Dispatch order, not `returned`'s newest-first order, since a reader
+  // scanning the console has no other order to expect.
+  case state.pending_checks {
+    [] -> Nil
+    pending -> {
+      io.println(
+        "checking "
+        <> int.to_string(list.length(pending))
+        <> " proposal file(s) from this run",
+      )
+      list.each(list.reverse(pending), fn(p) {
+        run_check(env.check_proposals, p)
+      })
+    }
+  }
   Ok(text)
 }
 
@@ -331,6 +368,17 @@ type RunState {
     /// run, so a finished attempt's guard — still listening, since nothing
     /// stops it — can never collide with a new one.
     next_port: Int,
+    /// Proposals files written by attempts that have already returned,
+    /// waiting for `seed.check_file_in` — prepended in `returned`, so this
+    /// is newest first. Deliberately not run there: `returned` executes on
+    /// the scheduler's own process with sibling attempts still claimed, and
+    /// the real checker can block up to 600s per route claim and 180s per
+    /// witness per proposal (stalling every other slot for that long) and
+    /// panics via its own `let assert` writes on a checkout with no
+    /// `.lake` (which would take the whole run down rather than fail one
+    /// attempt). `run_with_log` runs these only after `loop` returns and
+    /// the run's own record is already written.
+    pending_checks: List(PendingCheck),
   )
 }
 
@@ -616,16 +664,17 @@ fn returned(
     }
     _ -> Nil
   }
-  write_channels(
-    cfg,
-    run_.run_log,
-    flight.attempt_log,
-    flight.identity,
-    node.id,
-    flight.model,
-    attempt,
-    report,
-  )
+  let pending =
+    write_channels(
+      cfg,
+      run_.run_log,
+      flight.attempt_log,
+      flight.identity,
+      node,
+      flight.model,
+      attempt,
+      report,
+    )
   auto_file_signals(cfg, flight.attempt_log, node.id, flight.identity, attempt)
   log.summary(
     flight.attempt_log,
@@ -646,6 +695,10 @@ fn returned(
         Finished(node.id, flight.identity.name, attempt),
         ..state.finished
       ],
+      pending_checks: case pending {
+        None -> state.pending_checks
+        Some(p) -> [p, ..state.pending_checks]
+      },
     ),
   )
 }
@@ -1164,26 +1217,31 @@ fn record(node: dag.Node, attempt: dag.Attempt) -> dag.Node {
 ///
 /// `l` is the run log, where the notebook heading, the journal, the
 /// `report_discarded` event and filed bugs go; `attempt_log` is the
-/// attempt's own log, where a worker's proposed sub-lemmas and their check
-/// are written. `prove_one` has one log that serves as both; a run's
-/// `returned` has two.
+/// attempt's own log, where a worker's proposed sub-lemmas are written.
+/// `prove_one` has one log that serves as both; a run's `returned` has two.
 ///
 /// One more row when the decoder had to leave something out: a single
 /// `report_discarded` event naming the entries of `bugs` that did not
 /// decode. Without it an attempt whose bug report was dropped reads
 /// exactly like an attempt with nothing to report.
+///
+/// Returns what `write_proposals` returns: `Some(PendingCheck)` when a
+/// proposals file was written and still needs `run_check`, `None`
+/// otherwise (including when `report` itself is `None`). The caller
+/// decides when that runs — see `run_check`'s doc comment.
 fn write_channels(
   cfg: config.Config,
   l: log.Log,
   attempt_log: log.Log,
   identity: roster.Identity,
-  node_id: String,
+  node: dag.Node,
   model: String,
   attempt: dag.Attempt,
   report: Option(worker.Report),
-) -> Nil {
+) -> Option(PendingCheck) {
+  let node_id = node.id
   case report {
-    None -> Nil
+    None -> None
     Some(r) -> {
       case string.trim(r.notebook) {
         "" -> Nil
@@ -1224,7 +1282,7 @@ fn write_channels(
           ])
       }
       file_reported_bugs(cfg, l, identity, node_id, attempt, r.bugs)
-      write_proposals(cfg, attempt_log, identity, node_id, r)
+      write_proposals(attempt_log, identity, node, r)
     }
   }
 }
@@ -1237,60 +1295,70 @@ pub const proposals_file = "proposals.json"
 
 pub const proposals_check_file = "proposals-check.txt"
 
-/// A worker's proposed sub-lemmas: written to the attempt directory in the
-/// seeder's shape, checked by `seed.check_file_in` exactly as a seeder's
-/// would be, and both steps recorded as events in the attempt's
-/// `events.jsonl`. A proposal file nobody has checked is a hope; the check
-/// is what makes a failed attempt's output usable by the DAG.
+/// A proposals file `write_proposals` has written and that still needs
+/// `run_check` — the two are split apart so the (possibly slow, possibly
+/// panicking) check can be deferred by its caller rather than run inline.
+pub type PendingCheck {
+  PendingCheck(node_id: String, attempt_log: log.Log, path: String)
+}
+
+/// A worker's proposed sub-lemmas, written to the attempt directory in the
+/// seeder's shape and recorded as an event. A proposal file nobody has
+/// checked is a hope; `run_check` — deliberately not called from here — is
+/// what makes a failed attempt's output usable by the DAG.
 ///
 /// Nothing here reads the rung or the outcome: a `proved` attempt with
 /// proposals writes them too, and a proposal is weighed by the check, not by
 /// which model made it.
 ///
 /// One guard before the check, the only mechanical one: a proposal whose
-/// name is the node's own is a restatement and is dropped, named in a
+/// name is the node's own — either `node.id` or `node.lean_name`, since a
+/// worker may restate under whichever it knows — is dropped, named in a
 /// `proposals_discarded` event. A restatement under another name is what the
 /// check's report and the captain's reading are for.
 ///
-/// The check's failure to RUN (no `.lake` under `repo_root`, an unwritable
-/// file) is an event with a reason, never a crash: the attempt's record is
-/// already written and a derived artifact does not get to suppress it.
+/// Returns `Some(PendingCheck)` when a file was written and still needs
+/// checking, `None` when there was nothing to write or the write itself
+/// failed (that failure is still recorded, as `proposals_checked` /
+/// `outcome: "failed"`, right here — the write is fast and cannot panic, so
+/// nothing about it needs deferring).
 pub fn write_proposals(
-  cfg: config.Config,
   attempt_log: log.Log,
   identity: roster.Identity,
-  node_id: String,
+  node: dag.Node,
   report: worker.Report,
-) -> Nil {
+) -> Option(PendingCheck) {
   case report.proposals {
-    [] -> Nil
+    [] -> None
     proposals -> {
       let #(restating, kept) =
-        list.partition(proposals, fn(p) { p.name == node_id })
+        list.partition(proposals, fn(p) {
+          p.name == node.id || p.name == node.lean_name
+        })
       case restating {
         [] -> Nil
         rs ->
           log.event(attempt_log, "proposals_discarded", [
-            #("node", json.string(node_id)),
+            #("node", json.string(node.id)),
             #("reason", json.string("restates the node under its own name")),
             #("names", json.array(list.map(rs, fn(p) { p.name }), json.string)),
           ])
       }
       case kept {
-        [] -> Nil
-        kept -> {
+        [] -> None
+        survivors -> {
           let path = attempt_log.dir <> "/" <> proposals_file
-          let text = proposals_json(node_id, identity, attempt_log, kept)
+          let text = proposals_json(node.id, identity, attempt_log, survivors)
           log.event(attempt_log, "proposals", [
-            #("node", json.string(node_id)),
+            #("node", json.string(node.id)),
             #("from", json.string(identity.name)),
             #("file", json.string(path)),
-            #("count", json.int(list.length(kept))),
+            #("count", json.int(list.length(survivors))),
           ])
           case simplifile.write(path, text) {
-            Error(e) ->
+            Error(e) -> {
               log.event(attempt_log, "proposals_checked", [
-                #("node", json.string(node_id)),
+                #("node", json.string(node.id)),
                 #("outcome", json.string("failed")),
                 #(
                   "reason",
@@ -1302,7 +1370,9 @@ pub fn write_proposals(
                   ),
                 ),
               ])
-            Ok(Nil) -> check_proposals(cfg, attempt_log, node_id, path)
+              None
+            }
+            Ok(Nil) -> Some(PendingCheck(node_id: node.id, attempt_log:, path:))
           }
         }
       }
@@ -1310,17 +1380,28 @@ pub fn write_proposals(
   }
 }
 
-/// Run `seed.check_file_in` over the file `write_proposals` just wrote, and
-/// record the outcome as one more event: `written` with the report's path,
-/// or `failed` with the reason, never a crash.
-fn check_proposals(
-  cfg: config.Config,
-  attempt_log: log.Log,
-  node_id: String,
-  path: String,
+/// Run `checker` (`seed.check_file_in` with `repo_root` closed over, or a
+/// stand-in) over the file named by `pending`, and record the outcome as one
+/// more event: `written` with the report's path, or `failed` with the
+/// reason, never a crash.
+///
+/// Takes the checker as an argument rather than calling `seed.check_file_in`
+/// directly so its caller controls WHEN this runs. `prove_one` runs it
+/// immediately — nothing else is waiting on that process. A run's `returned`
+/// never calls this: it happens on the scheduler's own process with sibling
+/// attempts still claimed, and the real checker can block up to 600s per
+/// route claim and 180s per witness, and has its own `let assert` writes
+/// (`seed.gleam` ~245, ~537) that panic — taking the whole run down — rather
+/// than return `Error` on a checkout with no `.lake`. `returned` instead
+/// queues the `PendingCheck` in `RunState.pending_checks`, and
+/// `run_with_log` runs it here only after `loop` returns.
+pub fn run_check(
+  checker: fn(String) -> Result(String, String),
+  pending: PendingCheck,
 ) -> Nil {
+  let PendingCheck(node_id:, attempt_log:, path:) = pending
   let out = attempt_log.dir <> "/" <> proposals_check_file
-  case seed.check_file_in(cfg.repo_root, path) {
+  case checker(path) {
     Error(reason) ->
       log.event(attempt_log, "proposals_checked", [
         #("node", json.string(node_id)),

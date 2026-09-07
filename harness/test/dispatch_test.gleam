@@ -895,16 +895,24 @@ fn proposals_identity() -> roster.Identity {
   )
 }
 
-/// The seeder's shape, byte-compatible with `seed.decode_proposals`; the
-/// node's own restatement dropped and named; the check run and its honest
-/// failure — no `.lake` under this root — recorded rather than swallowed.
-pub fn write_proposals_writes_the_seeder_shape_and_records_the_check_test() {
+/// The seeder's shape, byte-compatible with `seed.decode_proposals`; a
+/// restatement dropped whichever of the node's two names it repeats — `id`
+/// and `lean_name` differ here on purpose, since a worker can echo either
+/// one back. `write_proposals` only writes and records; nothing here runs
+/// the check — that is `run_check`'s job, covered below.
+pub fn write_proposals_writes_the_seeder_shape_and_discards_either_name_test() {
   let root = "build/test-runs/write-proposals"
   let _ = simplifile.delete(root)
   let assert Ok(Nil) = simplifile.create_directory_all(root <> "/runs")
   let assert Ok(l) = log.open(root <> "/runs", "run-1")
-  let cfg = config.Config(..cfg(), repo_root: root, runs_root: root <> "/runs")
   let identity = proposals_identity()
+  let target =
+    node(
+      "evolve_left_seventh_diagonal",
+      "evolve_left_seventh_diagonal_isEventuallyPeriodic",
+      dag.M,
+      [],
+    )
   let report =
     worker.Report(
       outcome: "abandoned",
@@ -924,7 +932,7 @@ pub fn write_proposals_writes_the_seeder_shape_and_records_the_check_test() {
           route: None,
           witness: Some(#("evolve (t + 5) (-(t : ℤ)) = false", [], "t < 12")),
         ),
-        // Restates the node under the node's own name: refused, named.
+        // Restates the node under its `id`: refused, named.
         worker.ProposedLemma(
           name: "evolve_left_seventh_diagonal",
           statement: "theorem evolve_left_seventh_diagonal : True := by\n  sorry",
@@ -934,15 +942,22 @@ pub fn write_proposals_writes_the_seeder_shape_and_records_the_check_test() {
           route: None,
           witness: None,
         ),
+        // Restates the node under its `lean_name`, which is not its `id`
+        // here: refused just the same, named just the same.
+        worker.ProposedLemma(
+          name: "evolve_left_seventh_diagonal_isEventuallyPeriodic",
+          statement: "theorem evolve_left_seventh_diagonal_isEventuallyPeriodic : True := by\n  sorry",
+          reason: "r",
+          size: dag.M,
+          disclaims: "",
+          route: None,
+          witness: None,
+        ),
       ],
     )
-  dispatch.write_proposals(
-    cfg,
-    l,
-    identity,
-    "evolve_left_seventh_diagonal",
-    report,
-  )
+  let assert Some(pending) =
+    dispatch.write_proposals(l, identity, target, report)
+  assert pending.node_id == "evolve_left_seventh_diagonal"
   let assert Ok(text) = simplifile.read(l.dir <> "/proposals.json")
   // Byte-compatible with the seeder's decoder, and carrying only the survivor.
   let assert Ok([p]) = seed.decode_proposals(text)
@@ -963,23 +978,77 @@ pub fn write_proposals_writes_the_seeder_shape_and_records_the_check_test() {
   assert string.contains(events, "\"count\":1")
   assert string.contains(events, "\"kind\":\"proposals_discarded\"")
   assert string.contains(events, "evolve_left_seventh_diagonal")
-  // The check ran and failed honestly: this root has no `.lake`, and the
-  // failure is an event with a reason, not a crash and not a silence.
-  assert string.contains(events, "\"kind\":\"proposals_checked\"")
-  assert string.contains(events, "\"outcome\":\"failed\"")
-  assert string.contains(events, ".lake")
+  assert string.contains(
+    events,
+    "evolve_left_seventh_diagonal_isEventuallyPeriodic",
+  )
+  // `write_proposals` never runs the check itself.
   assert simplifile.is_file(l.dir <> "/proposals-check.txt") == Ok(False)
+}
+
+/// Every proposal restates the node — one under `id`, one under
+/// `lean_name` — so nothing survives: no file, no `proposals` event, and
+/// exactly one `proposals_discarded` event naming both. `write_proposals`
+/// returns `None`: there is nothing for a caller to check.
+pub fn write_proposals_with_everything_discarded_writes_nothing_test() {
+  let root = "build/test-runs/write-proposals-all-discarded"
+  let _ = simplifile.delete(root)
+  let assert Ok(Nil) = simplifile.create_directory_all(root <> "/runs")
+  let assert Ok(l) = log.open(root <> "/runs", "run-1")
+  let target = node("node_id_x", "node_lean_x", dag.S, [])
+  let report =
+    worker.Report(
+      outcome: "abandoned",
+      estimate: dag.S,
+      notebook: "",
+      journal: "",
+      bugs: [],
+      summary: "",
+      discarded: [],
+      proposals: [
+        worker.ProposedLemma(
+          name: "node_id_x",
+          statement: "theorem node_id_x : True := by\n  sorry",
+          reason: "r",
+          size: dag.S,
+          disclaims: "",
+          route: None,
+          witness: None,
+        ),
+        worker.ProposedLemma(
+          name: "node_lean_x",
+          statement: "theorem node_lean_x : True := by\n  sorry",
+          reason: "r",
+          size: dag.S,
+          disclaims: "",
+          route: None,
+          witness: None,
+        ),
+      ],
+    )
+  assert dispatch.write_proposals(l, proposals_identity(), target, report)
+    == None
+  assert simplifile.is_file(l.dir <> "/proposals.json") == Ok(False)
+  let assert Ok(events) = simplifile.read(l.dir <> "/events.jsonl")
+  assert !string.contains(events, "\"kind\":\"proposals\"")
+  let discarded_lines =
+    string.split(string.trim(events), "\n")
+    |> list.filter(fn(line) {
+      string.contains(line, "\"kind\":\"proposals_discarded\"")
+    })
+  assert list.length(discarded_lines) == 1
+  assert string.contains(events, "node_id_x")
+  assert string.contains(events, "node_lean_x")
 }
 
 /// A report with no proposals writes nothing and logs nothing named
 /// `proposals` — the empty case must be silent, not an empty file and an
-/// empty-count event.
+/// empty-count event. `write_proposals` returns `None`.
 pub fn write_proposals_with_none_writes_nothing_test() {
   let root = "build/test-runs/write-proposals-none"
   let _ = simplifile.delete(root)
   let assert Ok(Nil) = simplifile.create_directory_all(root <> "/runs")
   let assert Ok(l) = log.open(root <> "/runs", "run-1")
-  let cfg = config.Config(..cfg(), repo_root: root, runs_root: root <> "/runs")
   let report =
     worker.Report(
       outcome: "proved",
@@ -991,16 +1060,93 @@ pub fn write_proposals_with_none_writes_nothing_test() {
       discarded: [],
       proposals: [],
     )
-  dispatch.write_proposals(cfg, l, proposals_identity(), "n", report)
+  assert dispatch.write_proposals(
+      l,
+      proposals_identity(),
+      node("n", "n", dag.S, []),
+      report,
+    )
+    == None
   assert simplifile.is_file(l.dir <> "/proposals.json") == Ok(False)
   let assert Ok(events) = simplifile.read(l.dir <> "/events.jsonl")
   assert !string.contains(events, "proposals")
 }
 
+/// One survivor, written once, so the two `run_check` tests below share a
+/// `PendingCheck` shape rather than each rebuilding a `worker.Report`.
+fn a_pending_check(l: log.Log) -> dispatch.PendingCheck {
+  let report =
+    worker.Report(
+      outcome: "abandoned",
+      estimate: dag.S,
+      notebook: "",
+      journal: "",
+      bugs: [],
+      summary: "",
+      discarded: [],
+      proposals: [
+        worker.ProposedLemma(
+          name: "a_survivor",
+          statement: "theorem a_survivor : True := by\n  sorry",
+          reason: "r",
+          size: dag.S,
+          disclaims: "",
+          route: None,
+          witness: None,
+        ),
+      ],
+    )
+  let assert Some(pending) =
+    dispatch.write_proposals(
+      l,
+      proposals_identity(),
+      node("n", "n", dag.S, []),
+      report,
+    )
+  pending
+}
+
+/// `run_check` never touches disk beyond the report it is handed: a
+/// checker that fails records the failure as an event with its reason, and
+/// no `proposals-check.txt` appears. Proven with a stub rather than by
+/// starving a root of `.lake` and hoping `seed.check_file_in` fails for the
+/// right reason — that real path is `write_proposals_records_a_check_that_ran_test`, below.
+pub fn run_check_records_a_failed_check_test() {
+  let root = "build/test-runs/run-check-failed"
+  let _ = simplifile.delete(root)
+  let assert Ok(Nil) = simplifile.create_directory_all(root <> "/runs")
+  let assert Ok(l) = log.open(root <> "/runs", "run-1")
+  let pending = a_pending_check(l)
+  dispatch.run_check(fn(_path) { Error("no .lake here") }, pending)
+  let assert Ok(events) = simplifile.read(l.dir <> "/events.jsonl")
+  assert string.contains(events, "\"kind\":\"proposals_checked\"")
+  assert string.contains(events, "\"outcome\":\"failed\"")
+  assert string.contains(events, "no .lake here")
+  assert simplifile.is_file(l.dir <> "/proposals-check.txt") == Ok(False)
+}
+
+/// A checker that succeeds has its report text written to
+/// `proposals-check.txt` and the event says so.
+pub fn run_check_writes_the_report_on_a_successful_check_test() {
+  let root = "build/test-runs/run-check-written"
+  let _ = simplifile.delete(root)
+  let assert Ok(Nil) = simplifile.create_directory_all(root <> "/runs")
+  let assert Ok(l) = log.open(root <> "/runs", "run-1")
+  let pending = a_pending_check(l)
+  dispatch.run_check(fn(_path) { Ok("the check's report text") }, pending)
+  let assert Ok(events) = simplifile.read(l.dir <> "/events.jsonl")
+  assert string.contains(events, "\"kind\":\"proposals_checked\"")
+  assert string.contains(events, "\"outcome\":\"written\"")
+  let assert Ok(check_text) = simplifile.read(l.dir <> "/proposals-check.txt")
+  assert check_text == "the check's report text"
+}
+
 /// A cheaper, real check: against the built fixture project, a proposal
 /// with no route and no witness gets a check that actually ran — its
 /// report on disk, saying "none claimed" and "no witness supplied" rather
-/// than a refusal. Scratch `seed.check_file_in` writes lands under
+/// than a refusal. Routed through `run_check` exactly as `prove_one` routes
+/// it, rather than calling `seed.check_file_in` from the test directly.
+/// Scratch `seed.check_file_in` writes lands under
 /// `harness/test/fixture-project/harness/`, which `.gitignore` already
 /// lists, and this test's own report says whether `git status` agreed.
 pub fn write_proposals_records_a_check_that_ran_test() {
@@ -1009,7 +1155,6 @@ pub fn write_proposals_records_a_check_that_ran_test() {
   let _ = simplifile.delete(root)
   let assert Ok(Nil) = simplifile.create_directory_all(root)
   let assert Ok(l) = log.open(root, "run-1")
-  let cfg = config.Config(..cfg(), repo_root:, runs_root: root)
   let report =
     worker.Report(
       outcome: "abandoned",
@@ -1031,13 +1176,14 @@ pub fn write_proposals_records_a_check_that_ran_test() {
         ),
       ],
     )
-  dispatch.write_proposals(
-    cfg,
-    l,
-    proposals_identity(),
-    "harness_probe",
-    report,
-  )
+  let assert Some(pending) =
+    dispatch.write_proposals(
+      l,
+      proposals_identity(),
+      node("harness_probe", "harness_probe", dag.S, []),
+      report,
+    )
+  dispatch.run_check(fn(p) { seed.check_file_in(repo_root, p) }, pending)
   let assert Ok(events) = simplifile.read(l.dir <> "/events.jsonl")
   assert string.contains(events, "\"kind\":\"proposals_checked\"")
   assert string.contains(events, "\"outcome\":\"written\"")

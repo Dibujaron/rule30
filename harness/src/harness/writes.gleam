@@ -105,8 +105,8 @@ pub fn declared() -> List(Written) {
     ),
     Written(
       what: "runs/<run-id>/<attempt>/proposals-check.txt",
-      risk: "seed.check_file_in's report over proposals.json; derived, so an edit arriving before the next attempt at the same node is lost",
-      writers: ["check_proposals"],
+      risk: "seed.check_file_in's report over the proposals.json beside it; derived from that file and rewritten only by a re-run of the check over the same attempt directory, which nothing in the harness does automatically — an attempt directory is never revisited by a later attempt",
+      writers: ["run_check"],
     ),
   ]
 }

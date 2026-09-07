@@ -169,6 +169,10 @@ fn env(f: Fixture, verdict: verify.Verdict) -> dispatch.Env {
       simplifile.append(f.index_path, node.id <> "\n")
       |> result.map_error(simplifile.describe_error)
     },
+    // The real one can block minutes and panics with no `.lake`; this
+    // fixture has neither concern, so a stub is honest rather than a
+    // shortcut.
+    check_proposals: fn(_path) { Ok("stubbed check") },
   )
 }
 
@@ -196,6 +200,43 @@ fn result_line(session_id: String, outcome: String) -> String {
         #("summary", json.string("scripted " <> outcome)),
         #("notebook", json.string("scripted notebook entry")),
         #("journal", json.string("scripted journal entry")),
+      ]),
+    ),
+  ])
+  |> json.to_string
+}
+
+/// `result_line`, with one proposed sub-lemma attached — enough for the
+/// decoder (`name`, `statement`, `reason` are its required fields; `size`,
+/// `route` and `witness` are all optional).
+fn result_line_with_proposal(session_id: String, outcome: String) -> String {
+  json.object([
+    #("type", json.string("result")),
+    #("session_id", json.string(session_id)),
+    #("is_error", json.bool(False)),
+    #("total_cost_usd", json.float(0.25)),
+    #("num_turns", json.int(3)),
+    #(
+      "structured_output",
+      json.object([
+        #("outcome", json.string(outcome)),
+        #("estimate", json.string("S")),
+        #("summary", json.string("scripted " <> outcome)),
+        #("notebook", json.string("scripted notebook entry")),
+        #("journal", json.string("scripted journal entry")),
+        #(
+          "proposals",
+          json.preprocessed_array([
+            json.object([
+              #("name", json.string("harness_probe_child")),
+              #(
+                "statement",
+                json.string("theorem harness_probe_child : True := by\n  sorry"),
+              ),
+              #("reason", json.string("a scripted sub-lemma")),
+            ]),
+          ]),
+        ),
       ]),
     ),
   ])
@@ -296,6 +337,44 @@ pub fn two_slots_take_both_leaves_and_a_close_opens_the_next_test() {
     read(f.cfg.agents_dir <> "/Scripted.md"),
     "scripted notebook entry",
   )
+}
+
+/// A worker's proposal is checked only after the run's own summary is
+/// written, not inline in `returned`: `env.check_proposals` here is the
+/// stub `env()` supplies, so this proves the deferred sweep in
+/// `run_with_log` runs at all and writes into the ATTEMPT's own
+/// `events.jsonl` (not the run log), rather than proving anything about
+/// the real `seed.check_file_in` — that is `dispatch_test.gleam`'s job.
+pub fn a_proposal_is_checked_after_the_run_summary_test() {
+  let f =
+    fixture(
+      "proposal-checked",
+      [[init_line("s"), result_line_with_proposal("s", "abandoned")]],
+      ports.span(16),
+    )
+  let assert Ok(text) =
+    dispatch.run_with(
+      f.cfg,
+      Plan(max_attempts: 1, concurrency: 1),
+      env(
+        f,
+        verify.Verified(
+          ["propext"],
+          "Statements.harness_probe : True",
+          "'harness_check' depends on axioms",
+        ),
+      ),
+    )
+  assert string.contains(text, "1 attempt(s)")
+  let dirs = run_dirs(f)
+  assert list.contains(dirs, "probe_one-1")
+  let assert Ok(runs) = simplifile.read_directory(f.cfg.runs_root)
+  let assert [run] = runs
+  let events =
+    read(f.cfg.runs_root <> "/" <> run <> "/probe_one-1/events.jsonl")
+  assert string.contains(events, "\"kind\":\"proposals\"")
+  assert string.contains(events, "\"kind\":\"proposals_checked\"")
+  assert string.contains(events, "\"outcome\":\"written\"")
 }
 
 /// The claim as the scheduler writes it, read back from the board while the
