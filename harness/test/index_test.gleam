@@ -1,3 +1,5 @@
+import gleam/option.{None}
+import harness/dag.{type Node, Dag, Node}
 import harness/index.{Signature}
 
 const note = "**What this says.** The left edge is black at every time.
@@ -125,4 +127,87 @@ pub fn signature_of_a_seeded_declaration_drops_the_proof_opener_test() {
 pub fn signature_with_no_binders_has_no_hypotheses_test() {
   assert index.signature("Statements.harness_probe : True")
     == Signature(hypotheses: [], conclusion: "True")
+}
+
+fn node(id: String, deps: List(String), size: dag.Size) -> Node {
+  Node(
+    id:,
+    region: "P1",
+    lean_name: id,
+    description: "d " <> id,
+    deps:,
+    status: dag.Proved,
+    size:,
+    proof_file: None,
+    attempts: [],
+    verified: None,
+    claimed_by: None,
+    claimed_at: None,
+    claimed_run: None,
+    object: None,
+  )
+}
+
+pub fn imports_of_lists_every_import_line_test() {
+  assert index.imports_of(
+      "import Rule30.Basic\nimport Rule30.Proofs.EvolveLeftEdge\n\n/-! x -/\ntheorem t : True := by trivial\n",
+    )
+    == ["Rule30.Basic", "Rule30.Proofs.EvolveLeftEdge"]
+}
+
+pub fn cited_by_names_the_nodes_whose_proofs_import_this_one_test() {
+  let d =
+    Dag([
+      node("evolve_left_edge", [], dag.S),
+      node("evolve_left_second_diagonal", ["evolve_left_edge"], dag.S),
+      node("evolve_left_third_diagonal", ["evolve_left_edge"], dag.S),
+    ])
+  let proofs = [
+    #("EvolveLeftEdge.lean", "import Rule30.Basic\n"),
+    #(
+      "EvolveLeftSecondDiagonal.lean",
+      "import Rule30.Basic\nimport Rule30.Proofs.EvolveLeftEdge\n",
+    ),
+    #(
+      "EvolveLeftThirdDiagonal.lean",
+      "import Rule30.Basic\nimport Rule30.Proofs.EvolveLeftEdge\n",
+    ),
+  ]
+  let citers = index.cited_by(d, proofs)
+  let assert Ok(edge) = dag.get(d, "evolve_left_edge")
+  let assert Ok(second) = dag.get(d, "evolve_left_second_diagonal")
+  assert citers(edge)
+    == ["evolve_left_second_diagonal", "evolve_left_third_diagonal"]
+  assert citers(second) == []
+}
+
+pub fn cited_by_ignores_a_dep_that_is_declared_but_not_imported_test() {
+  // A citation is an `import` line in a proof file, not an entry in `deps`:
+  // the file is what `lake build` checked.
+  let d = Dag([node("a", [], dag.S), node("b", ["a"], dag.S)])
+  let citers =
+    index.cited_by(d, [#("A.lean", ""), #("B.lean", "import Rule30.Basic\n")])
+  let assert Ok(a) = dag.get(d, "a")
+  assert citers(a) == []
+}
+
+pub fn walls_over_lists_the_walls_a_node_sits_under_transitively_test() {
+  let d =
+    Dag([
+      node("leaf", [], dag.S),
+      node("middle", ["leaf"], dag.M),
+      node("wall_a", ["middle"], dag.Wall),
+      node("wall_b", ["leaf"], dag.Wall),
+      node("elsewhere", [], dag.S),
+    ])
+  let walls = index.walls_over(d)
+  let assert Ok(leaf) = dag.get(d, "leaf")
+  let assert Ok(middle) = dag.get(d, "middle")
+  let assert Ok(elsewhere) = dag.get(d, "elsewhere")
+  let assert Ok(wall_a) = dag.get(d, "wall_a")
+  assert walls(leaf) == ["wall_a", "wall_b"]
+  assert walls(middle) == ["wall_a"]
+  assert walls(elsewhere) == []
+  // A wall does not sit under itself.
+  assert walls(wall_a) == []
 }

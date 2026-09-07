@@ -16,9 +16,13 @@
 ////
 //// This module reads the statement file and never writes it.
 
+import gleam/dict
 import gleam/list
+import gleam/option.{None, Some}
 import gleam/result
+import gleam/set
 import gleam/string
+import harness/dag
 import harness/verify
 
 /// A theorem's signature: its binders, one string each, exactly as Lean
@@ -218,4 +222,109 @@ fn one_line(text: String) -> String {
   |> list.map(string.trim)
   |> list.filter(fn(s) { s != "" })
   |> string.join(" ")
+}
+
+/// The modules a proof file imports, from its `import` lines, in file order.
+pub fn imports_of(proof: String) -> List(String) {
+  proof
+  |> string.split("\n")
+  |> list.filter_map(fn(line) {
+    case string.trim(line) {
+      "import " <> module -> Ok(string.trim(module))
+      _ -> Error(Nil)
+    }
+  })
+}
+
+/// For a node, the `lean_name`s of every node whose proof file imports this
+/// node's module, sorted. A citation is an `import` line in a file `lake
+/// build` compiled, not an entry in `deps`, which is a plan rather than a
+/// fact. `proofs` pairs a file name under `Rule30/Proofs/` with its text.
+pub fn cited_by(
+  d: dag.Dag,
+  proofs: List(#(String, String)),
+) -> fn(dag.Node) -> List(String) {
+  // file name → node, so an importing file can be named as a theorem.
+  let by_file =
+    d.nodes
+    |> list.map(fn(n) { #(file_name(n), n) })
+    |> dict.from_list
+  // module → lean_names of the files importing it.
+  let citations =
+    proofs
+    |> list.flat_map(fn(pair) {
+      let #(file, text) = pair
+      case dict.get(by_file, file) {
+        Ok(citer) ->
+          imports_of(text)
+          |> list.map(fn(module) { #(module, citer.lean_name) })
+        Error(Nil) -> []
+      }
+    })
+    |> list.fold(dict.new(), fn(acc, pair) {
+      dict.upsert(acc, pair.0, fn(existing) {
+        case existing {
+          Some(names) -> [pair.1, ..names]
+          None -> [pair.1]
+        }
+      })
+    })
+  fn(node) {
+    dict.get(citations, dag.proof_module(node))
+    |> result.unwrap([])
+    |> list.unique
+    |> list.sort(string.compare)
+  }
+}
+
+/// `EvolveLeftEdge.lean` for a node whose module is
+/// `Rule30.Proofs.EvolveLeftEdge`.
+fn file_name(node: dag.Node) -> String {
+  let module = dag.proof_module(node)
+  let last = string.split(module, ".") |> list.last |> result.unwrap(module)
+  last <> ".lean"
+}
+
+/// For a node, the ids of the `Wall` nodes that depend on it, directly or
+/// through other nodes, sorted. A wall is a statement the scheduler never
+/// dispatches because it must be decomposed first; the theorems under it
+/// are the decomposition so far, and a theorist reading one wants to know
+/// which residual it feeds.
+pub fn walls_over(d: dag.Dag) -> fn(dag.Node) -> List(String) {
+  let walls = list.filter(d.nodes, fn(n) { n.size == dag.Wall })
+  let under =
+    walls
+    |> list.map(fn(w) { #(w.id, ancestors(d, w.deps, set.new())) })
+  fn(node: dag.Node) {
+    under
+    |> list.filter_map(fn(pair) {
+      case set.contains(pair.1, node.id) {
+        True -> Ok(pair.0)
+        False -> Error(Nil)
+      }
+    })
+    |> list.sort(string.compare)
+  }
+}
+
+/// Every id reachable from `frontier` through `deps`.
+fn ancestors(
+  d: dag.Dag,
+  frontier: List(String),
+  seen: set.Set(String),
+) -> set.Set(String) {
+  case frontier {
+    [] -> seen
+    [id, ..rest] ->
+      case set.contains(seen, id) {
+        True -> ancestors(d, rest, seen)
+        False -> {
+          let more = case dag.get(d, id) {
+            Ok(n) -> n.deps
+            Error(Nil) -> []
+          }
+          ancestors(d, list.append(more, rest), set.insert(seen, id))
+        }
+      }
+  }
 }
