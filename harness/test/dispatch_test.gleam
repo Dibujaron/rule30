@@ -807,7 +807,7 @@ pub fn guard_denials_is_empty_without_a_log_test() {
 
 // --- the theorem index render is derived, never a record --------------------
 
-/// `write_index` — reached only through `live_env(cfg).index`, since
+/// `write_index` — reached only through `live_env(cfg, l).index`, since
 /// `index_proof` and `write_index` are both private — must never let a
 /// render failure look like the import failed. Here `repo_root` has a
 /// `Rule30/` directory (so the import write into `Rule30/Proofs.lean`
@@ -815,16 +815,26 @@ pub fn guard_denials_is_empty_without_a_log_test() {
 /// read its sources). The import must still land and the call must still
 /// report `Ok(Nil)`: the render's failure is printed to stderr and
 /// swallowed, not propagated, so it can never suppress an attempt's own
-/// record for a node that really was proved and imported.
+/// record for a node that really was proved and imported. What the render
+/// failed IS on the record, though: its own `theorem_index` event on the
+/// log `live_env` was given, `outcome: "failed"` with the reason, so a
+/// render that never happened does not read from `events.jsonl` as one
+/// that did.
 pub fn write_index_swallows_a_render_failure_but_keeps_the_import_test() {
   let dir = "build/test-runs/write-index-render-failure"
   let _ = simplifile.delete(dir)
   let assert Ok(_) = simplifile.create_directory_all(dir <> "/Rule30")
   let cfg = config.Config(..cfg(), repo_root: dir)
+  let assert Ok(l) = log.open(dir <> "/runs", "run")
   let n = node("probe_one", "probe_one", dag.S, [])
-  assert dispatch.live_env(cfg).index(n) == Ok(Nil)
+  assert dispatch.live_env(cfg, l).index(n) == Ok(Nil)
   let assert Ok(text) = simplifile.read(dir <> "/Rule30/Proofs.lean")
   assert string.contains(text, "import Rule30.Proofs.ProbeOne")
   // The render itself never happened: no statement file, no index.
   assert simplifile.is_file(dir <> "/blueprint/index.md") == Ok(False)
+  let assert Ok(events) = simplifile.read(l.dir <> "/events.jsonl")
+  assert string.contains(events, "\"kind\":\"theorem_index\"")
+  assert string.contains(events, "\"outcome\":\"failed\"")
+  assert string.contains(events, "\"node\":\"probe_one\"")
+  assert string.contains(events, "could not read")
 }

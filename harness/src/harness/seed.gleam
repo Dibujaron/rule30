@@ -163,7 +163,12 @@ fn index_of_declaration(
   |> result.map(fn(pair) { pair.0 })
 }
 
-fn declares(line: String, lean_name: String) -> Bool {
+/// Does `line` declare `theorem <lean_name>`, followed by a delimiter so
+/// that `evolve_left_edge` is never matched by a line declaring
+/// `evolve_left_edge_two`. Shared with `index`, which walks the same
+/// statement file looking for the same declarations and must find exactly
+/// the ones this module would.
+pub fn declares(line: String, lean_name: String) -> Bool {
   let head = "theorem " <> lean_name
   case string.starts_with(line, head) {
     False -> False

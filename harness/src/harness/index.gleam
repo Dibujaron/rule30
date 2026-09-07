@@ -50,7 +50,11 @@ pub const index_path = "blueprint/index.md"
 /// The sources under a repository root. The statement file is required:
 /// an index rendered without it would print every open node as
 /// "(no statement found)" and look like a board with no statements rather
-/// than a renderer pointed at the wrong tree.
+/// than a renderer pointed at the wrong tree. `Rule30/Proofs` is not: a
+/// missing directory renders with no proofs — a tree that has not closed
+/// anything yet, not a wrong root — but any other error reading it
+/// (permissions, say, or a file sitting where the directory should be)
+/// propagates rather than being silently swallowed.
 pub fn sources_in(
   repo_root: String,
   dag_path: String,
@@ -67,9 +71,14 @@ pub fn sources_in(
     }),
   )
   let dir = repo_root <> "/Rule30/Proofs"
+  use entries <- result.try(case simplifile.read_directory(dir) {
+    Ok(names) -> Ok(names)
+    Error(simplifile.Enoent) -> Ok([])
+    Error(e) ->
+      Error("could not read " <> dir <> ": " <> simplifile.describe_error(e))
+  })
   let proofs =
-    simplifile.read_directory(dir)
-    |> result.unwrap([])
+    entries
     |> list.filter(string.ends_with(_, ".lean"))
     |> list.sort(string.compare)
     |> list.filter_map(fn(name) {
@@ -307,7 +316,7 @@ pub fn docstring_lead(
   use at <- result.try(
     lines
     |> list.index_map(fn(line, i) { #(i, line) })
-    |> list.find(fn(pair) { declares(pair.1, lean_name) })
+    |> list.find(fn(pair) { seed.declares(pair.1, lean_name) })
     |> result.map(fn(pair) { pair.0 }),
   )
   let above = list.take(lines, at) |> list.reverse
@@ -320,32 +329,56 @@ pub fn docstring_lead(
   case ends_just_above {
     False -> Error(Nil)
     True -> {
-      let block =
-        above
-        |> list.take_while(fn(line) { !string.contains(line, "/--") })
-        |> list.reverse
-      let opener =
-        above
-        |> list.find(fn(line) { string.contains(line, "/--") })
-        |> result.unwrap("")
-      let text = string.join([opener, ..block], "\n")
-      use #(_, after) <- result.try(string.split_once(text, "**"))
-      use #(lead, _) <- result.try(string.split_once(after, "**"))
-      Ok(one_line(lead))
+      use #(opener, block) <- result.try(find_opener(above))
+      case string.contains(opener, "/--") {
+        False -> Error(Nil)
+        True -> {
+          let text = string.join([opener, ..block], "\n")
+          use #(_, after) <- result.try(string.split_once(text, "**"))
+          use #(lead, _) <- result.try(string.split_once(after, "**"))
+          Ok(one_line(lead))
+        }
+      }
     }
   }
 }
 
-/// `theorem <lean_name>` followed by a delimiter, so `evolve_left_edge`
-/// never matches `evolve_left_edge_two`. The same rule `seed` uses.
-fn declares(line: String, lean_name: String) -> Bool {
-  let head = "theorem " <> lean_name
-  case string.starts_with(line, head) {
-    False -> False
-    True ->
-      case string.drop_start(line, string.length(head)) {
-        "" -> True
-        rest -> list.any([" ", "(", "{", "[", ":"], string.starts_with(rest, _))
+/// Walk `above` — lines above the declaration, nearest first — for the
+/// opener of the block whose close is `above`'s first line, and the lines
+/// between them in file order (the closing line last). `Error(Nil)` when a
+/// line strictly between the close and the opener contains `-/` of its
+/// own: that is another block's close, so the walk has stepped past the
+/// end of whatever is directly above the declaration rather than finding
+/// its start. This is what keeps a `/-! ... -/` section header — or any
+/// other block that closes just above a declaration but is not that
+/// declaration's own docstring — from letting the search walk on to a
+/// neighbour's `/--` block.
+fn find_opener(above: List(String)) -> Result(#(String, List(String)), Nil) {
+  case above {
+    [] -> Error(Nil)
+    [closer, ..rest] ->
+      case string.contains(closer, "/--") || string.contains(closer, "/-!") {
+        // A one-line block: the close is its own opener.
+        True -> Ok(#(closer, []))
+        False -> scan_for_opener(rest, [closer])
+      }
+  }
+}
+
+fn scan_for_opener(
+  lines: List(String),
+  seen: List(String),
+) -> Result(#(String, List(String)), Nil) {
+  case lines {
+    [] -> Error(Nil)
+    [line, ..rest] ->
+      case string.contains(line, "/--") || string.contains(line, "/-!") {
+        True -> Ok(#(line, list.reverse(seen)))
+        False ->
+          case string.contains(line, "-/") {
+            True -> Error(Nil)
+            False -> scan_for_opener(rest, [line, ..seen])
+          }
       }
   }
 }
@@ -527,24 +560,26 @@ pub fn cited_by(
   }
 }
 
-/// `EvolveLeftEdge.lean` for a node whose module is
-/// `Rule30.Proofs.EvolveLeftEdge`.
+/// `EvolveLeftEdge.lean`: the last `/`-segment of `dag.proof_path(node)`
+/// (`Rule30/Proofs/EvolveLeftEdge.lean`), so there is one source of truth
+/// for where a node's proof file lives rather than a second derivation from
+/// its module name.
 fn file_name(node: dag.Node) -> String {
-  let module = dag.proof_module(node)
-  let last = string.split(module, ".") |> list.last |> result.unwrap(module)
-  last <> ".lean"
+  let path = dag.proof_path(node)
+  string.split(path, "/") |> list.last |> result.unwrap(path)
 }
 
-/// For a node, the ids of the `Wall` nodes that depend on it, directly or
-/// through other nodes, sorted. A wall is a statement the scheduler never
-/// dispatches because it must be decomposed first; the theorems under it
-/// are the decomposition so far, and a theorist reading one wants to know
-/// which residual it feeds.
+/// For a node, the `lean_name`s of the `Wall` nodes that depend on it,
+/// directly or through other nodes, sorted. A wall is a statement the
+/// scheduler never dispatches because it must be decomposed first; the
+/// theorems under it are the decomposition so far, and a theorist reading
+/// one wants to know which residual it feeds — by the name headings and
+/// "Cited by" already use, not the board's internal id.
 pub fn walls_over(d: dag.Dag) -> fn(dag.Node) -> List(String) {
   let walls = list.filter(d.nodes, fn(n) { n.size == dag.Wall })
   let under =
     walls
-    |> list.map(fn(w) { #(w.id, ancestors(d, w.deps, set.new())) })
+    |> list.map(fn(w) { #(w.lean_name, ancestors(d, w.deps, set.new())) })
   fn(node: dag.Node) {
     under
     |> list.filter_map(fn(pair) {

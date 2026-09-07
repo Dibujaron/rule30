@@ -63,6 +63,29 @@ pub fn docstring_lead_matches_the_whole_name_test() {
   assert index.docstring_lead(statements, "evolve_left") == Error(Nil)
 }
 
+const statements_with_a_section_header = "/-- **Lead A.** -/
+theorem a : True := by
+  sorry
+
+/-!
+## Section
+-/
+theorem b : True := by
+  sorry
+"
+
+/// A `/-! ... -/` section header directly above a declaration is not that
+/// declaration's docstring, and the search for one must not be allowed to
+/// walk past it to whatever `/--` block happens to sit above the header —
+/// here, `a`'s. `a` itself is unaffected: its own docstring is found the
+/// same as ever.
+pub fn docstring_lead_does_not_walk_past_a_section_header_test() {
+  assert index.docstring_lead(statements_with_a_section_header, "b")
+    == Error(Nil)
+  assert index.docstring_lead(statements_with_a_section_header, "a")
+    == Ok("Lead A.")
+}
+
 const checked_proof = "import Rule30.Basic
 
 /-!
@@ -197,11 +220,15 @@ pub fn cited_by_ignores_a_dep_that_is_declared_but_not_imported_test() {
 }
 
 pub fn walls_over_lists_the_walls_a_node_sits_under_transitively_test() {
+  // `wall_a`'s id and `lean_name` are made to differ, so a `walls_over`
+  // that returned ids by mistake would fail this test rather than pass it
+  // by coincidence the way `node`'s `id == lean_name` fixtures otherwise
+  // would.
   let d =
     Dag([
       node("leaf", [], dag.S),
       node("middle", ["leaf"], dag.M),
-      node("wall_a", ["middle"], dag.Wall),
+      Node(..node("wall_a", ["middle"], dag.Wall), lean_name: "wall_a_name"),
       node("wall_b", ["leaf"], dag.Wall),
       node("elsewhere", [], dag.S),
     ])
@@ -210,8 +237,8 @@ pub fn walls_over_lists_the_walls_a_node_sits_under_transitively_test() {
   let assert Ok(middle) = dag.get(d, "middle")
   let assert Ok(elsewhere) = dag.get(d, "elsewhere")
   let assert Ok(wall_a) = dag.get(d, "wall_a")
-  assert walls(leaf) == ["wall_a", "wall_b"]
-  assert walls(middle) == ["wall_a"]
+  assert walls(leaf) == ["wall_a_name", "wall_b"]
+  assert walls(middle) == ["wall_a_name"]
   assert walls(elsewhere) == []
   // A wall does not sit under itself.
   assert walls(wall_a) == []
@@ -375,6 +402,58 @@ pub fn write_in_refuses_a_root_with_no_statement_file_test() {
     simplifile.write(root <> "/blueprint/dag.json", "{\"nodes\": []}")
   let assert Error(reason) = index.write_in(root, root <> "/blueprint/dag.json")
   assert string.contains(reason, "Statements.lean")
+}
+
+/// A tree that has not proved anything yet has no `Rule30/Proofs`
+/// directory at all — `sources_in` must render that as "no proofs", not
+/// refuse the root the way a missing `Statements.lean` does.
+pub fn write_in_renders_with_no_proofs_directory_test() {
+  let root = "test/tmp/index-no-proofs"
+  let _ = simplifile.delete(root)
+  let assert Ok(Nil) = simplifile.create_directory_all(root <> "/Rule30")
+  let assert Ok(Nil) = simplifile.create_directory_all(root <> "/blueprint")
+  let assert Ok(Nil) =
+    simplifile.write(
+      root <> "/Rule30/Statements.lean",
+      "/-- **The probe.** -/\ntheorem harness_probe : True := by\n  sorry\n",
+    )
+  let assert Ok(Nil) =
+    simplifile.write(
+      root <> "/blueprint/dag.json",
+      "{\"nodes\": [{\"id\": \"harness_probe\", \"region\": \"P1\", \"lean_name\": \"harness_probe\", \"description\": \"d\", \"deps\": [], \"status\": \"open\", \"size\": \"S\", \"proof_file\": null, \"attempts\": [], \"verified\": null, \"claimed_by\": null, \"claimed_at\": null, \"claimed_run\": null}]}",
+    )
+  let assert Ok(_) = index.write_in(root, root <> "/blueprint/dag.json")
+  let assert Ok(text) = simplifile.read(root <> "/blueprint/index.md")
+  assert string.contains(text, "(seeded statement; not yet checked)")
+  assert simplifile.is_directory(root <> "/Rule30/Proofs") == Ok(False)
+}
+
+/// A `Rule30/Proofs` that is a plain file rather than a directory is not a
+/// tree with no proofs — it is a wrong tree — so `sources_in` must
+/// propagate `read_directory`'s error rather than swallowing it the way it
+/// swallows a merely-absent directory.
+///
+/// This is the one portable way found to force a non-`Enoent` error out of
+/// `simplifile.read_directory` from a test on Windows: a genuinely
+/// unreadable directory needs an ACL change this suite cannot make
+/// portably, but "not a directory" (`Enotdir`) is available on every
+/// platform by putting a file where the directory is expected.
+pub fn write_in_propagates_a_non_missing_read_directory_error_test() {
+  let root = "test/tmp/index-proofs-is-a-file"
+  let _ = simplifile.delete(root)
+  let assert Ok(Nil) = simplifile.create_directory_all(root <> "/Rule30")
+  let assert Ok(Nil) = simplifile.create_directory_all(root <> "/blueprint")
+  let assert Ok(Nil) =
+    simplifile.write(
+      root <> "/Rule30/Statements.lean",
+      "/-- **The probe.** -/\ntheorem harness_probe : True := by\n  sorry\n",
+    )
+  let assert Ok(Nil) = simplifile.write(root <> "/Rule30/Proofs", "not a dir")
+  let assert Ok(Nil) =
+    simplifile.write(root <> "/blueprint/dag.json", "{\"nodes\": []}")
+  let assert Error(reason) = index.write_in(root, root <> "/blueprint/dag.json")
+  assert string.contains(reason, "Rule30/Proofs")
+  assert !string.contains(reason, "Statements.lean")
 }
 
 fn position(text: String, needle: String) -> Int {
