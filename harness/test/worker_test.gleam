@@ -78,15 +78,18 @@ pub fn a_full_report_decodes_test() {
       decode.dynamic,
     )
   assert worker.report_from_dynamic(dyn)
-    == Ok(worker.Report(
-      outcome: "proved",
-      estimate: dag.M,
-      notebook: "simp [centerColumn] closed it.",
-      journal: "Short and clean.",
-      posts: ["Thessaly: the cone lemma helped"],
-      bugs: [],
-      summary: "done",
-    ))
+    == Ok(
+      worker.Report(
+        outcome: "proved",
+        estimate: dag.M,
+        notebook: "simp [centerColumn] closed it.",
+        journal: "Short and clean.",
+        posts: ["Thessaly: the cone lemma helped"],
+        bugs: [],
+        summary: "done",
+        discarded: [],
+      ),
+    )
 }
 
 pub fn a_minimal_in_progress_report_decodes_test() {
@@ -337,6 +340,56 @@ pub fn a_refusal_above_the_ceiling_is_a_closed_window_test() {
   assert worker.hit_ceiling([refused], 0.9) == True
 }
 
+pub fn a_refusal_below_the_ceiling_is_a_closed_window_test() {
+  // The API's verdict outranks the utilization figure. A refusing status at
+  // half the window is still a refusal; the old predicate's `>=. ceiling`
+  // conjunct read it as open and let the attempt run into the wall.
+  let refused =
+    claude.RateLimit(
+      five_hour_utilization: 0.5,
+      resets_at: 1_788_659_400,
+      status: "rejected",
+      raw: "",
+    )
+  assert worker.hit_ceiling([refused], 0.9) == True
+}
+
+pub fn an_allowed_status_above_the_ceiling_is_not_a_closed_window_test() {
+  // The contract `an_allowed_warning_is_not_a_closed_window_test` states,
+  // pinned from the other side: `allowed` outranks utilization the same way
+  // a refusal does, so a plain `allowed` at 0.99 is still an open window.
+  let allowed =
+    claude.RateLimit(
+      five_hour_utilization: 0.99,
+      resets_at: 1_788_659_400,
+      status: "allowed",
+      raw: "",
+    )
+  assert worker.hit_ceiling([allowed], 0.9) == False
+}
+
+pub fn a_status_less_event_falls_back_to_the_utilization_test() {
+  // `claude.parse_event` gives a missing status as `""`. That is the one
+  // case where the number decides: at or above the ceiling closes, below
+  // stays open. Neither side of that may be lost to the status-first rule.
+  let above =
+    claude.RateLimit(
+      five_hour_utilization: 0.95,
+      resets_at: 1_788_659_400,
+      status: "",
+      raw: "",
+    )
+  let below =
+    claude.RateLimit(
+      five_hour_utilization: 0.5,
+      resets_at: 1_788_659_400,
+      status: "",
+      raw: "",
+    )
+  assert worker.hit_ceiling([above], 0.9) == True
+  assert worker.hit_ceiling([below], 0.9) == False
+}
+
 pub fn a_rate_limit_api_retry_is_a_closed_window_test() {
   let retry = claude.ApiRetry(error: "rate_limit", attempt: 1, raw: "")
   assert worker.hit_ceiling([retry], 0.9) == True
@@ -380,6 +433,50 @@ pub fn report_decodes_bugs_test() {
         body: "I needed it to check one file.",
       ),
     ]
+}
+
+pub fn a_dropped_bug_entry_is_recorded_as_discarded_test() {
+  // The `bugs` array holds two well-formed entries around one with no
+  // `title`. The good two survive, the bad one does not, and — the point of
+  // this test — the report says so: one line, naming the position, so the
+  // attempt record can tell "nothing to report" from "one report lost".
+  let json_text =
+    "{\"outcome\":\"proved\",\"estimate\":\"M\",\"summary\":\"s\",\"notebook\":\"n\",\"journal\":\"j\",\"posts\":[],\"bugs\":[{\"title\":\"first\"},{\"area\":\"guard\",\"body\":\"no title here\"},{\"title\":\"third\"}]}"
+  let assert Ok(dyn) = json.parse(json_text, decode.dynamic)
+  let assert Ok(report) = worker.report_from_dynamic(dyn)
+  assert list.map(report.bugs, fn(b) { b.title }) == ["first", "third"]
+  let assert [reason] = report.discarded
+  assert string.starts_with(reason, "bugs[1]: ")
+  assert string.contains(reason, "title")
+}
+
+pub fn a_non_array_posts_field_is_recorded_as_discarded_test() {
+  // The per-field route. `posts` written as a bare string degrades to no
+  // posts, as before, but no longer to *silently* no posts.
+  let json_text =
+    "{\"outcome\":\"proved\",\"estimate\":\"M\",\"summary\":\"s\",\"notebook\":\"n\",\"journal\":\"j\",\"posts\":\"Thessaly: the cone lemma helped\"}"
+  let assert Ok(dyn) = json.parse(json_text, decode.dynamic)
+  let assert Ok(report) = worker.report_from_dynamic(dyn)
+  assert report.posts == []
+  assert report.discarded == ["posts: not an array"]
+}
+
+pub fn a_clean_report_records_no_discards_test() {
+  // Both optional fields present and well-formed, one entry each: the
+  // confession is empty, so the dispatcher writes no `report_discarded`
+  // row. An absent field counts as clean too, not as discarded.
+  let json_text =
+    "{\"outcome\":\"proved\",\"estimate\":\"M\",\"summary\":\"s\",\"notebook\":\"n\",\"journal\":\"j\",\"posts\":[\"Thessaly: the cone lemma helped\"],\"bugs\":[{\"title\":\"Guard refused lake env lean\"}]}"
+  let assert Ok(dyn) = json.parse(json_text, decode.dynamic)
+  let assert Ok(report) = worker.report_from_dynamic(dyn)
+  assert report.discarded == []
+  let assert Ok(absent) =
+    json.parse(
+      "{\"outcome\":\"proved\",\"estimate\":\"M\",\"summary\":\"s\",\"notebook\":\"n\",\"journal\":\"j\"}",
+      decode.dynamic,
+    )
+  let assert Ok(report) = worker.report_from_dynamic(absent)
+  assert report.discarded == []
 }
 
 pub fn report_without_bugs_decodes_to_empty_test() {
