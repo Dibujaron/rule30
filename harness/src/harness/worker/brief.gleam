@@ -119,6 +119,131 @@ pub fn report_schema() -> String {
             ),
           ]),
         ),
+        #(
+          "proposals",
+          json.object([
+            #("type", json.string("array")),
+            #(
+              "items",
+              json.object([
+                #("type", json.string("object")),
+                #(
+                  "properties",
+                  json.object([
+                    #(
+                      "name",
+                      string_field(
+                        "the theorem's Lean name, snake_case, unique on the board",
+                      ),
+                    ),
+                    #(
+                      "statement",
+                      string_field(
+                        "the full declaration exactly as it would be seeded: `theorem <name> ... := by\\n  sorry`, in the vocabulary of Rule30.Basic",
+                      ),
+                    ),
+                    #(
+                      "reason",
+                      string_field(
+                        "one sentence on why a proof of THIS node would cite it",
+                      ),
+                    ),
+                    #(
+                      "size",
+                      json.object([
+                        #("type", json.string("string")),
+                        #("enum", json.array(["S", "M", "L"], json.string)),
+                      ]),
+                    ),
+                    #(
+                      "disclaims",
+                      string_field(
+                        "what this does NOT prove; omit when nothing",
+                      ),
+                    ),
+                    #(
+                      "route",
+                      json.object([
+                        #("type", json.string("object")),
+                        #(
+                          "properties",
+                          json.object([
+                            #(
+                              "tactics",
+                              string_field(
+                                "a tactic script that closes the statement, if you have one",
+                              ),
+                            ),
+                            #(
+                              "imports",
+                              json.object([
+                                #("type", json.string("array")),
+                                #(
+                                  "items",
+                                  json.object([
+                                    #("type", json.string("string")),
+                                  ]),
+                                ),
+                              ]),
+                            ),
+                          ]),
+                        ),
+                        #("required", json.array(["tactics"], json.string)),
+                      ]),
+                    ),
+                    #(
+                      "witness",
+                      json.object([
+                        #("type", json.string("object")),
+                        #(
+                          "properties",
+                          json.object([
+                            #(
+                              "expression",
+                              string_field(
+                                "a Bool-valued Lean expression over the range that names the statement's own terms",
+                              ),
+                            ),
+                            #(
+                              "range",
+                              string_field("the bound to check, e.g. `t < 12`"),
+                            ),
+                            #(
+                              "imports",
+                              json.object([
+                                #("type", json.string("array")),
+                                #(
+                                  "items",
+                                  json.object([
+                                    #("type", json.string("string")),
+                                  ]),
+                                ),
+                              ]),
+                            ),
+                          ]),
+                        ),
+                        #(
+                          "required",
+                          json.array(["expression", "range"], json.string),
+                        ),
+                      ]),
+                    ),
+                  ]),
+                ),
+                #(
+                  "required",
+                  json.array(["name", "statement", "reason"], json.string),
+                ),
+              ]),
+            ),
+            #(
+              "description",
+              json.string(
+                "sub-lemmas you would want seeded so this node could be closed; empty until you have one",
+              ),
+            ),
+          ]),
+        ),
       ]),
     ),
     #(
@@ -283,11 +408,18 @@ fn prior_attempts(node: dag.Node) -> String {
   }
 }
 
+/// `how_to_report`'s text, exposed so the brief's wording is testable the
+/// way the seeder's is.
+pub fn how_to_report_text() -> String {
+  how_to_report()
+}
+
 fn how_to_report() -> String {
   "## How to report\n\n"
   <> "Every turn ends with the structured report the harness asked for. Set `outcome` to `proved` only after `lake build` of your own module has actually succeeded — the harness then verifies your claim independently, and sends you the verdict if it fails. Set `outcome` to `in_progress` while you are still working. When you give up, set `outcome` to `abandoned` and fill in `notebook` and `journal`.\n\n"
   <> "`notebook` is for your future self: Mathlib lemmas that worked, dead ends worth not repeating, conventions. `journal` is a short written update for Dib, in your own words. Leave both empty until the attempt ends, then write them properly — the harness writes those files from your report verbatim, and they are the only voice you have outside this session: there is no channel to a peer, so anything another identity should know goes in the notebook, and anything Dib should know goes in the journal.\n\n"
   <> "A bug is the **harness** getting in your way: a command the guard refused that you needed, a brief that told you something untrue, a verifier message you could not act on, a lemma the brief said was served that was not. Lean being difficult is not a bug. A proof you could not find is not a bug. If the obstacle would still exist for a human doing this by hand in an editor, it is not the harness's. The framework agents maintain the harness and read these; file what actually cost you turns, and leave the array empty otherwise."
+  <> "\n\n`proposals` is your decomposition. When you can see a lemma that would let this node close but that is not on the board, propose it: a Lean name, the full declaration exactly as it would be seeded (`theorem <name> ... := by` and a `sorry` line, in the vocabulary of `Rule30.Basic` — a seeded statement cannot import a proof file), one sentence on why a proof of this node would cite it, and a size. Add a `route` if you have tactics that close it and a `witness` (a Bool-valued expression over a range that names the statement's own terms) if it can be checked by computation; both are checked by the harness after your attempt ends and reported to the captain, who lands what survives. A proposal is not a claim that the node is hard, and it is weighed by the check and not by which model made it — propose from any rung. A proposal that restates this node under another name, or weakens it, is the one thing the check cannot catch and the captain will; do not send one. Leave the array empty when you have nothing to propose."
 }
 
 // --- the task ----------------------------------------------------------------

@@ -678,6 +678,28 @@ pub fn a_bug_items_required_matches_what_the_decoder_actually_requires_test() {
   assert required == ["title"]
 }
 
+pub fn schema_offers_proposals_without_requiring_them_test() {
+  let schema = brief.report_schema()
+  assert string.contains(schema, "\"proposals\"")
+  assert string.contains(
+    schema,
+    "\"required\":[\"name\",\"statement\",\"reason\"]",
+  )
+  // Top-level required is unchanged: the turn's work, not its extras.
+  assert string.contains(
+    schema,
+    "\"required\":[\"outcome\",\"estimate\",\"summary\",\"notebook\",\"journal\"]",
+  )
+}
+
+pub fn the_brief_explains_proposals_test() {
+  let text = brief.how_to_report_text()
+  assert string.contains(text, "proposals")
+  assert string.contains(text, "exactly as it would be seeded")
+  assert string.contains(text, "not a claim that the node is hard")
+  assert string.contains(text, "restates")
+}
+
 pub fn a_malformed_bug_does_not_poison_the_whole_report_test() {
   // Four bug objects in one array: well-formed; `title` present but not a
   // string; a well-formed title with `body` present but not a string; and
