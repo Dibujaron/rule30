@@ -56,3 +56,30 @@ pub fn withdrawn_timeout_does_not_wedge_queue_test() {
   // request must not have been left in the queue to wedge things up.
   assert lock.acquire(l, "c", 1000)
 }
+
+pub fn release_if_holding_only_releases_the_holder_test() {
+  let assert Ok(l) = lock.start(60_000)
+  assert lock.acquire(l, "a", 1000)
+  // "z" holds nothing: nothing happens, and "a" keeps the lock.
+  assert lock.release_if_holding(l, "z") == False
+  assert lock.acquire(l, "b", 50) == False
+  // "a" does hold it: it is given back, and says so.
+  assert lock.release_if_holding(l, "a")
+  assert lock.acquire(l, "b", 1000)
+}
+
+/// The difference from `release`: a name that is queued but not holding is
+/// left queued. This is what lets the guard send it at every tool call —
+/// a worker's parallel build waiting on a sibling must not be withdrawn by
+/// that worker's next edit.
+pub fn release_if_holding_leaves_a_queued_request_in_place_test() {
+  let assert Ok(l) = lock.start(60_000)
+  assert lock.acquire(l, "a", 1000)
+  let got = process.new_subject()
+  process.spawn_unlinked(fn() { process.send(got, lock.acquire(l, "b", 2000)) })
+  process.sleep(100)
+  // "b" is queued behind "a", not holding: this must not withdraw it.
+  assert lock.release_if_holding(l, "b") == False
+  lock.release(l, "a")
+  assert process.receive(got, 2000) == Ok(True)
+}

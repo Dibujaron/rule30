@@ -24,6 +24,14 @@ pub type Msg {
   /// that already lost the lock (by timing out or by an auto-release) cannot
   /// release the wrong holder.
   Release(holder: String)
+  /// Give the lock back only if `holder` currently holds it, and say whether
+  /// that happened on `reply`. Unlike `Release`, a `holder` that is NOT the
+  /// current holder changes nothing at all — in particular it withdraws no
+  /// queued request under that name. This is what the guard sends when a
+  /// worker makes a new tool call: a stale hold of that worker's is given
+  /// back, but a request that worker has queued (a parallel build waiting
+  /// on a sibling) is left to be granted in its turn.
+  ReleaseIfHolding(reply: Subject(Bool), holder: String)
 }
 
 type State {
@@ -80,6 +88,19 @@ pub fn release(lock: Subject(Msg), holder: String) -> Nil {
   process.send(lock, Release(holder))
 }
 
+/// Give the lock back if `holder` holds it, and return whether it did. A
+/// `holder` that is not the current holder changes nothing (see
+/// `ReleaseIfHolding`). Waits up to a second for the actor's answer; a lock
+/// actor that cannot answer in that time is treated as "did not release".
+pub fn release_if_holding(lock: Subject(Msg), holder: String) -> Bool {
+  let reply = process.new_subject()
+  process.send(lock, ReleaseIfHolding(reply:, holder:))
+  case process.receive(reply, 1000) {
+    Ok(released) -> released
+    Error(Nil) -> False
+  }
+}
+
 fn handle(
   state: State,
   msg: Msg,
@@ -89,6 +110,17 @@ fn handle(
     Acquire(reply:, holder:) ->
       handle_acquire(state, reply, holder, auto_release_ms)
     Release(holder:) -> handle_release(state, holder, auto_release_ms)
+    ReleaseIfHolding(reply:, holder:) ->
+      case state.holder == Some(holder) {
+        True -> {
+          process.send(reply, True)
+          actor.continue(end_hold(state, auto_release_ms))
+        }
+        False -> {
+          process.send(reply, False)
+          actor.continue(state)
+        }
+      }
   }
 }
 
@@ -124,21 +156,24 @@ fn handle_release(
           waiting: list.filter(state.waiting, fn(entry) { entry.1 != holder }),
         ),
       )
-    True -> {
-      // The hold is ending: cancel its auto-release timer so it cannot fire
-      // later and release whatever/whoever holds the lock next.
-      cancel_timer(state.timer)
-      case state.waiting {
-        [] -> actor.continue(State(..state, holder: None, timer: None))
-        [#(next_reply, next_holder), ..rest] ->
-          actor.continue(grant(
-            State(..state, waiting: rest),
-            next_reply,
-            next_holder,
-            auto_release_ms,
-          ))
-      }
-    }
+    True -> actor.continue(end_hold(state, auto_release_ms))
+  }
+}
+
+/// End the current hold: cancel its auto-release timer so it cannot fire
+/// later and release whatever/whoever holds the lock next, then grant the
+/// lock to the first waiter if there is one.
+fn end_hold(state: State, auto_release_ms: Int) -> State {
+  cancel_timer(state.timer)
+  case state.waiting {
+    [] -> State(..state, holder: None, timer: None)
+    [#(next_reply, next_holder), ..rest] ->
+      grant(
+        State(..state, waiting: rest),
+        next_reply,
+        next_holder,
+        auto_release_ms,
+      )
   }
 }
 

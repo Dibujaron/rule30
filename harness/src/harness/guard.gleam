@@ -11,7 +11,10 @@
 //// `build_lock_wait_ms` is turned away with a message that says the command
 //// was permitted and to run it again, which is a different message from
 //// the one a forbidden command gets, because it asks for the opposite
-//// response.
+//// response. The lock is given back when the build's `PostToolUse` or
+//// `PostToolUseFailure` hook arrives, and as a backstop at the worker's
+//// next `PreToolUse`, since a worker making a new call is not still
+//// building.
 
 import gleam/bit_array
 import gleam/bytes_tree
@@ -194,7 +197,15 @@ fn decide_input(rules: Rules, hi: HookInput) -> Decision {
     // Only a build releases the build lock. Every `Bash` call used to, so a
     // `lake env lean` finishing while a sibling worker held the lock handed
     // that worker's lock away.
-    "PostToolUse" ->
+    //
+    // A build that FAILS is still a build that finished. Claude Code fires
+    // `PostToolUse` only for a tool call that succeeded; a `Bash` call that
+    // exits non-zero fires `PostToolUseFailure` instead, with the same
+    // `tool_name` / `tool_input` and an `error` in place of the response.
+    // A failing `lake build` is the normal case mid-proof, and listening to
+    // the success event alone held the lock through every one of them until
+    // the auto-release, so both events are one arm here.
+    "PostToolUse" | "PostToolUseFailure" ->
       case hi.tool_name, decide_bash_for(rules, hi.command) {
         "Bash", AcquireBuild -> ReleaseBuild
         _, _ -> Allow
@@ -624,13 +635,60 @@ fn respond_to_hook(
     Ok(hi) -> #(hi.event, hi.tool_name, attempted_of(hi))
     Error(_) -> #("", "", "")
   }
-  let decision = apply_side_effects(decide(rules, body), rules, build, log)
+  let decided = decide(rules, body)
+  release_stale_hold(event_name, tool_name, decided, rules, build, log)
+  let decision = apply_side_effects(decided, rules, build, log)
   log.event(
     log,
     "guard",
     event_fields(rules, event_name, tool_name, attempted, decision),
   )
   json_response(200, decision_json(decision, event_name))
+}
+
+/// A worker that is issuing a new tool call is not still building, so if
+/// this guard's worker holds the build lock at a `PreToolUse`, that hold is
+/// stale and is given back before the call is judged. This is the backstop
+/// for every way the release hook can fail to arrive — a `curl` past its
+/// timeout, a guard that was briefly unreachable, an event Claude Code did
+/// not fire — so a missed hook can hold the lock only until this worker's
+/// next action rather than until the auto-release.
+///
+/// Two things it deliberately does not do. It does not run for the
+/// `AcquireBuild` call itself: that call's acquire is the one acquire per
+/// build, and a release in front of it would hand back a hold that a
+/// parallel build from this same worker might still be using. And it only
+/// ever releases a hold that is *this worker's* — `release_if_holding`
+/// leaves another holder and any queued request untouched — so a sibling's
+/// build cannot be released by this worker's edit.
+///
+/// The residual hazard is a worker that runs a build and some other hooked
+/// call in parallel in one turn: the second call's `PreToolUse` releases the
+/// running build's hold. A brief that says one bare command per Bash call
+/// makes that rare rather than impossible, and the row this writes is how it
+/// would be seen.
+fn release_stale_hold(
+  event_name: String,
+  tool_name: String,
+  decided: Decision,
+  rules: Rules,
+  build: BuildLock,
+  l: log.Log,
+) -> Nil {
+  case event_name, decided {
+    "PreToolUse", AcquireBuild -> Nil
+    "PreToolUse", _ ->
+      case lock.release_if_holding(build.actor, rules.holder) {
+        True ->
+          log.event(l, "lock", [
+            #("node", json.string(rules.holder)),
+            #("released", json.string("stale hold")),
+            #("before", json.string(tool_name)),
+          ])
+        False -> Nil
+      }
+    _, _ -> Nil
+  }
 }
 
 /// What the worker actually asked for: the command for a `Bash` call, the
@@ -824,6 +882,21 @@ fn settings_json(token: String, port: Int) -> json.Json {
             hook_matcher(
               "Bash",
               hook_command(token, port, 20, "PostToolUse"),
+              30,
+            ),
+          ]),
+        ),
+        // The same hook again for a `Bash` call that exited non-zero, which
+        // Claude Code reports as `PostToolUseFailure` and NOT as
+        // `PostToolUse`. Without this a failing `lake build` — the ordinary
+        // case mid-proof — never released the build lock, and every sibling
+        // waited the full `build_lock_wait_ms`.
+        #(
+          "PostToolUseFailure",
+          json.preprocessed_array([
+            hook_matcher(
+              "Bash",
+              hook_command(token, port, 20, "PostToolUseFailure"),
               30,
             ),
           ]),

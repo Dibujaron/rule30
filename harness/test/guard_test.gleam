@@ -1,3 +1,4 @@
+import gleam/dynamic/decode
 import gleam/erlang/process.{type Subject}
 import gleam/json
 import gleam/list
@@ -160,9 +161,53 @@ pub fn every_generated_hook_carries_the_failure_branch_test() {
   let path = "build/test-runs/settings-failclosed.json"
   let assert Ok(_) = guard.write_settings(g, path)
   let assert Ok(content) = simplifile.read(path)
-  // Three hooks, three failure branches.
-  assert count(content, "exit 2; }") == 3
-  assert count(content, "curl -s -m ") == 3
+  // Four hooks, four failure branches.
+  assert count(content, "exit 2; }") == 4
+  assert count(content, "curl -s -m ") == 4
+  let assert Ok(_) = simplifile.delete("build/test-runs")
+}
+
+/// Every `(matcher, command, timeout)` registered under one hook event in a
+/// generated settings file, read by decoding the JSON rather than by
+/// substring, because the command itself is full of quotes.
+fn registered_hooks(
+  content: String,
+  event: String,
+) -> List(#(String, String, Int)) {
+  let one_hook = {
+    use command <- decode.field("command", decode.string)
+    use timeout <- decode.field("timeout", decode.int)
+    decode.success(#(command, timeout))
+  }
+  let entry = {
+    use matcher <- decode.field("matcher", decode.string)
+    use hooks <- decode.field("hooks", decode.list(one_hook))
+    decode.success(#(matcher, hooks))
+  }
+  let assert Ok(entries) =
+    json.parse(content, decode.at(["hooks", event], decode.list(entry)))
+  list.flat_map(entries, fn(e) { list.map(e.1, fn(h) { #(e.0, h.0, h.1) }) })
+}
+
+/// Claude Code fires `PostToolUse` only when the tool call succeeded; a
+/// `Bash` call that exits non-zero fires `PostToolUseFailure` instead. A
+/// failing `lake build` is the ordinary case mid-proof, so the release hook
+/// has to be registered under both, with the same matcher and the same
+/// command — differing only in the event name the fail-closed branch echoes.
+pub fn a_failed_bash_call_is_hooked_the_same_as_a_successful_one_test() {
+  let assert Ok(_) = simplifile.create_directory_all("build/test-runs")
+  let g = guard.Guard(port: 5555, token: "abc123", settings_path: "unused")
+  let path = "build/test-runs/settings-failure-hook.json"
+  let assert Ok(_) = guard.write_settings(g, path)
+  let assert Ok(content) = simplifile.read(path)
+  let assert [#("Bash", success_command, 30)] =
+    registered_hooks(content, "PostToolUse")
+  let assert [#("Bash", failure_command, 30)] =
+    registered_hooks(content, "PostToolUseFailure")
+  assert failure_command
+    == guard.hook_command("abc123", 5555, 20, "PostToolUseFailure")
+  assert failure_command
+    == string.replace(success_command, "PostToolUse", "PostToolUseFailure")
   let assert Ok(_) = simplifile.delete("build/test-runs")
 }
 
@@ -356,11 +401,17 @@ fn start_on_free_port(
 /// POST one PreToolUse `Bash` hook body to a running guard, the way Claude
 /// Code's hook does, and return what the hook would print back.
 fn post_bash_hook(started: guard.Guard, command: String) -> String {
-  let assert Ok(curl) = shell.which("curl")
-  let body =
+  post_hook(
+    started,
     "{\"hook_event_name\":\"PreToolUse\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\""
-    <> command
-    <> "\"}}"
+      <> command
+      <> "\"}}",
+  )
+}
+
+/// POST one raw hook body to a running guard and return the reply.
+fn post_hook(started: guard.Guard, body: String) -> String {
+  let assert Ok(curl) = shell.which("curl")
   let assert Ok(r) =
     shell.run(
       curl,
@@ -443,5 +494,94 @@ pub fn a_busy_build_lock_is_denied_as_busy_not_as_forbidden_test() {
   )
   assert string.contains(grammar_row, "\"denial\":\"not_permitted\"")
   assert !string.contains(grammar_row, "build_lock_timeout")
+  let assert Ok(_) = simplifile.delete(dir)
+}
+
+/// A `lake build` that exits non-zero reaches the guard as
+/// `PostToolUseFailure`, not `PostToolUse`. Observed in run 20260907T015318Z:
+/// a worker acquired at 01:53:39, its build failed, no release was logged,
+/// both siblings then timed out, and the first release came at 02:01:43
+/// after the worker's first successful build. The failure event must release
+/// exactly as the success event does, and a sibling must then get the lock
+/// promptly. The body carries `error` where a success carries
+/// `tool_response`; the guard reads neither.
+pub fn a_failed_build_releases_the_lock_test() {
+  let dir = "build/test-runs-failed-build"
+  let _ = simplifile.delete(dir)
+  let assert Ok(lock_actor) = lock.start(60_000)
+  let assert Ok(run_log) = log.open(dir, "guard")
+  let started = start_on_free_port(lock_actor, run_log, 200, 8)
+
+  assert post_bash_hook(started, "lake build Rule30.Proofs.X") == "{}"
+  // Held by this worker now: a sibling cannot get it.
+  assert lock.acquire(lock_actor, "sibling", 50) == False
+
+  let failed =
+    "{\"hook_event_name\":\"PostToolUseFailure\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"lake build Rule30.Proofs.X\"},\"error\":\"exit 1\"}"
+  assert post_hook(started, failed) == "{}"
+  assert lock.acquire(lock_actor, "sibling", 500)
+
+  let assert Ok(events) = simplifile.read(run_log.dir <> "/events.jsonl")
+  let rows =
+    string.split(events, "\n")
+    |> list.filter(fn(line) { string.contains(line, "\"kind\":\"guard\"") })
+  let assert [acquire_row, release_row] = rows
+  assert string.contains(acquire_row, "\"decision\":\"AcquireBuild\"")
+  assert string.contains(release_row, "\"event\":\"PostToolUseFailure\"")
+  assert string.contains(release_row, "\"decision\":\"ReleaseBuild\"")
+  let assert Ok(_) = simplifile.delete(dir)
+}
+
+/// The backstop for a release hook that never arrives at all. A worker that
+/// is making a new tool call is not still building, so its next `PreToolUse`
+/// — here a `lake env lean`, which never takes the lock itself — gives back
+/// the hold its build left behind, and the row that records it is written.
+/// A sibling then gets the lock without waiting for the auto-release.
+pub fn a_holders_next_call_releases_a_stale_hold_test() {
+  let dir = "build/test-runs-stale-hold"
+  let _ = simplifile.delete(dir)
+  let assert Ok(lock_actor) = lock.start(60_000)
+  let assert Ok(run_log) = log.open(dir, "guard")
+  let started = start_on_free_port(lock_actor, run_log, 200, 8)
+
+  assert post_bash_hook(started, "lake build Rule30.Proofs.X") == "{}"
+  assert lock.acquire(lock_actor, "sibling", 50) == False
+
+  // No PostToolUse ever arrives. The worker's next call is a plain `lake env
+  // lean`, which is allowed and is not a build.
+  assert post_bash_hook(started, "lake env lean x.lean") == "{}"
+  assert lock.acquire(lock_actor, "sibling", 500)
+
+  let assert Ok(events) = simplifile.read(run_log.dir <> "/events.jsonl")
+  let assert [stale_row] =
+    string.split(events, "\n")
+    |> list.filter(fn(line) { string.contains(line, "\"kind\":\"lock\"") })
+  assert string.contains(stale_row, "\"released\":\"stale hold\"")
+  assert string.contains(stale_row, "\"before\":\"Bash\"")
+  assert string.contains(stale_row, "\"node\":\"w1\"")
+  let assert Ok(_) = simplifile.delete(dir)
+}
+
+/// The rule must not fire for the build call itself: a `lake build` from a
+/// worker whose previous hold is stale is one acquire, not a release and an
+/// acquire, and the hold it gets is the one its build runs under. Checked
+/// here by the absence of a stale-hold row and by the sibling still being
+/// shut out after the second build starts.
+pub fn a_second_build_does_not_release_in_front_of_its_own_acquire_test() {
+  let dir = "build/test-runs-second-build"
+  let _ = simplifile.delete(dir)
+  let assert Ok(lock_actor) = lock.start(60_000)
+  let assert Ok(run_log) = log.open(dir, "guard")
+  let started = start_on_free_port(lock_actor, run_log, 200, 8)
+
+  assert post_bash_hook(started, "lake build Rule30.Proofs.X") == "{}"
+  let post =
+    "{\"hook_event_name\":\"PostToolUse\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"lake build Rule30.Proofs.X\"},\"tool_response\":\"ok\"}"
+  assert post_hook(started, post) == "{}"
+  assert post_bash_hook(started, "lake build Rule30.Proofs.X") == "{}"
+  assert lock.acquire(lock_actor, "sibling", 50) == False
+
+  let assert Ok(events) = simplifile.read(run_log.dir <> "/events.jsonl")
+  assert !string.contains(events, "\"kind\":\"lock\"")
   let assert Ok(_) = simplifile.delete(dir)
 }
