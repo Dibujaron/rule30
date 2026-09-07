@@ -493,15 +493,26 @@ type BuildLock {
 /// it like the grammar refusal it otherwise resembles — which is permanent,
 /// and whose correct response (stop) is the opposite of this one's (retry).
 ///
-/// It says three things, in this order, because a worker reads the first
-/// clause and acts: the command was allowed; a sibling worker held the lock;
-/// run the same command again.
+/// It says four things, in this order, because a worker reads the first
+/// clause and acts: the command was allowed; another worker held the lock;
+/// run the same command again once; if the same reply comes back, report it
+/// at the end of the turn instead of retrying. The last is what keeps a held
+/// lock from eating a worker's whole turn budget — an attempt that loops
+/// here is later scored as `budget_exhausted` against the node, which reads
+/// as difficulty and was contention.
+///
+/// The other worker is never named. The text says a worker held the lock
+/// and how long this guard waited, and nothing that identifies which
+/// worker, node or persona: a worker's reply is not the place to learn who
+/// else is on the run.
 pub fn build_lock_busy_reason(waited_ms: Int) -> String {
   "harness guard: your command was permitted and nothing about it needs to change. "
   <> "Another worker held the shared build lock for the "
   <> int.to_string(waited_ms / 1000)
   <> " seconds this guard waited, so this call was turned away without running. "
-  <> "This is contention, not a rule you broke: wait a little and run the same command again."
+  <> "This is contention, not a rule you broke: wait a little and run the same command again, once. "
+  <> "If this same reply comes back, do not retry again; say so in your end-of-turn report instead, "
+  <> "because a worker that keeps retrying a held lock spends its whole turn budget on it."
 }
 
 /// Start the guard: a fresh token, an HTTP server on `port` bound to

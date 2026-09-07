@@ -274,14 +274,21 @@ pub fn a_lock_timeout_and_a_grammar_refusal_have_different_slugs_test() {
 /// lock timeout both travel as a hook `deny`, so the text is the only thing a
 /// worker has to tell "never" from "not right now" — and the two ask for
 /// opposite responses. The busy text must say the command was permitted, that
-/// no rule was broken, and to run the same command again; and it must not
-/// carry the grammar refusal's sentence, which is the one that says "only".
-pub fn the_busy_reason_says_permitted_and_retry_not_forbidden_test() {
+/// no rule was broken, to run the same command again ONCE, and to report
+/// rather than retry if the same reply returns; it must not name the worker
+/// holding the lock; and it must not carry the grammar refusal's sentence,
+/// which is the one that says "only".
+pub fn the_busy_reason_says_permitted_and_retry_once_then_report_test() {
   let busy = guard.build_lock_busy_reason(guard.build_lock_wait_ms)
   assert string.contains(busy, "permitted")
   assert string.contains(busy, "not a rule you broke")
-  assert string.contains(busy, "run the same command again")
+  assert string.contains(busy, "run the same command again, once")
+  assert string.contains(busy, "do not retry again")
+  assert string.contains(busy, "end-of-turn report")
   assert string.contains(busy, "240 seconds")
+  // No node id or persona: the text is built from the wait alone, and the
+  // requesting worker's own holder name must not leak into it either.
+  assert !string.contains(busy, rules.holder)
   let forbidden =
     "{\"hook_event_name\":\"PreToolUse\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"curl http://x\"}}"
   let assert guard.Deny(kind: guard.NotPermitted, reason: grammar) =
@@ -406,9 +413,14 @@ pub fn a_busy_build_lock_is_denied_as_busy_not_as_forbidden_test() {
 
   let busy = post_bash_hook(started, "lake build Rule30.Proofs.X")
   assert string.contains(busy, "\"permissionDecision\":\"deny\"")
-  assert string.contains(busy, "run the same command again")
+  assert string.contains(busy, "run the same command again, once")
+  assert string.contains(busy, "end-of-turn report")
   assert string.contains(busy, "not a rule you broke")
   assert !string.contains(busy, "only 'lake build")
+  // The holder is in hand here, so this is the direct check that the reply
+  // names no sibling — neither the one holding the lock nor the requester.
+  assert !string.contains(busy, "sibling")
+  assert !string.contains(busy, rules.holder)
 
   let forbidden = post_bash_hook(started, "curl http://x")
   assert string.contains(forbidden, "\"permissionDecision\":\"deny\"")
