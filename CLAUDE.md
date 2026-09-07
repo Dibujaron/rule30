@@ -201,6 +201,18 @@ Three things that follow, each learned the hard way:
   variable still redirects `config.load`'s paths for tests that read them
   and is never required.
 
+- **Review in proportion to the change; the suite is not the cost.**
+  Measured on 2026-09-07: the whole suite is 503 tests in 48 seconds, half
+  of it the three modules that run Lean, and a one-field change still took
+  most of an hour from claim to landing — in review passes and a serial
+  land-then-merge cycle, not in tests. So: a change of one field, one
+  message, or one line of guard gets one review, of the task, and no
+  whole-branch review after it; a whole-branch review is for a branch whose
+  tasks interact. When several small rows are ready together, land them as
+  one branch with one suite run — the integrate branch is the normal case,
+  not the exception. Run the suite once, before the fast-forward, and not
+  again to feel safe.
+
 This composes with the freeze rule above rather than competing with it: a
 run in flight means no framework edits at all, so worktree work and a live
 run never overlap by design.
