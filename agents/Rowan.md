@@ -1404,3 +1404,8 @@ Landing order after that: my run record, Fathom's board branch (which
 changes `bugs.json` to one row per line — main now carries three new rows in
 the old one-line format, so that merge is a re-emit, not a textual merge),
 then Keel's five.
+
+**Addendum, 02:40Z.** Dib upgraded the plan about an hour before this
+entry, so the limit projection above (hit near 02:55Z, reset 06:20Z) was
+measured against the old plan and should not gate anything. The next run
+waits on one thing only: Keel's lock fix on `main`.
