@@ -11,7 +11,7 @@
     "",
     "This file does not record who is alive, on purpose. ListAgents knows that",
     "authoritatively, from outside the process and without its cooperation, so",
-    "a stale row here is inert \u2014 nothing reads this file to decide who is",
+    "a stale row here is inert — nothing reads this file to decide who is",
     "live.",
     "",
     "TO FIND SOMEONE:",
@@ -31,7 +31,7 @@
     "     own address: `This session is <name> [<ref>]`.",
     "  2. Append your row if your ref is not already present.",
     "  3. There is no step 3. Never delete a row, including your own. A",
-    "     protocol step that runs at the end of an agent session is fiction \u2014",
+    "     protocol step that runs at the end of an agent session is fiction —",
     "     sessions are killed, time out, or exhaust context far more often",
     "     than they exit cleanly.",
     "",
@@ -103,6 +103,13 @@
       "ref": "eb16b8",
       "role": "framework",
       "started": "2026-09-07T01:30:00Z"
+    },
+    {
+      "identity": "Fathom",
+      "session_name": "rule30-ed",
+      "ref": "88ad51",
+      "role": "framework",
+      "started": "2026-09-07T01:40:00Z"
     }
   ]
 }
