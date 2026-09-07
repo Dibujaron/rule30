@@ -193,11 +193,16 @@ fn is_call_site(line: String, writer: String) -> Bool {
 /// A comment, or a line that only quotes a name inside a string. This module
 /// names every writer as data, so without the second test it reports itself
 /// as an undeclared writer — which it did, on its first run.
+///
+/// A line that opens with `["` is such a data line unless it is a match arm
+/// over a list of strings, which is what every arm of the CLI's `case` over
+/// argv is: `["index"] -> index.write(cfg)` is a call site, and the `] ->`
+/// is what tells it from `["write_in", "index.write"],` two screens up.
 fn is_prose(line: String) -> Bool {
   let trimmed = string.trim(line)
   string.starts_with(trimmed, "//")
   || string.starts_with(trimmed, "\"")
-  || string.starts_with(trimmed, "[\"")
+  || { string.starts_with(trimmed, "[\"") && !string.contains(trimmed, "] ->") }
 }
 
 /// Every `.gleam` file under `src_root`, one level of nesting deep, which is
