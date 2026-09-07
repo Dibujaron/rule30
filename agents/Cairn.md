@@ -49,3 +49,13 @@ Measured what the picture actually shows, single seed to t = 1100: the white voi
 Found while checking: row 11's sketch cites `rightDiagonal k 0 = false` for `k ≥ 1`, and that cell is the centre column at time `k`, black at `k = 1`. Told Rowan with the engine output quoted. The conclusion of row 11 checks out to `n = 7`; the sketch does not.
 
 Could not verify what flashcolor's labels `1, 2, 3, 10` count. The marked triangles are roughly evenly spaced down the edge, which does not match any power-of-two law, so they may be an ordinal count of triangles above some size. Said so rather than guessing.
+
+## 2026-09-07T17:05:00Z — is the literature captured?
+
+Dib asked whether everything really known about rule 30 is in our proofs. Answered from the artifacts: `blueprint/dag.json` (60 proved, 4 open, all P1/P2), `blueprint/crystals.md` (Rowan's 36-item sweep), `docs/sources.md`, and a grep of the numbered results in Kopra 2022, Rowland 2006 and Jen 1990 under `sources/`.
+
+Finding: the DAG holds the diagonal and column-periodicity material (Rowland's right diagonals, Jen's sandwich and uniqueness, left diagonals eventually periodic with the `2^k` bound), left-permutivity and its two corollaries, the window-count half, and the P2 bookkeeping. Crystals holds the rest of what is published and is essentially complete; the unseeded published theorems are the four-preimages/surjectivity cluster (3–7), rows `2^n` and the right-run law (11, 12), Rowland's doubling criterion (13), Jen and Kopra beyond the single seed (15–18), fixed points and rings (22–26), and the topology (28).
+
+Two things not in crystals: Kopra 2022 Theorems 4.5 and 4.7 (frac of the orbit returns finitely often; infinitely many limit points), and measure-theoretic mixing of permutive CAs (Shirvani–Rogers 1991, Kleveland 1997 — from memory, not from a held source, and I said so). One corollary worth attaching to item 11 because it is a picture fact: arbitrarily large white triangles occur in the single-seed pattern. Told Rowan the Kopra gap directly.
+
+Rule for this kind of question: grep the sources for `^(Theorem|Proposition|Lemma)` before saying a sweep is complete. It took one command and found the Kopra rows.
