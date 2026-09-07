@@ -49,6 +49,7 @@ import gleam/dynamic.{type Dynamic}
 import gleam/dynamic/decode
 import gleam/float
 import gleam/int
+import gleam/io
 import gleam/json
 import gleam/list
 import gleam/option.{type Option, None, Some}
@@ -240,10 +241,7 @@ fn check_declaration(
   lean_name: String,
   route: Route,
 ) -> RouteVerdict {
-  let dir = repo_root <> "/harness/build/checks/seed"
-  let path = dir <> "/" <> lean_name <> ".lean"
-  let assert Ok(_) = simplifile.create_directory_all(dir)
-  let assert Ok(_) = simplifile.write(path, check_source(declaration, route))
+  use path <- in_scratch(repo_root, lean_name, check_source(declaration, route))
   case shell.run(lake, ["env", "lean", path], repo_root, 600_000) {
     Error(msg) -> RouteFailed(msg)
     Ok(shell.Run(status:, output:)) if status != 0 -> RouteFailed(output)
@@ -258,6 +256,72 @@ fn check_declaration(
       }
   }
 }
+
+// --- the scratch file ---------------------------------------------------------
+
+/// Where every seed check writes the Lean it elaborates:
+/// `<repo_root>/harness/build/checks/seed`, git-ignored, kept between calls.
+fn scratch_dir(repo_root: String) -> String {
+  repo_root <> "/harness/build/checks/seed"
+}
+
+/// A scratch path of this call's own: `<stem>_<token>.lean` under
+/// `scratch_dir`, where the token is 32 hex characters of CSPRNG drawn here,
+/// so two calls with one `stem` never name one file.
+///
+/// The token is not decoration. A path derived from the statement's name
+/// alone is one absolute path with no lock on it, and this file now has
+/// three producers on one checkout — a captain's `seed check`, the seeder
+/// session's own check when it ends, and the dispatcher's check over every
+/// attempt's proposals at the end of a run — so two checks of one
+/// `lean_name` could write and read one file and elaborate each other's
+/// text. The verdict that produces is a `RouteFailed` on a route that
+/// closes, reported as a fact about the statement. Measured on the fixture
+/// side on 2026-09-06: a constant path cost four spurious failures. See the
+/// board: `seed-check-declaration-scratch-path-has-no-per-call-token`.
+pub fn scratch_path(repo_root: String, stem: String) -> String {
+  scratch_dir(repo_root) <> "/" <> stem <> "_" <> token() <> ".lean"
+}
+
+/// Write `source` to a scratch file of this call's own, hand its path to
+/// `check`, delete the file, and return what `check` said.
+///
+/// The delete is reached only after this call's own write succeeded — a
+/// failed write panics above it — so the file it removes is the one this
+/// call named and wrote, never a peer's. A delete that fails is written to
+/// stderr with the path and the reason and the verdict is returned as it
+/// was: a scratch file left behind is litter, and litter must not change
+/// what the check says about the statement. The one realistic cause is a
+/// timed-out `lean` still holding the file, since `shell.run` closes the
+/// port on timeout and kills nothing.
+fn in_scratch(
+  repo_root: String,
+  stem: String,
+  source: String,
+  check: fn(String) -> a,
+) -> a {
+  let path = scratch_path(repo_root, stem)
+  let assert Ok(_) = simplifile.create_directory_all(scratch_dir(repo_root))
+  let assert Ok(_) = simplifile.write(path, source)
+  let verdict = check(path)
+  case simplifile.delete(path) {
+    Ok(Nil) -> Nil
+    Error(e) ->
+      io.println_error(
+        "harness/seed: could not delete the scratch file "
+        <> path
+        <> ": "
+        <> simplifile.describe_error(e)
+        <> ". This check wrote it and its verdict stands; remove the file by hand.",
+      )
+  }
+  verdict
+}
+
+/// 32 lowercase hex characters from a CSPRNG, the same source `guard.gleam`
+/// uses for its auth token and `verify_test` for its fixture id.
+@external(erlang, "harness_ffi", "token")
+fn token() -> String
 
 /// The one declaration a proposal's route may be checked against, or the
 /// verdict that says why there is none.
@@ -528,14 +592,11 @@ fn run_witness(
   witness: Witness,
   timeout_ms: Int,
 ) -> WitnessVerdict {
-  let dir = repo_root <> "/harness/build/checks/seed"
-  // A per-call token, for the reason `verify_test`'s fixture carries one:
-  // two sessions on this machine share one checkout, and a path derived
-  // only from the node name is one absolute path with no lock on it. That
-  // collision was measured on 2026-09-06 and cost four spurious failures.
-  let path = dir <> "/witness_" <> lean_name <> "_" <> token() <> ".lean"
-  let assert Ok(_) = simplifile.create_directory_all(dir)
-  let assert Ok(_) = simplifile.write(path, witness_source(witness))
+  use path <- in_scratch(
+    repo_root,
+    "witness_" <> lean_name,
+    witness_source(witness),
+  )
   case shell.run(lake, ["env", "lean", path], repo_root, timeout_ms) {
     // Every failure to *run* is `Unchecked`, never `Falsified`. A timeout
     // is the common one and the dangerous one — `shell.run` reports it as
@@ -547,11 +608,6 @@ fn run_witness(
       witness_verdict(witness.range, status, output)
   }
 }
-
-/// 32 lowercase hex characters from a CSPRNG, the same source `guard.gleam`
-/// uses for its auth token and `verify_test` for its fixture id.
-@external(erlang, "harness_ffi", "token")
-fn token() -> String
 
 // --- proposals ----------------------------------------------------------------
 

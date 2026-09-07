@@ -8,6 +8,7 @@
 //// routes, one known-bad and one known-good, both adjudicated by hand on
 //// 2026-09-06 and one of them by a live run that cost $0.97 to learn it.
 
+import gleam/list
 import gleam/option
 import gleam/string
 import harness/dag
@@ -142,6 +143,127 @@ pub fn a_sorry_route_is_not_closed_test() {
   let assert seed.RouteUsesSorry(out) =
     check("bool_map_iterate_three", Claimed(Route("sorry", [])))
   assert string.contains(out, "declaration uses `sorry`")
+}
+
+// --- the scratch file ----------------------------------------------------
+
+/// The fixture project's seed scratch directory — what `seed.scratch_path`
+/// names under `repo()`.
+fn scratch_dir() -> String {
+  repo() <> "/harness/build/checks/seed"
+}
+
+/// The scratch files whose name starts with `stem`, sorted, or none when
+/// the directory has not been made yet. A test diffs this around a check
+/// rather than asserting emptiness, so a leftover from another runner in
+/// this tree counts as background and not as this check's litter.
+fn scratch_files(stem: String) -> List(String) {
+  case simplifile.read_directory(scratch_dir()) {
+    Ok(names) ->
+      names
+      |> list.filter(string.starts_with(_, stem))
+      |> list.sort(string.compare)
+    Error(_) -> []
+  }
+}
+
+/// The path of the file Lean was elaborating, lifted from its own output:
+/// every error line opens `<path>:<line>:<col>: error:`, so the first line
+/// naming a `.lean` file names the scratch file the check wrote. This is
+/// how a test learns a path the check chose for itself.
+fn path_lean_named(output: String) -> String {
+  let assert Ok(line) =
+    output
+    |> string.split(
+      "
+",
+    )
+    |> list.find(string.contains(_, ".lean:"))
+  let assert Ok(#(path, _)) = string.split_once(line, ".lean:")
+  path <> ".lean"
+}
+
+/// Is `s` 32 lowercase hex characters — what `harness_ffi.token` returns?
+fn is_token(s: String) -> Bool {
+  string.length(s) == 32
+  && list.all(string.to_graphemes(s), string.contains("0123456789abcdef", _))
+}
+
+/// Two checks of one statement never name one file. The path used to be
+/// `<lean_name>.lean`, one absolute path shared by a captain's `seed
+/// check`, the seeder's closing check and the dispatcher's check at the end
+/// of a run; asserting the property directly is what fails if it ever goes
+/// back to that.
+pub fn two_checks_of_one_statement_never_share_a_scratch_path_test() {
+  let first = seed.scratch_path(repo(), "bool_map_iterate_three")
+  let second = seed.scratch_path(repo(), "bool_map_iterate_three")
+  assert first != second
+  assert string.starts_with(first, scratch_dir() <> "/bool_map_iterate_three_")
+  assert string.ends_with(first, ".lean")
+}
+
+/// The token is the harness's CSPRNG — `harness_ffi.token`, the source the
+/// guard's auth token and `verify_test`'s fixture id draw from — and this
+/// pins its shape rather than trusting the name: 32 lowercase hex characters
+/// between the stem and `.lean`.
+pub fn a_scratch_path_is_named_by_the_harness_token_test() {
+  let prefix = scratch_dir() <> "/witness_x_"
+  let token =
+    seed.scratch_path(repo(), "witness_x")
+    |> string.drop_start(string.length(prefix))
+    |> string.drop_end(string.length(".lean"))
+  assert is_token(token)
+}
+
+/// A route that fails leaves nothing behind. Lean's error output names the
+/// file it read, so this learns the path the check chose, checks that it
+/// carried a token, and checks that it is gone.
+pub fn a_failed_route_leaves_no_scratch_file_test() {
+  let before = scratch_files("bool_map_iterate_three")
+  let assert seed.RouteFailed(out) =
+    check("bool_map_iterate_three", Claimed(Route("decide", [])))
+  let path = path_lean_named(out)
+  let prefix = scratch_dir() <> "/bool_map_iterate_three_"
+  assert string.starts_with(path, prefix)
+  assert is_token(
+    path
+    |> string.drop_start(string.length(prefix))
+    |> string.drop_end(string.length(".lean")),
+  )
+  assert simplifile.is_file(path) == Ok(False)
+  assert scratch_files("bool_map_iterate_three") == before
+}
+
+/// A route that closes leaves nothing behind either. `RouteClosed` carries
+/// no output to lift a path from, so this diffs the directory around it.
+pub fn a_closed_route_leaves_no_scratch_file_test() {
+  let before = scratch_files("bool_map_iterate_three")
+  assert check(
+      "bool_map_iterate_three",
+      Claimed(Route("revert f; decide", ["Rule30.FintypePi"])),
+    )
+    == seed.RouteClosed
+  assert scratch_files("bool_map_iterate_three") == before
+}
+
+/// The witness side goes through the same scratch file and the same delete.
+/// A witness that does not compile has output naming its file, which is the
+/// path this checks for.
+pub fn a_witness_leaves_no_scratch_file_test() {
+  let before = scratch_files("witness_witness_calibration")
+  let assert seed.WitnessBroken(out) =
+    check_w(
+      center_statement,
+      "(List.range 4).all (fun t => centerColumn t == no_such_value)",
+      "t < 4",
+    )
+  let path = path_lean_named(out)
+  assert string.starts_with(
+    path,
+    scratch_dir() <> "/witness_witness_calibration_",
+  )
+  assert simplifile.is_file(path) == Ok(False)
+  assert scratch_files("witness_witness_calibration") == before
 }
 
 pub fn the_report_names_a_sorry_route_as_such_test() {
