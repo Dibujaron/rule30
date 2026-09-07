@@ -15,6 +15,11 @@
 //// `PostToolUseFailure` hook arrives, and as a backstop at the worker's
 //// next `PreToolUse`, since a worker making a new call is not still
 //// building.
+////
+//// `SendMessage` is denied for every role. A dispatched session speaks
+//// through its end-of-turn report, which the harness writes to disk, and
+//// a message it sent from inside an attempt would leave the attempt's
+//// record looking complete while being wrong about what happened.
 
 import gleam/bit_array
 import gleam/bytes_tree
@@ -107,6 +112,7 @@ type HookInput {
     tool_name: String,
     file_path: String,
     command: String,
+    to: String,
     session_id: String,
     transcript_path: String,
   )
@@ -131,11 +137,17 @@ fn hook_input_decoder() -> decode.Decoder(HookInput) {
     "",
     decode.string,
   ))
+  use to <- decode.then(decode.optionally_at(
+    ["tool_input", "to"],
+    "",
+    decode.string,
+  ))
   decode.success(HookInput(
     event:,
     tool_name:,
     file_path:,
     command:,
+    to:,
     session_id:,
     transcript_path:,
   ))
@@ -188,9 +200,30 @@ fn decide_pre(rules: Rules, hi: HookInput) -> Decision {
     "Edit" | "Write" | "MultiEdit" | "NotebookEdit" ->
       decide_write(rules, hi.file_path)
     "Bash" -> decide_bash_for(rules, hi.command)
+    "SendMessage" -> decide_message(rules)
     _ -> Allow
   }
 }
+
+/// No dispatched session may message another session, whatever its role.
+///
+/// The `case` names both constructors rather than using `_` so that a new
+/// role has to say here, before it compiles, that it too cannot send — the
+/// same reason `Role` is a sum type at all.
+///
+/// The reason is the one thing the session reads, so it says what the
+/// session should do instead: the notebook and journal fields of the
+/// end-of-turn report are how it reaches its peers and Dib, and the harness
+/// writes them to disk verbatim. It deliberately does not say that a peer
+/// message would go unrecorded, because the session cannot act on that.
+fn decide_message(rules: Rules) -> Decision {
+  case rules.role {
+    Prover(..) | Seeder(..) -> Deny(NotPermitted, message_deny_reason)
+  }
+}
+
+/// What a dispatched session is told when it tries to `SendMessage`.
+pub const message_deny_reason = "harness guard: a dispatched session cannot message another session. It speaks to peers and to Dib through the notebook and journal fields of its end-of-turn report, which the harness writes to disk verbatim; messaging a session from inside an attempt is not available to it."
 
 fn decide_write(rules: Rules, file_path: String) -> Decision {
   case rules.role {
@@ -655,14 +688,16 @@ fn release_stale_hold(
 }
 
 /// What the worker actually asked for: the command for a `Bash` call, the
-/// path for a write, and nothing for anything else. This is the field a
-/// denial row was missing — `tool: Bash, decision: Deny(...)` says a call was
-/// refused and never says which call, so a filed guard bug could not be acted
-/// on without the transcript, which the board does not have.
+/// path for a write, the recipient for a `SendMessage`, and nothing for
+/// anything else. This is the field a denial row was missing — `tool: Bash,
+/// decision: Deny(...)` says a call was refused and never says which call, so
+/// a filed guard bug could not be acted on without the transcript, which the
+/// board does not have.
 fn attempted_of(hi: HookInput) -> String {
   case hi.tool_name {
     "Bash" -> hi.command
     "Edit" | "Write" | "MultiEdit" | "NotebookEdit" -> hi.file_path
+    "SendMessage" -> hi.to
     _ -> ""
   }
 }
@@ -832,7 +867,7 @@ fn settings_json(token: String, port: Int) -> json.Json {
           "PreToolUse",
           json.preprocessed_array([
             hook_matcher(
-              "Edit|Write|MultiEdit|NotebookEdit|Bash",
+              "Edit|Write|MultiEdit|NotebookEdit|Bash|SendMessage",
               hook_command(token, port, 280, "PreToolUse"),
               300,
             ),
