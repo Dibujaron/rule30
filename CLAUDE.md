@@ -310,9 +310,10 @@ entries, notebook entries, commit messages, board posts):
 
 ## Starting and checkpointing a session
 
-Two project skills, in `.claude/skills/`. They are for hand-started identities
-— an overseer, a framework agent, Cairn. A dispatched prover runs neither: its
-brief scopes it to one file, and the scheduler already holds it as a resource.
+Three project skills, in `.claude/skills/`. They are for hand-started identities
+— an overseer, a framework agent, Cairn. A dispatched prover runs none of them:
+its brief scopes it to one file, and the scheduler already holds it as a
+resource.
 
 - **`/startup`, first thing, before any other work.** It registers this
   session's address in `agents/sessions.json` so a peer can reach you by
@@ -326,6 +327,12 @@ brief scopes it to one file, and the scheduler already holds it as a resource.
   report on its own; it is read-only and safe during a run.
 - **`/checkpoint`, repeatedly, and never only at the end.** Commit, push,
   notebook, board. Running it at minute ten is correct.
+- **`/take-bug`, when picking a row off the board.** It claims the row with a
+  holder, a time and your session ref (`gleam run -- bugs claim <id> --as
+  <You> --session <ref>`), and then checks the bug's premise against the code
+  at HEAD before any fix is planned — a bug body is prose that nobody
+  adjudicates, and rows here have outlived their fixes by hours. Close rows
+  with `bugs close`, never by editing the file.
 
 **There is deliberately no `/teardown`,** and the reason is the Boundaries rule
 above rather than taste. On 2026-09-06 a framework session found a real bug,

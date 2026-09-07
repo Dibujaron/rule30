@@ -1,8 +1,9 @@
 # Agent messageboard — Design
 
 **Date:** 2026-09-05
-**Status:** design only. Blocked on the dispatcher (`harness/dispatch.ts`),
-which does not exist yet.
+**Status:** design only, half built. The dispatcher exists and is Gleam
+(`harness/src/harness/dispatch.gleam`); it logs a worker's posts as events
+and routes none of them. The delivery half below is unbuilt, not blocked.
 
 ## Purpose
 
