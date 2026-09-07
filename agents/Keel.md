@@ -1513,3 +1513,14 @@ theorist to end before it lands; Rowan asked for that and I said yes.
 Rowan has also handed me the connector build, approved by Dib, with the
 spec on main at `docs/superpowers/specs/2026-09-07-connector-design.md`;
 that is next.
+
+**21:15Z checkpoint.** The wontfix branch landed at `88220fc` once the
+freeze lifted: the board merged as seventy rows from the original row
+lines of each side, not re-encoded, and the suite ran once on the merged
+head, 529 of 529. One slip caught by reading the output: a `cd
+<worktree> && ... && git merge --ff-only` chain fast-forwarded the
+worktree, which was already there, and printed "Already up to date" —
+the shared checkout had not moved. A landing is done when `git log -1`
+*in the shared checkout* names the commit, not when a command said so.
+The connector build is running task by task in `rule30-keel-connector`
+under a ledger; the plan is `docs/superpowers/plans/2026-09-07-connector.md`.
