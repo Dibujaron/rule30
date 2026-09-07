@@ -358,8 +358,12 @@ pub fn a_longer_identifier_does_not_count_as_mentioning_a_shorter_one_test() {
 /// says `= true`: keywords, `Bool` literals and core types are in nearly every
 /// statement and name none of them. Binders are single letters here and are
 /// dropped for the same reason — `fun t => true` mentions `t` and nothing.
+/// What survives is every name specific to this statement, and the theorem's
+/// own name is one of them: it is a token of the statement text like any
+/// other, so it is kept here and not only added by `names_the_statement`.
 pub fn keywords_literals_and_binders_are_not_names_test() {
-  assert seed.statement_names(center_statement) == ["centerColumn"]
+  assert seed.statement_names(center_statement)
+    == ["witness_calibration", "centerColumn"]
   assert !seed.names_the_statement(
     "(List.range 4).all (fun t => true)",
     "witness_calibration",
@@ -432,8 +436,10 @@ fn proposal_json(fields: String) -> String {
 
 /// A complete proposal. The witness names `centerColumn`, which the statement
 /// is about — this fixture used to carry the literal `true`, which is exactly
-/// the placeholder the checker now refuses.
-const full_proposal = "\"id\":\"foo_bar\",\"lean_name\":\"foo_bar\",\"statement\":\"theorem foo_bar : centerColumn 0 = true := by\\n  sorry\",\"reason\":\"The centre cell starts on.\",\"route\":{\"tactics\":\"rfl\",\"imports\":[]},\"witness\":{\"expression\":\"centerColumn 0 == true\",\"imports\":[],\"range\":\"t = 0\"}"
+/// the placeholder the checker now refuses. It is only ever decoded, never
+/// handed to Lean, so `route` and `range` are pinned by the decode test below
+/// and are not claims about what elaborates.
+const full_proposal = "\"id\":\"foo_bar\",\"lean_name\":\"foo_bar\",\"statement\":\"theorem foo_bar : centerColumn 0 = true := by\\n  sorry\",\"reason\":\"The centre cell starts on.\",\"route\":{\"tactics\":\"trivial\",\"imports\":[]},\"witness\":{\"expression\":\"centerColumn 0 == true\",\"imports\":[],\"range\":\"n/a\"}"
 
 pub fn a_full_proposal_decodes_test() {
   let assert Ok([p]) = seed.decode_proposals(proposal_json(full_proposal))
