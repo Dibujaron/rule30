@@ -89,6 +89,13 @@
       "ref": "9a93a2",
       "role": "overseer",
       "started": "2026-09-06T18:30:00Z"
+    },
+    {
+      "identity": "Rowan",
+      "session_name": "rule30-84",
+      "ref": "5cb80e",
+      "role": "overseer",
+      "started": "2026-09-07T01:25:00Z"
     }
   ]
 }
