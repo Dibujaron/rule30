@@ -601,7 +601,11 @@ theorem leftDiagonal_onset_le (k : ℕ) :
 
 /-- **Wall: the left periods grow at most linearly.** The measured periods
 are at most 16 to `k = 700`, so the truth is far below this line; it is the
-weakest statement that is already unproved. With `leftDiagonal_onset_le` it
+weakest statement that is already unproved. Wolfram's notes (NKS p. 871)
+give the depth at which each period first appears: 2 at `k = 3`, 4 at 8, 8
+at 29, 16 at 400, 32 at 87,867, and 64 not before 2,107,985,255 — so the
+period is about `2 * log₂ k`, and `k + 1` is generous by a factor that grows
+without bound. With `leftDiagonal_onset_le` it
 says why the left body looks regular while the right body does not. Not a
 prize conjecture. Never dispatch as an ordinary leaf; never weaken.
 
