@@ -929,6 +929,41 @@ theorem leftDiagonal_period_unbounded (a : ℕ) :
     ∃ k, ∀ N, ¬ PeriodicFrom (leftDiagonal k) (2 ^ a) N := by
   sorry
 
+/-! ## P1 — the settled configuration: the left side of the picture as a row of its own
+
+Seeded 2026-09-07 from blueprint/crystals.md items 46–47, out of Sextant's
+fourth attack. Definitions `settledCenter` and `settledConfig` in
+Rule30/Basic.lean under "The settled configuration". -/
+
+/-- **The settled centre column is well defined.** Read the seed's picture
+down any column whose distance from the origin is a multiple of `2 ^ k` and
+at least `2 ^ k`: the `k`-th cell below the left edge is `settledCenter k`
+whichever such column is read. `leftDiagonal_periodicFrom_pow` gives an onset
+`N ≤ 2 ^ k` and period `2 ^ k`; induct on `m` from `2 ^ k`, each step one
+application of the period at an index `≥ 2 ^ k ≥ N`. -/
+theorem leftDiagonal_mul_pow_eq_settledCenter (k m : ℕ) (hm : 1 ≤ m) :
+    leftDiagonal k (m * 2 ^ k) = settledCenter k := by
+  sorry
+
+/-- **The settled picture is the rule 30 evolution of the settled row.** Grow
+`settledConfig` for `t` steps and every cell at position `x ≥ -t` is the
+settled word of diagonal `t + x` at index `-x`, read from the seed's picture
+at `2 ^ (t + x + 1) - x`, an index past that diagonal's onset and congruent
+to `-x` modulo its period. So the settled region, with the words extended
+periodically to every index, is itself a rule 30 orbit, and its centre column
+is `settledCenter`. Induction on `t`: the cell at `t + 1` is `rule30_eq` on its
+three neighbours at `t`, each given by the hypothesis; move the four
+`leftDiagonal` indices to one common frame by `leftDiagonal_mul_pow_eq_settledCenter`'s
+periodicity (each shift is a multiple of that diagonal's `2 ^ k`), and
+`leftDiagonal_recurrence` at that frame is the rule at those three cells. At
+`x = -t` and `x = -t - 1` the neighbours are outside the cone and the edge
+diagonals (`evolve_left_edge`, `evolve_left_second_diagonal`,
+`evolve_left_third_diagonal`) close it. -/
+theorem column_settledConfig_eq (t : ℕ) (x : ℤ) (hx : -(t : ℤ) ≤ x) :
+    column settledConfig x t
+      = leftDiagonal (t + x).toNat (2 ^ ((t + x).toNat + 1) - x).toNat := by
+  sorry
+
 /-- A trivially true statement that exists only so the harness's verifier
 tests have something to prove without touching a real node's proof file. It
 is deliberately absent from `blueprint/dag.json`. -/

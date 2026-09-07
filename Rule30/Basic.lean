@@ -292,3 +292,45 @@ example : ∀ k : Fin 7, ∀ t : Fin 7,
     leftSolve (fun t => rowCell t 0) (fun t => rowCell t 1) k t
       = rowCell t (-(k : ℤ)) := by
   decide
+
+/-! ## The settled configuration
+
+Every left diagonal settles into a repeating word from some onset on
+(`leftDiagonal_periodicFrom_pow`), and the settled cells form a region on
+the left whose boundary, the seam, runs down the picture at about a quarter
+of the way in from the centre. Read the picture down a column far to the
+left, starting at the left edge: if the column's distance from the origin
+is a multiple of `2 ^ k` and past the onsets, the `k`-th cell below the edge
+is the same whichever such column is read. That common value is
+`settledCenter k`, the centre column the picture would have if its diagonals
+had no transients; and the row that grows the settled region without any
+transient at all is `settledConfig`. Both are read off the seed's own
+picture at indices past every onset: `2 ^ k` on diagonal `k`, and
+`2 ^ (x + 1) - x` for the cell at position `x` of the settled row, which is
+past the onset of diagonal `x` and congruent to `-x` modulo its period.
+
+In TypeScript terms these are memoised reads of a lazily computed table,
+not new automata: nothing here runs rule 30 on anything but the seed. The
+seam is that the settled row is infinite to the right, so its own picture
+is not a cone and its column at the origin, which `column_settledConfig_eq`
+identifies with `settledCenter`, is a new sequence with no transient. -/
+
+/-- The settled centre column: the settled word of diagonal `k` at index `0`,
+read from the seed's picture at index `2 ^ k`, which is past the onset and a
+multiple of the period. -/
+def settledCenter (k : ℕ) : Bool := leftDiagonal k (2 ^ k)
+
+/-- The settled configuration: the row whose rule 30 picture is the settled
+region with no transient. Position `x ≥ 0` reads diagonal `x` of the seed at
+index `2 ^ (x + 1) - x`, past its onset and congruent to `-x` modulo its
+period; positions left of the origin are white. -/
+def settledConfig : Config :=
+  fun x => if 0 ≤ x then leftDiagonal x.toNat (2 ^ (x.toNat + 1) - x.toNat) else false
+
+/- The first eleven values of the settled centre column, from the row model,
+kept as a guard: `11011100110`, equal to the centre column itself for these
+`k` (the onsets are zero there) and a coin flip from it afterwards. -/
+set_option maxRecDepth 100000 in
+example : (List.range 11).map (fun k => rowCell (2 ^ k + k) (-(2 ^ k : ℤ)))
+    = [true, true, false, true, true, true, false, false, true, true, false] := by
+  decide
