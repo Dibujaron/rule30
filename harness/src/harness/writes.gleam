@@ -88,7 +88,7 @@ pub fn declared() -> List(Written) {
     Written(
       what: "blueprint/index.md",
       risk: "rewritten whole from the board at every landing and by `gleam run -- index`; derived, so an edit arriving before the next render is lost",
-      writers: ["write_in"],
+      writers: ["write_in", "index.write"],
     ),
     Written(
       what: "runs/<run-id>/**",

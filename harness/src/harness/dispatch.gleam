@@ -751,7 +751,14 @@ fn index_proof(
 /// The write behind `index_proof`, without the event: the `import` line into
 /// `Rule30/Proofs.lean`, then `blueprint/index.md` re-rendered from the
 /// board so the two indexes are always written by the same step. The import
-/// goes first and is never undone by a render failure.
+/// is the caller's failure — it means the next `lake build` will not see the
+/// proof, so it is returned as `Error` exactly as before. The render is a
+/// derived artifact, not a record of what happened: a failure to read
+/// `Statements.lean`, load the board, or write the file is printed here and
+/// swallowed, never propagated, so it can never suppress the attempt's own
+/// record (`write_channels`, `auto_file_signals`, the summary, the printed
+/// outcome) for a node that was in fact proved and imported. The next
+/// landing, or a `gleam run -- index` by hand, re-renders it.
 fn write_index(cfg: config.Config, node: dag.Node) -> Result(Nil, String) {
   let path = cfg.repo_root <> "/" <> proofs_index
   let existing = simplifile.read(path) |> result.unwrap("")
@@ -767,7 +774,11 @@ fn write_index(cfg: config.Config, node: dag.Node) -> Result(Nil, String) {
       <> simplifile.describe_error(e)
     }),
   )
-  index.write(cfg) |> result.replace(Nil)
+  case index.write(cfg) {
+    Ok(_) -> Nil
+    Error(reason) -> io.println_error("harness/dispatch: " <> reason)
+  }
+  Ok(Nil)
 }
 
 /// `existing` with `import <module>` present exactly once, the imports
