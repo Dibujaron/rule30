@@ -168,6 +168,12 @@ pub fn task_message_carries_the_exact_statement_and_the_file_to_write_test() {
   assert string.contains(msg, "Estimated size: S.")
   assert string.contains(msg, "lake build Rule30.Proofs.CenterColumnZero")
   assert string.contains(msg, "import Rule30.Basic")
+  // A parked or crashed attempt leaves the file on disk; the next worker
+  // must be told it is theirs to read, not to overwrite.
+  assert string.contains(
+    msg,
+    "If `Rule30/Proofs/CenterColumnZero.lean` already exists it is a previous attempt's work on this node: read it first and keep whatever builds.",
+  )
 }
 
 // --- the brief ----------------------------------------------------------------
@@ -279,6 +285,37 @@ pub fn brief_states_the_constraints_test() {
   assert string.contains(text, "No `sorry`")
   assert string.contains(text, "type_of% Statements.centerColumn_zero")
   assert string.contains(text, "must be named exactly `centerColumn_zero`")
+}
+
+/// The row family `guard-denied-bash-not-permitted-*` /
+/// `guard-denied-edit-not-writable-*`: every denial in run 20260907T024158Z
+/// was correct — `cat`, `grep -rn`, `find`, `... 2>&1 | head -50`, a
+/// `--run` heredoc, an Edit of `Rule30/Proofs.lean` — and every one was a
+/// worker that had not been told what to do instead. The fix is in the
+/// brief, and these are the phrases a Claude Code session acts on.
+pub fn brief_says_how_to_read_and_what_bash_is_for_test() {
+  let d = a_dag()
+  let assert Ok(n) = dag.get(d, "centerColumn_zero")
+  let text = brief.text(cfg(), d, n, ravel(), "")
+  // Reading and searching go through tools, not Bash.
+  assert string.contains(text, "use the Read tool")
+  assert string.contains(text, "use Grep or Glob")
+  assert string.contains(
+    text,
+    "Bash `cat`, `grep`, `find`, `head` and `ls` are denied",
+  )
+  // The two commands, verbatim, for this node.
+  assert string.contains(text, "`lake build Rule30.Proofs.CenterColumnZero`")
+  assert string.contains(
+    text,
+    "`lake env lean Rule30/Proofs/CenterColumnZero.lean`",
+  )
+  assert string.contains(text, "One bare command per Bash call")
+  assert string.contains(text, "`2>&1`")
+  assert string.contains(text, "rather than piping to `head`")
+  // The index is the dispatcher's, and there is no `--run`.
+  assert string.contains(text, "never edit `Rule30/Proofs.lean`")
+  assert string.contains(text, "There is no `--run`")
 }
 
 pub fn brief_carries_prior_attempt_notes_verbatim_test() {

@@ -194,10 +194,12 @@ fn the_project(cfg: config.Config) -> String {
 fn your_constraints(node: dag.Node) -> String {
   "## Your constraints\n\n- The only file you may edit is `"
   <> dag.proof_path(node)
-  <> "`. Every other write is denied by a hook, not by convention.\n"
-  <> "- The only shell commands you may run are `lake build "
+  <> "`. Every other write is denied by a hook, not by convention. In particular, never edit `Rule30/Proofs.lean`, the index of closed proofs: the harness adds your import there when the node closes.\n"
+  <> "- To read a file use the Read tool; to search use Grep or Glob. Bash `cat`, `grep`, `find`, `head` and `ls` are denied — not because reading is forbidden, but because Bash is allowed for exactly two commands: `lake build "
   <> dag.proof_module(node)
-  <> "` and `lake env lean <file>`. Everything else is denied, and so is any shell operator — no `;`, `&&`, `|`, backticks, `$`, `>` or `<`. One bare command per Bash call.\n"
+  <> "` and `lake env lean "
+  <> dag.proof_path(node)
+  <> "` (one file, no flags). One bare command per Bash call — no `|`, `;`, `&&`, `2>&1`, backticks, `$`, `>`, `<`, heredocs or redirection. `lake build` output can be long; read its tail from the tool result rather than piping to `head`. There is no `--run`: to try a quick Lean snippet, put it in your proof file and build.\n"
   <> "- Never `import Rule30.Statements`. The harness checks your proof against the statement file from outside your session, so the two must never see each other.\n"
   <> "- No `sorry`, and no axiom beyond `propext`, `Classical.choice`, `Quot.sound`.\n"
   <> "- The harness verifies with a generated check theorem — `theorem harness_check : type_of% Statements."
@@ -293,7 +295,9 @@ pub fn task_message_from(
     <> dag.size_to_string(node.size)
     <> ". Start by creating the file with the imports you need (`import Rule30.Basic`, plus any served module), then iterate with `lake build "
     <> dag.proof_module(node)
-    <> "`.",
+    <> "`. If `"
+    <> dag.proof_path(node)
+    <> "` already exists it is a previous attempt's work on this node: read it first and keep whatever builds.",
   )
 }
 
