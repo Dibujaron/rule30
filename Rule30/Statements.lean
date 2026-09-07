@@ -889,6 +889,46 @@ theorem centerColumn_succ_of_black (t : ℕ) (h : centerColumn t = true) :
     centerColumn (t + 1) = !(evolve t (-1)) := by
   sorry
 
+/-! ## P1 — the left diagonals: the settled region never repeats, so the periods are unbounded
+
+Seeded 2026-09-07 from blueprint/crystals.md items 42–43, out of Sextant's
+third attack. Both were kernel-checked in scratch first
+(explorer/scratch_leftdiagonal_unbounded.lean); the routes in the
+docstrings are those proofs'. They sit beside the two diagonal walls as a
+lower bound, under no wall. -/
+
+/-- **No two pairs of adjacent left diagonals ever eventually agree.** Read
+along any two adjacent left diagonals, the settled region never coincides
+with itself moved `d` diagonals inward. If the pair `(k, k + 1)` agreed
+with `(k + d, k + d + 1)` from some index on, the recurrence read backwards
+(`leftDiagonal m (i + 2) = xor (leftDiagonal (m + 2) (i + 1)) (leftDiagonal (m + 1) (i + 1) || leftDiagonal (m + 2) i)`,
+from `leftDiagonal_recurrence`) would carry the agreement one diagonal
+outward at the cost of two indices, down to diagonals `0` and `1`, which
+are black (`evolve_left_edge`, `evolve_left_second_diagonal`); so
+diagonals `d` and `d + 1` would be eventually black, which by the forward
+recurrence makes `d - 1` and then `d - 2` eventually white, and two
+adjacent eventually-white diagonals force the next one outward white, all
+the way to the edge. State the two descents as predicates on `(m, M)` and
+induct on `m`; the case `d = 1` ends at the first white diagonal. -/
+theorem leftDiagonal_pair_never_eventually_shifted (k d N : ℕ) (hd : 0 < d) :
+    ∃ j ≥ N, leftDiagonal k j ≠ leftDiagonal (k + d) j ∨
+      leftDiagonal (k + 1) j ≠ leftDiagonal (k + d + 1) j := by
+  sorry
+
+/-- **The eventual periods of the left diagonals are unbounded**: for every
+`a` some left diagonal is not eventually `2 ^ a`-periodic, so the period
+doubling seen at diagonals 3, 8, 29, 400 and 87867 never stops. If every
+diagonal were eventually `2 ^ a`-periodic, read each one's tail as a word
+`Fin (2 ^ a) → Bool` at an onset that is a multiple of `2 ^ a` (the tail is
+then determined by the residue of the index); the pairs of words of
+adjacent diagonals live in a finite type, so two indices carry the same
+pair (`Finite.exists_ne_map_eq_of_infinite`), and those two pairs of
+diagonals agree from the larger onset on, against
+`leftDiagonal_pair_never_eventually_shifted`. -/
+theorem leftDiagonal_period_unbounded (a : ℕ) :
+    ∃ k, ∀ N, ¬ PeriodicFrom (leftDiagonal k) (2 ^ a) N := by
+  sorry
+
 /-- A trivially true statement that exists only so the harness's verifier
 tests have something to prove without touching a real node's proof file. It
 is deliberately absent from `blueprint/dag.json`. -/
