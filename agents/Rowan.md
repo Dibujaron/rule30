@@ -1235,3 +1235,76 @@ right.
 
 Nothing held on my account: no lock, no claim, no branch off `main`,
 everything pushed, shared checkout clean on `main`.
+
+## 2026-09-07T02:30:00Z — the two bodies, and a tier chosen by the engine
+
+Dib brought a note from a contributor, flashcolor: the rule 30 triangle looks
+like two triangles with different rules, a regular one on the left and a
+chaotic one on the right, meeting at about 14 degrees from the vertical; and
+nobody has proved the angle holds as n grows. Both halves are right, and the
+engine said what the eye was seeing before I could guess.
+
+**What the scan said.** `explorer/diagonalscan.mjs` to `k = 700`, and my own
+check to `k = 1100` over 1200 rows: every left diagonal has period at most 8
+to `k = 400` and 16 after, and its onset grows about a third as fast as `k`,
+never past `k / 2` (worst 0.479 at `k = 48`). Diagonal `k` becomes regular
+at time `k + onset` at position `-onset`, so the boundary sits at slope
+`onset / (k + onset)`, measured 0.22 to 0.25. `tan 14° = 0.249`. That is
+Wolfram's quarter-cell-per-step boundary, and the entire content of it is one
+sentence: **the left transients grow linearly and the left periods barely
+grow.** The proved bound for both is `2 ^ k`.
+
+Then the surprise. The right diagonals — which flashcolor called the chaotic
+body — are periodic too, from their *first cell*, with periods 1, 2, 2, 4,
+8, 8, 16, 32, 32, 64, … that double away. The right body is not chaotic in
+its diagonals; it is slow. The recurrence is the mirror of the left one with
+one difference: the cell's own previous term sits in the XOR slot instead of
+inside the OR, so the driven lemma is an involution and needs no delay. I
+derived it from the rule, checked it against the engine at 15,573 cells with
+no mismatch, and a Lean witness confirmed it at depth 11. A research agent
+then found it is Rowland's Lemma 2 and Theorem 1 (*Local Nested Structure in
+Rule 30*, 2006). Found from the engine, confirmed by the paper. Good order.
+
+**What I seeded**, ten nodes, all `P1`, after adding `leftDiagonal`,
+`rightDiagonal` and `PeriodicFrom` to `Rule30/Basic.lean` with Dib's word:
+
+- Left, quantitative: `periodicFrom_mul`, `leftDiagonal_periodicFrom_step`,
+  `leftDiagonal_periodicFrom_pow` — period `2 ^ k` from onset at most `2 ^ k`.
+  The existence proof knew this and threw it away.
+- Right, from scratch: `rightDiagonal_recurrence`,
+  `bool_xor_driven_periodicFrom`, `rightDiagonal_periodicFrom_step`,
+  `rightDiagonal_periodicFrom_pow`, `rightDiagonal_isEventuallyPeriodic` —
+  period `2 ^ k` from onset `0`. Close to tight.
+- Two walls that are not prizes: `leftDiagonal_onset_le` (onset at most `k`;
+  the 14 degrees) and `leftDiagonal_period_le` (period at most `k + 1`;
+  measured 16 at `k = 700`). Between `2 ^ k` and `k` nobody has proved
+  anything. Rowland's Proposition 2 says exactly *when* a left period
+  doubles; how rarely is the wall.
+
+Seed check: three witnesses hold in Lean — the multiple-of-a-period lemma, the
+right recurrence at depth 11, and the XOR-driven lemma exhaustively over every
+driver of period at most 4 — and seven unchecked, stated as unchecked. I had
+put `true` as a placeholder witness on both walls and deleted it before the
+check ran; a `true` witness passes any checker, and I told Keel so for its row
+on the exit-status checker.
+
+**Why these walls matter more than the P1 ones.** Both open P1 walls are the
+prize in disguise; nothing partial is possible. These two are empirically
+robust, structured — a recurrence on two-state machines — and a worker can
+make progress on them without solving anything Wolfram is paying for. They
+are the right first target for Keel's sub-lemma channel, and I said so.
+
+**What the centre column is not.** The centre column never enters the regular
+body: at time `t` it sits on diagonal `t`, whose onset has not been reached.
+So the 14-degree line constrains the left body and nothing else, and I see no
+route from "take the angle as given" to P1. I will tell flashcolor that
+plainly rather than leave it as a lead.
+
+Also tonight: three research agents out for seed crystals across the
+literature; the first back (columns and the centre column) found Rowland
+2006, Kopra 2022 (adjacent-column pairs are never eventually periodic, for
+any configuration white far to the left), and Jen's Proposition 3 for
+arbitrary finite initial conditions. Next tier's material. Keel landed the
+proof-note annotation at `5ee56fc` and flagged that CLAUDE.md's "exactly
+these three headings and nothing else" is now false by one harness block;
+that clause is Dib's to change and I have raised it.
