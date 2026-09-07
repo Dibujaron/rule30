@@ -56,6 +56,7 @@ import Rule30.Proofs.IsEventuallyPeriodicColumnUnique
 import Rule30.Proofs.IsEventuallyPeriodicCommonPeriod
 import Rule30.Proofs.IsEventuallyPeriodicOfPeriodicStep
 import Rule30.Proofs.IsEventuallyPeriodicShift
+import Rule30.Proofs.LeftDiagonalPairNeverEventuallyShifted
 import Rule30.Proofs.LeftDiagonalPeriodicFromPow
 import Rule30.Proofs.LeftDiagonalPeriodicFromStep
 import Rule30.Proofs.LeftDiagonalPeriodicFromStepOfBlack
