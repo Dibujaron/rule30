@@ -1160,6 +1160,48 @@ pub fn a_brief_without_a_region_is_the_whole_board_test() {
   assert string.contains(b, "2 closed")
 }
 
+/// The board Rowan actually aimed at: P2 has closed nodes and nothing open.
+/// The aim paragraph says the residuals are the open nodes in the next
+/// section, and that section is empty, so the brief must say where the
+/// target is instead — the prize theorem, by its name in Rule30/Prize.lean.
+pub fn a_regional_brief_with_nothing_open_aims_at_the_prize_theorem_test() {
+  let b =
+    seed.brief(
+      open: [open_node("leftDiagonal_period_le", dag.Wall, [])],
+      closed: [
+        closed_node("evolve_left_edge", dag.M, "sonnet", 0.36),
+        in_p2(closed_node("centerColumnDensity_nonneg", dag.S, "haiku", 0.1)),
+      ],
+      notes: [],
+      crystals: Error(Nil),
+      explorer_readme: "",
+      proposal_path: "p",
+      region: option.Some("P2"),
+    )
+  // The aim paragraph is the first section, so there is no newline before
+  // its heading for `section` to find; everything before the region
+  // heading is it.
+  let assert Ok(#(aim, _)) = string.split_once(b, "\n## This tier is for P2")
+  assert string.contains(aim, "Nothing in P2 is open today")
+  assert string.contains(
+    aim,
+    "`centerColumn_density_tendsto_half` in Rule30/Prize.lean",
+  )
+  assert string.contains(aim, "proof of that theorem would cite it")
+  assert string.contains(section(b, "## What is open in P2"), "0 open")
+}
+
+/// With something open in the region the pointer lands on it and the
+/// sentence is not rendered: naming the prize theorem next to an open wall
+/// would give the seeder two targets.
+pub fn a_regional_brief_with_an_open_node_does_not_name_the_prize_theorem_test() {
+  let b = two_region_brief(option.Some("P2"))
+  assert !string.contains(b, "Nothing in P2 is open")
+  assert !string.contains(b, "centerColumn_density_tendsto_half")
+  let whole = two_region_brief(option.None)
+  assert !string.contains(whole, "is open today")
+}
+
 // --- reading the proof notes --------------------------------------------------
 
 /// The `/-!` block is the only place the *reason* a proof worked is written in

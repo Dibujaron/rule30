@@ -973,6 +973,9 @@ pub fn brief(
         "exactly when a proof of one of them would cite it. **A tier of true,",
         "cheap, unconnected lemmas is the failure mode here, and it looks like",
         "progress while it happens.**",
+      ],
+      aim_when_nothing_open(region, open),
+      [
         "",
         "The closed table further down is the whole record of what has closed"
           <> where
@@ -1126,6 +1129,47 @@ fn conjecture_of(region: String) -> String {
     "P3" ->
       "the irreducibility conjecture — every correct algorithm for the nth cell of the centre column needs effort at least linear in n; its statement in Rule30/Prize.lean is a first approximation and not ready to be attacked."
     _ -> "a region with no prize conjecture of its own on the board."
+  }
+}
+
+/// The sentence the aim paragraph adds when a region is asked for and
+/// nothing in it is open. The paragraph says the residuals are the open
+/// nodes in the next section; for P2 today that section is empty, so the
+/// pointer lands on nothing. This says where the target is instead: the
+/// region's prize theorem, by name, so a proposal can be judged against it.
+/// Nothing is added for a whole-board brief, for a region with something
+/// open, or for a region with no prize theorem to name.
+fn aim_when_nothing_open(
+  region: Option(String),
+  open: List(dag.Node),
+) -> List(String) {
+  case region, open {
+    Some(r), [] ->
+      case prize_theorem_of(r) {
+        Ok(name) -> [
+          "Nothing in "
+            <> r
+            <> " is open today, so the residual is the prize theorem itself,",
+          "`"
+            <> name
+            <> "` in Rule30/Prize.lean: a proposal is worth landing when a",
+          "proof of that theorem would cite it.",
+        ]
+        Error(Nil) -> []
+      }
+    _, _ -> []
+  }
+}
+
+/// The name of the region's prize theorem as declared in
+/// `Rule30/Prize.lean`, or nothing for a region that is not one of the
+/// three prizes.
+fn prize_theorem_of(region: String) -> Result(String, Nil) {
+  case region {
+    "P1" -> Ok("centerColumn_not_eventually_periodic")
+    "P2" -> Ok("centerColumn_density_tendsto_half")
+    "P3" -> Ok("centerColumn_cost_at_least_linear")
+    _ -> Error(Nil)
   }
 }
 
