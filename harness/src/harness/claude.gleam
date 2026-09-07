@@ -53,9 +53,15 @@ pub type Event {
   /// `{"type":"system","subtype":"api_retry",...}`
   ApiRetry(error: String, attempt: Int, raw: String)
   /// The end of one turn. `structured_output` is present only when the
-  /// session was started with `--json-schema`.
+  /// session was started with `--json-schema`. `subtype` is the CLI's own
+  /// word for how the turn ended — `success`, or when `is_error` is set,
+  /// which ceiling ended the session: `error_max_turns` for `--max-turns`,
+  /// `error_max_budget_usd` for `--max-budget-usd`. Kept as the raw string
+  /// rather than parsed here, because the CLI has more subtypes than the
+  /// harness has names for, and a result must decode whatever it says.
   TurnResult(
     session_id: String,
+    subtype: Option(String),
     is_error: Bool,
     total_cost_usd: Float,
     num_turns: Int,
@@ -231,6 +237,15 @@ fn event_decoder(raw: String) -> decode.Decoder(Event) {
     }
     "result" -> {
       use session_id <- decode.field("session_id", decode.string)
+      // Optional, like `structured_output`: a result without a subtype
+      // must still be a result, or the turn that ended the session would
+      // fall back to `Other` and the loop would wait for one that never
+      // comes.
+      use subtype <- decode.optional_field(
+        "subtype",
+        None,
+        decode.optional(decode.string),
+      )
       use is_error <- decode.field("is_error", decode.bool)
       use total_cost_usd <- decode.field("total_cost_usd", decode.float)
       use num_turns <- decode.field("num_turns", decode.int)
@@ -241,6 +256,7 @@ fn event_decoder(raw: String) -> decode.Decoder(Event) {
       )
       decode.success(TurnResult(
         session_id:,
+        subtype:,
         is_error:,
         total_cost_usd:,
         num_turns:,
@@ -271,4 +287,39 @@ pub fn assistant_text(raw: String) -> String {
     decode.success(string.join(blocks, ""))
   }
   json.parse(raw, decoder) |> result.unwrap("")
+}
+
+/// The `input` of the last `StructuredOutput` tool call in an `assistant`
+/// event, or `None` if it made none. A session started with `--json-schema`
+/// reports by calling that tool, and the CLI copies the call's input into
+/// the turn's `result` as `structured_output` — except when that result
+/// ends the session in error (`error_max_budget_usd`, for one), when it
+/// carries no `structured_output` at all and the call is the only copy of
+/// the report.
+pub fn structured_output_call(raw: String) -> Option(Dynamic) {
+  let decoder = {
+    use blocks <- decode.subfield(
+      ["message", "content"],
+      decode.list({
+        use kind <- decode.field("type", decode.string)
+        case kind {
+          "tool_use" -> {
+            use name <- decode.field("name", decode.string)
+            case name {
+              "StructuredOutput" -> {
+                use input <- decode.field("input", decode.dynamic)
+                decode.success(Some(input))
+              }
+              _ -> decode.success(None)
+            }
+          }
+          _ -> decode.success(None)
+        }
+      }),
+    )
+    decode.success(
+      list.fold(blocks, None, fn(last, block) { option.or(block, last) }),
+    )
+  }
+  json.parse(raw, decoder) |> result.unwrap(None)
 }

@@ -1416,3 +1416,29 @@ matched on the seeder's text rather than Lean's elaborated form, said so in
 the doc comment, and measured over the sixty-five real declarations before
 shipping. Sextant, the first theorist, is live on the P1 frontier wall as I
 write this.
+
+**19:10Z — the first theorist taught three things in thirteen turns.** Landed
+at `2ad28f9`, 493 of 493: a theorist and a seeder run under ceilings of
+their own (600 turns and eighty dollars; eighty and twelve), the theorist
+fence allows scripts under `explorer/` as the spec always said, and a report
+the CLI drops when it ends a session in error is recovered from the last
+StructuredOutput call in the stream. Sextant hit the prover's four-dollar
+cap after thirteen turns, could write no script because the guard had
+dropped the spec's clause, and its complete final report died with the
+error result. **Every one of the three was a role inheriting a prover's
+world by default** — the config, the fence, the result decoder — and the
+role is defined by exactly where it differs. When a new session kind is
+built from an old one, list the inherited defaults and ask each whether it
+is still true; the two that were not and the one that dropped a message all
+looked like reuse. Rowan corrected one guess of mine on the way: the 118k
+tokens were cumulative cache creation across turns, not the brief, and I
+had named a driver from a number without asking what it measured.
+
+**19:40Z — two more from the theorist's first day, at `5fada35`.** An
+ending now names which ceiling ended it (the CLI's turns, its dollars, or
+the harness's rounds), decoded from the result subtype the loop had been
+discarding; and a second attack on one topic in a day gets its own numbered
+file instead of overwriting the first, which the fence would have allowed.
+Rowan found the second by reading what the path would resolve to before
+starting the session — the check that costs a minute before and a document
+after.

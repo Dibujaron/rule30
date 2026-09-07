@@ -1,12 +1,13 @@
-//// The theorist's rule set: two files and the seeder's commands, separate
-//// from both the prover's list and the seeder's.
+//// The theorist's rule set: the seeder's with two changes, separate from
+//// both the prover's list and the seeder's.
 ////
 //// A theorist writes one attack document and may add to the obstructions
-//// file; it runs scripts under `explorer/` but cannot write there, and it
-//// cannot reach the seeder's proposal file. The tests that matter are the
-//// negative ones again — the proposal file, the statement file, a script it
-//// would like to author — because a role whose deliverable is prose is
-//// fenced by what it cannot do rather than by what it can.
+//// file; like a seeder it writes and runs scripts under `explorer/`, since
+//// the falsification runs its brief demands are scripts; unlike a seeder it
+//// cannot reach the proposal file. The tests that matter are the negative
+//// ones again — the proposal file, the statement file, a path that starts
+//// under `explorer/` and climbs out — because a role whose deliverable is
+//// prose is fenced by what it cannot do rather than by what it can.
 
 import gleam/string
 import harness/guard.{Rules}
@@ -75,6 +76,18 @@ pub fn theorist_may_run_a_script_under_explorer_test() {
     == guard.Allow
 }
 
+/// The spec's fence is "the seeder's guard with two changes", and the
+/// seeder's makes `explorer/` writable — so a theorist writes scripts there
+/// exactly as a seeder does. The first theorist, fenced from it, did its
+/// falsification runs by pencil.
+pub fn theorist_may_write_a_script_under_explorer_like_a_seeder_test() {
+  assert guard.decide(theorist, write("c:/r/explorer/probe.mjs")) == guard.Allow
+  assert guard.decide(theorist, edit("c:/r/explorer/sub/scan.mjs"))
+    == guard.Allow
+  assert guard.decide(theorist, write("explorer/relative.mjs")) == guard.Allow
+  assert guard.decide(seeder, write("c:/r/explorer/probe.mjs")) == guard.Allow
+}
+
 pub fn theorist_keeps_the_lake_grammar_test() {
   assert guard.decide(theorist, bash("lake build Rule30.Basic"))
     == guard.AcquireBuild
@@ -93,6 +106,7 @@ pub fn theorist_cannot_write_the_proposal_file_test() {
     guard.decide(theorist, write("c:/r/blueprint/proposals/next.json"))
   assert string.contains(reason, "attack document")
   assert string.contains(reason, "obstructions.md")
+  assert string.contains(reason, "explorer")
 }
 
 pub fn theorist_cannot_write_the_statements_or_the_dag_test() {
@@ -106,13 +120,16 @@ pub fn theorist_cannot_write_the_statements_or_the_dag_test() {
     guard.decide(theorist, write("c:/r/agents/Keel.md"))
 }
 
-/// A theorist runs scripts it cannot author: `explorer/` is not writable
-/// for it, unlike for a seeder, so a script it wants has to already exist
-/// or go into the document as text.
-pub fn theorist_cannot_write_under_explorer_test() {
+/// The `explorer/` grant is a prefix check that refuses `..`, and the file
+/// it must not reach through it is the statement file. Same fence as the
+/// seeder's, same test.
+pub fn theorist_cannot_escape_explorer_with_dot_dot_test() {
   let assert guard.Deny(..) =
-    guard.decide(theorist, write("c:/r/explorer/probe.mjs"))
-  assert guard.decide(seeder, write("c:/r/explorer/probe.mjs")) == guard.Allow
+    guard.decide(theorist, write("c:/r/explorer/../Rule30/Statements.lean"))
+  let assert guard.Deny(..) =
+    guard.decide(theorist, write("c:/r/explorer/sub/../../blueprint/dag.json"))
+  let assert guard.Deny(..) =
+    guard.decide(theorist, write("c:/r/explorer_evil/probe.mjs"))
 }
 
 /// A second attack document is not this session's file.

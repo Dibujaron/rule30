@@ -130,7 +130,10 @@ fn fixture(
   envoy.unset("HARNESS_FAKE_MARKER")
   envoy.unset("HARNESS_FAKE_KILLED")
   envoy.unset("HARNESS_FAKE_IGNORE_EOF")
+  envoy.unset("HARNESS_FAKE_ARGS")
   let assert Ok(base) = config.load()
+  // The ceilings are pinned rather than loaded, so the test says which
+  // pair reached the command line whatever the environment holds.
   let cfg =
     config.Config(
       ..base,
@@ -142,6 +145,10 @@ fn fixture(
       roster_path: repo <> "/agents/roster.json",
       agents_dir: repo <> "/agents",
       stop_path: dir <> "/STOP",
+      max_turns: 40,
+      max_budget_usd: 4.0,
+      theorist_max_turns: 600,
+      theorist_max_budget_usd: 80.0,
       turn_timeout_ms: 20_000,
     )
   Fixture(cfg:, dir:, repo:)
@@ -194,6 +201,22 @@ fn result_with(session_id: String, fields: List(#(String, json.Json))) {
 
 fn result_line(session_id: String, outcome: String) -> String {
   result_with(session_id, report_fields(outcome))
+}
+
+/// The `result` the CLI ends a session with at one of its ceilings: the
+/// last line of run 20260907T175146Z's `theorist-1/events.jsonl`, less the
+/// usage, with `subtype` as given.
+fn error_result_line(session_id: String, subtype: String) -> String {
+  json.object([
+    #("type", json.string("result")),
+    #("subtype", json.string(subtype)),
+    #("session_id", json.string(session_id)),
+    #("is_error", json.bool(True)),
+    #("errors", json.array(["Reached maximum budget ($80)"], json.string)),
+    #("total_cost_usd", json.float(80.3)),
+    #("num_turns", json.int(13)),
+  ])
+  |> json.to_string
 }
 
 /// A result whose `structured_output` answers both a naming ceremony and a
@@ -256,21 +279,35 @@ fn ask_to_write(g: guard.Guard, path: String) -> String {
 // --- the verb -----------------------------------------------------------------------
 
 pub fn theorise_starts_one_fenced_session_and_reports_its_document_test() {
+  // The document is written by the scripted session, mid-turn, the way a
+  // theorist writes it — not by the test beforehand, because a file already
+  // at the path at session start is a first session's, and the fence moves
+  // to `-2`. What is under test is that the summary reads the file that is
+  // there when the session ends.
+  let assert Ok(cwd) = simplifile.current_directory()
+  let repo =
+    string.replace(cwd, "\\", "/") <> "/build/test-runs/theorist/attacked/repo"
+  let attack = theorist.attack_path(repo, theorist.today(), "the transients")
   let f =
     fixture(
       "attacked",
-      [[init_line("th-s"), result_line("th-s", "attacked")]],
+      [
+        [
+          init_line("th-s"),
+          "__WRITE__ " <> attack <> "\t# Attack\n\ntwenty-three",
+          result_line("th-s", "attacked"),
+        ],
+      ],
       peopled(),
     )
+  assert f.repo == repo
   put(f, "docs/theorist-brief.md", "# The theorist's task\n\nfixture task text")
-  // The document is written before the session because the shim is a
-  // script, not a theorist; what is under test is that the summary reads
-  // the file that is there.
-  let attack = theorist.attack_path(f.repo, theorist.today(), "the transients")
-  let assert Ok(_) = simplifile.create_directory_all(f.repo <> "/docs/attacks")
-  let assert Ok(_) = simplifile.write(attack, "# Attack\n\ntwenty-three")
   let port = ports.span(1)
-  let assert Ok(session) = theorist.run(f.cfg, options(port, "the transients"))
+  let args_path = f.dir <> "/args.json"
+  envoy.set("HARNESS_FAKE_ARGS", args_path)
+  let started = theorist.run(f.cfg, options(port, "the transients"))
+  envoy.unset("HARNESS_FAKE_ARGS")
+  let assert Ok(session) = started
   assert session.topic == "the transients"
   assert session.attack_path == attack
   // No `--as`: the eldest theorist on the roster, never the P1 prover.
@@ -303,6 +340,21 @@ pub fn theorise_starts_one_fenced_session_and_reports_its_document_test() {
   assert string.contains(events, "\"kind\":\"sent\"")
   assert string.contains(events, "Attack the topic `the transients`")
 
+  // The session ran under the theorist's ceilings, not the prover's: the
+  // dispatch row records them under the names a prover's row uses, the
+  // shim saw them on its command line, and the summary prints them. The
+  // first theorist ran under the prover's $4 and ended there.
+  assert string.contains(events, "\"max_turns\":600")
+  assert string.contains(events, "\"max_budget_usd\":80.0")
+  assert !string.contains(events, "\"max_turns\":40")
+  let args = read(args_path)
+  assert string.contains(
+    args,
+    "\"--max-turns\",\"600\",\"--max-budget-usd\",\"80.0\"",
+  )
+  assert !string.contains(args, "\"--max-turns\",\"40\"")
+  assert string.contains(session.summary, "ceilings  600 turns, $80.0")
+
   // The guard is a Theorist guard on the port it was asked for: it allows
   // the attack document, and it refuses the seeder's proposal file — the
   // one file the design takes away from this role — and the notebook.
@@ -312,6 +364,9 @@ pub fn theorise_starts_one_fenced_session_and_reports_its_document_test() {
     "127.0.0.1:" <> int.to_string(port),
   )
   assert ask_to_write(session.guard, attack) == "{}"
+  // A script under explorer/ is allowed, as for a seeder: the brief asks
+  // for falsification runs, and a run is a script.
+  assert ask_to_write(session.guard, f.repo <> "/explorer/probe.mjs") == "{}"
   let refused =
     ask_to_write(session.guard, f.repo <> "/blueprint/proposals/next.json")
   assert string.contains(refused, "deny")
@@ -390,6 +445,40 @@ pub fn as_starts_the_named_theorist_and_a_missing_document_is_abandoned_test() {
     "— " <> theorist.frontier_wall <> " (haiku, abandoned)",
   )
   assert !string.contains(read(f.cfg.agents_dir <> "/Vesper.md"), "scripted")
+}
+
+/// A session the CLI ended at its dollar ceiling is summarised as exactly
+/// that, with the ceiling the session was launched under — the theorist's
+/// $80, not the prover's $4 — so a reader of `summary.txt` can tell
+/// Sextant's thirteen-turn ending from a session that talked itself out,
+/// and the notebook heading says the same in a word.
+pub fn a_session_the_cli_ended_at_its_dollar_ceiling_is_summarised_as_dollars_test() {
+  let f =
+    fixture(
+      "dollar-ceiling",
+      [[init_line("th-d"), error_result_line("th-d", "error_max_budget_usd")]],
+      peopled(),
+    )
+  let assert Ok(session) =
+    theorist.run(f.cfg, options(ports.span(1), "the transients"))
+  assert string.contains(
+    session.summary,
+    "ended     stopped at the CLI's dollar ceiling ($80.0)",
+  )
+  assert !string.contains(session.summary, "turn ceiling")
+  assert !string.contains(session.summary, "the notes below say which")
+  // The notes under the summary name the ceiling too, then carry the CLI's
+  // own line.
+  assert string.contains(
+    session.summary,
+    "the CLI ended the session at the CLI's dollar ceiling ($80.0): ",
+  )
+  assert string.contains(
+    session.summary,
+    "\"subtype\":\"error_max_budget_usd\"",
+  )
+  assert string.contains(session.summary, "document  MISSING")
+  assert string.contains(session.summary, "(no report, so no next topic)")
 }
 
 /// `--as` with a name the roster lacks, or a name from another region, is
@@ -502,9 +591,97 @@ pub fn the_attack_path_is_dated_and_slugged_test() {
     == "the-transients-of-the-left-diagonals"
   assert theorist.attack_path("C:/r", "2026-09-07", "Onset & period")
     == "C:/r/docs/attacks/2026-09-07-onset-period.md"
+  assert theorist.numbered_attack_path(
+      "C:/r",
+      "2026-09-07",
+      "Onset & period",
+      1,
+    )
+    == "C:/r/docs/attacks/2026-09-07-onset-period.md"
+  assert theorist.numbered_attack_path(
+      "C:/r",
+      "2026-09-07",
+      "Onset & period",
+      2,
+    )
+    == "C:/r/docs/attacks/2026-09-07-onset-period-2.md"
   let today = theorist.today()
   assert string.length(today) == 10
   assert string.starts_with(today, "20")
+}
+
+/// The path a session is fenced to is the first free one: bare when
+/// nothing is there, `-2` when the bare file exists, `-3` when both do — a
+/// directory at the path counts as taken too.
+pub fn the_free_attack_path_is_the_first_not_taken_test() {
+  let f = fixture("free-path", [], roster.Roster([]))
+  let bare = theorist.attack_path(f.repo, "2026-09-07", "the seam")
+  let second =
+    theorist.numbered_attack_path(f.repo, "2026-09-07", "the seam", 2)
+  let third = theorist.numbered_attack_path(f.repo, "2026-09-07", "the seam", 3)
+  assert theorist.free_attack_path(f.repo, "2026-09-07", "the seam") == bare
+  let assert Ok(_) = simplifile.create_directory_all(f.repo <> "/docs/attacks")
+  let assert Ok(_) = simplifile.write(bare, "first")
+  assert theorist.free_attack_path(f.repo, "2026-09-07", "the seam") == second
+  let assert Ok(_) = simplifile.create_directory(second)
+  assert theorist.free_attack_path(f.repo, "2026-09-07", "the seam") == third
+  // Another topic, or another day, is untouched by the seam's files.
+  assert theorist.free_attack_path(f.repo, "2026-09-07", "the onset")
+    == theorist.attack_path(f.repo, "2026-09-07", "the onset")
+  assert theorist.free_attack_path(f.repo, "2026-09-08", "the seam")
+    == theorist.attack_path(f.repo, "2026-09-08", "the seam")
+}
+
+/// The case the design intends — several independent sessions on one
+/// topic, then a comparison — and the case that collided: with the first
+/// session's document on disk, the second session is fenced to `-2`, every
+/// record names that path, and the guard denies the first session's file.
+pub fn a_second_attack_on_one_topic_in_a_day_gets_its_own_file_test() {
+  let assert Ok(cwd) = simplifile.current_directory()
+  let repo =
+    string.replace(cwd, "\\", "/") <> "/build/test-runs/theorist/second/repo"
+  let first = theorist.attack_path(repo, theorist.today(), "the transients")
+  let second =
+    theorist.numbered_attack_path(repo, theorist.today(), "the transients", 2)
+  let f =
+    fixture(
+      "second",
+      [
+        [
+          init_line("th-2"),
+          "__WRITE__ " <> second <> "\t# Second attack",
+          result_line("th-2", "attacked"),
+        ],
+      ],
+      peopled(),
+    )
+  assert f.repo == repo
+  let assert Ok(_) = simplifile.create_directory_all(repo <> "/docs/attacks")
+  let assert Ok(_) = simplifile.write(first, "# First attack, Vesper's")
+  let assert Ok(session) =
+    theorist.run(f.cfg, options(ports.span(1), "the transients"))
+  assert session.attack_path == second
+  assert string.ends_with(second, "-the-transients-2.md")
+
+  // The brief, the first message, the dispatch row and the summary all name
+  // the second path and never the first.
+  let brief = read(session.dir <> "/briefs/theorist-1.md")
+  assert string.contains(brief, "Attack document: " <> second)
+  assert !string.contains(brief, first)
+  let events = read(session.dir <> "/events.jsonl")
+  assert string.contains(events, "\"attack\":\"" <> second <> "\"")
+  assert !string.contains(events, "\"attack\":\"" <> first <> "\"")
+  assert string.contains(events, "attack document to `" <> second <> "`")
+  assert string.contains(session.summary, "attack    " <> second)
+  assert string.contains(session.summary, "document  exists, 15 bytes")
+
+  // The guard allows exactly the second path and denies the first.
+  assert ask_to_write(session.guard, second) == "{}"
+  let refused = ask_to_write(session.guard, first)
+  assert string.contains(refused, "deny")
+  assert string.contains(refused, second)
+  // And the first session's document is as it was.
+  assert read(first) == "# First attack, Vesper's"
 }
 
 // --- flags -------------------------------------------------------------------------------
@@ -621,7 +798,8 @@ pub fn the_brief_names_the_persona_the_topic_the_fence_the_walls_and_the_section
   assert string.contains(brief, "Topic: the seam")
   assert string.contains(brief, "Attack document: " <> attack)
   assert string.contains(brief, f.repo <> "/docs/obstructions.md")
-  assert string.contains(brief, "exactly two files")
+  assert string.contains(brief, "exactly two files outside explorer/")
+  assert string.contains(brief, "Under explorer/ you may write")
   assert string.contains(brief, "not your own notebook")
   assert string.contains(brief, "node <one path")
   // Every wall, closed ones included, and only walls.

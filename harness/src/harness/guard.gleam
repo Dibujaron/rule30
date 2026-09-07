@@ -79,16 +79,19 @@ pub type Role {
   /// `blueprint/dag.json`. A seeder proposes; Rowan reviews and lands, because
   /// direction should not change while nobody is watching.
   Seeder(proposal_path: String)
-  /// Two files, and the seeder's commands: `attack_path` — the one attack
-  /// document the session exists to write, `docs/attacks/<date>-<topic>.md`
-  /// — and `obstructions_path`, `docs/obstructions.md`, the shared list of
-  /// known dead ends a theorist may add to. Plus `node <script>` under
-  /// `explorer/` and the `lake` grammar, for falsification runs. Nothing
-  /// under `explorer/` is writable: a theorist's deliverable is an argument,
-  /// and its scripts stay in the attack document as text rather than in the
-  /// tree. It cannot reach `blueprint/proposals/next.json`: that is the
-  /// seeder's file, and a theorist that could write it would be a seeder
-  /// with a longer brief.
+  /// The seeder's guard with two changes, as the spec's fence paragraph
+  /// says: `attack_path` — the one attack document the session exists to
+  /// write, `docs/attacks/<date>-<topic>.md` — and `obstructions_path`,
+  /// `docs/obstructions.md`, the shared list of known dead ends a theorist
+  /// may add to, in place of the seeder's proposal file. Everything else
+  /// is the seeder's: anything under `explorer/` writable, `node <script>`
+  /// under `explorer/`, and the `lake` grammar. The brief asks for every
+  /// candidate claim to carry an engine falsification run to a stated
+  /// depth, and a falsification run is a script; a theorist that could run
+  /// scripts but not write them did its falsification by pencil, which is
+  /// what the first one did. It cannot reach `blueprint/proposals/next.json`:
+  /// that is the seeder's file, and a theorist that could write it would be
+  /// a seeder with a longer brief.
   ///
   /// **On `obstructions_path`, the spec says "append access" and this guard
   /// cannot grant that.** A hook sees a `Write` or `Edit` tool call with a
@@ -275,6 +278,7 @@ fn decide_write(rules: Rules, file_path: String) -> Decision {
       case
         normalise_path(file_path) == normalise_path(attack_path)
         || normalise_path(file_path) == normalise_path(obstructions_path)
+        || under_explorer(rules.repo_root, file_path)
       {
         True -> Allow
         False ->
@@ -282,8 +286,10 @@ fn decide_write(rules: Rules, file_path: String) -> Decision {
             NotWritable,
             "harness guard: a theorist may only write its attack document "
               <> attack_path
-              <> " or add to "
-              <> obstructions_path,
+              <> ", add to "
+              <> obstructions_path
+              <> ", or write scripts under "
+              <> explorer_dir(rules.repo_root),
           )
       }
   }

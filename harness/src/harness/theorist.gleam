@@ -10,10 +10,11 @@
 //// description, and the provers' notes — driven by the same turn loop a
 //// prover runs in (`worker.drive`), and fenced by `guard.Theorist`: its
 //// attack document under `docs/attacks/`, the shared
-//// `docs/obstructions.md`, `node <script under explorer/>` and the `lake`
-//// grammar. Nothing adjudicates its work after the session, because the
-//// deliverable is prose: the summary says whether the document exists and
-//// how big it is, and a captain reads it.
+//// `docs/obstructions.md`, scripts under `explorer/` to write and to run
+//// with `node <script>`, and the `lake` grammar. Nothing adjudicates its
+//// work after the session, because the deliverable is prose: the summary
+//// says whether the document exists and how big it is, and a captain
+//// reads it.
 ////
 //// What it never does: write a statement, a proposal, a node, or its own
 //// notebook. It cannot reach `blueprint/proposals/next.json`,
@@ -30,6 +31,7 @@
 
 import gleam/dynamic.{type Dynamic}
 import gleam/dynamic/decode
+import gleam/float
 import gleam/int
 import gleam/io
 import gleam/json
@@ -312,11 +314,62 @@ fn trim_dashes(s: String) -> String {
   }
 }
 
-/// Where the attack document goes: `docs/attacks/<date>-<slug>.md` under
-/// the repository root, `date` as `YYYY-MM-DD`. The one file outside
-/// `docs/obstructions.md` the guard lets the session write.
+/// Where the attack document goes when nothing is there yet:
+/// `docs/attacks/<date>-<slug>.md` under the repository root, `date` as
+/// `YYYY-MM-DD`. Pure; `free_attack_path` is what a session is actually
+/// fenced to, because this path is taken by the first session of the day
+/// on a topic and a second must not be fenced to a file that exists.
 pub fn attack_path(repo_root: String, date: String, topic: String) -> String {
-  repo_root <> "/docs/attacks/" <> date <> "-" <> slug(topic) <> ".md"
+  numbered_attack_path(repo_root, date, topic, 1)
+}
+
+/// `attack_path` with an ordinal: `1` is the bare path, `2` and up carry
+/// `-2`, `-3`, ... before `.md`. So the second session on `the transients`
+/// on 2026-09-07 writes `2026-09-07-the-transients-2.md`.
+pub fn numbered_attack_path(
+  repo_root: String,
+  date: String,
+  topic: String,
+  n: Int,
+) -> String {
+  let ordinal = case n {
+    1 -> ""
+    _ -> "-" <> int.to_string(n)
+  }
+  repo_root
+  <> "/docs/attacks/"
+  <> date
+  <> "-"
+  <> slug(topic)
+  <> ordinal
+  <> ".md"
+}
+
+/// The first attack path for `topic` today that nothing is at: the bare
+/// path, else `-2`, else `-3`, and so on. Read off the disk at session
+/// start, once, and then fixed for the session's life — the guard, the
+/// brief, the first message, the dispatch row and the summary all name
+/// the one path this returns.
+///
+/// Two sessions on one topic in one day are the design's intended use
+/// (several independent attacks, then a comparison), and before this they
+/// resolved to the same path: the second was fenced to the file the first
+/// had written, and its Write overwrote it. Anything at the path counts as
+/// taken, a directory included, since a Write there would fail anyway.
+pub fn free_attack_path(
+  repo_root: String,
+  date: String,
+  topic: String,
+) -> String {
+  free_from(repo_root, date, topic, 1)
+}
+
+fn free_from(repo_root: String, date: String, topic: String, n: Int) -> String {
+  let path = numbered_attack_path(repo_root, date, topic, n)
+  case simplifile.file_info(path) {
+    Ok(_) -> free_from(repo_root, date, topic, n + 1)
+    Error(_) -> path
+  }
 }
 
 /// Where the shared list of dead ends lives, which the session may add to.
@@ -557,14 +610,15 @@ pub fn render(
       "",
       "Attack document: " <> attack_path,
       "",
-      "You may write exactly two files: the attack document above, and",
-      obstructions_path <> ",",
+      "You may write exactly two files outside explorer/: the attack",
+      "document above, and " <> obstructions_path <> ",",
       "to which you may add an entry at the end and change nothing above it —",
       "the guard permits the write and a captain's diff checks that it was",
-      "an addition. Every other write is denied by a hook, not by convention:",
-      "no script under explorer/ (put a script's text in the document), no",
-      "proposal, no statement, no node, and not your own notebook — the",
-      "harness writes that from your report. You may run `node <one path",
+      "an addition. Under explorer/ you may write and edit scripts freely:",
+      "a falsification run is a script, and it belongs in the tree with its",
+      "result in the document. Every other write is denied by a hook, not by",
+      "convention: no proposal, no statement, no node, and not your own notebook",
+      "— the harness writes that from your report. You may run `node <one path",
       "under explorer/>`, `lake build [modules]` and `lake env lean <file>`,",
       "one bare command per call with no shell operators.",
       "",
@@ -670,8 +724,11 @@ pub type Session {
 ///
 /// The order is the contract: the topic (from the flags or the board) and
 /// who runs (from the flags or the roster) are settled before anything is
-/// written, so a bad `--as` costs nothing; then the record directory, the
-/// guard and its settings; then the ceremony if a persona is being minted,
+/// written, so a bad `--as` costs nothing; then the attack path, chosen
+/// once as the first free `<date>-<slug>[-n].md` so a second session on
+/// the topic today gets its own file rather than the first session's;
+/// then the record directory, the guard and its settings — fenced to that
+/// path; then the ceremony if a persona is being minted,
 /// which needs the guard's settings and writes its `naming` row into the
 /// session's own log; then the brief (no brief, no session) and the
 /// session — and only once the session is closed, the notebook and journal
@@ -687,7 +744,7 @@ pub fn run(cfg: config.Config, options: Options) -> Result(Session, String) {
   })
   use roster_ <- result.try(roster.load(cfg.roster_path))
   use who_ <- result.try(who(roster_, options.persona))
-  let attack = attack_path(cfg.repo_root, today(), topic)
+  let attack = free_attack_path(cfg.repo_root, today(), topic)
   let obstructions = obstructions_path(cfg.repo_root)
   use run_log <- result.try(log.open(cfg.runs_root, log.new_run_id()))
   use l <- result.try(log.open(run_log.dir, session_name))
@@ -718,6 +775,9 @@ pub fn run(cfg: config.Config, options: Options) -> Result(Session, String) {
   ))
   use brief_text <- result.try(brief(cfg, identity, topic, attack))
   use brief_path <- result.try(worker.write_brief(l, session_name, brief_text))
+  // The theorist's ceilings, not the prover's: `worker.launch` reads
+  // `max_turns` and `max_budget_usd` from whatever config it is handed.
+  let session_cfg = config.for_theorist(cfg)
   log.event(l, "dispatch", [
     #("role", json.string("theorist")),
     #("identity", json.string(identity.name)),
@@ -725,14 +785,16 @@ pub fn run(cfg: config.Config, options: Options) -> Result(Session, String) {
     #("port", json.int(options.port)),
     #("topic", json.string(topic)),
     #("attack", json.string(attack)),
+    #("max_turns", json.int(session_cfg.max_turns)),
+    #("max_budget_usd", json.float(session_cfg.max_budget_usd)),
     #("log", json.string(l.dir)),
   ])
 
   let #(tally, ending) =
     worker.drive(
-      cfg,
+      session_cfg,
       l,
-      worker.launch(cfg, options.model, g, brief_path, report_schema()),
+      worker.launch(session_cfg, options.model, g, brief_path, report_schema()),
       task_message(topic, attack, obstructions),
       role(),
     )
@@ -740,7 +802,17 @@ pub fn run(cfg: config.Config, options: Options) -> Result(Session, String) {
   let size = document_size(attack)
   write_channels(cfg, run_log, identity, topic, options.model, ending, size)
   let summary =
-    summary(options, identity, topic, attack, l, tally, ending, size)
+    summary(
+      options,
+      session_cfg,
+      identity,
+      topic,
+      attack,
+      l,
+      tally,
+      ending,
+      size,
+    )
   log.summary(run_log, summary)
   Ok(Session(
     summary:,
@@ -817,9 +889,11 @@ fn document_size(path: String) -> Option(Int) {
 
 /// The summary a captain reads: who ran, the topic and where the document
 /// is, whether it exists, how the session ended in words that never call
-/// an argument proved, what it cost, and the next topic the theorist named.
+/// an argument proved, the ceilings it ran under, what it cost, and the
+/// next topic the theorist named.
 fn summary(
   options: Options,
+  cfg: config.Config,
   identity: roster.Identity,
   topic: String,
   attack: String,
@@ -848,7 +922,8 @@ fn summary(
         Some(bytes) -> "exists, " <> int.to_string(bytes) <> " bytes"
         None -> "MISSING — nothing is at that path"
       },
-      "ended     " <> ended_words(ending.end, size),
+      "ended     " <> ended_words(cfg, ending.end, size),
+      "ceilings  " <> ceilings(cfg),
       "cost      $" <> roster.usd(tally.cost_usd),
       "turns     " <> int.to_string(tally.turns),
       "session   " <> tally.session_id,
@@ -863,14 +938,20 @@ fn summary(
   )
 }
 
-/// How the session ended, in one word, for the notebook heading.
+/// How the session ended, in a word, for the notebook heading. A ceiling
+/// gets a second word saying which, because a theorist reading its own
+/// heading next session should know whether it ran out of money or of
+/// things to say.
 fn end_word(end: worker.End, size: Option(Int)) -> String {
   case end, size {
     worker.Finished, Some(_) -> "attacked"
     worker.Finished, None -> "abandoned"
     worker.Abandoned, _ -> "abandoned"
     worker.TimedOut, _ -> "timed_out"
-    worker.BudgetExhausted, _ -> "budget_exhausted"
+    worker.BudgetExhausted(worker.Turns), _ -> "budget_exhausted: turns"
+    worker.BudgetExhausted(worker.Dollars), _ -> "budget_exhausted: dollars"
+    worker.BudgetExhausted(worker.Rounds), _ -> "budget_exhausted: rounds"
+    worker.BudgetExhausted(worker.Unknown(_)), _ -> "budget_exhausted: cli"
     worker.RateLimited, _ -> "rate_limited"
   }
 }
@@ -879,8 +960,14 @@ fn end_word(end: worker.End, size: Option(Int)) -> String {
 /// claim that its document is written, and it is believed exactly as far as
 /// the file on disk supports it: with no document there the line says
 /// abandoned, because a report about a file that does not exist is not a
-/// report about the topic.
-fn ended_words(end: worker.End, size: Option(Int)) -> String {
+/// report about the topic. A ceiling is named with its value from the
+/// config the session ran under, so `$80.0` here is the ceiling the CLI was
+/// launched with and not a number remembered from elsewhere.
+fn ended_words(
+  cfg: config.Config,
+  end: worker.End,
+  size: Option(Int),
+) -> String {
   case end, size {
     worker.Finished, Some(_) ->
       "finished — the theorist reported its attack written; that is its claim about the document, and a captain's reading is the only adjudication"
@@ -888,7 +975,15 @@ fn ended_words(end: worker.End, size: Option(Int)) -> String {
       "abandoned — the theorist reported its attack written, but no document exists at the attack path, so the claim is recorded as abandoned"
     worker.Abandoned, _ -> "abandoned by the theorist"
     worker.TimedOut, _ -> "timed out"
-    worker.BudgetExhausted, _ -> "budget exhausted"
+    worker.BudgetExhausted(ceiling), _ ->
+      "stopped at " <> worker.ceiling_words(cfg, ceiling)
     worker.RateLimited, _ -> "rate limited"
   }
+}
+
+/// The two ceilings a session ran under, for the summary line.
+fn ceilings(cfg: config.Config) -> String {
+  int.to_string(cfg.max_turns)
+  <> " turns, $"
+  <> float.to_string(cfg.max_budget_usd)
 }
