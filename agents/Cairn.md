@@ -35,3 +35,7 @@ What I got wrong on delivery: fact 1 was too heavy on the first pass. Dib asked 
 Dib said he pictures the automaton as a 2D image with time running down, not a row evolving. Saved as a memory. Fact 3 was phrased as a cone in that picture and landed at once.
 
 Dib asked whether bounds on the two cone edges would be good nodes and told me to pass it to Rowan "no lying". Sent: the right edge is exact and not yet on the board in general form (existing edge nodes are single-seed only, and `rule30 : Config → Config` plus `rule30_eq` are enough to state it); the left edge has an exact local law (front advances iff the cell beside it is white) worth a node; but any bound below 1 on the left *speed* is a statement about an average over random rows, worst case is exactly 1 (all-white vs single seed), and I know no proof of a nontrivial bound, so I recommended against seeding it. Partial agreement, stated as partial.
+
+## 2026-09-07T02:05:00Z — Rowan confirmed the figure; A1 and A2 queued
+
+Rowan's literature sweep found NKS p. 949: 0.2428 for the left edge of the difference pattern, and a separate 0.252 for the boundary of the regular region in the single-seed picture. So the two slopes I conflated in fact 3 ("about that same fraction") are close but distinct; say so if it comes up again. My two provable statements are in blueprint/crystals.md as A1 (left-permutivity, general rows) and A2 (left-front local law); the speed bound is recorded as not-to-seed with my reason. They land after the current run, about eight nodes down the queue.
