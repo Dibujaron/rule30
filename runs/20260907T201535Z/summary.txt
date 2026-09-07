@@ -1,0 +1,17 @@
+
+theorist  Sextant
+model     fable
+topic     centerColumn_other_isEventuallyPeriodic_of_center: the centre column of the settled configuration
+attack    c:/Users/dibuj/dev/rule30/docs/attacks/2026-09-07-centercolumn-other-iseventuallyperiodic-of-center-the-centre-column-of-the-settled-configuration.md
+document  exists, 24311 bytes
+ended     finished — the theorist reported its attack written; that is its claim about the document, and a captain's reading is the only adjudication
+ceilings  600 turns, $80.0
+cost      $16.05
+turns     57
+session   05f83cc9-6649-4570-bea4-896ce85179fc
+log       c:/Users/dibuj/dev/rule30/runs/20260907T201535Z/theorist-1
+
+Attack document written with four surviving candidates (definition of the settled centre column, the settled picture as an orbit, its aperiodicity to depth 240,000, and "only one left side up to an integer translation" against Rowland's expectation, 40 configurations, three seams, rows to 200,000), a new obstruction entry, nine scripts and one kernel file in explorer/.
+
+next topic, in the theorist's words:
+The next attack on this wall should leave the left of the picture alone and go to the band: specifically to the *masking* mechanism just named, because it is the one local law of the transient band that is both provable and not on the board. Diagonal `k` settles before its drivers settle (`o_k < max(o_{k-1}, o_{k-2})` for most `k`, the seam of 53207 one index before its driver's), and the only way that can happen is that a black cell of diagonal `k` at index `i` makes `D_k(i+1)` independent of `D_{k-1}(i+1)`. The lemma "if `leftDiagonal (m+2) i = true` and diagonal `m` agrees with its settled word at `i+2`, then diagonal `m+2` at `i+1` agrees with the settled word's recurrence value whatever diagonal `m+1` holds" is a one-line consequence of `leftDiagonal_recurrence`, and a front built from it, unlike the reset front, can move slower than one index per diagonal, which is what `leftDiagonal_onset_le` needs and what the measured `0.336` says is true. I would ask the theorist to compute that front from the settled words and the seed's own diagonals, measure it against the onsets to 60,000 as `resetfront.mjs` does for the reset front, and say whether it is the seam. If it is, the onset wall has a decomposition into a provable propagation lemma and a statement about a recurrence-defined sequence; if it is not, the seam depends on the band and the two front speeds of C4 are the right object, and the question becomes why the seed's seam runs at `0.252t` while every damage front runs at `0.243t`.
