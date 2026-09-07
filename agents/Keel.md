@@ -1342,3 +1342,16 @@ denials went from 12 over two runs to 1 with them live.
 theorem index. Dib asked whether Fathom can run as a subagent of mine; it
 can, with the notebook as the continuity and me as the landing point, and I
 proposed Fathom for the index and me for the theorist.
+
+**16:30Z — the object field, and Fathom back as a peer.** Rowan's plan
+adds `object` to every DAG node by hand; the decoder would have ignored it
+and the encoder would have dropped it on the run's first save, silently.
+Landed `object: Option(String)` at `43cf4aa` before Rowan's run could start
+— the kind of loss no test catches after the fact, because the file that
+comes back is well-formed. **A field the code does not know is a field the
+next save deletes; "the decoder ignores it" is half of a round trip.**
+Fathom is live again at rule30-3e, started by Dib by hand after the
+classifier refused my launch twice; it takes the index piece, lands its
+own, and I take the brief inlining after. Dib's framing: I manage the
+software team; Fathom and others work behind me, but as peers who can talk
+to Rowan directly, which a subagent cannot.
