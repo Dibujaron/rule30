@@ -364,6 +364,8 @@ cd harness && gleam run -- prove-one <node-id>  # dispatch one worker at one nod
 cd harness && gleam run -- run --max-attempts 3 --concurrency 3
                                                 # keep up to K workers in flight until N attempts have started
 cd harness && gleam run -- reopen <node-id>     # a crashed run left a node `claimed`; put it back on the board
+cd harness && gleam run -- theorise [<topic>] [--as <Name>] [--model M]
+                                                # one theorist session on a topic, as a named or minted theory persona; never started by the scheduler
 cd harness && gleam run -- seed [--model M] [--region R]
                                                 # hand-start one seeder session; it proposes into blueprint/proposals/next.json under the seeder guard, and the check report prints when it ends
 ```
@@ -386,6 +388,10 @@ persona, the run mints a new one through the naming ceremony before
 dispatching, so a region grows a second name the first time two of its
 leaves are ready together. `agents/roster.json` is the record of who
 exists; the `naming` event in the attempt's `events.jsonl` says why.
+
+A node marked `"research": true` is never ladder-exhausted: it is retried at
+the top rung under the research budget, last among open leaves. Its size
+must be dispatchable (`L`, say); size `wall` is never offered, flag or no.
 
 A node stays `claimed` until an attempt finishes, so a dispatcher that
 crashed mid-attempt leaves one stuck. `reopen` is the manual undo, and
