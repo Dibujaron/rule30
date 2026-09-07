@@ -462,3 +462,19 @@ evolveHalfRight_eq_column (sonnet, proved), first attempt on this node — mirro
 Self-check via the append-`#print axioms`-then-remove trick (documented across many prior P1 nodes): `propext, Quot.sound`, no `Classical.choice` — pure constructive index bookkeeping, consistent with every other node in the arbitrary-row/half-line family.
 
 Import list `Rule30.Basic`, `Mathlib.Tactic.Ring` sufficient — `push_cast` rode in on `Ring` as in every other node that's needed it.
+
+## 2026-09-07T20:14:05Z — leftSolve_eq_column (sonnet, proved)
+
+leftSolve_eq_column (sonnet, proved), first try, no dead ends.
+
+Route: `induction k using Nat.strong_induction_on generalizing t with | _ k ih => match k, ih with ...`. Generalizing `t` before the strong induction is essential — the `m + 2` case needs `ih` at `m + 1` at *both* `t` and `t + 1`, so the carried statement must be `∀ t, ...`, not fixed `t`. `generalizing t` handles this cleanly since `t` has no dependent hypotheses to drag along.
+
+Key translation: `column X i t` is definitionally `evolveFrom X t i` (note the argument-order flip), and `sideways_inverse (c : Config) (i : ℤ) : c (i - 1) = xor (rule30 c i) (c i || c (i + 1))` becomes exactly `leftSolve`'s recurrence once instantiated at `c := evolveFrom X t` and rewritten with `← evolveFrom_succ` (`evolveFrom_succ c t : evolveFrom c (t+1) = rule30 (evolveFrom c t)` — note the `←`, since we want to *introduce* `evolveFrom X (t+1)`, not eliminate it; the forward direction is what `evolve_succ`/`rule30_eq` unfolds elsewhere, but here we're going the other way).
+
+Base case k=0: `rw [show -((0:ℕ):ℤ) = 0 from by norm_num]` does NOT auto-close via `rw`'s trailing `rfl` here (got "unsolved goals: leftSolve ... 0 t = column X 0 t") — needed an explicit `rfl` afterward, unlike the m+2 case's final `exact`. Minor inconsistency worth remembering: `rw`'s auto-rfl only fires when the resulting goal is *syntactically* rfl-closable at the transparency `rw` uses; here it wasn't, even though `leftSolve _ _ 0 t` is defeq to `column X 0 t` by `exact`/`rfl`'s own defeq check. Just append `rfl` defensively after a `rw` meant to fully close a defeq goal, rather than assuming the auto-rfl caught it.
+
+Base case k=1 and step case m+2: both close by `show <fully unfolded form> = <fully unfolded form>` (crossing the `leftSolve`/`column` definition boundary by defeq per [[evolve-left-edge]]'s established idiom), then one `sideways_inverse` instance with `← evolveFrom_succ` and a `rw [show <index eq> from by norm_num / push_cast; ring]` to line up the position argument, then `exact h.symm` (or `exact hstep.symm` after substituting IHs via `rw [h0, h1, h2]`) — `exact` finds column/evolveFrom defeq automatically once every index term matches syntactically, no further massaging needed.
+
+No new gotchas beyond what the cookbook and prior P1 notes already cover — `norm_num` for concrete numeral cast identities (`0 - 1 = -(1:ℕ:ℤ)`, `0 + 1 = 1`), `push_cast; ring` for the variable ones (`-(m+1) - 1 = -(m+2)`, `-(m+1)+1 = -m`). Axioms verified via `lake env lean` with a temporary `#print axioms` line: `propext, Quot.sound`, no `Classical.choice`.
+
+Import list: `Rule30.Basic`, `Rule30.Proofs.SidewaysInverse`, `Mathlib.Algebra.Order.Ring.Int`, `Mathlib.Tactic.Ring` — sufficient, `norm_num`/`push_cast` rode in on those two as in every other P1 node needing them.

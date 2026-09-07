@@ -61,6 +61,7 @@ import Rule30.Proofs.LeftDiagonalPeriodicFromStep
 import Rule30.Proofs.LeftDiagonalPeriodicFromStepOfBlack
 import Rule30.Proofs.LeftDiagonalRecurrence
 import Rule30.Proofs.LeftDiagonalStepPeriodDichotomy
+import Rule30.Proofs.LeftSolveEqColumn
 import Rule30.Proofs.NotEvolvePeriodAdjacent
 import Rule30.Proofs.NotIsEventuallyPeriodicAdjacent
 import Rule30.Proofs.NotIsEventuallyPeriodicPair
