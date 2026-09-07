@@ -146,7 +146,11 @@ pub fn prove_one(
   let pending =
     write_channels(cfg, l, l, identity, claimed, model, attempt, report)
   auto_file_signals(cfg, l, node_id, identity, attempt)
-  let text = summary(d, l, identity, attempt, node_id)
+  let parked = case attempt.outcome {
+    dag.Closed -> None
+    _ -> park_proof_file(cfg, l, claimed)
+  }
+  let text = summary(d, l, identity, attempt, node_id, parked)
   log.summary(l, text)
   io.println(text)
   // Only now, with the attempt's whole record already written — board
@@ -684,9 +688,13 @@ fn returned(
       report,
     )
   auto_file_signals(cfg, flight.attempt_log, node.id, flight.identity, attempt)
+  let parked = case attempt.outcome {
+    dag.Closed -> None
+    _ -> park_proof_file(cfg, flight.attempt_log, node)
+  }
   log.summary(
     flight.attempt_log,
-    summary(d, flight.attempt_log, flight.identity, attempt, node.id),
+    summary(d, flight.attempt_log, flight.identity, attempt, node.id, parked),
   )
   let halted = case attempt.outcome, state.halted {
     dag.RateLimited, None ->
@@ -730,6 +738,7 @@ fn crashed(
     #("node", json.string(node.id)),
     #("reason", json.string(reason)),
   ])
+  let _ = park_proof_file(run_.cfg, flight.attempt_log, node)
   io.println_error(
     "harness/dispatch: the attempt at "
     <> node.id
@@ -1814,12 +1823,79 @@ pub fn worth_filing(
   list.filter(reported, fn(rb) { rb.title != "" })
 }
 
+/// Move an unclosed attempt's proof file out of `Rule30/Proofs/` and into
+/// the attempt's own directory. Returns where it went, or `None` when there
+/// was nothing to move or the move failed — a failure is printed and
+/// recorded, never raised, because this runs after the attempt's record is
+/// written and must not cost it.
+///
+/// `Rule30/Proofs/` is read by Dib and swept into commits by captains, and
+/// CLAUDE.md says it holds one file per *closed* node. A parked, abandoned
+/// or crashed attempt used to leave its file there, where nothing
+/// distinguished debris from a proof whose attempt was mislabelled, and
+/// where `git add -A Rule30/Proofs` took it in (65cf7a8). The file is kept
+/// rather than deleted because it is often worth reading: the next brief on
+/// the node names this path (`brief.previous_attempt_file`), so the intent
+/// of `parked-attempt-leaves-untracked-proof-file` — the next worker reads
+/// the previous work first — survives the move.
+fn park_proof_file(
+  cfg: config.Config,
+  l: log.Log,
+  node: dag.Node,
+) -> Option(String) {
+  let rel = dag.proof_path(node)
+  let from = cfg.repo_root <> "/" <> rel
+  let to =
+    l.dir
+    <> "/"
+    <> {
+      string.split(rel, "/")
+      |> list.last
+      |> result.unwrap(rel)
+    }
+  case simplifile.is_file(from) {
+    Ok(True) ->
+      case simplifile.rename(from, to) {
+        Ok(Nil) -> {
+          log.event(l, "proof_file", [
+            #("node", json.string(node.id)),
+            #("from", json.string(rel)),
+            #("to", json.string(to)),
+            #("outcome", json.string("moved")),
+          ])
+          Some(to)
+        }
+        Error(err) -> {
+          let reason = simplifile.describe_error(err)
+          log.event(l, "proof_file", [
+            #("node", json.string(node.id)),
+            #("from", json.string(rel)),
+            #("to", json.string(to)),
+            #("outcome", json.string("failed")),
+            #("reason", json.string(reason)),
+          ])
+          io.println_error(
+            "harness/dispatch: could not move "
+            <> rel
+            <> " into "
+            <> l.dir
+            <> ": "
+            <> reason,
+          )
+          None
+        }
+      }
+    _ -> None
+  }
+}
+
 fn summary(
   d: dag.Dag,
   l: log.Log,
   identity: roster.Identity,
   attempt: dag.Attempt,
   node_id: String,
+  parked: Option(String),
 ) -> String {
   string.join(
     [
@@ -1833,6 +1909,12 @@ fn summary(
       "estimate  " <> dag.size_to_string(attempt.estimate),
       "session   " <> attempt.session_id,
       "log       " <> l.dir,
+      "proof     "
+        <> case parked {
+        Some(path) ->
+          path <> " (moved out of Rule30/Proofs/: not a closed node)"
+        None -> "-"
+      },
       "",
       "verifier:",
       attempt.notes,

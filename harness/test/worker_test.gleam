@@ -151,13 +151,13 @@ pub fn signature_of_an_absent_name_is_an_error_test() {
 
 pub fn task_message_of_an_absent_statement_is_an_error_test() {
   let n = node("no_such_lemma", dag.S, [])
-  let assert Error(reason) = brief.task_message_from(n, statements())
+  let assert Error(reason) = brief.task_message_from(n, statements(), None)
   assert string.contains(reason, "no_such_lemma")
 }
 
 pub fn task_message_carries_the_exact_statement_and_the_file_to_write_test() {
   let n = node("centerColumn_zero", dag.S, [])
-  let assert Ok(msg) = brief.task_message_from(n, statements())
+  let assert Ok(msg) = brief.task_message_from(n, statements(), None)
   assert string.starts_with(
     msg,
     "Prove `centerColumn_zero` in `Rule30/Proofs/CenterColumnZero.lean`.",
@@ -177,6 +177,62 @@ pub fn task_message_carries_the_exact_statement_and_the_file_to_write_test() {
     msg,
     "If `Rule30/Proofs/CenterColumnZero.lean` already exists it is a previous attempt's work on this node: read it first and keep whatever builds.",
   )
+}
+
+/// An unclosed attempt's file is moved into its attempt directory at attempt
+/// end, so the sentence that pointed the next worker at the file's old
+/// place is no longer enough on its own: the brief names where it went.
+pub fn the_task_message_names_the_previous_attempts_parked_file_test() {
+  let n = node("centerColumn_zero", dag.S, [])
+  let assert Ok(msg) =
+    brief.task_message_from(
+      n,
+      statements(),
+      Some("runs/20260907T201514Z/centerColumn_zero-1/CenterColumnZero.lean"),
+    )
+  assert string.contains(
+    msg,
+    "The previous attempt's file was moved to `runs/20260907T201514Z/centerColumn_zero-1/CenterColumnZero.lean`: read it first and keep whatever builds.",
+  )
+  let assert Ok(fresh) = brief.task_message_from(n, statements(), None)
+  assert !string.contains(fresh, "was moved to")
+}
+
+/// The parked file is found under `runs/` and not recorded on the board:
+/// newest run first, highest attempt within it, and only when the file is
+/// actually there. Relative to the repo root only when `runs/` is under it.
+pub fn the_previous_attempts_file_is_the_newest_one_under_runs_test() {
+  let dir = "build/test-runs/brief-previous"
+  let _ = simplifile.delete(dir)
+  let n = node("centerColumn_zero", dag.S, [])
+  let file = "CenterColumnZero.lean"
+  let put = fn(run: String, attempt: String, present: Bool) {
+    let d = dir <> "/runs/" <> run <> "/" <> attempt
+    let assert Ok(_) = simplifile.create_directory_all(d)
+    case present {
+      True -> {
+        let assert Ok(_) =
+          simplifile.write(
+            d <> "/" <> file,
+            "-- parked
+",
+          )
+        Nil
+      }
+      False -> Nil
+    }
+  }
+  put("20260906T000000Z", n.id <> "-1", True)
+  put("20260907T000000Z", n.id <> "-2", True)
+  put("20260907T000000Z", n.id <> "-10", True)
+  put("20260908T000000Z", n.id <> "-3", False)
+  put("20260908T000000Z", "other_node-1", True)
+  let assert Ok(base) = config.load()
+  let cfg = config.Config(..base, runs_root: dir <> "/runs")
+  assert brief.previous_attempt_file(cfg, n)
+    == Some(dir <> "/runs/20260907T000000Z/" <> n.id <> "-10/" <> file)
+  let none = config.Config(..base, runs_root: dir <> "/nowhere")
+  assert brief.previous_attempt_file(none, n) == None
 }
 
 // --- the brief ----------------------------------------------------------------

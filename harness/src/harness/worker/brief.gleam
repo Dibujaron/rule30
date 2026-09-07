@@ -16,6 +16,7 @@
 import gleam/int
 import gleam/json
 import gleam/list
+import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
 import harness/config
@@ -437,14 +438,68 @@ pub fn task_message(
       "cannot read " <> path <> ": " <> simplifile.describe_error(e)
     }),
   )
-  task_message_from(node, source)
+  task_message_from(node, source, previous_attempt_file(cfg, node))
+}
+
+/// Where the last unclosed attempt at `node` left its proof file, if any:
+/// the dispatcher moves an unclosed attempt's file into that attempt's
+/// directory (`dispatch.park_proof_file`), and this is the read side. Derived
+/// from `runs/` rather than recorded on the board, so a dispatcher that died
+/// after the move and before any save still leaves a path the next brief
+/// can find. Newest run first, highest attempt number within it; relative
+/// to the repo root when `runs/` is under it, so it reads like every other
+/// path in the brief.
+pub fn previous_attempt_file(
+  cfg: config.Config,
+  node: dag.Node,
+) -> Option(String) {
+  let base =
+    string.split(dag.proof_path(node), "/")
+    |> list.last
+    |> result.unwrap(dag.proof_path(node))
+  let prefix = node.id <> "-"
+  let runs =
+    simplifile.read_directory(cfg.runs_root)
+    |> result.unwrap([])
+    |> list.sort(fn(a, b) { string.compare(b, a) })
+  list.find_map(runs, fn(run) {
+    let run_dir = cfg.runs_root <> "/" <> run
+    simplifile.read_directory(run_dir)
+    |> result.unwrap([])
+    |> list.filter_map(fn(entry) {
+      case string.starts_with(entry, prefix) {
+        True ->
+          int.parse(string.drop_start(entry, string.length(prefix)))
+          |> result.map(fn(n) { #(n, entry) })
+        False -> Error(Nil)
+      }
+    })
+    |> list.sort(fn(a, b) { int.compare(b.0, a.0) })
+    |> list.find_map(fn(pair) {
+      let path = run_dir <> "/" <> pair.1 <> "/" <> base
+      case simplifile.is_file(path) {
+        Ok(True) -> Ok(path)
+        _ -> Error(Nil)
+      }
+    })
+  })
+  |> result.map(fn(path) {
+    let root = cfg.repo_root <> "/"
+    case string.starts_with(path, root) {
+      True -> string.drop_start(path, string.length(root))
+      False -> path
+    }
+  })
+  |> option.from_result
 }
 
 /// `task_message` with the statement file's text supplied — the pure half,
-/// so it can be tested without a working directory.
+/// so it can be tested without a working directory. `previous` is where the
+/// last unclosed attempt's file was parked, when there is one.
 pub fn task_message_from(
   node: dag.Node,
   statements_source: String,
+  previous: Option(String),
 ) -> Result(String, String) {
   use sig <- result.try(signature(statements_source, node.lean_name))
   Ok(
@@ -462,7 +517,14 @@ pub fn task_message_from(
     <> dag.proof_module(node)
     <> "`. If `"
     <> dag.proof_path(node)
-    <> "` already exists it is a previous attempt's work on this node: read it first and keep whatever builds.",
+    <> "` already exists it is a previous attempt's work on this node: read it first and keep whatever builds."
+    <> case previous {
+      Some(path) ->
+        " The previous attempt's file was moved to `"
+        <> path
+        <> "`: read it first and keep whatever builds."
+      None -> ""
+    },
   )
 }
 
