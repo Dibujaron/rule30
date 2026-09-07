@@ -417,6 +417,89 @@ in another coat, and would sit beside it, not under it.
     seed's up to a shift chosen at the branch points, Rowland §6 with
     phase) as the reason a periodic boundary is invisible to it.
 
+45. **The white branch of the left induction costs one index, not one period.**
+    `leftDiagonal_step_onset_dichotomy (m q N) : PeriodicFrom (leftDiagonal m) q N → PeriodicFrom (leftDiagonal (m+1)) q N → PeriodicFrom (leftDiagonal (m+2)) (2*q) (N+1) ∨ ∃ j, N ≤ j ∧ leftDiagonal (m+1) (j+1) = true ∧ PeriodicFrom (leftDiagonal (m+2)) q (j+1)`.
+    When the middle diagonal is white from `N + 1` on, the new diagonal is a
+    running total of the one two further out (`bool_xor_driven_periodicFrom`
+    applies verbatim), so its onset moves by one cell and its period at most
+    doubles; when the middle diagonal is black somewhere, the onset jumps to
+    that cell (`leftDiagonal_periodicFrom_step_of_black`). *Proved*: found by
+    Cadence on opus in an abandoned research attempt on `leftDiagonal_onset_le`
+    (run 20260907T201514Z), kept as `explorer/scratch_onset_dichotomy.lean`,
+    which compiles alone. The seed check's verdict on it as a route to the
+    wall is right: iterating it bounds the onset by the sum of the first-black
+    gaps, and bounding that sum by `k` is what remains open. Worth a node when
+    an onset argument wants it; sits under `leftDiagonal_onset_le`.
+
+46. **The settled centre column, defined on the board.**
+    `settledCenter (k : ℕ) : Bool := leftDiagonal k (2 ^ k)`, and
+    `∀ k m, 1 ≤ m → leftDiagonal k (m * 2 ^ k) = settledCenter k`: read the
+    seed's picture down any column whose distance from the origin is a
+    multiple of `2^k` and past the onset, and the `k`-th cell below the
+    edge is the same whichever column is read. It is the settled word of
+    diagonal `k` at index 0, where the centre column reads the transient
+    instead. *Proved* in effect: `leftDiagonal_periodicFrom_pow` gives an
+    onset `≤ 2^k` with period `2^k`, and an induction on `m` walks from
+    `2^k` to `m · 2^k`. Size S. Checked by Sextant to 240,000 and by Rowan
+    independently for `k ≤ 11` on 47,967 cells
+    (`explorer/rowan_leftside_check.mjs`); kernel to `k ≤ 10`
+    (`explorer/scratch_settledcenter.lean`). `s(0..10) = 11011100110`,
+    equal to the centre column for `k ≤ 17` and at the coin-flip rate
+    after. Sextant, fourth attack of 2026-09-07, C1. Seed first: 47–49
+    need it.
+47. **The settled picture is the rule 30 evolution of the settled
+    configuration**, stated in diagonal coordinates without a settled-word
+    object: `Σ x = leftDiagonal x (2 ^ (x + 1) - x)` for `x ≥ 0`, white for
+    `x < 0`, and `column Σ x t = leftDiagonal (t + x) (2 ^ (t + x + 1) - x)`
+    for `x ≥ -t`; so `column Σ 0 = settledCenter`. Puts crystal 44's `Σ` on
+    the board as a `Config`, to which the half-line tier and Kopra's width-2
+    theorem apply. *Computed*: 300,040,001 cells, 0 mismatches to 10,000
+    steps (`explorer/settledorbit.mjs`). Route: induction on `t` with
+    `rule30_eq`, moving four `leftDiagonal` indices to a common frame by 46's
+    periodicity and closing with `leftDiagonal_recurrence`; edge cases from
+    the three edge diagonals. Size M–L, cast-heavy: seed it with `j : ℕ`
+    diagonal indices, not through `column`. Sextant C2.
+48. **The settled centre column is not eventually periodic.**
+    `¬ IsEventuallyPeriodic settledCenter`: Kopra's width-1 problem for the
+    configuration `Σ`, which has no transients at all and the lowest
+    information content in the picture (fixed by the recurrence and about
+    `log₂ log₂ K` branch bits to depth `K`). *Computed*: 240,001 terms, every
+    lag to 120,000, longest agreeing tail 16 cells; balanced, factor counts
+    those of a random sequence. *Open*; no route; the wall in another
+    configuration. Sextant C3.
+49. **There is only one left side of rule 30, up to a translation along the
+    edge** — a computed finding against a published surmise. For every
+    configuration white far to the left with its leftmost black cell at the
+    origin that was tried (40 by Sextant to 200,000 rows; three by Rowan
+    independently to 20,000, `explorer/rowan_leftside_check.mjs`), there is
+    one integer `N` such that the configuration's picture equals the seed's
+    translated by `(t, x) ↦ (t + N, x - N)` on everything left of a front at
+    about `0.243 t` from the origin, which lies inside the transient band:
+    the seam at `0.252 t`, every settled word, every seam position and a
+    strip of transients are the seed's. Rowan's numbers: `N = 58, 16, 77`
+    for a cell added at 7, a block at 100..199, and a random right half of
+    width 3000; with that `N` the first disagreement sits at `0.764`–`0.769 t`
+    from the left edge, and with any other `N` of the same residue mod 16
+    at `0.751`–`0.754 t`, the seam. Rowland 2006 §5 (lines 913–946 of the
+    extraction) conjectures the eventual periods are independent of the row,
+    calls the conjecture "likely false", names column 53209 as the expected
+    counterexample "if in fact they do occur for some initial conditions",
+    and surmises infinitely many left sides. Sextant: all 40 configurations
+    take the seed's word at 53208 and branch next at 58287, never at
+    Rowland's 72577. **Mechanism and limit**, in Sextant's words and
+    Rowan's reading: the damage front from any right-side change moves left
+    at about `0.243` and the seam at `0.252`, so the settled region is
+    protected by a margin of `0.009 t` that is an average, not a law; below
+    row 2,100 the front ran ahead of the seam in five of seven cases, and a
+    right half built to push its front 3.5 % faster for 70,000 rows would
+    take Rowland's other branch. Crystals A3 says no speed below 1 is
+    provable. So Rowland's surmise is not refuted; what is new is that the
+    counterexample is never realised by an ordinary configuration, and the
+    translation form with its integer `N`. *Computed*; no route to the
+    full claim; the finite propagation piece is
+    `bool_driven_periodicFrom_of_reset` with two orbits in place of a
+    periodic driver, size S. Sextant C4; the fifth obstruction entry.
+
 ## Not credible or not verified
 
 - arXiv:2207.13237 (Das, "Rule 30: Solving the Chaos") claims an analytical

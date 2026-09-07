@@ -1,0 +1,15 @@
+
+node      leftDiagonal_pair_never_eventually_shifted
+identity  Vesper
+model     sonnet
+outcome   proved
+cost      $0.77
+turns     15
+estimate  M
+session   ad012d4b-b85a-4180-a4a8-196bef44cb40
+log       c:/Users/dibuj/dev/rule30/runs/20260907T201514Z/leftDiagonal_pair_never_eventually_shifted-1
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Vesper (#2b3a67): closed 40, abandoned 1, $21.05, calibration 34/40

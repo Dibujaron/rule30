@@ -179,3 +179,58 @@ region the residual does not live in.
 `docs/attacks/2026-09-07-centercolumn-other-iseventuallyperiodic-of-center-the-transients-of-the-left-diagonals-under-a-periodic-boundary.md`.
 One correction to the entry above: its rows `1`, `11`, `011`, `0011`,
 `11011` are written with cell `-1` leftmost, not rightmost.
+
+## The left of the picture knows one integer about the configuration
+
+**The natural attempt.** The entry above says the settled words carry no
+trace of the boundary. The seam between the settled region and the
+transient band, and the first cells of the transients beyond it, are not
+periodic, so look there: the position of the seam on each diagonal, the
+transient cells just inside it, and above all the choice at Rowland's
+complement-type branch points (his column 53209, our diagonal 53208,
+where the settled word has two candidates that are not shifts of each
+other) all look like places where a configuration, and so a periodic
+boundary, could leave a signature. Rowland 2006 §5 expected exactly this:
+"one surmises that in fact there are infinitely many possible left sides
+of rule 30".
+
+**Why it fails.** For every configuration white far to the left that was
+tried (40 of them: single added cells, blocks, periodic right halves,
+random right halves of width 3,000 and 20,000, sparse ones), there is one
+integer `N` between `-123` and `34` such that the configuration's picture
+is the seed's picture translated by `(t, x) ↦ (t + N, x - N)` on the
+whole region left of a front at about `0.243 t` from the origin, and the
+seam runs at `0.252 t`, so the region that is the seed's includes every
+settled cell, every seam, and a strip of the transient band. The
+complement-type branches at 53208 and 58287 are inherited from the seed
+by all 40 (the word is a cyclic shift of the seed's, the next branch is
+at 58287 and never at Rowland's 72577), the seams of the eventually-white
+diagonals 53207, 58286 and 87866 are the seed's shifted by the same `N`
+for all 40, and the four diagonals around the seam of 53207 are the
+seed's cell for cell, transient cells included, in every one looked at
+(`explorer/leftsides.mjs`, `branch53208.mjs`, `translated.mjs`,
+`frontmargin.mjs`, `frontmargin2.mjs`; rows to 200,000). The picture of a
+configuration is `τ_N(seed)` plus damage from the right whose front runs
+slower than the seed's own seam. So the settled centre column of every
+configuration is the seed's settled column `-N` read down from the edge,
+and nothing left of the damage front distinguishes one boundary from
+another beyond `N`. A periodic boundary, if one existed, would have a
+left side that is the seed's translated, like every other.
+
+**What it would take.** The statement is a margin, not a law: below
+row 2,100 the damage front did run ahead of the seed's translated seam
+(by up to 68 cells), and the margin at row 79,000 is 650–760 cells,
+growing at about `0.009 t`; a configuration built to keep its damage
+front 3.5 % ahead of the average for 70,000 rows would take the other
+branch, and no bound on a left front is available (crystals A3). So the
+left side cannot be *proved* universal either. Either way the residual
+is a statement about the band right of the damage front, where the
+right half-line and the black-time identity live, and a lemma that
+mentions only diagonals, seams or settled words cannot close it. What
+the region does leave open is the integer `N` itself: it is decided in
+the first few thousand rows by the interaction of the right side with
+the left, and nothing is known about it as a function of the
+configuration.
+
+**Recorded** 2026-09-07 by Sextant, from the attack document
+`docs/attacks/2026-09-07-centercolumn-other-iseventuallyperiodic-of-center-the-centre-column-of-the-settled-configuration.md`.

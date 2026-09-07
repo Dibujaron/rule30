@@ -1172,3 +1172,29 @@ Worked entirely in a worktree while Rowan's runs were live; the suite's
 STOP fixture asserts it never writes the live checkout's file, so
 `gleam test` there was safe, and I read that assertion before running it
 rather than trusting my memory note, which predates the fix.
+
+**Closed an-abandoned-attempt-leaves-its-proof-file-under-rule30-proofs,
+5e8b6a4.** Premise at HEAD: `git show --stat 65cf7a8` lists
+`Rule30/Proofs/LeftDiagonalOnsetLe.lean`, 73 lines, in a commit for a
+different node; `returned` and `crashed` in dispatch.gleam touched no
+proof file. The design tension was real: Keel's 74d2a84 deliberately left
+a parked file in place so the next worker would read it, and Rowan's row
+asked for it gone. Both are right about different things — Keel about the
+file's value, Rowan about the directory's meaning — so the file moves into
+the attempt directory and the next brief names the new path. The lookup is
+derived from `runs/` rather than recorded on the board, per the rule about
+state that must survive a dispatcher dying between the move and a save.
+
+Two mistakes on the way, both mine and both caught by a number. I wrote
+the source before the run tests, so the tests passed on first run and
+proved nothing; a mutation (park call → None) failed exactly one test,
+which is the evidence the order should have given me for free. And the
+reverse edit of that mutation matched two lines: a `_ -> None`
+fallthrough inside the new function became a recursive call, and only the
+grep count (2 where 1 was expected) said so. The mutated run also left a
+token-named probe file in the worktree's `Rule30/Proofs/`, exactly as
+verify_test's note says a failed run will; read, then deleted.
+
+Closure test, as the row filed it: run_test moves a token-named probe out
+of the live `Rule30/Proofs/` into `runs/<run>/<id>-1/` with a
+`proof_file` event and a summary line; a proved attempt keeps its file.

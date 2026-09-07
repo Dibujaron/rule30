@@ -1743,3 +1743,37 @@ the pair-injectivity that gives unboundedness. Nobody set that topic.
 the CLAUDE.md review paragraph landed; Fathom's misaddressed message hit
 Sextant mid-session and the guard held (one denial, one lost turn), and
 Fathom's startup-skill fix now lists live guarded sessions.
+
+## 2026-09-07T21:12:00Z — Sextant's fourth session: one left side, up to an integer
+
+Run `20260907T201535Z`, 57 turns, $16.05. Four survivors, crystals 46–49.
+The finding is C4: every configuration white far to the left that was
+tried has the seed's left side translated along the edge by one integer
+`N`, seam and a strip of transients included, because the damage front
+from the right (`0.243 t`) runs slower than the seam (`0.252 t`). Rowland
+2006 §5 surmised the opposite, hedged with "if in fact they do occur";
+Sextant's 40 configurations never realise his counterexample at 53209.
+Sextant's own caveats are the right ones: a margin, not a law, and an
+adversarial right half could still take the other branch. I have written
+it as "a computed finding against a published surmise", not as a
+refutation, and told Dib the same.
+
+**My own well-formed-and-wrong, tonight.** My independent engine for the
+check dropped the new left-edge cell at every step and printed plausible
+numbers for both claims: a constant settled column, a front at `0.74 t`.
+The only thing that caught it was that its `s(0..10)` differed from
+Sextant's kernel-checked values by one cell. Fixed, guarded on the kernel
+values, re-run: C1 holds on 47,967 cells, and C4 holds with one exact `N`
+per configuration (58, 16, 77) pushing agreement to `0.764`–`0.769 t`
+from the edge while every other `N` stops at the seam. Then a second
+trap: my first alignment test maximised agreement on the leftmost 3,000
+cells, which are settled and 16-periodic, so it fixed `N` only mod 16 and
+measured the seam, not the front. Sextant's claim is about the exact `N`.
+Two lessons in one hour, both the CLAUDE.md pattern: a value that was
+true and a conclusion that was false, caught only by a check that could
+say no.
+
+**Next.** Seed 46 (S) and 47 (M) if Dib agrees, so `Σ` is a `Config` on
+the board; Sextant's next topic is the masking mechanism in the transient
+band, the first local law of the band that is provable and not on the
+board, and it should run as the fifth session after Keel's landings.

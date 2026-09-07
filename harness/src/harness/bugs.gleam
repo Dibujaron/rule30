@@ -74,6 +74,11 @@ pub type Bug {
     body: String,
     reported_by: String,
     source: Source,
+    /// Where it was FIRST seen. On a signed row that `append` has bumped,
+    /// these three still name the first occurrence, while `filed` and
+    /// `occurrences` have moved on — so a row can name one node and carry a
+    /// count gathered over several runs and nodes. Read the count against
+    /// the events, not against these fields.
     node: Option(String),
     run: Option(String),
     session_id: Option(String),
@@ -82,7 +87,11 @@ pub type Bug {
     /// agents describing the same friction in their own words are two pieces
     /// of evidence, so those carry `None` and never dedupe.
     signature: Option(String),
+    /// When it was LAST seen: `append` refreshes it on every bump, so on a
+    /// signed row it is the latest occurrence, not the filing time.
     filed: String,
+    /// Every occurrence `append` folded into this row while it was open,
+    /// claimed or wontfix — across runs, nodes and personas alike.
     occurrences: Int,
     status: BugStatus,
     resolution: Option(String),
@@ -251,20 +260,30 @@ pub fn save(board: Board, path: String) -> Result(Nil, String) {
 
 /// Put `bug` on the board, giving it an id slugged from its title.
 ///
-/// When it carries a signature an **open or claimed** bug already carries,
-/// that bug's `occurrences` is bumped and its `filed` refreshed instead of a
-/// row being added — otherwise one bad guard rule files forty identical bugs
-/// in a single run. A signature matching a bug already `fixed` files a new
-/// row, so a regression is visibly a regression.
+/// When it carries a signature, the newest row carrying that signature
+/// decides what happens, because that row holds the last verdict on it:
+///
+/// - **open or claimed**: its `occurrences` is bumped and its `filed`
+///   refreshed instead of a row being added — otherwise one bad guard rule
+///   files forty identical bugs in a single run.
+/// - **wontfix**: the same bump. That verdict said the behaviour is correct
+///   and will recur, so a recurrence is the count it asked for, not a
+///   question to answer again; the row stays wontfix and stays off the open
+///   list. Before this, `guard:Bash:not_permitted` opened five rows in a day,
+///   three closed wontfix with one reasoning.
+/// - **fixed**: a new row, so a regression is visibly a regression.
+///
+/// Like an error tracker's Resolved and Ignored: a resolved issue reopens on
+/// its next event, an ignored one keeps counting and stays quiet.
 pub fn append(board: Board, bug: Bug) -> Board {
   case bug.signature {
     None -> add(board, bug)
     Some(sig) ->
       case
-        list.find(board.bugs, fn(b) { b.signature == Some(sig) && is_live(b) })
+        list.filter(board.bugs, fn(b) { b.signature == Some(sig) })
+        |> list.last
       {
-        Error(Nil) -> add(board, bug)
-        Ok(existing) ->
+        Ok(existing) if existing.status != Fixed ->
           update(
             board,
             Bug(
@@ -273,6 +292,7 @@ pub fn append(board: Board, bug: Bug) -> Board {
               filed: bug.filed,
             ),
           )
+        _ -> add(board, bug)
       }
   }
 }

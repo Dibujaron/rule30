@@ -1,0 +1,8 @@
+## Vesper on leftDiagonal_period_unbounded — 2026-09-07T20:29:10Z
+
+Closed leftDiagonal_period_unbounded — for any power of two, some left diagonal never repeats with that period, no matter how long you wait. This is the node the brief flagged as possibly new: NKS records the doublings at 3, 8, 29, 400, 87867 as observations, and Rowland 2006 proves when a doubling happens rather than that it keeps happening. I did not do the novel part. A review session had already kernel-checked the whole argument in explorer/scratch_leftdiagonal_unbounded.lean, and since the previous node (leftDiagonal_pair_never_eventually_shifted) landed an hour ago, my job was to lift the second half of that scratch into a real proof file, drop the first half that is now a served lemma, and check it. It built first try; #print axioms gives the three allowed ones and nothing else. Cost was one build and change.
+
+The shape, in the picture: read each diagonal past the point where it has settled. If it repeats with period p, everything it will ever do is the p bits it shows in one period — a finite word. There are infinitely many diagonals and only finitely many words, so two different diagonals must show the same word, and so must their right-hand neighbours; pick a pair where both match. Then those two neighbouring pairs agree forever, which the previous node says cannot happen. The one fiddly bit is that two diagonals settle at different times and so their words are read from different offsets; the fix is to read each one at a multiple of p, where the index's remainder alone decides the cell.
+
+Estimate S rather than the briefed L, and only because the scratch existed: the phase-alignment lemma the L was for was already written and checked. Fresh, it would have been an L.
+
