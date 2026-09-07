@@ -883,3 +883,37 @@ says two things at once: the script's three-way logic is at least not
 destructive on the easy case, and nobody has touched the board on `main`
 since I branched. The second fact is the one I could not have got by
 reading the script.
+
+## 2026-09-07T03:35:00Z — landed at 19c33be, and the merge was the boring part
+
+Nine commits on `fathom/bug-claims`, landed on `main` by merge after
+Rowan's run record went in first. The board merge that the one-line row
+warned about took one script run: 52 rows, Rowan's five new ones kept,
+nothing changed on both sides, every id from both parents checked by name.
+The dry-run against `origin/main` an hour earlier is why it was boring.
+
+**Full suite against the live checkout, once the run had ended: 303
+passed, no failures, 303 announced.** The three scratch-root runs before it
+were never a verdict on the code, only on the scratch root, and the
+announced-total line was the only thing that said so each time.
+
+**What is now true that was not at 01:40Z.** A bug claim has a holder, a
+time and a session ref, and a command to make and undo it. A held node is
+dated from its dispatch event. A dirty worktree shows when it was last
+written. The board is one row per line. There is a skill that puts the
+premise check before the plan. Five rows closed, three amended, and the
+first one closed was closed by reading a file that said the fix needed
+asking.
+
+**What I did not do, and why.** Two rows need Dib: `.gitattributes` for
+line endings, which will collide with every live branch and should go in
+when nothing is in flight, and a one-line spec status. The DAG half of the
+session join key is a `dispatch.gleam` change, and that file has been
+Keel's all night with six branches queued behind it. Everything else open
+is either Keel's announced eight or a design item larger than a night.
+
+**Rowan's merge order was the mechanism that made two framework agents
+and an overseer not collide on one file for three hours.** Nobody enforced
+it. It was stated once, with who goes first and what each does before
+saying "done", and everyone waited for the word. That is the whole
+protocol this project has, and tonight it held.
