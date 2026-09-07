@@ -154,6 +154,147 @@ pub fn the_report_names_a_sorry_route_as_such_test() {
   assert string.contains(out, "`sorry`")
 }
 
+// --- which text a proposal's route is checked against -----------------------
+//
+// A proposal's `statement` is the declaration as the seeder wants it landed,
+// and Rowan lands it by hand, so there are two texts and nothing in the
+// harness makes them the same. The route check picks the seeded text when the
+// two agree byte for byte, the proposal's own text when the name is not yet
+// seeded, and NEITHER when they disagree — because that disagreement is the
+// bug: a route confirmed against the ∀-form and seeded with a parameter.
+
+const seeded_bool_map = "theorem bool_map_iterate_three (f : Bool → Bool) : f^[3] = f := by"
+
+/// The paraphrase from the bug report, as a proposal would carry it: the
+/// same name, the same theorem, `f` bound by `∀` instead of as a parameter.
+const paraphrased_bool_map = "theorem bool_map_iterate_three : ∀ f : Bool → Bool, f^[3] = f := by"
+
+pub fn an_unseeded_proposal_is_checked_on_its_own_text_test() {
+  assert seed.declaration_to_check(
+      "theorem not_yet_seeded_anywhere : True := by\n  sorry",
+      statements(),
+      "not_yet_seeded_anywhere",
+    )
+    == Ok("theorem not_yet_seeded_anywhere : True := by")
+}
+
+pub fn a_proposal_landed_byte_for_byte_is_checked_on_the_seeded_text_test() {
+  assert seed.declaration_to_check(
+      seeded_bool_map <> "\n  sorry\n",
+      statements(),
+      "bool_map_iterate_three",
+    )
+    == Ok(seeded_bool_map)
+}
+
+/// **The check that would have caught the original.** The captain's scratch
+/// text and the seeded text differ only in how `f` is bound, and that is
+/// exactly the difference that flipped `by decide` from passing to failing.
+/// Neither text is elaborated: a verdict on either would be about the other's
+/// object. Both texts come back so the report can show which bytes moved.
+pub fn a_paraphrase_of_the_seeded_text_is_refused_not_checked_test() {
+  assert seed.declaration_to_check(
+      paraphrased_bool_map <> "\n  sorry",
+      statements(),
+      "bool_map_iterate_three",
+    )
+    == Error(seed.SeededTextDiffers(
+      proposed: paraphrased_bool_map,
+      seeded: seeded_bool_map,
+    ))
+}
+
+pub fn a_proposal_whose_statement_is_not_a_declaration_is_not_found_test() {
+  // Just the type, no `theorem <name> ... := by` and no `sorry` line: there
+  // is nothing to lift, and the verdict says so rather than elaborating a
+  // guess at what the seeder meant.
+  assert seed.declaration_to_check(
+      "∀ f : Bool → Bool, f^[3] = f",
+      statements(),
+      "bool_map_iterate_three",
+    )
+    == Error(seed.StatementNotFound("bool_map_iterate_three"))
+}
+
+/// Through `check_proposal`, with a `lake` that does not exist: if the route
+/// were elaborated at all this would come back `RouteFailed` from the shell,
+/// so the verdict doubles as proof that no Lean ran.
+pub fn check_proposal_refuses_the_wrong_object_before_running_lean_test() {
+  let checked =
+    seed.check_proposal(
+      repo(),
+      "this-is-not-lake",
+      statements(),
+      seed.Proposal(
+        ..a_proposal("bool_map_iterate_three"),
+        statement: paraphrased_bool_map <> "\n  sorry",
+        route: Claimed(Route("decide", [])),
+      ),
+      1000,
+    )
+  assert checked.route
+    == seed.SeededTextDiffers(
+      proposed: paraphrased_bool_map,
+      seeded: seeded_bool_map,
+    )
+}
+
+pub fn a_proposal_with_no_route_is_not_compared_test() {
+  // Nothing was claimed, so nothing was checked against anything, and the
+  // route column says exactly that even when the texts disagree.
+  let checked =
+    seed.check_proposal(
+      repo(),
+      "this-is-not-lake",
+      statements(),
+      seed.Proposal(
+        ..a_proposal("bool_map_iterate_three"),
+        statement: paraphrased_bool_map <> "\n  sorry",
+      ),
+      1000,
+    )
+  assert checked.route == seed.NoRoute
+}
+
+pub fn the_report_names_a_route_checked_against_the_wrong_object_test() {
+  let out =
+    seed.report([
+      seed.Checked(
+        proposal: a_proposal("theta"),
+        route: seed.SeededTextDiffers(
+          proposed: paraphrased_bool_map,
+          seeded: seeded_bool_map,
+        ),
+        witness: seed.Unchecked("no witness supplied"),
+      ),
+    ])
+  assert string.contains(out, "WRONG OBJECT")
+  assert string.contains(out, "not elaborated")
+  assert string.contains(out, paraphrased_bool_map)
+  assert string.contains(out, seeded_bool_map)
+  assert string.contains(out, "1 wrong object")
+}
+
+/// Against the real toolchain: the corrected route, on a proposal whose text
+/// is the seeded text byte for byte, closes through `check_proposal` exactly
+/// as it does through `check_route`.
+pub fn a_proposal_landed_byte_for_byte_closes_on_the_corrected_route_test() {
+  let assert Ok(lake) = shell.which("lake")
+  let checked =
+    seed.check_proposal(
+      repo(),
+      lake,
+      statements(),
+      seed.Proposal(
+        ..a_proposal("bool_map_iterate_three"),
+        statement: seeded_bool_map <> "\n  sorry",
+        route: Claimed(Route("revert f; decide", ["Mathlib.Data.Fintype.Pi"])),
+      ),
+      180_000,
+    )
+  assert checked.route == seed.RouteClosed
+}
+
 // --- the falsification witness ------------------------------------------------
 //
 // The calibration below is labelled the same way the route check's is, and for
