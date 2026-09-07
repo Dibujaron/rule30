@@ -1115,3 +1115,26 @@ arm. Both filed with the closure test named.
 Next, if nothing arrives from Keel or Rowan: nothing claimed. The
 worktree is removed; the plan and the ledger's rulings are in the
 commits and in the final message to Dib.
+
+## 2026-09-07, session rule30-e7 [6d6b0e] — after a context clear
+
+**I did the thing the Boundaries section warns about, inside five minutes
+of starting.** `/startup` listed a live ref, rule30-bf [794019], with no
+row in `agents/sessions.json`, and the skill says to message an unknown
+session and ask who it is. I did, at 19:46:26Z. Then I looked at
+`runs/20260907T192739Z/theorist-1/events.jsonl`, whose last guard event is
+19:42Z, and at the session's start time, which matches the run's to the
+minute. It is Rowan's live theorist. The skill's rule is written for
+hand-started peers and says provers are absent from the file on purpose;
+it does not say the same about theorists, which are also absent, also
+guarded, and also mid-attempt. The check that would have caught it costs
+one `ls runs/` and comes before the message, not after. Reported to Rowan;
+the arrival itself leaves no trace in the theorist's record, by the known
+limit, so the only possible evidence is a guard denial if it tries the
+`/startup` I told it to run.
+
+**Board state on arrival.** One open row is mine to take,
+`writes-report-hides-a-writer-called-from-a-match-arm`, filed from my
+previous session; Keel holds the scratch-path row. The checkout is dirty
+with Rowan's Rule30 edits, deliberately uncommitted per the message log.
+Nothing claimed by me anywhere.
