@@ -1,5 +1,6 @@
 import gleam/erlang/process.{type Subject}
 import gleam/list
+import gleam/option.{None, Some}
 import gleam/string
 import harness/dispatch
 import harness/guard.{Rules}
@@ -116,7 +117,10 @@ pub fn non_tool_events_are_allowed_test() {
 
 pub fn deny_json_shape_test() {
   let j =
-    guard.decision_json(guard.Deny(guard.NotPermitted, "no"), "PreToolUse")
+    guard.decision_json(
+      guard.Deny(guard_event.NotPermitted, "no"),
+      "PreToolUse",
+    )
   assert string.contains(j, "\"permissionDecision\":\"deny\"")
   assert string.contains(j, "\"hookEventName\":\"PreToolUse\"")
 }
@@ -218,7 +222,7 @@ pub fn guard_events_name_the_node_test() {
       "PreToolUse",
       "Bash",
       "lake clean",
-      guard.Deny(guard.NotPermitted, "nope"),
+      guard.Deny(guard_event.NotPermitted, "nope"),
     )
   assert e.node == "evolve_left_edge"
 }
@@ -243,11 +247,10 @@ pub fn a_denial_row_carries_the_command_and_the_kind_test() {
       "PreToolUse",
       "Bash",
       "rm -rf /",
-      guard.Deny(guard.NotPermitted, "nope"),
+      guard.Deny(guard_event.NotPermitted, "nope"),
     )
   assert e.attempted == "rm -rf /"
-  assert e.denial == "not_permitted"
-  assert guard_event.is_denial(e)
+  assert e.denial == Some(guard_event.NotPermitted)
 }
 
 /// The field is empty for anything that was not a denial, which is what
@@ -255,7 +258,7 @@ pub fn a_denial_row_carries_the_command_and_the_kind_test() {
 /// non-denial, every allowed call in a run would be filed as a bug.
 pub fn a_non_denial_row_carries_an_empty_denial_test() {
   let e = guard.event(rules, "PreToolUse", "Bash", "lake build", guard.Allow)
-  assert e.denial == ""
+  assert e.denial == None
   assert !guard_event.is_denial(e)
 }
 
@@ -263,9 +266,10 @@ pub fn a_non_denial_row_carries_an_empty_denial_test() {
 /// that the board most needs to: one is permanent, one is a transient
 /// contention with a sibling worker, and they used to share a signature.
 pub fn a_lock_timeout_and_a_grammar_refusal_have_different_slugs_test() {
-  assert guard.denial_slug(guard.BuildLockTimeout)
-    != guard.denial_slug(guard.NotPermitted)
-  assert guard.denial_slug(guard.BuildLockTimeout) == "build_lock_timeout"
+  assert guard_event.denial_slug(guard_event.BuildLockTimeout)
+    != guard_event.denial_slug(guard_event.NotPermitted)
+  assert guard_event.denial_slug(guard_event.BuildLockTimeout)
+    == "build_lock_timeout"
 }
 
 /// A command longer than the cap is cut, and says so. A silently shortened
@@ -278,7 +282,7 @@ pub fn a_very_long_command_is_truncated_and_says_so_test() {
       "PreToolUse",
       "Bash",
       long,
-      guard.Deny(guard.NotPermitted, "nope"),
+      guard.Deny(guard_event.NotPermitted, "nope"),
     )
   assert string.contains(e.attempted, "truncated")
 }
@@ -374,7 +378,7 @@ pub fn a_denial_over_the_wire_reaches_dispatch_test() {
     == [
       dispatch.GuardDenial(
         tool: "Bash",
-        denial: "not_permitted",
+        denial: guard_event.NotPermitted,
         attempted: "rm -rf /",
       ),
     ]

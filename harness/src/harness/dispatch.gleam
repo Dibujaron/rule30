@@ -1181,22 +1181,46 @@ fn auto_file(
   }
 }
 
-/// The distinct tools this attempt was denied, read back from the guard's
-/// own rows in the attempt's event log.
+/// The distinct policy denials of this attempt — refusals of the call
+/// itself, which the same call would meet again — read back from the
+/// guard's own rows in the attempt's event log. Contention is not here: a
+/// build-lock timeout is a sibling holding the lock, and `guard_contention`
+/// reads those.
 ///
 /// The rows are read through `guard_event`, the module the guard wrote them
-/// through, and classified by their decoded `denial` field — never by
-/// searching the line for a word. A row is a denial exactly when its slug
-/// is non-empty, so a new kind of refusal reaches the board by getting a
-/// slug, and a row that merely mentions a denial (a worker's command can
-/// contain any text it likes) does not.
+/// through, and classified by their decoded, typed `denial` — never by
+/// searching the line for a word. A new kind of refusal reaches the board by
+/// becoming a `guard_event.Denial` and saying which `Meaning` it has; a row
+/// that merely mentions a denial (a worker's command can contain any text it
+/// likes) does not.
 pub fn guard_denials(l: log.Log, node_id: String) -> List(GuardDenial) {
+  denials_meaning(l, node_id, guard_event.Policy) |> list.unique
+}
+
+/// Every contention denial of this attempt, one per row rather than
+/// deduplicated, because for contention the count is the finding: how many
+/// times a legal `lake build` waited its whole timeout on a sibling.
+pub fn guard_contention(l: log.Log, node_id: String) -> List(GuardDenial) {
+  denials_meaning(l, node_id, guard_event.Contention)
+}
+
+fn denials_meaning(
+  l: log.Log,
+  node_id: String,
+  wanted: guard_event.Meaning,
+) -> List(GuardDenial) {
   guard_event.read(l, node_id)
-  |> list.filter(guard_event.is_denial)
-  |> list.map(fn(e) {
-    GuardDenial(tool: e.tool, denial: e.denial, attempted: e.attempted)
+  |> list.filter_map(fn(e) {
+    case e.denial {
+      Some(d) ->
+        case guard_event.meaning(d) == wanted {
+          True ->
+            Ok(GuardDenial(tool: e.tool, denial: d, attempted: e.attempted))
+          False -> Error(Nil)
+        }
+      None -> Error(Nil)
+    }
   })
-  |> list.unique
 }
 
 /// One denial as the board needs to read it: which tool, why it was refused,
@@ -1207,16 +1231,24 @@ pub fn guard_denials(l: log.Log, node_id: String) -> List(GuardDenial) {
 /// build-lock timeout were one bug that could not be acted on in either of
 /// its two meanings.
 pub type GuardDenial {
-  GuardDenial(tool: String, denial: String, attempted: String)
+  GuardDenial(tool: String, denial: guard_event.Denial, attempted: String)
 }
 
-/// The two auto-filed signals in scope this round: a rate-limited outcome,
-/// and every distinct tool the guard denied during the attempt. Called once
-/// per attempt end, right after `write_channels` — the worker's own report
-/// may have said nothing about either, since a denied call does not always
-/// read to the worker as the harness's fault, and a rate limit is not the
-/// worker's story to tell at all.
-fn auto_file_signals(
+/// The auto-filed signals: a rate-limited outcome, every distinct policy
+/// denial the guard made during the attempt, and any build-lock contention
+/// the attempt suffered. Called once per attempt end, right after
+/// `write_channels` — the worker's own report may have said nothing about
+/// any of them, since a denied call does not always read to the worker as
+/// the harness's fault, and a rate limit is not the worker's story to tell
+/// at all. Public for its test, which reads the board it writes.
+///
+/// A policy denial and a lock timeout are filed apart, under different
+/// areas, because their remedies are opposite: the first is the brief or
+/// the allowlist and belongs to the guard; the second is the scheduler's
+/// concurrency or the lock's wait and belongs to `dispatch` — the nearest
+/// `bugs.Area` to a lock, since there is no `Lock` or `Scheduler` value.
+/// One signature for either can only be acted on in one of its meanings.
+pub fn auto_file_signals(
   cfg: config.Config,
   l: log.Log,
   node_id: String,
@@ -1242,30 +1274,72 @@ fn auto_file_signals(
     _ -> Nil
   }
   list.each(guard_denials(l, node_id), fn(d) {
+    let slug = guard_event.denial_slug(d.denial)
     auto_file(
       cfg,
       l,
       node_id,
       identity,
-      "Guard denied " <> d.tool <> " (" <> d.denial <> ")",
+      "Guard denied " <> d.tool <> " (" <> slug <> ")",
       "The guard refused a "
         <> d.tool
         <> " call during the attempt at "
         <> node_id
         <> ", as "
-        <> d.denial
+        <> slug
         <> ". It tried: "
-        <> case d.attempted {
-        "" -> "(not recorded)"
-        a -> a
-      }
+        <> attempted_text(d)
         <> ". If the worker needed it, the allowlist is wrong; if it did "
         <> "not, the brief is.",
       bugs.Guard,
       bugs.Friction,
-      "guard:" <> d.tool <> ":" <> d.denial,
+      "guard:" <> d.tool <> ":" <> slug,
     )
   })
+  case guard_contention(l, node_id) {
+    [] -> Nil
+    [first, ..] as all -> {
+      let slug = guard_event.denial_slug(first.denial)
+      let n = list.length(all)
+      auto_file(
+        cfg,
+        l,
+        node_id,
+        identity,
+        "Build lock contention: "
+          <> int.to_string(n)
+          <> " "
+          <> first.tool
+          <> " call(s) timed out waiting for a sibling",
+        "During the attempt at "
+          <> node_id
+          <> ", "
+          <> int.to_string(n)
+          <> " "
+          <> first.tool
+          <> " call(s) were refused as "
+          <> slug
+          <> ": the build lock did not come free within the guard's wait "
+          <> "because another worker held it. The command was legal and the "
+          <> "worker did nothing wrong, so neither the brief nor the allowlist "
+          <> "is the remedy; the cost is in the scheduler's concurrency or the "
+          <> "lock's wait, which is why this is filed under dispatch rather "
+          <> "than guard. Last tried: "
+          <> attempted_text(first)
+          <> ".",
+        bugs.Dispatch,
+        bugs.Friction,
+        "dispatch:" <> slug,
+      )
+    }
+  }
+}
+
+fn attempted_text(d: GuardDenial) -> String {
+  case d.attempted {
+    "" -> "(not recorded)"
+    a -> a
+  }
 }
 
 /// Bugs actually worth putting on the board: a malformed report can decode a
