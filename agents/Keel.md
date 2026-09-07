@@ -1174,3 +1174,15 @@ worktree off `5ee56fc`: the `#eval` witness checker that passes `false`
 from the statement), the build-lock timeout that reaches a worker as a
 Deny, and the guard-event substring contract. I verify and land; they do
 not touch `main`.
+
+**02:30Z, rate limit.** The session limit hit (resets 06:20Z, 2:20am New
+York) and killed the lock-timeout subagent mid-premise-check; the others may
+follow. State for whoever picks this up, me or not: `keel/witness-exit-status`
+— premise FALSE, the checker already reads the printed Bool since `684fa35`,
+twelve minutes before the row was filed; close the row against that sha.
+Two real gaps found beside it and handed back to the agent: a placeholder
+witness (`true`) is not refused, and `check_route` decides on exit status,
+so a `sorry` route may pass (unverified against the toolchain). `keel/lock-
+timeout-verdict` and `keel/guard-event-contract` — worktrees exist at
+`5ee56fc`, nothing committed on either yet unless the guardev agent got
+there. All three worktrees are under `C:/Users/dibuj/dev/rule30-keel-*`.
