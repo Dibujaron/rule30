@@ -1,6 +1,10 @@
-import gleam/option.{None}
+import gleam/int
+import gleam/list
+import gleam/option.{None, Some}
+import gleam/string
 import harness/dag.{type Node, Dag, Node}
 import harness/index.{Signature}
+import harness/verify
 
 const note = "**What this says.** The left edge is black at every time.
 **Why it is true.** Its left neighbour is outside the cone.
@@ -210,4 +214,125 @@ pub fn walls_over_lists_the_walls_a_node_sits_under_transitively_test() {
   assert walls(elsewhere) == []
   // A wall does not sit under itself.
   assert walls(wall_a) == []
+}
+
+fn classified(id: String, object: String) -> Node {
+  Node(..node(id, [], dag.S), object: Some(object))
+}
+
+pub fn render_groups_by_object_in_spec_order_with_unclassified_last_test() {
+  let d =
+    Dag([
+      classified("two_period", "machine"),
+      classified("density_le_one", "bookkeeping"),
+      classified("evolve_left_edge", "leftDiagonal"),
+      node("no_object_yet", [], dag.S),
+      classified("window_count", "configuration"),
+    ])
+  let text = index.render(index.Sources(d:, statements: "", proofs: []))
+  let heading_order =
+    [
+      "## Configuration", "## Left diagonal", "## One-bit machine",
+      "## Bookkeeping", "## Unclassified",
+    ]
+    |> list.map(fn(h) { position(text, h) })
+  assert heading_order == list.sort(heading_order, int.compare)
+  // Groups with nothing in them are not printed.
+  assert !string.contains(text, "## Row")
+  assert !string.contains(text, "## Prize")
+}
+
+pub fn render_puts_an_unknown_object_in_its_own_group_after_the_vocabulary_test() {
+  let d = Dag([classified("a", "bookkeeping"), classified("b", "widget")])
+  let text = index.render(index.Sources(d:, statements: "", proofs: []))
+  assert position(text, "## Bookkeeping") < position(text, "## widget")
+}
+
+pub fn render_entry_carries_what_it_says_signature_citers_status_and_wall_test() {
+  let d =
+    Dag([
+      Node(..classified("evolve_left_edge", "leftDiagonal"), deps: []),
+      Node(..classified("evolve_left_second_diagonal", "leftDiagonal"), deps: [
+        "evolve_left_edge",
+      ]),
+      Node(
+        ..classified("the_residual", "column"),
+        deps: ["evolve_left_second_diagonal"],
+        size: dag.Wall,
+        status: dag.Open,
+      ),
+    ])
+  let proofs = [
+    #(
+      "EvolveLeftEdge.lean",
+      "import Rule30.Basic\n\n/-!\n**What this says.** The left edge is black at every time.\n**Why it is true.** y\n**Where the work is.** z\n\n"
+        <> verify.annotation_heading
+        <> "\n```lean\nStatements.evolve_left_edge (t : ℕ) : evolve t (-↑t) = true\n```\n-/\n",
+    ),
+    #(
+      "EvolveLeftSecondDiagonal.lean",
+      "import Rule30.Basic\nimport Rule30.Proofs.EvolveLeftEdge\n\n/-!\n**What this says.** The second diagonal is black.\n-/\n",
+    ),
+  ]
+  let statements =
+    "/-- **The residual.** -/\ntheorem the_residual (t : ℕ) : centerColumn t = true := by\n  sorry\n"
+  let text = index.render(index.Sources(d:, statements:, proofs:))
+  let entry =
+    between(text, "### evolve_left_edge", "### evolve_left_second_diagonal")
+  assert string.contains(
+    entry,
+    "**What this says.** The left edge is black at every time.",
+  )
+  assert string.contains(entry, "- `(t : ℕ)`")
+  assert string.contains(entry, "**Conclusion.** `evolve t (-↑t) = true`")
+  assert string.contains(entry, "**Cited by.** evolve_left_second_diagonal")
+  assert string.contains(
+    entry,
+    "**Status.** proved, size S, under the wall the_residual",
+  )
+  // An open node with no proof file reads its lead from the statement file
+  // and its signature from the seeded declaration, and says so.
+  let residual = between(text, "### the_residual", "\n## ")
+  assert string.contains(residual, "**What this says.** The residual.")
+  assert string.contains(residual, "**Conclusion.** `centerColumn t = true`")
+  assert string.contains(residual, "(seeded statement; not yet checked)")
+  assert string.contains(residual, "**Cited by.** nothing yet")
+  assert string.contains(residual, "**Status.** open, size wall")
+}
+
+pub fn render_header_states_every_count_with_its_denominator_test() {
+  let d =
+    Dag([
+      classified("a", "row"),
+      Node(..classified("b", "row"), status: dag.Open),
+      node("c", [], dag.S),
+    ])
+  let text = index.render(index.Sources(d:, statements: "", proofs: []))
+  assert string.contains(
+    text,
+    "3 theorems on the board: 2 proved, 1 open, 0 claimed, 0 blocked, 0 abandoned",
+  )
+  assert string.contains(text, "1 of 3 without an object")
+}
+
+pub fn render_is_deterministic_test() {
+  let d = Dag([classified("b", "row"), classified("a", "row")])
+  let s = index.Sources(d:, statements: "", proofs: [])
+  assert index.render(s) == index.render(s)
+  assert position(index.render(s), "### a") < position(index.render(s), "### b")
+}
+
+fn position(text: String, needle: String) -> Int {
+  case string.split_once(text, needle) {
+    Ok(#(before, _)) -> string.length(before)
+    Error(Nil) -> panic as { "missing from the rendered index: " <> needle }
+  }
+}
+
+fn between(text: String, from: String, to: String) -> String {
+  let assert Ok(#(_, after)) = string.split_once(text, from)
+  case string.split_once(after, to) {
+    Ok(#(body, _)) -> body
+    Error(Nil) -> after
+  }
 }
