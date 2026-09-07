@@ -368,6 +368,7 @@ cd harness && gleam run -- theorise [<topic>] [--as <Name>] [--model M]
                                                 # one theorist session on a topic, as a named or minted theory persona; never started by the scheduler
 cd harness && gleam run -- seed [--model M] [--region R]
                                                 # hand-start one seeder session; it proposes into blueprint/proposals/next.json under the seeder guard, and the check report prints when it ends
+cd harness && gleam run -- bugs file <row.json>   # put one hand-written row on the board; refused, naming every fault, before it can break the board
 ```
 
 A seeder is started by hand and never by the scheduler; its guard sits on
