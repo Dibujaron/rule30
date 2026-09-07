@@ -51,6 +51,7 @@ fn board() -> dag.Dag {
       claimed_at: None,
       claimed_run: None,
       object: None,
+      under: None,
       research: False,
     ),
   ])

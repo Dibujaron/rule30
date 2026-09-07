@@ -594,6 +594,14 @@ pub type Proposal {
     /// asked to derive the boundary itself — which is the derivation that
     /// failed. See `nothing-checks-what-a-proof-note-claims`.
     disclaims: String,
+    /// The id of the wall this proposal attacks, when it attacks one, and
+    /// the captain lands it as the node's `under`. A proposal is worth
+    /// landing exactly when a proof of an open node would cite it, so the
+    /// wall is the proposal's reason for existing said in one word — and it
+    /// is the relation `deps` cannot carry, since a wall is never dispatched
+    /// and lists no dependents. Not validated beyond being a string: the
+    /// captain reads the report and the index shows a wrong one.
+    under: Option(String),
     route: Claim,
     witness: WitnessClaim,
   )
@@ -661,6 +669,12 @@ fn proposal_decoder() -> decode.Decoder(Proposal) {
   // Optional, unlike `reason`: most nodes disclaim nothing, and a required
   // field that is usually empty gets filled with noise to satisfy it.
   use disclaims <- decode.optional_field("disclaims", "", decode.string)
+  // Optional: a proposal that attacks no wall in particular names none.
+  use under <- decode.optional_field(
+    "under",
+    None,
+    decode.optional(decode.string),
+  )
   use route <- decode.optional_field("route", NoClaim, route_claim_decoder())
   use witness <- decode.optional_field(
     "witness",
@@ -673,6 +687,7 @@ fn proposal_decoder() -> decode.Decoder(Proposal) {
     statement:,
     reason:,
     disclaims:,
+    under:,
     route:,
     witness:,
   ))
@@ -718,6 +733,7 @@ pub fn proposal_shape() -> String {
   <> "    \"statement\": \"theorem <lean_name> ... := by\\n  sorry\",\n"
   <> "    \"reason\": \"<why a proof of an open node would cite this>\",\n"
   <> "    \"disclaims\": \"<what this does NOT prove; omit when nothing>\",\n"
+  <> "    \"under\": \"<id of the wall this attacks; omit when none>\",\n"
   <> "    \"route\": {\"tactics\": \"<tactic script>\", \"imports\": [\"Rule30.Proofs.EvolveLeftEdge\"]},\n"
   <> "    \"witness\": {\"expression\": \"<Bool-valued Lean over the range>\", \"imports\": [], \"range\": \"t < 12\"}\n"
   <> "  }\n"
@@ -827,7 +843,13 @@ fn report_line(c: Checked) -> String {
     None -> ""
     Some(text) -> "\n  " <> text
   }
-  c.proposal.id <> disclaimer <> warning <> "
+  // The wall the proposal attacks, as written; a proposal naming none has
+  // no line, so the report does not read as though every wall were "none".
+  let under = case c.proposal.under {
+    None -> ""
+    Some(wall) -> "\n  under:   " <> wall
+  }
+  c.proposal.id <> disclaimer <> warning <> under <> "
   route:   " <> route_line(c.route) <> "
   witness: " <> witness_line(c.witness)
 }
@@ -1159,7 +1181,10 @@ pub fn brief(
         "",
         "Required: `id`, `lean_name`, `statement`, `reason`. Optional, and to be",
         "OMITTED rather than filled with a placeholder: `disclaims` (defaults to",
-        "empty), `route` (then `tactics` is required and `imports` optional), and",
+        "empty), `under` (the id of the wall this proposal attacks, when it",
+        "attacks one — name it, since the captain lands it as the node's `under`",
+        "and the index shows which blocks belong to which wall by nothing else),",
+        "`route` (then `tactics` is required and `imports` optional), and",
         "`witness` (then `expression` and `range` are required and `imports`",
         "optional). One `{\"proposals\": [...]}` document, any number of entries.",
         "",

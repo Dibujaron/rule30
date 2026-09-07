@@ -98,6 +98,16 @@ pub type Attempt {
 /// so that a run's `save` gives back exactly what the captain wrote. `None`
 /// is a node nobody has classified yet, and the file carries no key for it.
 ///
+/// `under` is the wall this node was seeded to attack — the id of a `Wall`
+/// node — set by hand on the board by the captain at landing, and carried
+/// the way `object` is: never set, never checked, encoded only when
+/// present. It is a different relation from `deps`. `deps` means "must be
+/// proved before this node is dispatched" and the scheduler reads it that
+/// way; a wall is never dispatched and lists no dependents, so the walls a
+/// block attacks cannot be recovered from `deps` — the index renderer
+/// computed exactly that and rendered it on zero of 64 nodes. `None` is a
+/// node seeded under no wall, and the file carries no key for it.
+///
 /// `research` marks a task the scheduler keeps retrying at full strength: a
 /// node where nobody knows the proof, so an attempt is a search rather than
 /// a probe. The model ladder is a cost optimiser and below its top rung a
@@ -123,6 +133,7 @@ pub type Node {
     claimed_at: Option(String),
     claimed_run: Option(String),
     object: Option(String),
+    under: Option(String),
     research: Bool,
   )
 }
@@ -500,6 +511,14 @@ fn node_decoder() -> decode.Decoder(Node) {
     None,
     decode.optional(decode.string),
   )
+  // Absent on every node seeded under no wall. Unvalidated for `object`'s
+  // reason: the value is a wall's id the captain wrote, and the renderer
+  // that prints it is where a wrong one shows up.
+  use under <- decode.optional_field(
+    "under",
+    None,
+    decode.optional(decode.string),
+  )
   // Absent on every node the captain has not marked; an ordinary node.
   use research <- decode.optional_field("research", False, decode.bool)
   decode.success(Node(
@@ -517,6 +536,7 @@ fn node_decoder() -> decode.Decoder(Node) {
     claimed_at:,
     claimed_run:,
     object:,
+    under:,
     research:,
   ))
 }
@@ -542,14 +562,19 @@ fn attempt_to_json(attempt: Attempt) -> json.Json {
   ])
 }
 
-/// `object` and `research` are written only when they say something: a
-/// node the captain has not classified carries no `object` key on disk and
-/// an ordinary node no `research` key, and a save must not invent either —
-/// `null` or `false` would put a key on every node that the hand-written
-/// board does not have.
+/// `object`, `under` and `research` are written only when they say
+/// something: a node the captain has not classified carries no `object` key
+/// on disk, a node seeded under no wall no `under` key, and an ordinary node
+/// no `research` key, and a save must not invent any of them — `null` or
+/// `false` would put a key on every node that the hand-written board does
+/// not have.
 fn node_to_json(node: Node) -> json.Json {
   let object = case node.object {
     Some(o) -> [#("object", json.string(o))]
+    None -> []
+  }
+  let under = case node.under {
+    Some(w) -> [#("under", json.string(w))]
     None -> []
   }
   let research = case node.research {
@@ -574,6 +599,7 @@ fn node_to_json(node: Node) -> json.Json {
         #("claimed_run", json.nullable(node.claimed_run, json.string)),
       ],
       object,
+      under,
       research,
     ]),
   )

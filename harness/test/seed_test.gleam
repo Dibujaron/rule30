@@ -635,6 +635,7 @@ fn a_proposal(id: String) -> seed.Proposal {
     statement: "theorem " <> id <> " : True := by\n  sorry",
     reason: "Because.",
     disclaims: "",
+    under: option.None,
     route: seed.NoClaim,
     witness: seed.NoWitness,
   )
@@ -761,6 +762,7 @@ fn closed_node(
     claimed_at: option.None,
     claimed_run: option.None,
     object: option.None,
+    under: option.None,
     research: False,
   )
 }
@@ -926,6 +928,7 @@ pub fn the_brief_shows_the_proposal_shape_where_it_says_where_to_write_test() {
   assert string.contains(format, "\"statement\"")
   assert string.contains(format, "\"reason\"")
   assert string.contains(format, "\"disclaims\"")
+  assert string.contains(format, "\"under\"")
   assert string.contains(format, "\"route\"")
   assert string.contains(format, "\"tactics\"")
   assert string.contains(format, "\"witness\"")
@@ -945,6 +948,7 @@ pub fn the_brief_shows_the_proposal_shape_where_it_says_where_to_write_test() {
 pub fn the_proposal_shape_decodes_test() {
   let assert Ok([p]) = seed.decode_proposals(seed.proposal_shape())
   assert p.disclaims != ""
+  let assert option.Some(_) = p.under
   let assert Claimed(Route(tactics: _, imports: [_])) = p.route
   let assert seed.Claims(seed.Witness(expression: _, imports: [], range: _)) =
     p.witness
@@ -1059,6 +1063,56 @@ pub fn the_report_shows_what_a_proposal_disclaims_test() {
       ),
     ])
   assert string.contains(out, "does NOT prove P1")
+}
+
+// --- the wall a proposal attacks ----------------------------------------------
+//
+// A proposal is worth landing exactly when a proof of an open node would cite
+// it, and the open nodes that matter are the walls. `deps` cannot record
+// which wall a block attacks — a wall is never dispatched and lists no
+// dependents — so the proposal names it and the captain lands it as `under`.
+
+pub fn a_proposal_can_name_the_wall_it_attacks_test() {
+  let assert Ok([p]) =
+    seed.decode_proposals(proposal_json(
+      "\"id\":\"a\",\"lean_name\":\"a\",\"statement\":\"theorem a : True := by\\n  sorry\",\"reason\":\"r\",\"under\":\"leftDiagonal_period_le\"",
+    ))
+  assert p.under == option.Some("leftDiagonal_period_le")
+}
+
+pub fn a_proposal_naming_no_wall_decodes_to_none_test() {
+  let assert Ok([p]) =
+    seed.decode_proposals(proposal_json(
+      "\"id\":\"a\",\"lean_name\":\"a\",\"statement\":\"theorem a : True := by\\n  sorry\",\"reason\":\"r\"",
+    ))
+  assert p.under == option.None
+}
+
+/// The wall reaches the report the captain lands from, on its own line and
+/// only when named: a proposal attacking no wall must not read "under: none"
+/// beside one that does, since the absence is the thing to notice.
+pub fn the_report_shows_the_wall_a_proposal_attacks_test() {
+  let out =
+    seed.report([
+      seed.Checked(
+        proposal: seed.Proposal(
+          ..a_proposal("lambda"),
+          under: option.Some("leftDiagonal_period_le"),
+        ),
+        route: seed.NoRoute,
+        witness: seed.Unchecked("no witness supplied"),
+      ),
+      seed.Checked(
+        proposal: a_proposal("mu"),
+        route: seed.NoRoute,
+        witness: seed.Unchecked("no witness supplied"),
+      ),
+    ])
+  assert string.contains(
+    out,
+    "lambda\n  under:   leftDiagonal_period_le\n  route:   none claimed",
+  )
+  assert string.contains(out, "mu\n  route:   none claimed")
 }
 
 // --- the cast warning ---------------------------------------------------------

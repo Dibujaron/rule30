@@ -21,7 +21,6 @@ import gleam/int
 import gleam/list
 import gleam/option.{None, Some}
 import gleam/result
-import gleam/set
 import gleam/string
 import harness/config
 import harness/dag
@@ -143,7 +142,7 @@ const unclassified = "Unclassified"
 pub fn render(sources: Sources) -> String {
   let Sources(d:, statements:, proofs:) = sources
   let citers = cited_by(d, proofs)
-  let walls = walls_over(d)
+  let wall_name = wall_name_in(d)
   let groups = grouped(d.nodes)
   let sections =
     groups
@@ -155,7 +154,7 @@ pub fn render(sources: Sources) -> String {
       <> {
         nodes
         |> list.sort(fn(a, b) { string.compare(a.lean_name, b.lean_name) })
-        |> list.map(entry(_, statements, proofs, citers, walls))
+        |> list.map(entry(_, statements, proofs, citers, wall_name))
         |> string.join("\n")
       }
     })
@@ -237,7 +236,7 @@ fn entry(
   statements: String,
   proofs: List(#(String, String)),
   citers: fn(dag.Node) -> List(String),
-  walls: fn(dag.Node) -> List(String),
+  wall_name: fn(String) -> String,
 ) -> String {
   let proof =
     list.find(proofs, fn(pair) { pair.0 == file_name(node) })
@@ -273,10 +272,14 @@ fn entry(
     [] -> "nothing yet"
     names -> string.join(names, ", ")
   }
-  let wall = case walls(node) {
-    [] -> ""
-    [w] -> ", under the wall " <> w
-    ws -> ", under the walls " <> string.join(ws, ", ")
+  // The wall this node was seeded to attack, from the board's `under`
+  // field and nothing else. It is captain-set because `deps` cannot carry
+  // it: `deps` means "must be proved first" and a wall, never dispatched,
+  // has none — so the walls whose transitive deps reach a node was the
+  // right computation of the wrong relation, and rendered on no node.
+  let wall = case node.under {
+    None -> ""
+    Some(w) -> ", under the wall " <> wall_name(w)
   }
   "### "
   <> node.lean_name
@@ -593,47 +596,17 @@ fn file_name(node: dag.Node) -> String {
   string.split(path, "/") |> list.last |> result.unwrap(path)
 }
 
-/// For a node, the `lean_name`s of the `Wall` nodes that depend on it,
-/// directly or through other nodes, sorted. A wall is a statement the
-/// scheduler never dispatches because it must be decomposed first; the
-/// theorems under it are the decomposition so far, and a theorist reading
-/// one wants to know which residual it feeds — by the name headings and
-/// "Cited by" already use, not the board's internal id.
-pub fn walls_over(d: dag.Dag) -> fn(dag.Node) -> List(String) {
-  let walls = list.filter(d.nodes, fn(n) { n.size == dag.Wall })
-  let under =
-    walls
-    |> list.map(fn(w) { #(w.lean_name, ancestors(d, w.deps, set.new())) })
-  fn(node: dag.Node) {
-    under
-    |> list.filter_map(fn(pair) {
-      case set.contains(pair.1, node.id) {
-        True -> Ok(pair.0)
-        False -> Error(Nil)
-      }
-    })
-    |> list.sort(string.compare)
-  }
-}
-
-/// Every id reachable from `frontier` through `deps`.
-fn ancestors(
-  d: dag.Dag,
-  frontier: List(String),
-  seen: set.Set(String),
-) -> set.Set(String) {
-  case frontier {
-    [] -> seen
-    [id, ..rest] ->
-      case set.contains(seen, id) {
-        True -> ancestors(d, rest, seen)
-        False -> {
-          let more = case dag.get(d, id) {
-            Ok(n) -> n.deps
-            Error(Nil) -> []
-          }
-          ancestors(d, list.append(more, rest), set.insert(seen, id))
-        }
-      }
+/// How a wall named in a node's `under` field is printed: by the
+/// `lean_name` of the node with that id — the name headings and "Cited by"
+/// already use, not the board's internal id — or, for an `under` that
+/// names no node on the board, the value verbatim. The field is
+/// captain-set and unvalidated, so a wrong one is shown rather than hidden:
+/// this is where it shows up.
+pub fn wall_name_in(d: dag.Dag) -> fn(String) -> String {
+  fn(id: String) {
+    case dag.get(d, id) {
+      Ok(wall) -> wall.lean_name
+      Error(Nil) -> id
+    }
   }
 }

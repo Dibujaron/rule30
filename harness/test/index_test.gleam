@@ -190,6 +190,7 @@ fn node(id: String, deps: List(String), size: dag.Size) -> Node {
     claimed_at: None,
     claimed_run: None,
     object: None,
+    under: None,
     research: False,
   )
 }
@@ -237,29 +238,43 @@ pub fn cited_by_ignores_a_dep_that_is_declared_but_not_imported_test() {
   assert citers(a) == []
 }
 
-pub fn walls_over_lists_the_walls_a_node_sits_under_transitively_test() {
-  // `wall_a`'s id and `lean_name` are made to differ, so a `walls_over`
-  // that returned ids by mistake would fail this test rather than pass it
-  // by coincidence the way `node`'s `id == lean_name` fixtures otherwise
-  // would.
+/// **The wall clause reads `under`, and never `deps`.** The clause used to
+/// be computed as "the walls whose transitive deps reach this node", which
+/// is the right computation of the wrong relation: `deps` means "must be
+/// proved first", a wall is never dispatched and lists no dependents, and
+/// so it rendered on zero of 64 nodes. `under` is captain-set at landing.
+///
+/// `wall_a`'s id and `lean_name` are made to differ, so a renderer that
+/// printed the id by mistake would fail this test rather than pass it by
+/// coincidence the way `node`'s `id == lean_name` fixtures otherwise would.
+pub fn the_wall_clause_comes_from_under_and_not_from_deps_test() {
   let d =
     Dag([
+      // Reached by `wall_a`'s deps, and seeded under nothing: no clause.
       node("leaf", [], dag.S),
-      node("middle", ["leaf"], dag.M),
+      // Seeded under `wall_a`, which is printed by its `lean_name`.
+      Node(..node("middle", ["leaf"], dag.M), under: Some("wall_a")),
       Node(..node("wall_a", ["middle"], dag.Wall), lean_name: "wall_a_name"),
-      node("wall_b", ["leaf"], dag.Wall),
-      node("elsewhere", [], dag.S),
+      // Seeded under an id that names no node: shown verbatim, not hidden.
+      Node(..node("stray", [], dag.S), under: Some("no_such_wall")),
     ])
-  let walls = index.walls_over(d)
-  let assert Ok(leaf) = dag.get(d, "leaf")
-  let assert Ok(middle) = dag.get(d, "middle")
-  let assert Ok(elsewhere) = dag.get(d, "elsewhere")
-  let assert Ok(wall_a) = dag.get(d, "wall_a")
-  assert walls(leaf) == ["wall_a_name", "wall_b"]
-  assert walls(middle) == ["wall_a_name"]
-  assert walls(elsewhere) == []
-  // A wall does not sit under itself.
-  assert walls(wall_a) == []
+  let text = index.render(index.Sources(d:, statements: "", proofs: []))
+  let leaf = between(text, "### leaf", "### middle")
+  assert string.contains(leaf, "**Status.** proved, size S\n")
+  assert !string.contains(leaf, "under the wall")
+  let middle = between(text, "### middle", "### stray")
+  assert string.contains(
+    middle,
+    "**Status.** proved, size M, under the wall wall_a_name\n",
+  )
+  let stray = between(text, "### stray", "### wall_a_name")
+  assert string.contains(
+    stray,
+    "**Status.** proved, size S, under the wall no_such_wall\n",
+  )
+  // A wall seeded under nothing — every wall today — has no clause.
+  let wall = between(text, "### wall_a_name", "\n## ")
+  assert !string.contains(wall, "under the wall")
 }
 
 fn classified(id: String, object: String) -> Node {
@@ -297,7 +312,11 @@ pub fn render_puts_an_unknown_object_in_its_own_group_after_the_vocabulary_test(
 pub fn render_entry_carries_what_it_says_signature_citers_status_and_wall_test() {
   let d =
     Dag([
-      Node(..classified("evolve_left_edge", "leftDiagonal"), deps: []),
+      Node(
+        ..classified("evolve_left_edge", "leftDiagonal"),
+        deps: [],
+        under: Some("the_residual"),
+      ),
       Node(..classified("evolve_left_second_diagonal", "leftDiagonal"), deps: [
         "evolve_left_edge",
       ]),

@@ -25,6 +25,7 @@ fn node(
     claimed_at: None,
     claimed_run: None,
     object: None,
+    under: None,
     research: False,
   )
 }
@@ -76,6 +77,7 @@ pub fn round_trip_json_test() {
         claimed_at: Some("2026-09-07T03:00:00Z"),
         claimed_run: Some("20260907T030000Z"),
         object: Some("row"),
+        under: None,
         research: False,
       ),
     ])
@@ -106,6 +108,29 @@ pub fn a_node_with_an_object_keeps_it_through_a_save_test() {
   assert odd_back == Dag([odd])
 }
 
+pub fn a_node_under_a_wall_keeps_it_through_a_save_test() {
+  // `under` is the wall a block was seeded to attack, captain-set at
+  // landing the way `object` is, and it is the relation `deps` cannot
+  // carry: a wall is never dispatched and lists no dependents. Same
+  // hazard, same test — a save must give back what the captain wrote.
+  let n =
+    Node(
+      ..node("block_lemma", [], dag.Open, dag.S),
+      under: Some("leftDiagonal_period_le"),
+    )
+  let text = dag.encode(Dag([n]))
+  assert string.contains(text, "\"under\":\"leftDiagonal_period_le\"")
+  let assert Ok(back) = dag.decode(text)
+  assert back == Dag([n])
+  let assert Ok(again) = dag.get(back, "block_lemma")
+  assert again.under == Some("leftDiagonal_period_le")
+  // Unvalidated: the id need not name a node on the board. The index shows
+  // a wrong one; the decoder does not refuse the board over it.
+  let stray = Node(..n, under: Some("no_such_wall"))
+  let assert Ok(stray_back) = dag.decode(dag.encode(Dag([stray])))
+  assert stray_back == Dag([stray])
+}
+
 pub fn a_node_without_an_object_decodes_to_none_and_stays_keyless_test() {
   // A hand-written row with no `object` key is an unclassified node, and
   // saving it must not invent a key — not `null`, not anything — so that
@@ -118,6 +143,10 @@ pub fn a_node_without_an_object_decodes_to_none_and_stays_keyless_test() {
   let assert Ok(n) = dag.get(d, "plain")
   assert n.object == None
   assert !string.contains(dag.encode(d), "object")
+  // The same for `under`: absent is a node seeded under no wall, and the
+  // save writes no key for it — not `null`, not anything.
+  assert n.under == None
+  assert !string.contains(dag.encode(d), "under")
   // The same for `research`: absent is an ordinary node, and stays absent.
   assert n.research == False
   assert !string.contains(dag.encode(d), "research")
