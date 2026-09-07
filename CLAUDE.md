@@ -85,6 +85,11 @@ no Lean in it.
 -/
 ```
 
+The harness appends a fourth block after verification, headed **Checked
+type**, holding the seeded statement's signature as Lean printed it; you
+never write that block, and it is the only sentence in the file the harness
+stands behind.
+
 Six lines is the ceiling and shorter is better. The reader is Dib: he writes
 TypeScript, is learning Lean, and will not read your tactic script — so do
 not narrate it ("we then `simp`"), do not re-state the theorem in symbols,
@@ -156,7 +161,7 @@ nothing for isolation and a session that has to verify Lean pays hours —
 which is why **provers never work in a worktree** and framework sessions
 always do.
 
-Four things that follow, each learned the hard way:
+Three things that follow, each learned the hard way:
 
 - **The tree you dispatch from must be the tree you would commit from.**
   The rule above splits work by kind, and both halves can be obeyed while
@@ -189,13 +194,12 @@ Four things that follow, each learned the hard way:
   where it should rest, which is how this checkout once sat on a feature
   branch until it was twenty commits behind `main` and three sessions
   were reading pre-landing harness code out of it.
-- **Running the suite from a worktree currently reaches back into the
-  live checkout.** `verify_test` needs a built `.lake`, so tests run with
-  `HARNESS_REPO_ROOT` pointed at the main checkout — which also points
-  `dag_path`, `bugs_path`, `runs_root` and `roster_path` there. So never
-  run `gleam test` from a worktree while a run is in flight. This is the
-  open bug `offline-fixtures-write-into-the-live-checkout`; when it is
-  fixed the variable stops being needed and this paragraph goes away.
+- **The suite never touches the live checkout.** Tests that run Lean do so
+  against `harness/test/fixture-project/`, a dependency-free Lean project
+  inside the tree that builds in seconds, so `gleam test` from a worktree
+  needs no `HARNESS_REPO_ROOT` and writes nothing outside its own tree; the
+  variable still redirects `config.load`'s paths for tests that read them
+  and is never required.
 
 This composes with the freeze rule above rather than competing with it: a
 run in flight means no framework edits at all, so worktree work and a live
@@ -280,6 +284,9 @@ entries, notebook entries, commit messages, board posts):
   they exit cleanly. Rowan and a framework agent each shipped a design
   that ignored this within one hour of each other, from opposite
   directions.
+- Two agents agreeing on a premise neither looked up reads as review and
+  is not. A claim settled by a peer message is not settled; a command run
+  against the artifact, quoted by file and line or `git show`, is.
 - **A record can be well-formed, confident, and wrong, and nothing
   downstream can tell.** Five instances on 2026-09-06, in one evening,
   across four identities: a killed test runner printed `193 passed` and the
@@ -357,7 +364,11 @@ cd harness && gleam run -- prove-one <node-id>  # dispatch one worker at one nod
 cd harness && gleam run -- run --max-attempts 3 --concurrency 3
                                                 # keep up to K workers in flight until N attempts have started
 cd harness && gleam run -- reopen <node-id>     # a crashed run left a node `claimed`; put it back on the board
+cd harness && gleam run -- seed [--model M]     # hand-start one seeder session; it proposes into blueprint/proposals/next.json under the seeder guard, and the check report prints when it ends
 ```
+
+A seeder is started by hand and never by the scheduler; its guard sits on
+the run port base plus 100 so it can run beside a live run.
 
 `run` is the scheduler over the build graph: whenever a slot is free it
 starts the best open leaf, including one that only just became a leaf
