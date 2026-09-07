@@ -761,6 +761,7 @@ fn closed_node(
     claimed_at: option.None,
     claimed_run: option.None,
     object: option.None,
+    research: False,
   )
 }
 

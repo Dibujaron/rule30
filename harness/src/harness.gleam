@@ -23,6 +23,7 @@ import harness/log
 import harness/schedule
 import harness/seed
 import harness/seeder
+import harness/theorist
 import harness/writes
 
 pub fn main() {
@@ -95,11 +96,40 @@ fn run(cfg: config.Config, arguments: List(String)) -> Nil {
         seeder.parse_flags(flags)
         |> result.try(fn(parsed) { seed_session(cfg, parsed) }),
       )
+    // `theorise` starts one theorist session — hand-started, never by the
+    // scheduler — on a topic, or on the P1 frontier when none is given, as
+    // the named theorist or the eldest idle one (minting one when the
+    // roster has none), and reports where its attack document is once it
+    // ends. `theorize` is the same verb spelt the other way.
+    ["theorise", ..flags] | ["theorize", ..flags] ->
+      print_outcome(
+        theorist.parse_flags(flags)
+        |> result.try(fn(parsed) { theorist_session(cfg, parsed) }),
+      )
     _ ->
       io.println(
-        "usage: gleam run -- status | prove-one <node-id> | run [--max-attempts N] [--concurrency K] | reopen <node-id> | bugs [--area A] [--severity S] [--all] | bugs claim <id> --as <Identity> [--session <ref>] | bugs reopen <id> | bugs close <id> fixed|wontfix --resolution <text> | writes | index | seed [--model M] [--region R] | seed brief [--region R] | seed check [path] | spike",
+        "usage: gleam run -- status | prove-one <node-id> | run [--max-attempts N] [--concurrency K] | reopen <node-id> | bugs [--area A] [--severity S] [--all] | bugs claim <id> --as <Identity> [--session <ref>] | bugs reopen <id> | bugs close <id> fixed|wontfix --resolution <text> | writes | index | seed [--model M] [--region R] | seed brief [--region R] | seed check [path] | theorise [<topic>] [--as <Name>] [--model M] | spike",
       )
   }
+}
+
+/// One theorist session on the parsed flags' model, topic and persona, on
+/// the theorist's own guard port; the summary it returns names who ran,
+/// the attack document and whether it exists.
+fn theorist_session(
+  cfg: config.Config,
+  flags: theorist.Flags,
+) -> Result(String, String) {
+  theorist.run(
+    cfg,
+    theorist.Options(
+      model: flags.model,
+      port: theorist.default_port(cfg),
+      topic: flags.topic,
+      persona: flags.persona,
+    ),
+  )
+  |> result.map(fn(session) { session.summary })
 }
 
 /// One seeder session on the parsed flags' model, aimed at their region if

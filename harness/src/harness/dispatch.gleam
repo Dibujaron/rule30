@@ -68,7 +68,7 @@ pub fn prove_one(
   })
   let failed = failed_attempts(node)
   use model <- result.try(
-    config.model_for(node.size, failed)
+    config.model_for(node.size, failed, research: node.research)
     |> result.replace_error(
       "ladder exhausted for `"
       <> node_id
@@ -106,13 +106,16 @@ pub fn prove_one(
   ))
   use _ <- result.try(guard.write_settings(g, g.settings_path))
 
-  let who = schedule.who_for(roster_, node.region, busy: [])
+  let who = schedule.who_for_node(roster_, node, busy: [])
   use identity <- result.try(ensure_identity(cfg, roster_, who, model, g, l))
+  let attempt_cfg = config.for_attempt(cfg, node)
   log.event(l, "dispatch", [
     #("node", json.string(node_id)),
     #("identity", json.string(identity.name)),
     #("model", json.string(model)),
     #("reason", json.string(dispatch_reason(d, node, failed))),
+    #("max_turns", json.int(attempt_cfg.max_turns)),
+    #("max_budget_usd", json.float(attempt_cfg.max_budget_usd)),
   ])
 
   let claimed =
@@ -122,7 +125,7 @@ pub fn prove_one(
 
   let #(attempt, report) =
     worker.attempt(
-      cfg,
+      attempt_cfg,
       worker.live_deps(cfg, task_message),
       d,
       claimed,
@@ -440,7 +443,7 @@ fn start(
   let cfg = run_.cfg
   let failed = failed_attempts(node)
   use model <- result.try(
-    config.model_for(node.size, failed)
+    config.model_for(node.size, failed, research: node.research)
     |> result.replace_error(
       "no model for `"
       <> node.id
@@ -496,11 +499,18 @@ fn start(
       // A ceremony may have written the roster; read it back so the next
       // attempt in this run sees the name and colour.
       use roster_ <- result.try(roster.load(cfg.roster_path))
+      // The budget is the attempt's, not the run's: a research attempt at
+      // the top rung runs under the research ceilings and every other
+      // attempt under the ordinary ones. Recorded here so the event says
+      // what the attempt was allowed, not only what it was asked.
+      let attempt_cfg = config.for_attempt(cfg, node)
       log.event(run_.run_log, "dispatch", [
         #("node", json.string(node.id)),
         #("identity", json.string(identity.name)),
         #("model", json.string(model)),
         #("reason", json.string(dispatch_reason(state.d, node, failed))),
+        #("max_turns", json.int(attempt_cfg.max_turns)),
+        #("max_budget_usd", json.float(attempt_cfg.max_budget_usd)),
         #("port", json.int(port)),
         #("log", json.string(attempt_log.dir)),
         #("in_flight", json.int(list.length(state.running) + 1)),
@@ -525,7 +535,7 @@ fn start(
         process.spawn_unlinked(fn() {
           let #(attempt, report) =
             worker.attempt(
-              cfg,
+              attempt_cfg,
               deps,
               d,
               claimed,
@@ -940,7 +950,7 @@ pub fn claim_text(cfg: config.Config, node: dag.Node, now: String) -> String {
 }
 
 /// Every node, then the open leaves in the order the dispatcher would take
-/// them.
+/// them (`schedule.startable`: research nodes last).
 ///
 /// A wall node whose dependencies are all proved is an open leaf by the
 /// DAG's own definition — `dag.open_leaves` correctly lists it — but the
@@ -949,6 +959,10 @@ pub fn claim_text(cfg: config.Config, node: dag.Node, now: String) -> String {
 /// it no model to dispatch with. Listing it under "Open leaves, in dispatch
 /// order" would tell a human it is about to be picked up, which is false,
 /// so it gets its own section instead.
+///
+/// A research node is marked `research` after its size, in the rows and in
+/// the leaf list: a reader should see that its attempts will not end with
+/// the ladder.
 pub fn status(cfg: config.Config) -> Result(String, String) {
   use d <- result.try(dag.load(cfg.dag_path))
   let now = log.now_iso()
@@ -966,7 +980,7 @@ pub fn status(cfg: config.Config) -> Result(String, String) {
     |> list.map(fn(n) {
       string.pad_end(n.id, id_width, " ")
       <> string.pad_end(dag.status_to_string(n.status), 10, " ")
-      <> string.pad_end(dag.size_to_string(n.size), 6, " ")
+      <> string.pad_end(size_text(n), 15, " ")
       <> string.pad_end(n.region, 5, " ")
       <> "attempts="
       <> int.to_string(list.length(n.attempts))
@@ -982,10 +996,10 @@ pub fn status(cfg: config.Config) -> Result(String, String) {
     <> " — unblocks "
     <> int.to_string(dag.unblocks(d, n.id))
     <> ", size "
-    <> dag.size_to_string(n.size)
+    <> size_text(n)
   }
-  let #(walled, startable) =
-    dag.open_leaves(d) |> list.partition(fn(n) { n.size == dag.Wall })
+  let walled = dag.open_leaves(d) |> list.filter(fn(n) { n.size == dag.Wall })
+  let startable = schedule.startable(d)
   let walled_lines = case walled {
     [] -> ["  (none)"]
     ws -> list.map(ws, leaf_line)
@@ -1003,6 +1017,15 @@ pub fn status(cfg: config.Config) -> Result(String, String) {
     <> "\n\nOpen leaves, in dispatch order:\n"
     <> string.join(startable_lines, "\n"),
   )
+}
+
+/// A node's size, with `research` after it when the node is one.
+fn size_text(n: dag.Node) -> String {
+  dag.size_to_string(n.size)
+  <> case n.research {
+    True -> " research"
+    False -> ""
+  }
 }
 
 /// The identity an attempt runs as, given the scheduler's decision. An
@@ -1111,8 +1134,9 @@ fn backfill_color(
 /// Fold one attempt into its node. A closed attempt proves the node; every
 /// other outcome puts it back on the board, unless the ladder has no model
 /// left for it — then it is abandoned, because an open leaf nothing can be
-/// dispatched at is not an open leaf. Whichever way, the attempt has ended,
-/// so the claim is released with it.
+/// dispatched at is not an open leaf. A research node always has a model
+/// left (`config.model_for`), so it always goes back on the board.
+/// Whichever way, the attempt has ended, so the claim is released with it.
 fn record(node: dag.Node, attempt: dag.Attempt) -> dag.Node {
   let attempts = list.append(node.attempts, [attempt])
   let node = dag.Node(..node, attempts:)
@@ -1120,7 +1144,13 @@ fn record(node: dag.Node, attempt: dag.Attempt) -> dag.Node {
     dag.Closed ->
       dag.Node(..dag.release(node, dag.Proved), verified: Some(log.now_iso()))
     _ ->
-      case config.model_for(node.size, failed_attempts(node)) {
+      case
+        config.model_for(
+          node.size,
+          failed_attempts(node),
+          research: node.research,
+        )
+      {
         Ok(_) -> dag.release(node, dag.Open)
         Error(Nil) -> dag.release(node, dag.Abandoned)
       }
@@ -1525,28 +1555,16 @@ fn summary(
   )
 }
 
-/// How many attempts at this node count against its model ladder: the two
-/// outcomes that mean a model was given the node and could not close it.
-///
-/// A `RateLimited` or `TimedOut` attempt is a pause, not a verdict on the
-/// model — the spec's line is that nothing is lost to a rate limit. Counting
-/// one would escalate the ladder for free and, at an `L` node whose ladder
-/// is one rung long, abandon the node outright. A `HarnessFailed` attempt is
-/// not a verdict on anything: the harness broke it, and escalating on it
-/// would manufacture the very evidence of difficulty it does not carry.
+/// How many attempts at this node count against its model ladder:
+/// `config.failed_attempts`, which lives beside the ladder it is counted
+/// against. Kept here as the dispatcher's name for it, since this is where
+/// the count is spent.
 pub fn failed_attempts(node: dag.Node) -> Int {
-  list.count(node.attempts, fn(a) { burns_a_rung(a.outcome) })
+  config.failed_attempts(node)
 }
 
 fn burns_a_rung(o: dag.Outcome) -> Bool {
-  case o {
-    dag.GaveUp | dag.BudgetExhausted -> True
-    dag.Closed
-    | dag.Reduced
-    | dag.RateLimited
-    | dag.TimedOut
-    | dag.HarnessFailed -> False
-  }
+  config.burns_a_rung(o)
 }
 
 /// Re-read a finished attempt against what the harness's own components
@@ -1659,10 +1677,16 @@ fn verify_row_decoder(node_id: String) -> decode.Decoder(Option(String)) {
 /// asks for decisions to be recorded with their reasons, not just their
 /// results.
 fn dispatch_reason(d: dag.Dag, node: dag.Node, failed: Int) -> String {
+  let rungs = list.length(config.ladder(node.size))
   "open leaf; unblocks "
   <> int.to_string(dag.unblocks(d, node.id))
-  <> "; ladder step "
-  <> int.to_string(failed + 1)
+  <> case config.on_research_rung(node) {
+    True ->
+      "; research node at its top rung, attempt "
+      <> int.to_string(failed + 2 - rungs)
+      <> " there"
+    False -> "; ladder step " <> int.to_string(failed + 1)
+  }
 }
 
 fn dependency_summary(d: dag.Dag, node: dag.Node) -> String {

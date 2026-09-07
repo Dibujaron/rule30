@@ -1185,11 +1185,13 @@ fn open_count(open: List(dag.Node)) -> String {
   }
 }
 
-/// One entry per open node, with its description VERBATIM. A wall's
+/// One entry per node, with its description VERBATIM. A wall's
 /// description is the specification of what a decomposition must imply and
 /// what has been measured, so cutting it would cut the only part of this
-/// brief that says what to aim at.
-fn open_section(open: List(dag.Node)) -> String {
+/// brief that says what to aim at. The seeder renders its open nodes with
+/// this and the theorist its walls, so the two briefs describe a wall in
+/// the same shape.
+pub fn open_section(open: List(dag.Node)) -> String {
   case open {
     [] -> "(nothing is open)"
     nodes ->
@@ -1358,8 +1360,9 @@ pub fn brief_at(
 ///
 /// Files without a note are skipped rather than contributing an empty
 /// section: older proofs predate the convention, and an empty heading reads
-/// as a note whose author had nothing to say.
-fn proof_notes(repo_root: String) -> List(#(String, String)) {
+/// as a note whose author had nothing to say. Shared with the theorist's
+/// brief, which carries the same notes for the same reason.
+pub fn proof_notes(repo_root: String) -> List(#(String, String)) {
   let dir = repo_root <> "/Rule30/Proofs"
   case simplifile.read_directory(dir) {
     Error(_) -> []

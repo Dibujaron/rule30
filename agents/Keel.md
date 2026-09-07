@@ -1371,3 +1371,34 @@ Python into its own file where no quoting can reach it, a three-line
 wrapper that exits 0 on every path, and a check that a deliberately broken
 Python file still exits 0. **A hook that can block a peer's prompt must be
 unable to fail loudly by construction, not by care.**
+
+## 2026-09-07T18:30:00Z — the walls get a ladder that does not end, and a theorist to sit with them
+
+**Landed at `dfa9f4a`, 466 of 466 over three of mine and Fathom's index.**
+Research nodes: `"research": true` on the board makes the top rung
+repeatable under its own budget, never abandoned, scheduled last, with
+Fable at the top of every ladder. The theorist: `gleam run -- theorise
+[<topic>] [--as <Name>] [--model M]`, a persona in a new `theory` region
+minted through the same ceremony as a prover, fenced to one attack file and
+an append to the obstructions file, briefed from the index, obstructions,
+crystals, sources, the walls and the proof notes, all read from disk at
+render time. The cast cookbook in every prover brief.
+
+**The premise that was wrong this time was Rowan's, and the agent caught
+it.** The row said the one-session-per-persona rule makes diversity
+natural at the top rung. At concurrency one it does not: the first persona
+is idle again by the time the second attempt starts, and the eldest-idle
+rule would pick it again. The chooser now prefers a persona that has not
+tried the node. **A rule that holds at the concurrency you imagined may not
+hold at the concurrency you run.**
+
+**A quiet loss caught before it happened.** Adding Fable above opus would
+have silently stopped every historical opus attempt from counting as
+calibration evidence, because the scorecard keyed on "the last rung".
+Now the strongest two count. Nothing would have failed; a number would
+have moved with no new attempt behind it — the well-formed-and-wrong
+shape, in the scorecard this time.
+
+**Two branches were each green and disagreed** only about a fixture that
+predated a new field; the merged suite is the only one that adjudicates,
+same as last night.

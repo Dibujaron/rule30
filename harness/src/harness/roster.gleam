@@ -190,8 +190,8 @@ pub fn scorecard(dag_: dag.Dag, name: String) -> Scorecard {
 ///
 /// Calibration — did the identity's re-pricing agree with the node's size —
 /// is scored for a reported attempt that closed the node at any rung or was
-/// made on the top rung of its ladder (`config.ladder`), and never for one
-/// the harness itself broke. The ladder is a cost optimiser: it tries the
+/// made on one of the top two rungs of its ladder (`config.ladder`), and
+/// never for one the harness itself broke. The ladder is a cost optimiser: it tries the
 /// cheapest model first because a cheap success is a bargain, not because a
 /// cheap failure means anything. A haiku that closes an `S` node confirms
 /// (or over-prices) the estimate exactly as an opus close would; a haiku
@@ -230,11 +230,17 @@ fn tally(acc: Scorecard, node: dag.Node, attempt: dag.Attempt) -> Scorecard {
   )
 }
 
-/// Was this attempt made with the last model on the node's ladder — the
-/// one whose failure the scheduler has nothing left to escalate to. A
-/// `Wall` node has no ladder, so nothing made there is on its top rung.
+/// Was this attempt made with one of the two strongest models on the
+/// node's ladder — for `S`, `M` and `L` that is opus and fable; a one-rung
+/// ladder has only its one. The strongest two count, not the last one
+/// alone, so that evidence gathered when opus topped every ladder keeps
+/// counting now that fable does. A `Wall` node has no ladder, so nothing
+/// made there is on its top rungs.
 fn on_top_rung(node: dag.Node, attempt: dag.Attempt) -> Bool {
-  list.last(config.ladder(node.size)) == Ok(attempt.model)
+  let rungs = config.ladder(node.size)
+  rungs
+  |> list.drop(int.max(0, list.length(rungs) - 2))
+  |> list.contains(attempt.model)
 }
 
 /// One line for the dispatcher's summary, e.g.
@@ -278,21 +284,26 @@ pub fn region_description(region: String) -> String {
       "the density bookkeeping behind the balance conjecture: counting black cells and bounding ratios in ℝ"
     "framework" ->
       "the harness itself: the dispatcher, the guard, the verifier and the board every prover runs inside"
+    "theory" ->
+      "the whole board at once: what would have to be true for a wall to fall, which routes are already dead, and which claims survive the engine — an argument, never a proof"
     other -> other
   }
 }
 
 /// The single message the naming ceremony sends. Names are self-chosen: the
 /// first instance of an identity is told its region and asked to name
-/// itself, and both the name and its stated reason go in the log. When the
-/// region already has provers, the newcomer is told their names, so it can
-/// place itself beside them and cannot pick one of them.
+/// itself — as a prover, or as a theorist when the region is `theory` — and
+/// both the name and its stated reason go in the log. When the region
+/// already has members, the newcomer is told their names, so it can place
+/// itself beside them and cannot pick one of them.
 pub fn naming_prompt(
   region: String,
   region_description: String,
   siblings: List(String),
 ) -> String {
-  "You are about to join a small team of provers formalizing Wolfram's Rule 30 in Lean 4. You will be "
+  "You are about to join a small team of "
+  <> role(region)
+  <> "s formalizing Wolfram's Rule 30 in Lean 4. You will be "
   <> case siblings {
     [] -> "the specialist"
     _ -> "a specialist"
@@ -302,7 +313,7 @@ pub fn naming_prompt(
   <> "\": "
   <> region_description
   <> ". "
-  <> sibling_sentence(siblings)
+  <> sibling_sentence(role(region), siblings)
   <> "Your work on this region will persist across many sessions through a notebook that only you write. Choose a name for yourself. It must be a name, not a job title, and not the name of a living person"
   <> case siblings {
     [] -> ""
@@ -311,17 +322,31 @@ pub fn naming_prompt(
   <> ". Then write the opening paragraph of your notebook: who you are, in your own words. Reply with a JSON object with exactly these five fields, all required:\n- \"name\": the name you choose (a single capitalised word, letters only)\n- \"reason\": one paragraph on why\n- \"opening\": the opening paragraph of your notebook — who you are, in your own words, three to six sentences\n- \"color\": a hex colour that is yours, written #rrggbb\n- \"color_reason\": one sentence on why"
 }
 
-fn sibling_sentence(siblings: List(String)) -> String {
+/// The word a newcomer is asked to name itself as. A mint in the `theory`
+/// region is a theorist (`theorist.gleam` runs the same ceremony the
+/// dispatcher does for a prover); every other region's mint is a prover.
+fn role(region: String) -> String {
+  case region {
+    "theory" -> "theorist"
+    _ -> "prover"
+  }
+}
+
+fn sibling_sentence(role: String, siblings: List(String)) -> String {
   case siblings {
     [] -> ""
     [one] ->
-      "This region already has a prover named "
+      "This region already has a "
+      <> role
+      <> " named "
       <> one
       <> ". They keep a notebook of their own, as you will; you are joining them, not replacing them. "
     many -> {
       let assert Ok(last) = list.last(many)
       let init = list.take(many, list.length(many) - 1)
-      "This region already has provers named "
+      "This region already has "
+      <> role
+      <> "s named "
       <> string.join(init, ", ")
       <> " and "
       <> last

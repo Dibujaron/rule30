@@ -190,6 +190,7 @@ fn node(id: String, deps: List(String), size: dag.Size) -> Node {
     claimed_at: None,
     claimed_run: None,
     object: None,
+    research: False,
   )
 }
 

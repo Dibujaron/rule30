@@ -134,6 +134,24 @@ pub fn naming_prompt_asks_for_a_colour_and_its_reason_test() {
   assert string.contains(p, "#rrggbb")
 }
 
+pub fn naming_prompt_asks_a_theory_mint_to_name_itself_as_a_theorist_test() {
+  let alone =
+    roster.naming_prompt("theory", roster.region_description("theory"), [])
+  assert string.contains(alone, "a small team of theorists")
+  assert !string.contains(alone, "prover")
+  let joined =
+    roster.naming_prompt("theory", roster.region_description("theory"), [
+      "Aster",
+    ])
+  assert string.contains(
+    joined,
+    "This region already has a theorist named Aster.",
+  )
+  assert !string.contains(joined, "prover")
+  let prover = roster.naming_prompt("P1", roster.region_description("P1"), [])
+  assert string.contains(prover, "a small team of provers")
+}
+
 pub fn naming_prompt_names_the_siblings_when_the_region_has_them_test() {
   let alone = roster.naming_prompt("P2", roster.region_description("P2"), [])
   assert !string.contains(alone, "already")
@@ -255,7 +273,7 @@ fn attempt(
   estimate: dag.Size,
   cost: Float,
 ) -> dag.Attempt {
-  at_rung("opus", who, outcome, estimate, cost)
+  at_rung("fable", who, outcome, estimate, cost)
 }
 
 fn at_rung(
@@ -300,6 +318,7 @@ fn node_with(
     claimed_at: None,
     claimed_run: None,
     object: None,
+    research: False,
   )
 }
 
@@ -369,6 +388,23 @@ pub fn a_lower_rung_attempt_is_not_calibration_evidence_test() {
   // Only the opus attempt on `a` is evidence, and it was a hit.
   assert s.calibration_hits == 1
   assert s.calibration_total == 1
+}
+
+pub fn the_two_strongest_rungs_are_calibration_evidence_test() {
+  // Fable now tops every ladder, and opus attempts were made when opus did.
+  // The strongest two rungs count, so an opus failure on an `S` node is
+  // still evidence — a miss here — and a sonnet one still is not.
+  let d =
+    Dag([
+      node_with("a", dag.S, [
+        at_rung("sonnet", "Thessaly", dag.GaveUp, dag.L, 1.0),
+        at_rung("opus", "Thessaly", dag.GaveUp, dag.L, 2.0),
+        at_rung("fable", "Thessaly", dag.GaveUp, dag.S, 4.0),
+      ]),
+    ])
+  let s = roster.scorecard(d, "Thessaly")
+  assert s.calibration_hits == 1
+  assert s.calibration_total == 2
 }
 
 pub fn a_close_on_a_cheap_rung_is_calibration_evidence_test() {

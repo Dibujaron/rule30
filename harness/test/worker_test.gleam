@@ -38,6 +38,7 @@ fn node(id: String, size: dag.Size, attempts: List(dag.Attempt)) -> dag.Node {
     claimed_at: None,
     claimed_run: None,
     object: None,
+    research: False,
   )
 }
 
@@ -195,6 +196,7 @@ fn a_dag() -> dag.Dag {
       claimed_at: None,
       claimed_run: None,
       object: None,
+      research: False,
     ),
     node("centerColumn_zero", dag.S, [
       Attempt(
@@ -221,6 +223,8 @@ pub fn brief_has_every_section_in_order_test() {
   let assert Ok(#(_, rest)) = string.split_once(text, "## Who you are")
   let assert Ok(#(_, rest)) = string.split_once(rest, "## The project")
   let assert Ok(#(_, rest)) = string.split_once(rest, "## Your constraints")
+  let assert Ok(#(_, rest)) =
+    string.split_once(rest, "## Casts and names, checked against this pin")
   let assert Ok(#(_, rest)) = string.split_once(rest, "## Served lemmas")
   let assert Ok(#(_, rest)) =
     string.split_once(rest, "## Prior attempts on this node")
@@ -255,6 +259,71 @@ pub fn brief_includes_claude_md_whole_test() {
   assert string.contains(text, claude_md)
 }
 
+// --- the cast cookbook ------------------------------------------------------------
+
+const cookbook_heading = "## Casts and names, checked against this pin"
+
+/// The checkout this suite runs against carries `docs/prover-cookbook.md`,
+/// so the brief must carry it whole: the heading, then the file's own first
+/// line, then the rest.
+pub fn brief_inlines_the_cookbook_when_present_test() {
+  let d = a_dag()
+  let assert Ok(n) = dag.get(d, "centerColumn_zero")
+  let assert Ok(cookbook) =
+    simplifile.read(cfg().repo_root <> "/docs/prover-cookbook.md")
+  let assert Ok(first_line) =
+    cookbook
+    |> string.split(
+      "
+",
+    )
+    |> list.first
+  assert first_line != ""
+  let text = brief.text(cfg(), d, n, ravel(), "")
+  assert string.contains(text, cookbook_heading)
+  assert string.contains(text, first_line)
+  assert string.contains(text, cookbook)
+  assert !string.contains(text, "(no docs/prover-cookbook.md in this checkout)")
+}
+
+/// A checkout without the cookbook — a repo root that is an empty scratch
+/// directory — renders the same heading over one line saying so, rather
+/// than failing to render the brief at all.
+pub fn brief_says_the_cookbook_is_absent_when_it_is_test() {
+  let d = a_dag()
+  let assert Ok(n) = dag.get(d, "centerColumn_zero")
+  let root = "build/test-runs/brief-without-cookbook"
+  let assert Ok(_) = simplifile.create_directory_all(root)
+  let _ = simplifile.delete(root <> "/docs")
+  let text =
+    brief.text(config.Config(..cfg(), repo_root: root), d, n, ravel(), "")
+  let assert Ok(#(_, rest)) = string.split_once(text, cookbook_heading)
+  let assert Ok(#(_, rest)) =
+    string.split_once(rest, "(no docs/prover-cookbook.md in this checkout)")
+  // The absence line is the whole section: the next thing is the next heading.
+  assert string.starts_with(
+    rest,
+    "
+
+## Served lemmas",
+  )
+}
+
+/// The cookbook is what a worker needs while writing tactics, so it sits
+/// right after the constraints and before everything about the task.
+pub fn brief_places_the_cookbook_after_the_constraints_and_before_the_task_test() {
+  let d = a_dag()
+  let assert Ok(n) = dag.get(d, "centerColumn_zero")
+  let text = brief.text(cfg(), d, n, ravel(), "")
+  let assert Ok(#(before, after)) = string.split_once(text, cookbook_heading)
+  assert string.contains(before, "## Your constraints")
+  assert !string.contains(before, "## Served lemmas")
+  assert !string.contains(before, "## Prior attempts on this node")
+  assert string.contains(after, "## Served lemmas")
+  assert string.contains(after, "## Prior attempts on this node")
+  assert !string.contains(after, "## Your constraints")
+}
+
 pub fn brief_lists_the_served_lemmas_test() {
   let d = a_dag()
   let assert Ok(n) = dag.get(d, "centerColumn_zero")
@@ -286,6 +355,58 @@ pub fn brief_states_the_constraints_test() {
   assert string.contains(text, "No `sorry`")
   assert string.contains(text, "type_of% Statements.centerColumn_zero")
   assert string.contains(text, "must be named exactly `centerColumn_zero`")
+}
+
+/// The worker is told the ceilings its session was actually launched with:
+/// the research ones at the top rung of a research node, the ordinary
+/// ones everywhere else.
+pub fn brief_states_the_attempts_own_turn_and_dollar_ceilings_test() {
+  let d = a_dag()
+  let assert Ok(n) = dag.get(d, "centerColumn_zero")
+  let base =
+    config.Config(
+      ..cfg(),
+      max_turns: 40,
+      max_budget_usd: 4.0,
+      research_max_turns: 120,
+      research_max_budget_usd: 20.0,
+    )
+  let ordinary = brief.text(base, d, n, ravel(), "")
+  assert string.contains(
+    ordinary,
+    "This attempt has at most 40 turns and a budget of $4.00",
+  )
+  // The same node marked research, its four rungs spent: the attempt runs
+  // under the research config, and the brief says so.
+  let spent =
+    Node(..n, research: True, attempts: [
+      Attempt(..gave_up(), model: "haiku"),
+      Attempt(..gave_up(), model: "sonnet"),
+      Attempt(..gave_up(), model: "opus"),
+      Attempt(..gave_up(), model: "fable"),
+    ])
+  let research =
+    brief.text(config.for_attempt(base, spent), d, spent, ravel(), "")
+  assert string.contains(
+    research,
+    "This attempt has at most 120 turns and a budget of $20.00",
+  )
+}
+
+fn gave_up() -> dag.Attempt {
+  Attempt(
+    identity: "Ravel",
+    session_id: "s",
+    model: "opus",
+    started: "t0",
+    ended: "t1",
+    outcome: dag.GaveUp,
+    estimate: dag.S,
+    reported: True,
+    cost_usd: 0.0,
+    turns: 1,
+    notes: "",
+  )
 }
 
 /// The row family `guard-denied-bash-not-permitted-*` /

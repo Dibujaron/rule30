@@ -77,7 +77,7 @@ pub fn declared() -> List(Written) {
     ),
     Written(
       what: "agents/<Name>.md",
-      risk: "the dispatcher appends a notebook entry from a worker's report; an identity's notebook is not exclusively its own during a run",
+      risk: "the dispatcher appends a notebook entry from a worker's report, and `theorise` from a theorist's; an identity's notebook is not exclusively its own during a run",
       writers: ["roster.append_notebook"],
     ),
     Written(
