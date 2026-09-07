@@ -1,0 +1,15 @@
+
+node      rightDiagonal_periodicFrom_step
+identity  Cadence
+model     sonnet
+outcome   proved
+cost      $0.41
+turns     13
+estimate  S
+session   7459ee53-273e-440d-8382-a7cd3f8ed680
+log       c:/Users/dibuj/dev/rule30/runs/20260907T024158Z/rightDiagonal_periodicFrom_step-1
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Cadence (#2a6f77): closed 8, abandoned 0, $2.54, calibration 7/8

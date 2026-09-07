@@ -1,0 +1,11 @@
+{"ts":"2026-09-07T02:41:58Z","kind":"run","max_attempts":8,"concurrency":3}
+{"ts":"2026-09-07T02:41:58Z","kind":"dispatch","node":"leftDiagonal_periodicFrom_step","identity":"Vesper","model":"sonnet","reason":"open leaf; unblocks 1; ladder step 1","port":4130,"log":"c:/Users/dibuj/dev/rule30/runs/20260907T024158Z/leftDiagonal_periodicFrom_step-1","in_flight":1}
+{"ts":"2026-09-07T02:41:58Z","kind":"dispatch","node":"rightDiagonal_periodicFrom_step","identity":"Cadence","model":"sonnet","reason":"open leaf; unblocks 1; ladder step 1","port":4131,"log":"c:/Users/dibuj/dev/rule30/runs/20260907T024158Z/rightDiagonal_periodicFrom_step-1","in_flight":2}
+{"ts":"2026-09-07T02:43:42Z","kind":"index","node":"rightDiagonal_periodicFrom_step","module":"Rule30.Proofs.RightDiagonalPeriodicFromStep","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-07T02:43:42Z","kind":"dispatch","node":"rightDiagonal_periodicFrom_pow","identity":"Cadence","model":"sonnet","reason":"open leaf; unblocks 1; ladder step 1","port":4132,"log":"c:/Users/dibuj/dev/rule30/runs/20260907T024158Z/rightDiagonal_periodicFrom_pow-1","in_flight":2}
+{"ts":"2026-09-07T02:44:30Z","kind":"index","node":"leftDiagonal_periodicFrom_step","module":"Rule30.Proofs.LeftDiagonalPeriodicFromStep","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-07T02:44:30Z","kind":"dispatch","node":"leftDiagonal_periodicFrom_pow","identity":"Vesper","model":"sonnet","reason":"open leaf; unblocks 0; ladder step 1","port":4133,"log":"c:/Users/dibuj/dev/rule30/runs/20260907T024158Z/leftDiagonal_periodicFrom_pow-1","in_flight":2}
+{"ts":"2026-09-07T02:46:45Z","kind":"index","node":"rightDiagonal_periodicFrom_pow","module":"Rule30.Proofs.RightDiagonalPeriodicFromPow","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-07T02:46:45Z","kind":"dispatch","node":"rightDiagonal_isEventuallyPeriodic","identity":"Cadence","model":"haiku","reason":"open leaf; unblocks 0; ladder step 1","port":4134,"log":"c:/Users/dibuj/dev/rule30/runs/20260907T024158Z/rightDiagonal_isEventuallyPeriodic-1","in_flight":2}
+{"ts":"2026-09-07T02:48:34Z","kind":"index","node":"leftDiagonal_periodicFrom_pow","module":"Rule30.Proofs.LeftDiagonalPeriodicFromPow","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-07T02:48:42Z","kind":"index","node":"rightDiagonal_isEventuallyPeriodic","module":"Rule30.Proofs.RightDiagonalIsEventuallyPeriodic","file":"Rule30/Proofs.lean"}

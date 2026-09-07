@@ -1,0 +1,15 @@
+
+node      leftDiagonal_periodicFrom_pow
+identity  Vesper
+model     sonnet
+outcome   proved
+cost      $0.95
+turns     22
+estimate  M
+session   ed26cc4a-4d97-41d8-a1c5-15b06f4e2f4b
+log       c:/Users/dibuj/dev/rule30/runs/20260907T024158Z/leftDiagonal_periodicFrom_pow-1
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Vesper (#2b3a67): closed 27, abandoned 1, $10.63, calibration 24/27
