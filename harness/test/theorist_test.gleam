@@ -338,6 +338,9 @@ pub fn theorise_starts_one_fenced_session_and_reports_its_document_test() {
     "127.0.0.1:" <> int.to_string(port),
   )
   assert ask_to_write(session.guard, attack) == "{}"
+  // A script under explorer/ is allowed, as for a seeder: the brief asks
+  // for falsification runs, and a run is a script.
+  assert ask_to_write(session.guard, f.repo <> "/explorer/probe.mjs") == "{}"
   let refused =
     ask_to_write(session.guard, f.repo <> "/blueprint/proposals/next.json")
   assert string.contains(refused, "deny")
@@ -647,7 +650,8 @@ pub fn the_brief_names_the_persona_the_topic_the_fence_the_walls_and_the_section
   assert string.contains(brief, "Topic: the seam")
   assert string.contains(brief, "Attack document: " <> attack)
   assert string.contains(brief, f.repo <> "/docs/obstructions.md")
-  assert string.contains(brief, "exactly two files")
+  assert string.contains(brief, "exactly two files outside explorer/")
+  assert string.contains(brief, "Under explorer/ you may write")
   assert string.contains(brief, "not your own notebook")
   assert string.contains(brief, "node <one path")
   // Every wall, closed ones included, and only walls.

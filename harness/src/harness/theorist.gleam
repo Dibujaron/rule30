@@ -10,10 +10,11 @@
 //// description, and the provers' notes — driven by the same turn loop a
 //// prover runs in (`worker.drive`), and fenced by `guard.Theorist`: its
 //// attack document under `docs/attacks/`, the shared
-//// `docs/obstructions.md`, `node <script under explorer/>` and the `lake`
-//// grammar. Nothing adjudicates its work after the session, because the
-//// deliverable is prose: the summary says whether the document exists and
-//// how big it is, and a captain reads it.
+//// `docs/obstructions.md`, scripts under `explorer/` to write and to run
+//// with `node <script>`, and the `lake` grammar. Nothing adjudicates its
+//// work after the session, because the deliverable is prose: the summary
+//// says whether the document exists and how big it is, and a captain
+//// reads it.
 ////
 //// What it never does: write a statement, a proposal, a node, or its own
 //// notebook. It cannot reach `blueprint/proposals/next.json`,
@@ -558,14 +559,15 @@ pub fn render(
       "",
       "Attack document: " <> attack_path,
       "",
-      "You may write exactly two files: the attack document above, and",
-      obstructions_path <> ",",
+      "You may write exactly two files outside explorer/: the attack",
+      "document above, and " <> obstructions_path <> ",",
       "to which you may add an entry at the end and change nothing above it —",
       "the guard permits the write and a captain's diff checks that it was",
-      "an addition. Every other write is denied by a hook, not by convention:",
-      "no script under explorer/ (put a script's text in the document), no",
-      "proposal, no statement, no node, and not your own notebook — the",
-      "harness writes that from your report. You may run `node <one path",
+      "an addition. Under explorer/ you may write and edit scripts freely:",
+      "a falsification run is a script, and it belongs in the tree with its",
+      "result in the document. Every other write is denied by a hook, not by",
+      "convention: no proposal, no statement, no node, and not your own notebook",
+      "— the harness writes that from your report. You may run `node <one path",
       "under explorer/>`, `lake build [modules]` and `lake env lean <file>`,",
       "one bare command per call with no shell operators.",
       "",
