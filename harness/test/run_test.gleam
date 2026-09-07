@@ -427,3 +427,63 @@ pub fn a_second_persona_is_minted_when_the_only_one_is_busy_test() {
   assert one.identity == "Scripted"
   assert two.identity == "Minted"
 }
+
+// --- the stop file ------------------------------------------------------------
+
+/// **A run must be stoppable without killing a worker.**
+///
+/// From run 20260906T230339Z: a harness defect was diagnosed while the run was
+/// live, and there was no way to end it. The only lever was killing the
+/// process, which the permission classifier refused, so a run known to be
+/// burning attempts against a harness bug had to be waited out until the ladder
+/// exhausted. See `a-run-cannot-be-stopped-once-a-defect-in-it-is-known`.
+///
+/// The stop file is checked where the scheduler already decides whether to
+/// start another attempt, so a stopped run **finishes what is in flight and
+/// starts no more**. That is the property a kill cannot give: the node the
+/// ladder was burning against in that run had ALREADY BEEN PROVED, and opus had
+/// left a working proof on disk. A kill would have discarded it.
+pub fn a_stop_file_starts_no_further_attempts_test() {
+  let f =
+    fixture(
+      "stop-file",
+      [[init_line("s"), result_line("s", "proved")]],
+      ports.span(16),
+    )
+  let assert Ok(_) = simplifile.write(f.cfg.repo_root <> "/STOP", "keel")
+  let assert Ok(text) =
+    dispatch.run_with(
+      f.cfg,
+      Plan(max_attempts: 3, concurrency: 2),
+      env(f, verify.Verified(["propext"], "'harness_check' depends on axioms")),
+    )
+  let _ = simplifile.delete(f.cfg.repo_root <> "/STOP")
+  // Nothing started. The plan allowed three attempts and two leaves were
+  // ready; a stop present before the first fill means none of them begin.
+  assert node_after(f, "probe_one").status == dag.Open
+  assert node_after(f, "probe_two").status == dag.Open
+  assert list.length(node_after(f, "probe_one").attempts) == 0
+  // And the run says WHY it started nothing, rather than looking like a run
+  // with nothing to do — those are the same summary otherwise, which is this
+  // project's most expensive shape.
+  assert string.contains(string.lowercase(text), "stop")
+}
+
+/// Without the file, the same fixture runs normally — the guard against a stop
+/// check that is always on, which would be indistinguishable from a scheduler
+/// that had stopped working.
+pub fn no_stop_file_means_the_run_proceeds_test() {
+  let f =
+    fixture(
+      "stop-file-absent",
+      [[init_line("s"), result_line("s", "proved")]],
+      ports.span(16),
+    )
+  let assert Ok(_) =
+    dispatch.run_with(
+      f.cfg,
+      Plan(max_attempts: 1, concurrency: 1),
+      env(f, verify.Verified(["propext"], "'harness_check' depends on axioms")),
+    )
+  assert node_after(f, "probe_one").status == dag.Proved
+}

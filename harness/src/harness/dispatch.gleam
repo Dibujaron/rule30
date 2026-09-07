@@ -336,12 +336,72 @@ fn fill(run_: Run, state: RunState) -> Result(RunState, String) {
         skip: state.skip,
       )
   }
+  // The stop file is checked HERE, where the scheduler already decides whether
+  // to start another attempt, and nowhere else. That placement is the whole
+  // design: attempts already in flight run to completion, and no new one
+  // begins. A process kill cannot do that — in run 20260906T230339Z the node
+  // the ladder was burning against had already been proved and opus had left a
+  // working proof on disk, which a kill would have discarded along with a
+  // claimed node and a half-written file.
+  //
+  // Checked per fill rather than once per run, because the point is to be
+  // usable by a captain who has just realised something is wrong DURING a run.
+  // See `a-run-cannot-be-stopped-once-a-defect-in-it-is-known`.
   case candidate {
     None -> Ok(state)
-    Some(schedule.Assignment(node:, who:)) -> {
-      use state <- result.try(start(run_, state, node, who))
-      fill(run_, state)
-    }
+    Some(schedule.Assignment(node:, who:)) ->
+      case stop_requested(run_.cfg.repo_root) {
+        // Recorded as `halted`, reusing the mechanism a rate limit already
+        // uses, rather than as a quiet `Ok(state)`. That is not tidiness: it
+        // is what puts the reason in the run's closing summary AND in its
+        // events. A run that started nothing and a run that was STOPPED
+        // produce an identical summary otherwise — "nothing happened" reading
+        // the same as "something was prevented" is this project's most
+        // expensive shape, and it would be absurd to reintroduce it in the
+        // feature built to end a run that had gone wrong.
+        //
+        // The declined node is named, so the record says what the stop cost.
+        True -> {
+          let reason =
+            "stopped by "
+            <> stop_path(run_.cfg.repo_root)
+            <> "; declined to start "
+            <> node.id
+          log.event(run_.run_log, "stopped", [
+            #("reason", json.string(reason)),
+            #("declined", json.string(node.id)),
+          ])
+          Ok(RunState(..state, halted: Some(reason)))
+        }
+        False -> {
+          use state <- result.try(start(run_, state, node, who))
+          fill(run_, state)
+        }
+      }
+  }
+}
+
+/// Where a captain writes to end a run: `STOP` at the repository root.
+///
+/// At the root and in capitals because the situation it exists for is a person
+/// who has just realised a live run is doing something wrong, and needs to act
+/// before reading anything. Gitignored — committing it would halt every run.
+pub fn stop_path(repo_root: String) -> String {
+  repo_root <> "/STOP"
+}
+
+/// Has a captain asked this run to stop?
+///
+/// Deliberately a file rather than a signal or an interruptible dispatcher.
+/// A file needs no process to be reachable, survives the session that wrote
+/// it, works when a permission classifier refuses a kill — which is what
+/// happened — and is removable by the same person who wrote it. It is the
+/// "derive it from outside the process" half of CLAUDE.md's rule about state
+/// surviving a session that dies without warning.
+pub fn stop_requested(repo_root: String) -> Bool {
+  case simplifile.is_file(stop_path(repo_root)) {
+    Ok(True) -> True
+    _ -> False
   }
 }
 

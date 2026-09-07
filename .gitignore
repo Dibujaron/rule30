@@ -19,3 +19,7 @@ credentials.json
 
 # SDD workspace
 /.superpowers/
+
+# A captain writes this to end a run: the scheduler finishes what is in
+# flight and starts no more. Committing it would halt every run.
+STOP
