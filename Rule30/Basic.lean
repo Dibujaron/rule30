@@ -11,6 +11,9 @@ uses.
 -/
 import Mathlib.Data.Int.Notation
 import Mathlib.Logic.Function.Iterate
+import Mathlib.Data.Fintype.Card
+import Mathlib.Data.Fintype.Pi
+import Mathlib.Data.Finset.Card
 
 /-- A configuration of the automaton: a bi-infinite row of cells, each black
 (`true`) or white (`false`), indexed by the integers.
@@ -115,3 +118,71 @@ theorem rule30_eq (c : Config) (i : ℤ) :
 /-- `evolve` unfolded one step, so that `rule30_eq` can be applied to it. -/
 theorem evolve_succ (t : Nat) : evolve (t + 1) = rule30 (evolve t) := by
   simp [evolve, Function.iterate_succ_apply']
+
+/-! ## Arbitrary rows
+
+Everything above grows the picture from one black cell. The tools the
+literature uses on the columns question — left-permutivity, preimage
+counting — are about *any* starting row, so here the same picture is grown
+from an arbitrary `c : Config`. `evolve t` is the special case
+`evolveFrom initialConfig t`, and the two are equal by definition. -/
+
+/-- The row after `t` steps of rule 30, starting from any row `c`.
+
+The same `f^[t]` iterate as `evolve`, with the starting row a parameter
+instead of the fixed `initialConfig`. In TypeScript this is the difference
+between `evolve(t)` and `evolveFrom(c, t)` where the first is
+`evolveFrom(initialConfig, t)` by definition. -/
+def evolveFrom (c : Config) (t : Nat) : Config := rule30^[t] c
+
+/-- Column `i` of the picture grown from `c`: the colour of position `i`
+after `t` steps, as a function of `t`. `centerColumn` is `column initialConfig 0`. -/
+def column (c : Config) (i : ℤ) (t : Nat) : Bool := evolveFrom c t i
+
+/-- The cells of `c` at positions `-t .. t`, as a function on the finite type
+`Fin (2 * t + 1)`: index `k` reads position `k - t`.
+
+The point of a *finite* type is counting. `Fin n → Bool` has `2 ^ n`
+inhabitants and Mathlib knows it (`Fintype`), so "all windows of width
+`2t + 1`" is `Finset.univ` and can be filtered and counted. A `Config` is
+`ℤ → Bool` and has no such thing. -/
+def window (c : Config) (t : Nat) : Fin (2 * t + 1) → Bool :=
+  fun k => c ((k : ℤ) - (t : ℤ))
+
+/-- A window extended by white cells outside `-t .. t`, back to a full row.
+`window (ofWindow w) t = w`, and the picture grown from `ofWindow w` agrees
+at the origin for `t` steps with the picture grown from any row whose
+window is `w` (that is the cone lemma, `evolveFrom_eq_of_agree_on_window`). -/
+def ofWindow {t : Nat} (w : Fin (2 * t + 1) → Bool) : Config :=
+  fun i => if h : 0 ≤ i + t ∧ i + t < 2 * t + 1 then w ⟨(i + t).toNat, by omega⟩ else false
+
+/-- `f` is **left-permutive** with radius `r`: two rows that agree at every
+position `i - r + 1 .. i + r` and differ at `i - r` are sent to rows that
+differ at `i`. Flipping the leftmost cell a step reads always flips its
+output, whatever the other cells hold.
+
+This is the property everything about rule 30's columns leans on. For one
+step of rule 30 it is `rule30_eq` read as "`xor` with the left neighbour":
+`rule30_leftPermutive`. For `t` steps it is `evolveFrom_leftPermutive`, with
+radius `t`. -/
+def LeftPermutive (f : Config → Config) (r : Nat) : Prop :=
+  ∀ (c d : Config) (i : ℤ),
+    (∀ j : ℤ, i - r < j → j ≤ i + r → c j = d j) → c (i - r) ≠ d (i - r) → f c i ≠ f d i
+
+/-- How many of the `2 ^ (2t + 1)` windows of width `2t + 1` grow a black
+centre cell after `t` steps. `window_count_half` says it is exactly half.
+
+`noncomputable` because Mathlib's `Fintype` instance on functions is built
+from a `Finset` of all functions, which the kernel can enumerate but the
+compiler will not generate code for; nothing here is meant to run. -/
+noncomputable def blackWindowCount (t : Nat) : Nat :=
+  (Finset.univ.filter fun w : Fin (2 * t + 1) → Bool =>
+    evolveFrom (ofWindow w) t 0 = true).card
+
+/-- The single-seed picture is the general one grown from `initialConfig`. -/
+theorem evolve_eq_evolveFrom_initial (t : Nat) :
+    evolve t = evolveFrom initialConfig t := rfl
+
+/-- The centre column is column `0` of the single-seed picture. -/
+theorem centerColumn_eq_column (t : Nat) :
+    centerColumn t = column initialConfig 0 t := rfl
