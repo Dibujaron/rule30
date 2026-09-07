@@ -316,6 +316,59 @@ reformulations, all provable, none of them the prize.
     real math, above item 18 in cost. Found by Cairn 2026-09-07 checking
     literature coverage; not on the DAG, not previously here.
 
+38. **The two half-lines and the sideways solve (definitions).** Each half
+    of the picture is driven by column 0 alone: `evolveHalfLeft (c : ℕ → Bool)
+    (w : List Bool) : ℕ → ℕ → Bool` is the cells `x ≤ -1` grown from a
+    white start with finite left word `w` and boundary column `c`
+    (`evolveHalfRight` symmetric), and `leftSolve (c d : ℕ → Bool) : ℕ → ℕ → Bool`
+    is the sideways solve, `leftSolve c d 0 = c`, `leftSolve c d 1 = d`,
+    `leftSolve c d (k+2) t = xor (leftSolve c d (k+1) (t+1)) (leftSolve c d (k+1) t || leftSolve c d k t)`.
+    Agreement theorems: for any `X : Config`,
+    `evolveHalfLeft (column X 0) (left word of X) t k = column X (-(k+1)) t`
+    (M, induction on `t` with `evolve_eq_false_of_outside_cone`'s argument
+    for the white start) and `leftSolve (column X 0) (column X 1) k t = column X (-k) t`
+    (S, induction on `k` from `sideways_inverse`). *Folklore*; definitions
+    plus two nodes. Sextant, second attack of 2026-09-07, C1–C2; checked by
+    Sextant to 200,000 rows and by Rowan independently to 6,000, and the
+    list model against `rowCell` in the kernel. Seed first: 39–41 need it.
+39. **The cone constraint splits by the centre's colour.** For any `X` with
+    `c = column X 0`, `L = column X (-1)`, `R = column X 1`: at every black
+    time `c (t+1) = !L t` (column 1 absent), and at every white time
+    `R t = xor (c (t+1)) (L t)`. *Proved*: one rewrite each from
+    `sideways_inverse` at `i = 0`; two S nodes. Its content, with 38: the
+    black-time half of the residual is a condition on column 0 and the
+    left half-line alone, so a proof through the left may discard column 1.
+    Sextant C2; Rowan checked on the seed to 6,000 rows, Sextant to
+    200,000, kernel to depth 40 (`explorer/scratch_blacktime.lean`).
+40. **Column 0 and the right half are free coordinates.**
+    `∀ b Y, ∃! X : Config, (∀ k : ℕ, X (k+1) = Y k) ∧ ∀ t, column X 0 t = b t`.
+    Finite form: for every `t` and every word `c : Fin (t+1) → Bool`,
+    exactly `2^t` of the `2^(2t+1)` windows have that column word to depth
+    `t`. *Proved* in print for the count (Wolfram 1986 §4: "an equal number
+    of initial configurations"); uniqueness with the right half fixed is
+    `rightmost_difference_moves_right`, existence is induction on `k` via
+    `leftSolve`. Rowan checked the count exhaustively for `t ≤ 8`, Sextant
+    `t ≤ 10`. Consequence worth stating: the seed is rigid from the right
+    (a white right half plus column 0 pins everything) and loose from the
+    left (many windows white on `x ≤ -1` share its column to any finite
+    depth, `explorer/whiteleft.mjs`). Size M with 38; two S after. Sextant C1.
+41. **Finite exclusions for number-like configurations.** No configuration
+    white on `x ≤ -3` has a column 0 periodic from time 0 with period `≤ 5`
+    through row 40:
+    `∀ X : Config, (∀ i ≤ -3, X i = false) → ∀ p ≤ 5, 0 < p → ¬ ∀ t ≤ 40, column X 0 (t+p) = column X 0 t`.
+    *Computed*, kernel-accepted by `decide` over a list half-line model in
+    11 s (`explorer/scratch_blacktime.lean`, part 3); a node once 38's
+    agreement theorem ties the model to `column`. The first statement here
+    about every configuration white far to the left rather than the seed;
+    companion to crystal 19. Supply, not insight. Sextant C4.
+
+Deliberately not listed: Sextant's "left half-line conjecture" (every
+eventually periodic, not eventually white boundary fails the black-time
+test for every finite left word). It implies the wall and Kopra's width-1
+problem for all of `N(2)`; its sweep statistics to period 240 are those
+of a fair coin, so it carries no evidence of a mechanism. It is the wall
+in another coat, and would sit beside it, not under it.
+
 ## Not credible or not verified
 
 - arXiv:2207.13237 (Das, "Rule 30: Solving the Chaos") claims an analytical
