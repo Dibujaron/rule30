@@ -621,6 +621,63 @@ theorem leftDiagonal_period_le (k : ℕ) :
 
 /-! ## Harness self-test -/
 
+/-- **One step of the rule in left-diagonal coordinates.** The mirror of
+`rightDiagonal_recurrence`, with the diagonal's own previous term inside the
+`||` rather than in the `xor` slot. `evolve_left_diagonal_recurrence` says
+the same thing in `evolve` coordinates; this is the form every node above
+it cites, so the cast bookkeeping is paid once. -/
+theorem leftDiagonal_recurrence (m i : ℕ) :
+    leftDiagonal (m + 2) (i + 1)
+      = xor (leftDiagonal m (i + 2))
+          (leftDiagonal (m + 1) (i + 1) || leftDiagonal (m + 2) i) := by
+  sorry
+
+/-- **A one-bit OR-machine that is back where it started after one driver
+period keeps that period.** `bool_driven_eventually_two_periodic` always
+doubles; this says the doubling is not forced, and turns a question about
+periods into one Bool equality. -/
+theorem bool_driven_periodicFrom_of_return (a b x : ℕ → Bool) (p N M : ℕ)
+    (hrec : ∀ i, x (i + 1) = xor (a i) (b i || x i))
+    (ha : PeriodicFrom a p N) (hb : PeriodicFrom b p N) (hNM : N ≤ M)
+    (hret : x (M + p) = x M) :
+    PeriodicFrom x p M := by
+  sorry
+
+/-- **A true driver bit resets the machine.** When `b j` is true the update
+collapses to `not (a j)` and the machine forgets its history, so the period
+is `p` and the onset is the reset point `j + 1`, not one period later. -/
+theorem bool_driven_periodicFrom_of_reset (a b x : ℕ → Bool) (p N j : ℕ)
+    (hrec : ∀ i, x (i + 1) = xor (a i) (b i || x i))
+    (ha : PeriodicFrom a p N) (hb : PeriodicFrom b p N) (hNj : N ≤ j)
+    (hbj : b j = true) :
+    PeriodicFrom x p (j + 1) := by
+  sorry
+
+/-- **A black cell in the upper diagonal stops the doubling.** The sharp
+companion to `leftDiagonal_periodicFrom_step`: if diagonal `m + 1` is black
+at `j + 1` past the common onset, diagonal `m + 2` keeps period `q` from
+`j + 1`. Measured to `m = 428`: such a cell exists in 425 of 429 steps,
+always within 8 of the onset, with no violation. -/
+theorem leftDiagonal_periodicFrom_step_of_black (m q N j : ℕ) (hNj : N ≤ j)
+    (h0 : PeriodicFrom (leftDiagonal m) q N)
+    (h1 : PeriodicFrom (leftDiagonal (m + 1)) q N)
+    (hblack : leftDiagonal (m + 1) (j + 1) = true) :
+    PeriodicFrom (leftDiagonal (m + 2)) q (j + 1) := by
+  sorry
+
+/-- **Rowland's doubling criterion, in the direction a bound uses.** The
+period can only double at a diagonal whose predecessor is eventually white.
+Below `k = 430` the eventually-white left diagonals are 2, 7, 28 and 399,
+and the doublings are at 3, 8, 29 and 400. What remains of the wall
+`leftDiagonal_period_le` after this is "the eventually-white diagonals are
+sparse", which nobody has proved. -/
+theorem leftDiagonal_step_period_dichotomy (m q N : ℕ)
+    (h0 : PeriodicFrom (leftDiagonal m) q N)
+    (h1 : PeriodicFrom (leftDiagonal (m + 1)) q N) :
+    (∃ M, PeriodicFrom (leftDiagonal (m + 2)) q M) ∨
+      ∀ j ≥ N + 1, leftDiagonal (m + 1) j = false := by
+  sorry
+
 /-- A trivially true statement that exists only so the harness's verifier
 tests have something to prove without touching a real node's proof file. It
 is deliberately absent from `blueprint/dag.json`. -/
