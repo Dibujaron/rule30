@@ -259,7 +259,9 @@ provers on first use, one live session per persona, the naming event
 recorded in the attempt's `events.jsonl`. `theorise` takes `--as <Name>`
 to start a named persona if idle, and without it picks an idle theory
 persona or mints one. A theorist's system prompt carries its own notebook
-`agents/<Name>.md` and no other theorist's, so that five theorists on one
+`agents/<Name>.md`, inlined from disk at render time so a revision between
+sessions reaches the next session without a harness change, and no other
+theorist's, so that five theorists on one
 topic are five accumulated views rather than one; its session ends with a
 structured report (outcome, the attack document path, a notebook entry, a
 journal entry) from which the harness writes the notebook and the run
