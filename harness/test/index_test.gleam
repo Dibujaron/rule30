@@ -86,6 +86,23 @@ pub fn docstring_lead_does_not_walk_past_a_section_header_test() {
     == Ok("Lead A.")
 }
 
+const statements_with_a_wrapped_lead = "/-- **Lead part one
+continued lead.**
+-/
+theorem foo : True := by
+  sorry
+"
+
+/// A docstring whose block is opener, then a content line, then a `-/` of
+/// its own on the closing line — three lines, the shortest shape where the
+/// opener and closer are not the same line and there is more than one line
+/// of content between them. The assembled text must keep the closer last,
+/// not splice it between the two content lines.
+pub fn docstring_lead_keeps_a_wrapped_lead_in_order_test() {
+  assert index.docstring_lead(statements_with_a_wrapped_lead, "foo")
+    == Ok("Lead part one continued lead.")
+}
+
 const checked_proof = "import Rule30.Basic
 
 /-!

@@ -365,6 +365,14 @@ fn find_opener(above: List(String)) -> Result(#(String, List(String)), Nil) {
   }
 }
 
+/// `seen` is built by prepending each line as the walk moves upward through
+/// `above`, one line further from the declaration each time — which is
+/// already file order: the first line prepended is the closer (nearest the
+/// declaration, so last in the file among these), and each line prepended
+/// after it sits earlier in the file, ending up ahead of the closer rather
+/// than behind it. So `seen` is returned as built, not reversed; reversing
+/// it here put the closer first and the content last, splicing a stray
+/// `-/` into the middle of a docstring that wraps more than one line.
 fn scan_for_opener(
   lines: List(String),
   seen: List(String),
@@ -373,7 +381,7 @@ fn scan_for_opener(
     [] -> Error(Nil)
     [line, ..rest] ->
       case string.contains(line, "/--") || string.contains(line, "/-!") {
-        True -> Ok(#(line, list.reverse(seen)))
+        True -> Ok(#(line, seen))
         False ->
           case string.contains(line, "-/") {
             True -> Error(Nil)
