@@ -23,3 +23,11 @@ credentials.json
 # A captain writes this to end a run: the scheduler finishes what is in
 # flight and starts no more. Committing it would halt every run.
 STOP
+
+# The harness test suite's Mathlib-free Lean fixture project
+# (harness/test/fixture-project): its build, the check files the verifier
+# and seed checks write under its harness/build, and the fixture proofs
+# verify_test writes and deletes. The sources beside them are committed.
+/harness/test/fixture-project/.lake/
+/harness/test/fixture-project/harness/
+/harness/test/fixture-project/Rule30/Proofs/*.lean
