@@ -69,7 +69,7 @@ could prove. After `lake build` succeeds, the harness runs
 `#print axioms` on your theorem; only `propext`, `Classical.choice`, and
 `Quot.sound` may appear. End every turn with the structured report the
 harness requests (outcome, your size estimate, notebook entry, journal
-entry, posts for peers) — the dispatcher writes files from that report, so
+entry) — the dispatcher writes files from that report, so
 a harness worker never edits `agents/` or `runs/` directly.
 
 **Your proof file must open with a note that explains it in English.** Put a
@@ -364,11 +364,14 @@ cd harness && gleam run -- prove-one <node-id>  # dispatch one worker at one nod
 cd harness && gleam run -- run --max-attempts 3 --concurrency 3
                                                 # keep up to K workers in flight until N attempts have started
 cd harness && gleam run -- reopen <node-id>     # a crashed run left a node `claimed`; put it back on the board
-cd harness && gleam run -- seed [--model M]     # hand-start one seeder session; it proposes into blueprint/proposals/next.json under the seeder guard, and the check report prints when it ends
+cd harness && gleam run -- seed [--model M] [--region R]
+                                                # hand-start one seeder session; it proposes into blueprint/proposals/next.json under the seeder guard, and the check report prints when it ends
 ```
 
 A seeder is started by hand and never by the scheduler; its guard sits on
-the run port base plus 100 so it can run beside a live run.
+the run port base plus 100 so it can run beside a live run. `--region` aims
+the seeder at one region: its brief, its open-node section and its closed
+table are restricted to it, and proposals outside it are not landed.
 
 `run` is the scheduler over the build graph: whenever a slot is free it
 starts the best open leaf, including one that only just became a leaf
