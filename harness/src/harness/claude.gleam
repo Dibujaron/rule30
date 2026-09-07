@@ -272,3 +272,38 @@ pub fn assistant_text(raw: String) -> String {
   }
   json.parse(raw, decoder) |> result.unwrap("")
 }
+
+/// The `input` of the last `StructuredOutput` tool call in an `assistant`
+/// event, or `None` if it made none. A session started with `--json-schema`
+/// reports by calling that tool, and the CLI copies the call's input into
+/// the turn's `result` as `structured_output` — except when that result
+/// ends the session in error (`error_max_budget_usd`, for one), when it
+/// carries no `structured_output` at all and the call is the only copy of
+/// the report.
+pub fn structured_output_call(raw: String) -> Option(Dynamic) {
+  let decoder = {
+    use blocks <- decode.subfield(
+      ["message", "content"],
+      decode.list({
+        use kind <- decode.field("type", decode.string)
+        case kind {
+          "tool_use" -> {
+            use name <- decode.field("name", decode.string)
+            case name {
+              "StructuredOutput" -> {
+                use input <- decode.field("input", decode.dynamic)
+                decode.success(Some(input))
+              }
+              _ -> decode.success(None)
+            }
+          }
+          _ -> decode.success(None)
+        }
+      }),
+    )
+    decode.success(
+      list.fold(blocks, None, fn(last, block) { option.or(block, last) }),
+    )
+  }
+  json.parse(raw, decoder) |> result.unwrap(None)
+}

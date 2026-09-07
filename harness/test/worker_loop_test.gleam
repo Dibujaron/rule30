@@ -240,16 +240,93 @@ fn result_line(session_id: String, is_error: Bool, outcome: String) -> String {
     #("is_error", json.bool(is_error)),
     #("total_cost_usd", json.float(0.25)),
     #("num_turns", json.int(3)),
+    #("structured_output", report_object(outcome, "scripted " <> outcome)),
+  ])
+  |> json.to_string
+}
+
+/// A full prover report, as the session writes it: the same object whether
+/// it arrives as a result's `structured_output` or as the `input` of the
+/// `StructuredOutput` call that produced it.
+fn report_object(outcome: String, summary: String) -> json.Json {
+  json.object([
+    #("outcome", json.string(outcome)),
+    #("estimate", json.string("S")),
+    #("summary", json.string(summary)),
+    #("notebook", json.string("scripted notebook")),
+    #("journal", json.string("scripted journal")),
+  ])
+}
+
+/// An `assistant` event whose one content block is a `StructuredOutput`
+/// tool call carrying a full report: the shape the CLI streams when a
+/// session reports, before (and whether or not) it copies the input into
+/// the turn's `result`.
+fn structured_output_call_line(summary: String) -> String {
+  json.object([
+    #("type", json.string("assistant")),
     #(
-      "structured_output",
+      "message",
       json.object([
-        #("outcome", json.string(outcome)),
-        #("estimate", json.string("S")),
-        #("summary", json.string("scripted " <> outcome)),
-        #("notebook", json.string("")),
-        #("journal", json.string("")),
+        #("role", json.string("assistant")),
+        #(
+          "content",
+          json.preprocessed_array([
+            json.object([
+              #("type", json.string("tool_use")),
+              #("id", json.string("toolu_scripted")),
+              #("name", json.string("StructuredOutput")),
+              #("input", report_object("in_progress", summary)),
+            ]),
+          ]),
+        ),
       ]),
     ),
+  ])
+  |> json.to_string
+}
+
+/// The `user` event the CLI echoes after a `StructuredOutput` call: the
+/// tool's own result, which is only ever an acknowledgement.
+fn tool_result_line() -> String {
+  json.object([
+    #("type", json.string("user")),
+    #(
+      "message",
+      json.object([
+        #("role", json.string("user")),
+        #(
+          "content",
+          json.preprocessed_array([
+            json.object([
+              #("tool_use_id", json.string("toolu_scripted")),
+              #("type", json.string("tool_result")),
+              #(
+                "content",
+                json.string("Structured output provided successfully"),
+              ),
+            ]),
+          ]),
+        ),
+      ]),
+    ),
+  ])
+  |> json.to_string
+}
+
+/// The `result` a CLI ends a session with in error: `is_error`, a subtype,
+/// an `errors` list, and no `structured_output` at all — the fields of the
+/// last line of run 20260907T175146Z's `theorist-1/events.jsonl`, less the
+/// usage.
+fn error_result_line(session_id: String) -> String {
+  json.object([
+    #("type", json.string("result")),
+    #("subtype", json.string("error_max_budget_usd")),
+    #("session_id", json.string(session_id)),
+    #("is_error", json.bool(True)),
+    #("errors", json.array(["Reached maximum budget ($4)"], json.string)),
+    #("total_cost_usd", json.float(4.27)),
+    #("num_turns", json.int(13)),
   ])
   |> json.to_string
 }
@@ -463,6 +540,70 @@ pub fn an_errored_result_is_budget_exhausted_and_is_never_verified_test() {
   assert r.attempt.outcome == dag.BudgetExhausted
   // A session the CLI killed did not prove anything, whatever it claimed.
   assert r.verify_calls == 0
+  assert r.eof
+}
+
+// --- (b2) the CLI ends the session and drops the report it was just given ----
+
+pub fn a_report_the_cli_dropped_is_recovered_from_the_last_call_test() {
+  // The session reported twice in its last turn, and the result that ended
+  // it in error carried neither copy. The attempt gets the last one, and
+  // the log says where it came from.
+  let r =
+    go(
+      scenario("report-recovered", [
+        [
+          init_line("sess-f"),
+          structured_output_call_line("the first call"),
+          tool_result_line(),
+          structured_output_call_line("the last call"),
+          tool_result_line(),
+          error_result_line("sess-f"),
+        ],
+      ]),
+    )
+  assert r.attempt.outcome == dag.BudgetExhausted
+  assert r.attempt.reported
+  let assert Some(report) = r.report
+  assert report.summary == "the last call"
+  assert report.notebook == "scripted notebook"
+  assert string.contains(r.events, "\"kind\":\"report_recovered\"")
+  // Recovered, not adjudicated: a session the CLI killed still proved
+  // nothing.
+  assert r.verify_calls == 0
+  assert r.eof
+}
+
+pub fn a_result_that_carries_its_report_is_not_second_guessed_test() {
+  let r =
+    go(
+      scenario("report-delivered", [
+        [
+          init_line("sess-g"),
+          structured_output_call_line("from the call"),
+          tool_result_line(),
+          result_line("sess-g", True, "abandoned"),
+        ],
+      ]),
+    )
+  assert r.attempt.outcome == dag.BudgetExhausted
+  let assert Some(report) = r.report
+  assert report.summary == "scripted abandoned"
+  assert !string.contains(r.events, "report_recovered")
+  assert r.eof
+}
+
+pub fn an_error_result_with_no_call_to_recover_leaves_no_report_test() {
+  let r =
+    go(
+      scenario("report-absent", [
+        [init_line("sess-h"), error_result_line("sess-h")],
+      ]),
+    )
+  assert r.attempt.outcome == dag.BudgetExhausted
+  assert r.report == None
+  assert !r.attempt.reported
+  assert !string.contains(r.events, "report_recover")
   assert r.eof
 }
 
