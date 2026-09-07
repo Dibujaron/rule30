@@ -3,3 +3,10 @@
 # error, or splits a heredoc on the stray carriage return. This repo is
 # developed on Windows, so the default checkout would otherwise convert them.
 *.sh text eol=lf
+
+# Every text file is checked out LF, whatever core.autocrlf says. The index
+# has always been LF; the churn was working copies checked out CRLF while
+# tools (gleam format, node, the harness) wrote LF back, so git listed
+# untouched files as modified with zero changed lines. Binary detection is
+# left to git (`auto`).
+* text=auto eol=lf
