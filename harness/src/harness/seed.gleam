@@ -33,6 +33,17 @@
 //// `type_of%` still has a job, but the second one — see `verify.gleam`,
 //// which already does it for proofs. First the shape the worker will meet,
 //// then the identity with the seeded text.
+////
+//// There are two places a statement's text can live, and a route is only
+//// ever checked against one of them at a time. `check_route` takes the text
+//// of `Rule30/Statements.lean`. `check_proposal` takes a proposal, whose
+//// `statement` field is the declaration as the seeder wants it landed, and
+//// Rowan lands it BY HAND — nothing in the harness writes the statement
+//// file. So once a proposal's name appears in `Rule30/Statements.lean`, the
+//// two texts are compared byte for byte before any Lean runs, and a route
+//// whose two texts disagree gets `SeededTextDiffers` and no elaboration at
+//// all: a verdict on either text would be a verdict about the other's
+//// object, which is the failure this module exists to catch.
 
 import gleam/dynamic.{type Dynamic}
 import gleam/dynamic/decode
@@ -77,11 +88,17 @@ pub type Claim {
 /// `sorry`'s founding failure mode — a build that says success over nothing —
 /// arriving at the statement gate, and it gets a verdict a reader cannot
 /// mistake for "the tactics were wrong".
+///
+/// `SeededTextDiffers` is the verdict for a route that was NOT elaborated,
+/// because the proposal's declaration and the one now in
+/// `Rule30/Statements.lean` are different texts. Both are carried so the
+/// report can show the reader exactly which bytes moved.
 pub type RouteVerdict {
   RouteClosed
   RouteFailed(output: String)
   RouteUsesSorry(output: String)
   StatementNotFound(lean_name: String)
+  SeededTextDiffers(proposed: String, seeded: String)
   NoRoute
 }
 
@@ -182,12 +199,9 @@ pub fn check_source(declaration: String, route: Route) -> String {
   imports <> "\n" <> declaration <> "\n  " <> route.tactics <> "\n"
 }
 
-/// Elaborate one claimed route and say whether it closes the statement.
-///
-/// Runs `lake env lean`, which reads oleans and takes no build lock — so
-/// this is safe alongside a live run, unlike `lake build`. A whole
-/// proposal's worth of routes costs about what one prover spends on one
-/// compile.
+/// Elaborate one claimed route against the declaration named `lean_name`
+/// in `statements_source` — the text of `Rule30/Statements.lean` — and say
+/// whether it closes the statement.
 pub fn check_route(
   repo_root: String,
   lake: String,
@@ -200,28 +214,68 @@ pub fn check_route(
     Claimed(route) ->
       case declaration_without_proof(statements_source, lean_name) {
         Error(Nil) -> StatementNotFound(lean_name)
-        Ok(declaration) -> {
-          let dir = repo_root <> "/harness/build/checks/seed"
-          let path = dir <> "/" <> lean_name <> ".lean"
-          let assert Ok(_) = simplifile.create_directory_all(dir)
-          let assert Ok(_) =
-            simplifile.write(path, check_source(declaration, route))
-          case shell.run(lake, ["env", "lean", path], repo_root, 600_000) {
-            Error(msg) -> RouteFailed(msg)
-            Ok(shell.Run(status:, output:)) if status != 0 ->
-              RouteFailed(output)
-            // Exit 0 is necessary and not sufficient: `sorry` elaborates
-            // cleanly and warns. The warning is checked rather than the
-            // tactic text because it also catches a `sorry` a tactic
-            // introduced on the route's behalf, which a text scan of what
-            // the captain wrote would not see.
-            Ok(shell.Run(output:, ..)) ->
-              case string.contains(output, sorry_warning) {
-                True -> RouteUsesSorry(output)
-                False -> RouteClosed
-              }
-          }
-        }
+        Ok(declaration) ->
+          check_declaration(repo_root, lake, declaration, lean_name, route)
+      }
+  }
+}
+
+/// Elaborate `route` in place of the `sorry` of one already-lifted
+/// declaration. Every route verdict that involves Lean comes from here.
+///
+/// Runs `lake env lean`, which reads oleans and takes no build lock — so
+/// this is safe alongside a live run, unlike `lake build`. A whole
+/// proposal's worth of routes costs about what one prover spends on one
+/// compile.
+fn check_declaration(
+  repo_root: String,
+  lake: String,
+  declaration: String,
+  lean_name: String,
+  route: Route,
+) -> RouteVerdict {
+  let dir = repo_root <> "/harness/build/checks/seed"
+  let path = dir <> "/" <> lean_name <> ".lean"
+  let assert Ok(_) = simplifile.create_directory_all(dir)
+  let assert Ok(_) = simplifile.write(path, check_source(declaration, route))
+  case shell.run(lake, ["env", "lean", path], repo_root, 600_000) {
+    Error(msg) -> RouteFailed(msg)
+    Ok(shell.Run(status:, output:)) if status != 0 -> RouteFailed(output)
+    // Exit 0 is necessary and not sufficient: `sorry` elaborates cleanly and
+    // warns. The warning is checked rather than the tactic text because it
+    // also catches a `sorry` a tactic introduced on the route's behalf,
+    // which a text scan of what the captain wrote would not see.
+    Ok(shell.Run(output:, ..)) ->
+      case string.contains(output, sorry_warning) {
+        True -> RouteUsesSorry(output)
+        False -> RouteClosed
+      }
+  }
+}
+
+/// The one declaration a proposal's route may be checked against, or the
+/// verdict that says why there is none.
+///
+/// A proposal's `statement` is the declaration as the seeder wants it
+/// landed, and landing is by hand. Until the name appears in
+/// `Rule30/Statements.lean` the proposal's own text is the only text there
+/// is, and the route is checked against it. Once the name is seeded there
+/// are two texts, and the route is checked against neither unless they are
+/// byte for byte the same: `bool_map_iterate_three` was checked against a
+/// `∀`-form and seeded with a parameter, and a check that had picked either
+/// text would have reported truthfully about the wrong object.
+pub fn declaration_to_check(
+  proposal_statement: String,
+  statements_source: String,
+  lean_name: String,
+) -> Result(String, RouteVerdict) {
+  case declaration_without_proof(proposal_statement, lean_name) {
+    Error(Nil) -> Error(StatementNotFound(lean_name))
+    Ok(proposed) ->
+      case declaration_without_proof(statements_source, lean_name) {
+        Error(Nil) -> Ok(proposed)
+        Ok(seeded) if seeded == proposed -> Ok(seeded)
+        Ok(seeded) -> Error(SeededTextDiffers(proposed:, seeded:))
       }
   }
 }
@@ -641,25 +695,42 @@ fn witness_claim_decoder() -> decode.Decoder(WitnessClaim) {
 
 /// Run both checks over one proposal.
 ///
-/// The route is checked against the proposal's OWN statement text, not against
-/// `Rule30/Statements.lean` — the statement is not seeded yet, and checking it
-/// anywhere else would be the bug this module exists to catch, one step
-/// earlier: a route verified against a paraphrase of the thing that ships.
+/// `statements_source` is the text of `Rule30/Statements.lean` as it stands.
+/// The route is checked against the proposal's own statement text while the
+/// name is not yet seeded, and against the seeded text once it is — and only
+/// if the two are the same bytes. See `declaration_to_check` for why a
+/// disagreement is a verdict of its own rather than a choice.
 pub fn check_proposal(
   repo_root: String,
   lake: String,
+  statements_source: String,
   proposal: Proposal,
   timeout_ms: Int,
 ) -> Checked {
+  let route = case proposal.route {
+    NoClaim -> NoRoute
+    Claimed(route) ->
+      case
+        declaration_to_check(
+          proposal.statement,
+          statements_source,
+          proposal.lean_name,
+        )
+      {
+        Error(verdict) -> verdict
+        Ok(declaration) ->
+          check_declaration(
+            repo_root,
+            lake,
+            declaration,
+            proposal.lean_name,
+            route,
+          )
+      }
+  }
   Checked(
     proposal:,
-    route: check_route(
-      repo_root,
-      lake,
-      proposal.statement,
-      proposal.lean_name,
-      proposal.route,
-    ),
+    route:,
     witness: check_witness(
       repo_root,
       lake,
@@ -682,6 +753,7 @@ pub fn report(checked: List(Checked)) -> String {
   let lines = list.map(checked, report_line)
   let counts =
     [
+      #("wrong object", list.count(checked, fn(c) { is_wrong_object(c.route) })),
       #("falsified", list.count(checked, fn(c) { is_falsified(c.witness) })),
       #("placeholder", list.count(checked, fn(c) { is_placeholder(c.witness) })),
       #("broken check", list.count(checked, fn(c) { is_broken(c.witness) })),
@@ -726,8 +798,28 @@ fn route_line(v: RouteVerdict) -> String {
     RouteUsesSorry(_) ->
       "DOES NOT CLOSE — the route itself uses `sorry`, which Lean accepts "
       <> "with exit 0 and a warning"
-    StatementNotFound(name) -> "BROKEN CHECK — no declaration named " <> name
+    StatementNotFound(name) ->
+      "BROKEN CHECK — the statement text has no `theorem "
+      <> name
+      <> " ... := by` ending in a line that is only `sorry`, so nothing "
+      <> "could be lifted to check against"
+    SeededTextDiffers(proposed:, seeded:) ->
+      "WRONG OBJECT, not elaborated — `Rule30/Statements.lean` now declares "
+      <> "this name with different text from the proposal, so a verdict on "
+      <> "either would be about the other's statement. Land the same bytes "
+      <> "or check the seeded text.\n    proposed: "
+      <> one_line(proposed)
+      <> "\n    seeded:   "
+      <> one_line(seeded)
   }
+}
+
+/// A declaration on one line, for a report a reader compares by eye.
+fn one_line(declaration: String) -> String {
+  declaration
+  |> string.split("\n")
+  |> list.map(string.trim)
+  |> string.join(" ")
 }
 
 /// The five witness verdicts, worded so no two of them can be skimmed as the
@@ -759,6 +851,13 @@ fn first_line(output: String) -> String {
   {
     [line, ..] -> line
     [] -> ""
+  }
+}
+
+fn is_wrong_object(v: RouteVerdict) -> Bool {
+  case v {
+    SeededTextDiffers(..) -> True
+    _ -> False
   }
 }
 
@@ -847,7 +946,11 @@ pub fn brief(
       "",
       "## The proposal format",
       "Each proposal carries an id, a lean_name, the statement text, and a",
-      "`reason`. The reason is REQUIRED and the route is OPTIONAL, and that is",
+      "`reason`. The statement text is the declaration EXACTLY as it should",
+      "land in Rule30/Statements.lean — `theorem <lean_name> ... := by` with",
+      "`sorry` on its own line — because a route is checked against those",
+      "bytes and against nothing else, and the captain lands the same bytes.",
+      "The reason is REQUIRED and the route is OPTIONAL, and that is",
       "the opposite of what it looks like it should be. Measured on the tier",
       "seeded 2026-09-06: description quality dominated node difficulty as a",
       "cost driver and it was not close. One node was seeded with a route its",
@@ -1061,12 +1164,25 @@ pub fn check_file_in(
     }),
   )
   use proposals <- result.try(decode_proposals(text))
+  // Read once, so every proposal is compared against the same bytes.
+  let statements_path = repo_root <> "/Rule30/Statements.lean"
+  use statements_source <- result.try(
+    simplifile.read(statements_path)
+    |> result.map_error(fn(e) {
+      "harness/seed: cannot read "
+      <> statements_path
+      <> ": "
+      <> simplifile.describe_error(e)
+    }),
+  )
   use lake <- result.try(
     shell.which("lake")
     |> result.replace_error("harness/seed: no `lake` on PATH"),
   )
   let checked =
-    list.map(proposals, fn(p) { check_proposal(repo_root, lake, p, 180_000) })
+    list.map(proposals, fn(p) {
+      check_proposal(repo_root, lake, statements_source, p, 180_000)
+    })
   Ok(report(checked))
 }
 
