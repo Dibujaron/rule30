@@ -66,6 +66,9 @@ fn node(
     proof_file: None,
     attempts: [],
     verified: None,
+    claimed_by: None,
+    claimed_at: None,
+    claimed_run: None,
   )
 }
 
@@ -191,6 +194,64 @@ pub fn prove_one_points_a_claimed_node_at_reopen_test() {
   let assert Error(reason) = dispatch.prove_one(c, "harness_probe")
   assert string.contains(reason, "it is claimed")
   assert string.contains(reason, "reopen harness_probe")
+  // A claim with no record of its own says so, rather than inventing one.
+  assert string.contains(reason, "no holder, time or run recorded")
+
+  // A recorded claim is named in the refusal, so the reader deciding whether
+  // to reopen has the holder, the run and the age in front of them.
+  let assert Ok(_) = dag.save(dag.update(d, held(n)), c.dag_path)
+  let assert Error(reason) = dispatch.prove_one(c, "harness_probe")
+  assert string.contains(reason, "held by Vesper since 2026-09-07T03:00:00Z")
+  assert string.contains(reason, "run 20260907T030000Z")
+}
+
+/// `harness_probe` as a claim made under a run that is not on disk.
+fn held(n: dag.Node) -> dag.Node {
+  dag.claim(
+    n,
+    by: "Vesper",
+    at: "2026-09-07T03:00:00Z",
+    run: "20260907T030000Z",
+  )
+}
+
+pub fn status_names_the_holder_run_and_age_of_a_claim_test() {
+  let c = cfg()
+  let assert Ok(d) = dag.load(c.dag_path)
+  let assert Ok(n) = dag.get(d, "harness_probe")
+  let assert Ok(_) = dag.save(dag.update(d, held(n)), c.dag_path)
+  let assert Ok(text) = dispatch.status(c)
+  let assert Ok(row) =
+    string.split(text, "\n")
+    |> list.find(fn(line) { string.starts_with(line, "harness_probe ") })
+  assert string.contains(row, "claimed")
+  assert string.contains(row, "held by Vesper since 2026-09-07T03:00:00Z")
+  // The age is computed against the real clock, so only its shape is
+  // pinned here; the arithmetic is `log_test`'s.
+  assert string.contains(row, " ago), run 20260907T030000Z")
+  // No `runs/<run>/summary.txt` exists for that run, and its absence is
+  // NOT evidence the run is dead — a live run has not written one either.
+  assert string.contains(row, "not ended (live, or died without writing)")
+  // An open node says nothing about a claim it does not hold.
+  let assert Ok(other) =
+    string.split(text, "\n")
+    |> list.find(fn(line) { string.starts_with(line, "ghost_lemma ") })
+  assert !string.contains(other, "held by")
+}
+
+pub fn status_calls_a_claim_stale_once_its_run_has_written_a_summary_test() {
+  let c = cfg()
+  let assert Ok(d) = dag.load(c.dag_path)
+  let assert Ok(n) = dag.get(d, "harness_probe")
+  let assert Ok(_) = dag.save(dag.update(d, held(n)), c.dag_path)
+  // The one liveness fact readable from outside: the run's closing summary
+  // is written when the run ends, so a claim whose run has one is stale
+  // for certain.
+  let assert Ok(l) = log.open(c.runs_root, "20260907T030000Z")
+  log.summary(l, "run ended")
+  let assert Ok(text) = dispatch.status(c)
+  assert string.contains(text, "which has ended: this claim is stale")
+  let _ = simplifile.delete(l.dir)
 }
 
 // --- reopen -------------------------------------------------------------------
@@ -204,9 +265,30 @@ pub fn reopen_puts_a_claimed_node_back_on_the_board_test() {
 
   let assert Ok(said) = dispatch.reopen(c, "harness_probe")
   assert string.contains(said, "is now open")
+  assert string.contains(said, "no holder, time or run recorded")
   let assert Ok(after) = dag.load(c.dag_path)
   let assert Ok(reopened) = dag.get(after, "harness_probe")
   assert reopened.status == dag.Open
+}
+
+pub fn reopen_says_which_claim_it_is_clearing_and_clears_it_test() {
+  let c = cfg()
+  let assert Ok(d) = dag.load(c.dag_path)
+  let assert Ok(n) = dag.get(d, "harness_probe")
+  let assert Ok(_) = dag.save(dag.update(d, held(n)), c.dag_path)
+
+  let assert Ok(said) = dispatch.reopen(c, "harness_probe")
+  // The claim is gone from the node once this returns, so the message is
+  // the last place it is legible: holder, time, run.
+  assert string.contains(said, "held by Vesper since 2026-09-07T03:00:00Z")
+  assert string.contains(said, "run 20260907T030000Z")
+  assert string.contains(said, "claim cleared")
+  let assert Ok(after) = dag.load(c.dag_path)
+  let assert Ok(reopened) = dag.get(after, "harness_probe")
+  assert reopened.status == dag.Open
+  assert reopened.claimed_by == None
+  assert reopened.claimed_at == None
+  assert reopened.claimed_run == None
 }
 
 pub fn reopen_refuses_anything_that_is_not_claimed_test() {

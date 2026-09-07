@@ -50,6 +50,9 @@ fn probe(id: String, deps: List(String)) -> dag.Node {
     proof_file: None,
     attempts: [],
     verified: None,
+    claimed_by: None,
+    claimed_at: None,
+    claimed_run: None,
   )
 }
 
@@ -281,6 +284,62 @@ pub fn two_slots_take_both_leaves_and_a_close_opens_the_next_test() {
   )
 }
 
+/// The claim as the scheduler writes it, read back from the board while the
+/// attempt is still in flight. The verifier is the one hook a test has into
+/// the middle of an attempt, and it is handed the claimed node, so it reads
+/// `dag.json` from there and leaves what it saw on disk for the assertions.
+pub fn a_claim_in_flight_names_its_holder_time_and_run_test() {
+  let f =
+    fixture(
+      "claim-in-flight",
+      [[init_line("s"), result_line("s", "proved")]],
+      ports.span(16),
+    )
+  let seen_path = f.dir <> "/seen.json"
+  let env_ =
+    dispatch.Env(
+      ..env(
+        f,
+        verify.Verified(
+          ["propext"],
+          "Statements.harness_probe : True",
+          "'harness_check' depends on axioms",
+        ),
+      ),
+      verifier: fn(_lock) {
+        fn(node: dag.Node) {
+          let assert Ok(on_disk) = dag.load(f.cfg.dag_path)
+          let assert Ok(row) = dag.get(on_disk, node.id)
+          let _ = simplifile.write(seen_path, dag.encode(Dag([row])))
+          verify.Verified(
+            ["propext"],
+            "Statements.harness_probe : True",
+            "'harness_check' depends on axioms",
+          )
+        }
+      },
+    )
+  let assert Ok(_) =
+    dispatch.run_with(f.cfg, Plan(max_attempts: 1, concurrency: 1), env_)
+  // Mid-attempt, the board said who held the node, since when, and under
+  // which run — and the run is the directory `runs/<run>` this run wrote.
+  let assert Ok(seen) = dag.decode(read(seen_path))
+  let assert Dag([held]) = seen
+  assert held.status == dag.Claimed
+  assert held.claimed_by == Some("Scripted")
+  let assert Some(at) = held.claimed_at
+  assert string.length(at) == 20 && string.ends_with(at, "Z")
+  let assert Ok([run]) = simplifile.read_directory(f.cfg.runs_root)
+  assert held.claimed_run == Some(run)
+  // Once the attempt returned, the claim went with it: a proved node is not
+  // held by anyone.
+  let after = node_after(f, "probe_one")
+  assert after.status == dag.Proved
+  assert after.claimed_by == None
+  assert after.claimed_at == None
+  assert after.claimed_run == None
+}
+
 pub fn the_attempt_budget_bounds_what_starts_test() {
   let f =
     fixture(
@@ -300,8 +359,12 @@ pub fn the_attempt_budget_bounds_what_starts_test() {
   assert list.length(one.attempts) == 1
   let assert [attempt] = one.attempts
   assert attempt.outcome == dag.GaveUp
-  // A failed S attempt on haiku leaves sonnet on the ladder, so it reopens.
+  // A failed S attempt on haiku leaves sonnet on the ladder, so it reopens —
+  // and reopening is releasing: the claim is cleared with the status.
   assert one.status == dag.Open
+  assert one.claimed_by == None
+  assert one.claimed_at == None
+  assert one.claimed_run == None
   assert node_after(f, "probe_two").attempts == []
   assert node_after(f, "probe_two").status == dag.Open
   assert read(f.index_path) == ""

@@ -20,6 +20,9 @@ fn node(
     proof_file: None,
     attempts: [],
     verified: None,
+    claimed_by: None,
+    claimed_at: None,
+    claimed_run: None,
   )
 }
 
@@ -66,10 +69,65 @@ pub fn round_trip_json_test() {
           ),
         ],
         verified: None,
+        claimed_by: Some("Vesper"),
+        claimed_at: Some("2026-09-07T03:00:00Z"),
+        claimed_run: Some("20260907T030000Z"),
       ),
     ])
   let assert Ok(back) = dag.decode(dag.encode(d))
   assert back == d
+  // The field names are the contract the shell-side readers grep for.
+  let text = dag.encode(d)
+  assert string.contains(text, "\"claimed_by\":\"Vesper\"")
+  assert string.contains(text, "\"claimed_at\":\"2026-09-07T03:00:00Z\"")
+  assert string.contains(text, "\"claimed_run\":\"20260907T030000Z\"")
+}
+
+pub fn a_row_written_before_claims_had_a_record_decodes_test() {
+  // A `dag.json` from before the three claim fields existed has no such
+  // keys at all. It must still load — the board is the source of truth and
+  // a decoder that refused it would take the whole board down — and a
+  // claimed node from then honestly has no holder, time or run.
+  let text =
+    "{\"nodes\":[{\"id\":\"old_claim\",\"region\":\"P1\",\"lean_name\":\"old_claim\","
+    <> "\"description\":\"d\",\"deps\":[],\"status\":\"claimed\",\"size\":\"S\","
+    <> "\"proof_file\":null,\"attempts\":[],\"verified\":null}]}"
+  let assert Ok(d) = dag.decode(text)
+  let assert Ok(n) = dag.get(d, "old_claim")
+  assert n.status == dag.Claimed
+  assert n.claimed_by == None
+  assert n.claimed_at == None
+  assert n.claimed_run == None
+  // And `null`, which is what `encode` writes for an unclaimed node, reads
+  // back the same way.
+  let assert Ok(again) = dag.decode(dag.encode(d))
+  assert again == d
+}
+
+pub fn claim_sets_all_three_and_release_clears_them_test() {
+  let n = node("evolve_left_edge", [], dag.Open, dag.M)
+  let held =
+    dag.claim(
+      n,
+      by: "Vesper",
+      at: "2026-09-07T03:00:00Z",
+      run: "20260907T030000Z",
+    )
+  assert held.status == dag.Claimed
+  assert held.proof_file == Some("Rule30/Proofs/EvolveLeftEdge.lean")
+  assert held.claimed_by == Some("Vesper")
+  assert held.claimed_at == Some("2026-09-07T03:00:00Z")
+  assert held.claimed_run == Some("20260907T030000Z")
+  // Every way out of `Claimed` goes through `release`, and none of them
+  // keeps a claim: a proved node is not held, and neither is an abandoned
+  // one.
+  let proved = dag.release(held, dag.Proved)
+  assert proved.status == dag.Proved
+  assert proved.claimed_by == None
+  assert proved.claimed_at == None
+  assert proved.claimed_run == None
+  assert dag.release(held, dag.Open).claimed_run == None
+  assert dag.release(held, dag.Abandoned).claimed_by == None
 }
 
 pub fn proof_module_is_pascal_test() {

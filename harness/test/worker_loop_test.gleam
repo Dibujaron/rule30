@@ -151,6 +151,9 @@ fn a_node() -> dag.Node {
     proof_file: None,
     attempts: [],
     verified: None,
+    claimed_by: None,
+    claimed_at: None,
+    claimed_run: None,
   )
 }
 
