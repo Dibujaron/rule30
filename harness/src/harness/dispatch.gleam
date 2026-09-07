@@ -998,6 +998,11 @@ fn record(node: dag.Node, attempt: dag.Attempt) -> dag.Node {
 
 /// The three channels, each written from the report exactly as the worker
 /// wrote it. Posts are logged, not delivered — routing is v2.
+///
+/// One more row when the decoder had to leave something out: a single
+/// `report_discarded` event naming the entries of `posts` or `bugs` that
+/// did not decode. Without it an attempt whose bug report was dropped
+/// reads exactly like an attempt with nothing to report.
 fn write_channels(
   cfg: config.Config,
   l: log.Log,
@@ -1046,6 +1051,15 @@ fn write_channels(
           #("text", json.string(post)),
         ])
       })
+      case r.discarded {
+        [] -> Nil
+        reasons ->
+          log.event(l, "report_discarded", [
+            #("from", json.string(identity.name)),
+            #("node", json.string(node_id)),
+            #("reasons", json.array(reasons, json.string)),
+          ])
+      }
       file_reported_bugs(cfg, l, identity, node_id, attempt, r.bugs)
     }
   }

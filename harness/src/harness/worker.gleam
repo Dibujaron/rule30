@@ -43,6 +43,14 @@ pub type ReportedBug {
 
 /// What a worker reports at the end of every turn. `outcome` is the worker's
 /// claim, not the harness's finding.
+///
+/// `discarded` is the decoder's own confession: one short line per `posts`
+/// or `bugs` entry it could not read and therefore left out, and one line
+/// for either field written as something other than an array. It is empty
+/// for a clean report. The worker never writes it — it is what the harness
+/// knows about the gap between what the worker sent and what survived, and
+/// the dispatcher logs it into the attempt so a clean `bugs: []` can be told
+/// apart from a bug report that was dropped on the floor.
 pub type Report {
   Report(
     outcome: String,
@@ -52,6 +60,7 @@ pub type Report {
     posts: List(String),
     bugs: List(ReportedBug),
     summary: String,
+    discarded: List(String),
   )
 }
 
@@ -67,10 +76,8 @@ fn report_decoder() -> decode.Decoder(Report) {
   use summary <- decode.optional_field("summary", "", decode.string)
   use notebook <- decode.optional_field("notebook", "", decode.string)
   use journal <- decode.optional_field("journal", "", decode.string)
-  use raw_posts <- decode.optional_field("posts", [], dynamic_list())
-  let posts = list.filter_map(raw_posts, fn(d) { decode.run(d, decode.string) })
-  // `posts` above and `bugs` here are both read as arrays of undecoded
-  // elements and then decoded one element at a time, rather than with
+  // `posts` and `bugs` are both read as arrays of undecoded elements and
+  // then decoded one element at a time, rather than with
   // `decode.list(decode.string)` / `decode.list(reported_bug_decoder())`
   // embedded directly. Two routes make that necessary, and both of them end
   // by discarding `outcome`:
@@ -89,9 +96,15 @@ fn report_decoder() -> decode.Decoder(Report) {
   // The promise both of these keep: nothing a worker writes in `posts` or
   // `bugs` may cost the turn's proof outcome. Those two fields are optional
   // extras; `outcome`, `notebook` and `journal` are the turn's work.
-  use raw_bugs <- decode.optional_field("bugs", [], dynamic_list())
-  let bugs =
-    list.filter_map(raw_bugs, fn(d) { decode.run(d, reported_bug_decoder()) })
+  //
+  // What that promise must not cost is the record. Every entry dropped on
+  // either route is named in `discarded`, so a report that reached the
+  // dispatcher with fewer bugs than the worker wrote says so.
+  use raw_posts <- decode.optional_field("posts", Ok([]), dynamic_list())
+  use raw_bugs <- decode.optional_field("bugs", Ok([]), dynamic_list())
+  let #(posts, dropped_posts) = survivors("posts", raw_posts, decode.string)
+  let #(bugs, dropped_bugs) =
+    survivors("bugs", raw_bugs, reported_bug_decoder())
   decode.success(Report(
     outcome:,
     estimate:,
@@ -100,24 +113,79 @@ fn report_decoder() -> decode.Decoder(Report) {
     posts:,
     bugs:,
     summary:,
+    discarded: list.append(dropped_posts, dropped_bugs),
   ))
 }
 
-/// An array with its elements left undecoded, or `[]` when the field holds
-/// anything that is not an array. The `[]` is the same answer the field
-/// already gets when it is absent, which is the point: a field written in
-/// the wrong shape degrades to "not supplied" instead of failing the decode
-/// that carries it. A report in the wrong shape is lost; a proof is not.
-fn dynamic_list() -> decode.Decoder(List(Dynamic)) {
-  decode.one_of(decode.list(decode.dynamic), or: [decode.success([])])
+/// An array with its elements left undecoded, or `Error(Nil)` when the
+/// field holds anything that is not an array. Either way the decoder that
+/// carries it succeeds, which is the point: a field written in the wrong
+/// shape must not fail the decode of the whole report. What shape it was
+/// written in is still visible to the caller, so `survivors` can record
+/// the field as discarded rather than treating it as absent.
+fn dynamic_list() -> decode.Decoder(Result(List(Dynamic), Nil)) {
+  decode.one_of(decode.map(decode.list(decode.dynamic), Ok), or: [
+    decode.success(Error(Nil)),
+  ])
+}
+
+/// Decode one field's entries independently, keeping those that decode and
+/// naming, in order, each one that does not: `bugs[2]: expected String at
+/// title, found Int`, or `posts: not an array` for the whole field. The
+/// entries are the first element of the pair, the reasons the second.
+fn survivors(
+  field: String,
+  raw: Result(List(Dynamic), Nil),
+  decoder: decode.Decoder(a),
+) -> #(List(a), List(String)) {
+  case raw {
+    Error(Nil) -> #([], [field <> ": not an array"])
+    Ok(entries) -> {
+      let outcomes =
+        list.index_map(entries, fn(d, i) {
+          decode.run(d, decoder)
+          |> result.map_error(fn(errors) {
+            field <> "[" <> int.to_string(i) <> "]: " <> describe(errors)
+          })
+        })
+      #(result.values(outcomes), list.filter_map(outcomes, flip))
+    }
+  }
+}
+
+/// The first error's `expected`/`found`/`path`, in one short line. One is
+/// enough to say which entry and roughly why; the full entry is already in
+/// the raw `stream` events for anyone who needs the rest.
+fn describe(errors: List(decode.DecodeError)) -> String {
+  case errors {
+    [] -> "did not decode"
+    [decode.DecodeError(expected:, found:, path:), ..] ->
+      case path {
+        [] -> "expected " <> expected <> ", found " <> found
+        _ ->
+          "expected "
+          <> expected
+          <> " at "
+          <> string.join(path, ".")
+          <> ", found "
+          <> found
+      }
+  }
+}
+
+fn flip(r: Result(a, b)) -> Result(b, a) {
+  case r {
+    Ok(a) -> Error(a)
+    Error(b) -> Ok(b)
+  }
 }
 
 /// One bug object, decoded on its own by `report_decoder` — never as part of
 /// a `decode.list` over the whole array, so a failure here costs only this
 /// one entry. `title` is `decode.field`, a hard requirement, precisely
 /// because a failing decode is now safe: an entry with no title, or any
-/// field of the wrong type, simply does not survive `list.filter_map` rather
-/// than being patched over with a default.
+/// field of the wrong type, simply does not survive `survivors` rather
+/// than being patched over with a default — and is named in `discarded`.
 fn reported_bug_decoder() -> decode.Decoder(ReportedBug) {
   use title <- decode.field("title", decode.string)
   use area <- decode.optional_field("area", "other", decode.string)
@@ -961,26 +1029,30 @@ fn note(tally: Tally, text: String) -> String {
   }
 }
 
-/// The two signals that mean the subscription window is actually closed: a
-/// `rate_limit_event` at or above the ceiling whose status is *not* one of
-/// the `allowed*` ones, and a `system/api_retry` whose error is
-/// `rate_limit`.
+/// The signals that mean the subscription window is actually closed: a
+/// `system/api_retry` whose error is `rate_limit`, and a `rate_limit_event`
+/// read by its `status` first and its utilization second.
 ///
-/// The status is what makes this correct. A `rate_limit_event` at 0.94
-/// against a 0.9 ceiling carrying `allowed_warning` is the API saying we
-/// are close, not refusing us. Reading that as a refusal parks a finished
-/// attempt as `rate_limited`, and a rate-limited attempt stops the run from
-/// starting any more — so one misread warning can halt a whole run. It did,
-/// on 2026-09-06, to a proof that was already correct.
+/// The status is the API's own verdict, and where it gives one it is
+/// believed outright. Any `allowed*` status is the API saying we are still
+/// served — `allowed_warning` at 0.94 against a 0.9 ceiling is "you are
+/// close", not a refusal, and reading it as one parked a finished, correct
+/// proof as `rate_limited` on 2026-09-06 and halted the run behind it.
+/// Any other status is a refusal, and a refusal is a refusal at 0.5 just as
+/// much as at 0.95: the utilization figure does not get a vote against it.
+///
+/// Only when the event carries no status at all (`""` — an older CLI, or a
+/// shape change) does the utilization decide, at or above the ceiling
+/// meaning closed. That is the pre-`status` reading kept as the fallback.
 ///
 /// Public for its tests: a pure predicate over events, with no state to set
 /// up, is worth testing directly rather than through the turn loop.
 pub fn hit_ceiling(events: List(claude.Event), ceiling: Float) -> Bool {
   list.any(events, fn(e) {
     case e {
-      claude.RateLimit(five_hour_utilization:, status:, ..) ->
+      claude.RateLimit(five_hour_utilization:, status: "", ..) ->
         five_hour_utilization >=. ceiling
-        && !string.starts_with(status, "allowed")
+      claude.RateLimit(status:, ..) -> !string.starts_with(status, "allowed")
       claude.ApiRetry(error:, ..) -> error == "rate_limit"
       _ -> False
     }
