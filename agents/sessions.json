@@ -110,6 +110,13 @@
       "ref": "88ad51",
       "role": "framework",
       "started": "2026-09-07T01:40:00Z"
+    },
+    {
+      "identity": "Cairn",
+      "session_name": "rule30-fb",
+      "ref": "dfcdd9",
+      "role": "guide",
+      "started": "2026-09-07T01:48:00Z"
     }
   ]
 }
