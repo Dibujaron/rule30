@@ -52,7 +52,9 @@ fn run(cfg: config.Config, arguments: List(String)) -> Nil {
         |> result.map(fn(_) { "run ended" }),
       )
     ["bugs", "claim", id, "--as", identity] ->
-      print_outcome(claim_bug(cfg, id, identity))
+      print_outcome(claim_bug(cfg, id, identity, None))
+    ["bugs", "claim", id, "--as", identity, "--session", ref] ->
+      print_outcome(claim_bug(cfg, id, identity, Some(ref)))
     ["bugs", "claim", _] ->
       print_outcome(Error("bugs claim needs --as <Identity>"))
     ["bugs", "reopen", id] -> print_outcome(reopen_bug(cfg, id))
@@ -73,7 +75,7 @@ fn run(cfg: config.Config, arguments: List(String)) -> Nil {
     ["seed", "check", path] -> print_outcome(seed.check_file(cfg, path))
     _ ->
       io.println(
-        "usage: gleam run -- status | prove-one <node-id> | run [--max-attempts N] [--concurrency K] | reopen <node-id> | bugs [--area A] [--severity S] [--all] | bugs claim <id> --as <Identity> | bugs reopen <id> | bugs close <id> fixed|wontfix --resolution <text> | writes | seed brief | seed check [path] | spike",
+        "usage: gleam run -- status | prove-one <node-id> | run [--max-attempts N] [--concurrency K] | reopen <node-id> | bugs [--area A] [--severity S] [--all] | bugs claim <id> --as <Identity> [--session <ref>] | bugs reopen <id> | bugs close <id> fixed|wontfix --resolution <text> | writes | seed brief | seed check [path] | spike",
       )
   }
 }
@@ -105,17 +107,30 @@ fn bug_board(
 }
 
 /// Take a bug for `identity`, stamping the claim with the time so the next
-/// reader can tell a live holder from a dead one.
+/// reader can tell a live holder from a dead one, and with the session ref
+/// when given so they can check `ListAgents` rather than ask.
 fn claim_bug(
   cfg: config.Config,
   id: String,
   identity: String,
+  ref: Option(String),
 ) -> Result(String, String) {
   use board <- result.try(bugs.load(cfg.bugs_path))
   let now = log.now_iso()
-  use claimed <- result.try(bugs.claim(board, id, identity, now))
+  use claimed <- result.try(bugs.claim(board, id, identity, ref, now))
   use _ <- result.try(bugs.save(claimed, cfg.bugs_path))
-  Ok("`" <> id <> "` is now claimed by " <> identity <> " since " <> now)
+  Ok(
+    "`"
+    <> id
+    <> "` is now claimed by "
+    <> identity
+    <> " since "
+    <> now
+    <> case ref {
+      None -> ""
+      Some(r) -> " (session " <> r <> ")"
+    },
+  )
 }
 
 /// Put a claimed bug back on the board. The bug module's `reopen` refuses
@@ -195,6 +210,10 @@ fn bug_line(bug: bugs.Bug) -> String {
           <> who
           <> " since "
           <> option.unwrap(bug.claimed_at, "?")
+          <> case bug.claimed_ref {
+            None -> ""
+            Some(ref) -> ", session " <> ref
+          }
           <> "]"
       },
     ],

@@ -93,6 +93,10 @@ pub type Bug {
     /// When the claim was made, ISO-8601 with a `Z` like `filed`. Set and
     /// cleared alongside `claimed_by`.
     claimed_at: Option(String),
+    /// The holder's session ref as `ListAgents` prints it (`88ad51`), so a
+    /// reader can check the holder is alive instead of asking. Absent when
+    /// the claim was made without one; cleared by `reopen` with the rest.
+    claimed_ref: Option(String),
   )
 }
 
@@ -196,9 +200,32 @@ fn id_only_decoder() -> decode.Decoder(String) {
   decode.success(id)
 }
 
-/// Render a `Board` to its JSON text representation.
+/// Render a `Board` to its JSON text representation, one bug per line:
+///
+/// ```
+/// {"bugs":[
+/// {...row 1, compact...},
+/// {...row 2, compact...}
+/// ]}
+/// ```
+///
+/// One row per line because git merges by line. On a single-line board any
+/// two edits conflict on that one line and the obvious resolution drops a
+/// row; laid out like this, two agents adding or editing different rows no
+/// longer conflict at all, and a conflict that does happen is one legible
+/// row. An empty board is exactly `{"bugs":[]}`. Still ordinary JSON, so
+/// `decode` is unchanged.
 pub fn encode(board: Board) -> String {
-  board_to_json(board) |> json.to_string
+  case board.bugs {
+    [] -> "{\"bugs\":[]}"
+    rows ->
+      "{\"bugs\":[\n"
+      <> string.join(
+        list.map(rows, fn(bug) { json.to_string(bug_to_json(bug)) }),
+        ",\n",
+      )
+      <> "\n]}"
+  }
 }
 
 /// Read and decode a `Board` from a file. A missing file is an empty board:
@@ -276,12 +303,15 @@ pub fn update(board: Board, bug: Bug) -> Board {
 }
 
 /// Take bug `id` for `by`, stamping who and when so a later reader can ask
-/// whether the holder is still alive. Only an `Open` bug can be claimed: a
-/// `Claimed` one is someone else's, and a settled one wants no work.
+/// whether the holder is still alive — and, when `ref` is given, the
+/// holder's `ListAgents` ref so the reader can check instead of asking. Only
+/// an `Open` bug can be claimed: a `Claimed` one is someone else's, and a
+/// settled one wants no work.
 pub fn claim(
   board: Board,
   id: String,
   by: String,
+  ref: Option(String),
   now: String,
 ) -> Result(Board, String) {
   use bug <- result.try(
@@ -291,7 +321,13 @@ pub fn claim(
     Open ->
       Ok(update(
         board,
-        Bug(..bug, status: Claimed, claimed_by: Some(by), claimed_at: Some(now)),
+        Bug(
+          ..bug,
+          status: Claimed,
+          claimed_by: Some(by),
+          claimed_at: Some(now),
+          claimed_ref: ref,
+        ),
       ))
     Claimed ->
       Error(
@@ -316,8 +352,8 @@ pub fn claim(
   }
 }
 
-/// Put a `Claimed` bug back on the board, clearing who held it and since
-/// when. A claim outlives the session that made it, and nothing else ever
+/// Put a `Claimed` bug back on the board, clearing who held it, since when,
+/// and from which session. A claim outlives the session that made it, and nothing else ever
 /// clears the status, so this is the manual undo for a session that died
 /// holding a bug. Only `Claimed` is reopened: a `Fixed` or `Wontfix` bug is
 /// a decision, not a stale claim.
@@ -329,7 +365,13 @@ pub fn reopen(board: Board, id: String) -> Result(Board, String) {
     Claimed ->
       Ok(update(
         board,
-        Bug(..bug, status: Open, claimed_by: None, claimed_at: None),
+        Bug(
+          ..bug,
+          status: Open,
+          claimed_by: None,
+          claimed_at: None,
+          claimed_ref: None,
+        ),
       ))
     other ->
       Error(
@@ -626,6 +668,11 @@ fn bug_decoder() -> decode.Decoder(Bug) {
     None,
     decode.optional(decode.string),
   )
+  use claimed_ref <- decode.optional_field(
+    "claimed_ref",
+    None,
+    decode.optional(decode.string),
+  )
   decode.success(Bug(
     id:,
     title:,
@@ -645,6 +692,7 @@ fn bug_decoder() -> decode.Decoder(Bug) {
     fixed:,
     claimed_by:,
     claimed_at:,
+    claimed_ref:,
   ))
 }
 
@@ -673,9 +721,6 @@ fn bug_to_json(bug: Bug) -> json.Json {
     #("fixed", json.nullable(bug.fixed, json.string)),
     #("claimed_by", json.nullable(bug.claimed_by, json.string)),
     #("claimed_at", json.nullable(bug.claimed_at, json.string)),
+    #("claimed_ref", json.nullable(bug.claimed_ref, json.string)),
   ])
-}
-
-fn board_to_json(board: Board) -> json.Json {
-  json.object([#("bugs", json.array(board.bugs, bug_to_json))])
 }

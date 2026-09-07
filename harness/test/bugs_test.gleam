@@ -25,6 +25,7 @@ fn bug(id: String, status: bugs.BugStatus) -> Bug {
     fixed: None,
     claimed_by: None,
     claimed_at: None,
+    claimed_ref: None,
   )
 }
 
@@ -78,6 +79,51 @@ pub fn empty_board_round_trips_test() {
   assert bugs.decode(bugs.encode(Board([]))) == Ok(Board([]))
 }
 
+// --- one bug per line on disk ----------------------------------------------
+
+/// The on-disk shape git can merge: a header line, one compact row per
+/// line, a footer line. Three bugs is five lines exactly.
+pub fn encode_writes_one_bug_per_line_test() {
+  let text =
+    bugs.encode(
+      Board([bug("a", bugs.Open), bug("b", bugs.Open), bug("c", bugs.Open)]),
+    )
+  let lines = string.split(text, "\n")
+  assert list.length(lines) == 5
+  let assert [first, ..] = lines
+  assert first == "{\"bugs\":["
+  assert list.last(lines) == Ok("]}")
+}
+
+/// Each middle line, minus its trailing comma, is one bug on its own: it
+/// decodes as a one-row board through the public decoder, which is the row
+/// decoder in the only wrapping it accepts.
+pub fn each_encoded_line_is_one_decodable_bug_test() {
+  let text =
+    bugs.encode(
+      Board([bug("a", bugs.Open), bug("b", bugs.Open), bug("c", bugs.Open)]),
+    )
+  let assert [_, ..rest] = string.split(text, "\n")
+  let rows = list.take(rest, 3)
+  list.zip(rows, ["a", "b", "c"])
+  |> list.each(fn(pair) {
+    let #(line, id) = pair
+    assert string.starts_with(line, "{\"id\":\"")
+    assert string.ends_with(line, "}") || string.ends_with(line, "},")
+    let row = case string.ends_with(line, ",") {
+      True -> string.drop_end(line, 1)
+      False -> line
+    }
+    let assert Ok(board) = bugs.decode("{\"bugs\":[" <> row <> "]}")
+    let assert [b] = board.bugs
+    assert b.id == id
+  })
+}
+
+pub fn an_empty_board_encodes_to_the_bare_shape_test() {
+  assert bugs.encode(Board([])) == "{\"bugs\":[]}"
+}
+
 /// A row with neither `claimed_by` nor `claimed_at` key decodes with both
 /// `None`. This pins compatibility with the live board: every row filed
 /// before the claim fields existed lacks the keys, and so does the row that
@@ -90,14 +136,59 @@ pub fn a_row_without_the_claim_keys_decodes_with_no_holder_test() {
   let assert [b] = board.bugs
   assert b.claimed_by == None
   assert b.claimed_at == None
+  assert b.claimed_ref == None
 }
 
 // --- claiming and reopening ------------------------------------------------
 
+pub fn claim_with_a_session_ref_stores_it_test() {
+  let board = Board([bug("a", bugs.Open)])
+  let assert Ok(board) =
+    bugs.claim(board, "a", "Fathom", Some("88ad51"), "2026-09-06T05:00:00Z")
+  let assert Ok(b) = bugs.get(board, "a")
+  assert b.claimed_ref == Some("88ad51")
+}
+
+pub fn claim_without_a_session_ref_leaves_it_absent_test() {
+  let board = Board([bug("a", bugs.Open)])
+  let assert Ok(board) =
+    bugs.claim(board, "a", "Fathom", None, "2026-09-06T05:00:00Z")
+  let assert Ok(b) = bugs.get(board, "a")
+  assert b.claimed_ref == None
+}
+
+pub fn reopen_clears_the_session_ref_test() {
+  let board =
+    Board([
+      Bug(
+        ..bug("a", bugs.Claimed),
+        claimed_by: Some("Keel"),
+        claimed_at: Some("2026-09-06T04:00:00Z"),
+        claimed_ref: Some("88ad51"),
+      ),
+    ])
+  let assert Ok(board) = bugs.reopen(board, "a")
+  let assert Ok(b) = bugs.get(board, "a")
+  assert b.claimed_ref == None
+}
+
+/// A ref survives the file, like the rest of the claim.
+pub fn a_claim_with_a_session_ref_round_trips_through_json_test() {
+  let assert Ok(board) =
+    bugs.claim(
+      Board([bug("a", bugs.Open)]),
+      "a",
+      "Keel",
+      Some("88ad51"),
+      "2026-09-06T05:00:00Z",
+    )
+  assert bugs.decode(bugs.encode(board)) == Ok(board)
+}
+
 pub fn claim_on_an_open_bug_stamps_status_holder_and_time_test() {
   let board = Board([bug("a", bugs.Open)])
   let assert Ok(board) =
-    bugs.claim(board, "a", "Fathom", "2026-09-06T05:00:00Z")
+    bugs.claim(board, "a", "Fathom", None, "2026-09-06T05:00:00Z")
   let assert Ok(b) = bugs.get(board, "a")
   assert b.status == bugs.Claimed
   assert b.claimed_by == Some("Fathom")
@@ -114,7 +205,7 @@ pub fn claim_on_a_claimed_bug_fails_naming_the_holder_test() {
       ),
     ])
   let assert Error(reason) =
-    bugs.claim(board, "a", "Fathom", "2026-09-06T05:00:00Z")
+    bugs.claim(board, "a", "Fathom", None, "2026-09-06T05:00:00Z")
   assert string.contains(reason, "Keel")
   assert string.contains(reason, "2026-09-06T04:00:00Z")
 }
@@ -123,20 +214,20 @@ pub fn claim_on_a_claimed_bug_fails_naming_the_holder_test() {
 pub fn claim_on_a_hand_claimed_bug_fails_saying_no_holder_test() {
   let board = Board([bug("a", bugs.Claimed)])
   let assert Error(reason) =
-    bugs.claim(board, "a", "Fathom", "2026-09-06T05:00:00Z")
+    bugs.claim(board, "a", "Fathom", None, "2026-09-06T05:00:00Z")
   assert string.contains(reason, "no holder")
 }
 
 pub fn claim_on_a_fixed_bug_fails_test() {
   let board = Board([bug("a", bugs.Fixed)])
   let assert Error(reason) =
-    bugs.claim(board, "a", "Fathom", "2026-09-06T05:00:00Z")
+    bugs.claim(board, "a", "Fathom", None, "2026-09-06T05:00:00Z")
   assert string.contains(reason, "settled")
 }
 
 pub fn claim_of_an_unknown_id_fails_naming_the_id_test() {
   let assert Error(reason) =
-    bugs.claim(Board([]), "nope", "Fathom", "2026-09-06T05:00:00Z")
+    bugs.claim(Board([]), "nope", "Fathom", None, "2026-09-06T05:00:00Z")
   assert string.contains(reason, "`nope`")
 }
 
@@ -237,6 +328,7 @@ pub fn a_claim_round_trips_through_json_test() {
       Board([bug("a", bugs.Open)]),
       "a",
       "Keel",
+      None,
       "2026-09-06T05:00:00Z",
     )
   assert bugs.decode(bugs.encode(board)) == Ok(board)

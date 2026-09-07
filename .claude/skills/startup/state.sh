@@ -135,16 +135,19 @@ if [ -f blueprint/dag.json ]; then
   while read -r rec; do
     case "$rec" in *'"status":"claimed"'*) ;; *) continue ;; esac
     n=$(printf '%s' "$rec" | grep -oE '^\{"id":"[^"]*"' | sed 's/.*:"//; s/"//')
-    who=$(printf '%s' "$rec" | grep -oE '"identity":"[^"]*"' | tail -1 | sed 's/.*:"//; s/"//')
-    # The last attempt's start is the nearest thing a node claim has to a
-    # timestamp: the dispatcher claims the node and starts the attempt in
-    # the same step.
-    started=$(printf '%s' "$rec" | grep -oE '"started":"[^"]*"' | tail -1 | sed 's/.*:"//; s/"//')
+    # The node's own record cannot date the claim: an attempt row is appended
+    # when the attempt ENDS, so a node claimed by a live run has no row for
+    # it yet and looks exactly like one whose dispatcher died before writing.
+    # The dispatch event in runs/ is written when the attempt starts, and it
+    # is the only timestamp a claim has. Latest one for this node wins.
+    ev=$(grep -h "\"kind\":\"dispatch\",\"node\":\"$n\"" runs/*/events.jsonl 2>/dev/null | tail -1)
+    who=$(printf '%s' "$ev" | grep -oE '"identity":"[^"]*"' | sed 's/.*:"//; s/"//')
+    at=$(printf '%s' "$ev" | grep -oE '"ts":"[^"]*"' | sed 's/.*:"//; s/"//')
     if [ -n "$who" ]; then
-      printf '  dag node   %-34s last attempt by %s, started %s (%s)\n' \
-        "$n" "$who" "${started:-?}" "$(ago "${started:-}")"
+      printf '  dag node   %-34s dispatched to %s at %s (%s)\n' \
+        "$n" "$who" "$at" "$(ago "$at")"
     else
-      printf '  dag node   %-34s claimed with no attempt recorded\n' "$n"
+      printf '  dag node   %-34s claimed, and no dispatch event in runs/ names it\n' "$n"
     fi
     found=1
   done < <(sed 's/{"id":/\n{"id":/g' blueprint/dag.json)
@@ -158,9 +161,14 @@ if [ -f blueprint/bugs.json ]; then
     # claimed.
     who=$(printf '%s' "$rec" | grep -oE '"claimed_by": *"[^"]*"' | sed 's/.*: *"//; s/"//')
     since=$(printf '%s' "$rec" | grep -oE '"claimed_at": *"[^"]*"' | sed 's/.*: *"//; s/"//')
+    # Only a `bugs claim --session <ref>` stamps this one. When it is there
+    # it is the holder's ListAgents ref, the one thing liveness can be
+    # checked against by eye.
+    ref=$(printf '%s' "$rec" | grep -oE '"claimed_ref": *"[^"]*"' | sed 's/.*: *"//; s/"//')
     if [ -n "$who" ]; then
-      printf '  bug        %-34s claimed by %s since %s (%s)\n' \
-        "${b:-<unparsed>}" "$who" "${since:-?}" "$(ago "${since:-}")"
+      printf '  bug        %-34s claimed by %s since %s (%s)%s\n' \
+        "${b:-<unparsed>}" "$who" "${since:-?}" "$(ago "${since:-}")" \
+        "${ref:+ [ref $ref]}"
     else
       printf '  bug        %-34s claimed by hand, no holder or time recorded\n' "${b:-<unparsed>}"
     fi
@@ -169,10 +177,12 @@ if [ -f blueprint/bugs.json ]; then
 fi
 [ "$found" -eq 0 ] && echo "  (none claimed)"
 cat <<'NOTE'
-  A claim does NOT record a session ref, so nothing here can be checked
-  automatically against ListAgents. Ask the named identity whether it is still
-  working. If its session is gone: `gleam run -- reopen <node>` for a node,
-  `gleam run -- bugs reopen <id>` for a bug.
+  A bug claim made with `--session` carries the holder's ListAgents ref,
+  printed above as `[ref ...]`: compare it against ListAgents by eye. A DAG
+  node claim, and a bug claim made without `--session`, still record no ref,
+  so nothing about them can be checked automatically — ask the named identity
+  whether it is still working. If its session is gone: `gleam run -- reopen
+  <node>` for a node, `gleam run -- bugs reopen <id>` for a bug.
 
   A promise made only in a peer message — a held build lock, an agreed file
   boundary — appears NOWHERE in this report and cannot. If a peer has gone
