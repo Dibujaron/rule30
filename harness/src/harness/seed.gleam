@@ -790,6 +790,10 @@ pub fn report(checked: List(Checked)) -> String {
       #("broken check", list.count(checked, fn(c) { is_broken(c.witness) })),
       #("unchecked", list.count(checked, fn(c) { is_unchecked(c.witness) })),
       #("holds", list.count(checked, fn(c) { is_holding(c.witness) })),
+      #(
+        "with a cast warning",
+        list.count(checked, fn(c) { cast_markers(c.proposal.statement) != [] }),
+      ),
     ]
     |> list.filter(fn(pair) { pair.1 > 0 })
     |> list.map(fn(pair) { int.to_string(pair.1) <> " " <> pair.0 })
@@ -816,9 +820,137 @@ fn report_line(c: Checked) -> String {
     "" -> ""
     text -> "\n  DOES NOT PROVE: " <> text
   }
-  c.proposal.id <> disclaimer <> "
+  // A warning, not a verdict: the proposal still lands if its checks pass.
+  // It sits above the verdicts for the disclaimer's reason — it is about
+  // what the statement will cost, and a reader decides on the verdicts.
+  let warning = case cast_warning(c.proposal.statement) {
+    None -> ""
+    Some(text) -> "\n  " <> text
+  }
+  c.proposal.id <> disclaimer <> warning <> "
   route:   " <> route_line(c.route) <> "
   witness: " <> witness_line(c.witness)
+}
+
+// --- the cast warning ---------------------------------------------------------
+
+/// The warning line for a statement that mixes ℕ and ℤ or uses an absolute
+/// value, naming what was found, or `None` for a statement with none of it.
+///
+/// Why it exists: two of the three budget exhaustions on 2026-09-07 were
+/// provers cycling on casts — `centerColumnCount_sandwich` on haiku (the same
+/// `omega could not prove the goal` ten times over a two-line induction) and
+/// `centerColumn_excess_interpolate` on sonnet (a ℕ count, a ℤ difference and
+/// an absolute value in one statement) — and both closed in nine turns one
+/// rung up. The cost lands on the statement's shape, not its idea, and the
+/// captain's rule (the last section of `docs/prover-cookbook.md`) is to
+/// state a helper in ℕ, with an absolute value over casts written as two ℕ
+/// inequalities. See the board: `cast-arithmetic-eats-prover-budgets`.
+///
+/// This is a warning and never a failed verdict. A statement indexed by ℤ is
+/// sometimes the only honest statement — cells live at `ℤ` positions — so
+/// the report says what it saw and the captain decides.
+pub fn cast_warning(statement: String) -> Option(String) {
+  case cast_markers(statement) {
+    [] -> None
+    found ->
+      Some(
+        "WARNING: the statement mixes ℕ and ℤ or uses absolute value — found "
+        <> string.join(found, ", ")
+        <> ". Provers spent their budgets cycling on casts (two of the three "
+        <> "exhaustions on 2026-09-07); the captain's rule in "
+        <> "docs/prover-cookbook.md prefers a statement in ℕ, with an absolute "
+        <> "value over casts written as two ℕ inequalities.",
+      )
+  }
+}
+
+/// What in `statement` says it casts or takes an absolute value, in a fixed
+/// order, each named once; empty for a statement in ℕ alone.
+///
+/// **What is matched on.** The declaration text the seeder wrote, not Lean's
+/// elaborated form: the harness has no elaborated form without running Lean,
+/// and a route is the only thing that runs it, so the check would fall
+/// silent on exactly the proposals that claim nothing. In the text a cast
+/// appears as one of five things, and these are the five:
+///
+/// - `Nat.cast` or `Int.cast` written out;
+/// - `↑`, the coercion arrow;
+/// - a term ascribed to `ℤ` or `ℝ` (`Int`, `Real`) somewhere a binder cannot
+///   be — at bracket depth two or more anywhere (`(h : (t : ℤ) < |i|)`), or
+///   at depth one or more after the top-level colon (`evolve t (-(t : ℤ))`).
+///   A binder `(i : ℤ)` sits at depth one before that colon and a `∀ i : ℤ,`
+///   at depth zero after it, and neither is a cast: a statement indexed by
+///   ℤ with no ℕ crossing into it is not flagged;
+/// - `|`, on its own — the `||` of Bool `or` is not one;
+/// - `abs` as a whole token. `Int.natAbs` lands in ℕ and is not flagged.
+///
+/// **What is not caught.** A `∀ (i : ℤ),` written with its parentheses after
+/// the top-level colon reads as an ascription and is flagged; a cast hidden
+/// in a definition the statement calls is invisible here, as it would be in
+/// any text. Measured 2026-09-07 over the 65 declarations then in
+/// `Rule30/Statements.lean`: 16 flagged, each one a real ℕ→ℤ or ℕ→ℝ
+/// crossing or an absolute value, and no ℤ-indexed statement without one.
+pub fn cast_markers(statement: String) -> List(String) {
+  let tokens = identifiers(statement)
+  [
+    #("Nat.cast", string.contains(statement, "Nat.cast")),
+    #("Int.cast", string.contains(statement, "Int.cast")),
+    #("↑", string.contains(statement, "↑")),
+    #(
+      "a term ascribed to ℤ or ℝ",
+      has_ascription(string.to_graphemes(statement), 0, False),
+    ),
+    #("|·|", has_lone_bar(string.to_graphemes(statement))),
+    #("abs", list.contains(tokens, "abs")),
+  ]
+  |> list.filter_map(fn(pair) {
+    case pair.1 {
+      True -> Ok(pair.0)
+      False -> Error(Nil)
+    }
+  })
+}
+
+/// Is there a `: ℤ` or `: ℝ` where only an ascription can sit? `depth` is
+/// the bracket depth over `()`, `{}` and `[]`; `after` says the top-level
+/// colon — the one that ends the binders — has been passed.
+fn has_ascription(chars: List(String), depth: Int, after: Bool) -> Bool {
+  case chars {
+    [] -> False
+    [":", ..rest] -> {
+      let target =
+        rest
+        |> list.drop_while(fn(g) { g == " " })
+        |> list.take_while(fn(g) { g != " " && g != "," && g != ")" })
+        |> string.join("")
+      let ascribed_to_z_or_r =
+        list.contains(["ℤ", "ℝ", "Int", "Real"], target)
+        && { depth >= 2 || { after && depth >= 1 } }
+      case ascribed_to_z_or_r {
+        True -> True
+        False -> has_ascription(rest, depth, after || depth == 0)
+      }
+    }
+    [c, ..rest] -> {
+      let depth = case c {
+        "(" | "{" | "[" -> depth + 1
+        ")" | "}" | "]" -> depth - 1
+        _ -> depth
+      }
+      has_ascription(rest, depth, after)
+    }
+  }
+}
+
+/// A `|` with no `|` beside it: an absolute value bar rather than Bool `or`.
+fn has_lone_bar(chars: List(String)) -> Bool {
+  case chars {
+    [] -> False
+    ["|", "|", ..rest] -> has_lone_bar(rest)
+    ["|", ..] -> True
+    [_, ..rest] -> has_lone_bar(rest)
+  }
 }
 
 fn route_line(v: RouteVerdict) -> String {
@@ -1050,6 +1182,12 @@ pub fn brief(
         "cannot state the reason, you have not finished thinking about the node.**",
         "If you cannot supply a route, you have merely left it open, which is",
         "fine and is recorded as claiming nothing.",
+        "",
+        "**State it in ℕ.** A statement that mixes ℕ and ℤ, or takes an absolute",
+        "value, gets a WARNING from the check rather than a refusal — but two of",
+        "the three budget exhaustions on 2026-09-07 were provers cycling on casts",
+        "over two-line facts, so an absolute value over casts is better proposed",
+        "as two ℕ inequalities, and a ℕ statement closes a rung cheaper.",
         "",
         "## Falsification witnesses, and the wall you will hit",
         "Every proposal may carry a witness: a Bool-valued Lean expression over an",

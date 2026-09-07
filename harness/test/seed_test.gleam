@@ -1061,6 +1061,113 @@ pub fn the_report_shows_what_a_proposal_disclaims_test() {
   assert string.contains(out, "does NOT prove P1")
 }
 
+// --- the cast warning ---------------------------------------------------------
+//
+// Two of the three budget exhaustions on 2026-09-07 were provers cycling on
+// casts over two-line facts, and both facts closed in nine turns one rung up.
+// The check cannot make a statement cheaper; it can say, before the captain
+// lands it, that this one has the shape that cost a rung twice.
+
+/// Each of the five shapes a cast or an absolute value takes in the text a
+/// seeder writes, and the marker the report names for it. The `(t : ℤ)` case
+/// is the one this board's diagonal tier is full of.
+pub fn a_statement_that_casts_or_takes_an_absolute_value_warns_test() {
+  assert seed.cast_markers(
+      "theorem a (t : ℕ) : evolve t (-(t : ℤ)) = true := by\n  sorry",
+    )
+    == ["a term ascribed to ℤ or ℝ"]
+  assert seed.cast_markers("theorem a (t : ℕ) : (↑t : ℤ) = ↑t := by\n  sorry")
+    == ["↑", "a term ascribed to ℤ or ℝ"]
+  assert seed.cast_markers(
+      "theorem a (t : ℕ) (i : ℤ) (h : (t : ℤ) < |i|) : evolve t i = false := by\n  sorry",
+    )
+    == ["a term ascribed to ℤ or ℝ", "|·|"]
+  assert seed.cast_markers("theorem a (n : ℕ) : Int.cast n = 0 := by\n  sorry")
+    == ["Int.cast"]
+  assert seed.cast_markers("theorem a (n : ℕ) : Nat.cast n = 0 := by\n  sorry")
+    == ["Nat.cast"]
+  assert seed.cast_markers("theorem a (x : ℤ) : abs x = x := by\n  sorry")
+    == ["abs"]
+  // The P2 shape: a ℕ count cast to ℝ.
+  assert seed.cast_markers(
+      "theorem a (N : ℕ) : centerColumnDensity N * (N : ℝ) = 0 := by\n  sorry",
+    )
+    == ["a term ascribed to ℤ or ℝ"]
+}
+
+/// The negatives, and they are the ones that decide whether the warning is
+/// read: a statement in ℕ alone, a statement whose only ℤ is the cell index
+/// (a binder, not a cast), the `||` of Bool `or`, and `Int.natAbs`, which
+/// lands in ℕ and is the shape the cookbook recommends.
+pub fn a_statement_in_nat_alone_does_not_warn_test() {
+  assert seed.cast_markers(
+      "theorem a (M N : ℕ) (h : M ≤ N) : count N - count M ≤ N - M := by\n  sorry",
+    )
+    == []
+  assert seed.cast_markers(
+      "theorem a (t : ℕ) (i : ℤ) : evolve t i = evolve t (i + 1) := by\n  sorry",
+    )
+    == []
+  assert seed.cast_markers(
+      "theorem a : ∀ i : ℤ, evolve 0 i = (i == 0 || i == 1) := by\n  sorry",
+    )
+    == []
+  assert seed.cast_markers(
+      "theorem a (i : ℤ) : Int.natAbs i = Int.natAbs (-i) := by\n  sorry",
+    )
+    == []
+  assert seed.cast_warning("theorem a (n : ℕ) : n = n := by\n  sorry")
+    == option.None
+}
+
+/// The wording is pinned: the line names what it found, says whose budgets
+/// went where, and points at the rule rather than restating it. It is a
+/// WARNING and never a verdict — the route and witness lines are unchanged
+/// beside it, and the summary counts it under its own word.
+pub fn the_report_warns_on_a_statement_that_mixes_nat_and_int_test() {
+  let out =
+    seed.report([
+      seed.Checked(
+        proposal: seed.Proposal(
+          ..a_proposal("iota"),
+          statement: "theorem iota (t : ℕ) (i : ℤ) (h : (t : ℤ) < |i|) : evolve t i = false := by\n  sorry",
+        ),
+        route: seed.NoRoute,
+        witness: seed.WitnessHolds("t < 12"),
+      ),
+    ])
+  assert string.contains(
+    out,
+    "\n  WARNING: the statement mixes ℕ and ℤ or uses absolute value — found a term ascribed to ℤ or ℝ, |·|. Provers spent their budgets cycling on casts (two of the three exhaustions on 2026-09-07); the captain's rule in docs/prover-cookbook.md prefers a statement in ℕ, with an absolute value over casts written as two ℕ inequalities.\n  route:   none claimed\n  witness: holds over t < 12",
+  )
+  assert string.contains(out, "1 with a cast warning")
+  assert string.contains(out, "1 holds")
+}
+
+pub fn the_report_does_not_warn_on_a_statement_in_nat_test() {
+  let out =
+    seed.report([
+      seed.Checked(
+        proposal: seed.Proposal(
+          ..a_proposal("kappa"),
+          statement: "theorem kappa (M N : ℕ) (h : M ≤ N) : count M ≤ count N := by\n  sorry",
+        ),
+        route: seed.NoRoute,
+        witness: seed.Unchecked("no witness supplied"),
+      ),
+    ])
+  assert !string.contains(out, "WARNING")
+  assert !string.contains(out, "cast warning")
+}
+
+/// The brief says the rule before the check warns about it: a seeder that
+/// meets the rule only in a report has already spent the pass.
+pub fn the_brief_says_to_state_it_in_nat_test() {
+  let format = section(brief(), "## The proposal format")
+  assert string.contains(format, "**State it in ℕ.**")
+  assert string.contains(format, "two ℕ inequalities")
+}
+
 /// **The brief may not state a count it was not given.**
 ///
 /// Caught by Rowan on 2026-09-06, hours after I wrote it: the brief said "the
