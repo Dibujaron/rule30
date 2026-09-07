@@ -104,6 +104,16 @@ pub fn declared() -> List(Written) {
       writers: ["write_proposals"],
     ),
     Written(
+      what: "Rule30/Proofs/<Node>.lean",
+      risk: "written only by the worker inside its guard; the harness touches it once, to move an unclosed attempt's file out at attempt end, so that between attempts the directory holds exactly the closed nodes' files",
+      writers: ["park_proof_file"],
+    ),
+    Written(
+      what: "runs/<run-id>/<attempt>/<Node>.lean",
+      risk: "an unclosed attempt's proof file, moved here from Rule30/Proofs/ at attempt end and never rewritten; the next brief on the node names this path, so an edit here is what the next worker reads",
+      writers: ["park_proof_file"],
+    ),
+    Written(
       what: "runs/<run-id>/<attempt>/proposals-check.txt",
       risk: "seed.check_file_in's report over the proposals.json beside it; derived from that file and rewritten only by a re-run of the check over the same attempt directory, which nothing in the harness does automatically — an attempt directory is never revisited by a later attempt",
       writers: ["run_check"],

@@ -399,6 +399,108 @@ pub fn a_proposal_is_checked_after_the_run_summary_test() {
   assert string.contains(events, "\"outcome\":\"written\"")
 }
 
+/// An attempt that ends in anything but `Closed` leaves nothing under
+/// `Rule30/Proofs/`: its file is moved into the attempt's directory, the move
+/// is an event, and the summary says where it went. The directory is one
+/// Dib reads and captains sweep into commits, and CLAUDE.md says it holds
+/// one file per closed node, which an abandoned attempt's file broke
+/// (`an-abandoned-attempt-leaves-its-proof-file-under-rule30-proofs`).
+///
+/// The fixture's `repo_root` is the live checkout, so this writes a real
+/// file under the live `Rule30/Proofs/` — under a per-call token, as
+/// `verify_test` does, so two suites cannot hold one path. A failure between
+/// the write and the move leaves a file whose name says it is a fixture's.
+pub fn an_unclosed_attempts_proof_file_moves_into_its_attempt_directory_test() {
+  let id = "harness_probe_fixture_" <> token()
+  let node = probe(id, [])
+  let f =
+    fixture_with_board(
+      "park-proof-file",
+      [[init_line("s"), result_line("s", "abandoned")]],
+      ports.span(16),
+      roster.Roster([scripted_identity(), understudy()]),
+      Dag([node]),
+    )
+  let rel = dag.proof_path(node)
+  let live = f.cfg.repo_root <> "/" <> rel
+  let assert Ok(False) = simplifile.is_file(live)
+  let assert Ok(_) =
+    simplifile.write(
+      live,
+      "-- a fixture's unclosed work
+",
+    )
+  let assert Ok(_) =
+    dispatch.run_with(
+      f.cfg,
+      Plan(max_attempts: 1, concurrency: 1),
+      env(f, verify.BuildFailed("not run")),
+    )
+  assert simplifile.is_file(live) == Ok(False)
+  let assert Ok(runs) = simplifile.read_directory(f.cfg.runs_root)
+  let assert [run] = runs
+  let attempt_dir = f.cfg.runs_root <> "/" <> run <> "/" <> id <> "-1"
+  let base = string.split(rel, "/") |> list.last |> result.unwrap(rel)
+  assert read(attempt_dir <> "/" <> base) == "-- a fixture's unclosed work
+"
+  let events = read(attempt_dir <> "/events.jsonl")
+  assert string.contains(events, "\"kind\":\"proof_file\"")
+  assert string.contains(events, "\"outcome\":\"moved\"")
+  assert string.contains(
+    read(attempt_dir <> "/summary.txt"),
+    "proof     " <> attempt_dir <> "/" <> base,
+  )
+}
+
+/// The other half of the invariant: a closed node's file is exactly what
+/// belongs under `Rule30/Proofs/`, so a `Closed` attempt moves nothing.
+pub fn a_closed_attempts_proof_file_stays_test() {
+  let id = "harness_probe_fixture_" <> token()
+  let node = probe(id, [])
+  let f =
+    fixture_with_board(
+      "keep-proof-file",
+      [[init_line("s"), result_line("s", "proved")]],
+      ports.span(16),
+      roster.Roster([scripted_identity(), understudy()]),
+      Dag([node]),
+    )
+  let live = f.cfg.repo_root <> "/" <> dag.proof_path(node)
+  let assert Ok(False) = simplifile.is_file(live)
+  let assert Ok(_) =
+    simplifile.write(
+      live,
+      "-- a fixture's closed work
+",
+    )
+  let assert Ok(_) =
+    dispatch.run_with(
+      f.cfg,
+      Plan(max_attempts: 1, concurrency: 1),
+      env(
+        f,
+        verify.Verified(
+          ["propext"],
+          "Statements.harness_probe : True",
+          "'harness_check' depends on axioms",
+        ),
+      ),
+    )
+  let stayed = simplifile.is_file(live)
+  let _ = simplifile.delete(live)
+  assert stayed == Ok(True)
+  let assert Ok(runs) = simplifile.read_directory(f.cfg.runs_root)
+  let assert [run] = runs
+  let events =
+    read(f.cfg.runs_root <> "/" <> run <> "/" <> id <> "-1/events.jsonl")
+  assert !string.contains(events, "\"kind\":\"proof_file\"")
+}
+
+/// 32 lowercase hex characters from a CSPRNG, the source `verify_test` and
+/// the guard use; what makes a fixture's live-checkout path its own.
+@external(erlang, "harness_ffi", "token")
+fn token() -> String
+
 /// The claim as the scheduler writes it, read back from the board while the
 /// attempt is still in flight. The verifier is the one hook a test has into
 /// the middle of an attempt, and it is handed the claimed node, so it reads

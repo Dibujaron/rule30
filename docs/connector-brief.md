@@ -75,6 +75,14 @@ Write it to the one file your fence allows,
 this order. A section you have nothing to put in still appears, with one
 sentence saying so.
 
+**Write the file early and keep it current.** Create it with all six
+headings in your first hour, fill sections 1 and 2 at once, and rewrite
+the rest as dictionaries are built and broken, rather than composing the
+whole document at the end. A captain, and Dib, may read the file while
+you work; a session that dies at hour three with an empty file has left
+nothing, and one that dies with sections 1 to 3 current has left most of
+its value.
+
 ### 1. The problem, seen from outside
 
 The residual restated for a reader from another field, in one paragraph,

@@ -1,0 +1,6 @@
+leftDiagonal_step_onset_dichotomy
+  DOES NOT PROVE: Does not prove leftDiagonal_onset_le and does not bound the onset at all. Iterating it gives onset ≤ (sum of the first-black gaps over the first k diagonals), and nothing here bounds those gaps — that sum being at most k is exactly what remains open. It also bears on no prize conjecture: it is about the settled edge of the cone, not the centre column. It is not a restatement of the wall, which quantifies over k and asserts a numeric bound; this is one induction step with the bound left free.
+  route:   DOES NOT CLOSE — c:/Users/dibuj/dev/rule30/harness/build/checks/seed/leftDiagonal_step_onset_dichotomy_994878b7c585ac4daad3e9a564e38164.lean:10:57: error: unsolved goals
+  witness: unchecked — no witness supplied
+
+1 unchecked

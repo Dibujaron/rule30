@@ -417,6 +417,20 @@ in another coat, and would sit beside it, not under it.
     seed's up to a shift chosen at the branch points, Rowland §6 with
     phase) as the reason a periodic boundary is invisible to it.
 
+45. **The white branch of the left induction costs one index, not one period.**
+    `leftDiagonal_step_onset_dichotomy (m q N) : PeriodicFrom (leftDiagonal m) q N → PeriodicFrom (leftDiagonal (m+1)) q N → PeriodicFrom (leftDiagonal (m+2)) (2*q) (N+1) ∨ ∃ j, N ≤ j ∧ leftDiagonal (m+1) (j+1) = true ∧ PeriodicFrom (leftDiagonal (m+2)) q (j+1)`.
+    When the middle diagonal is white from `N + 1` on, the new diagonal is a
+    running total of the one two further out (`bool_xor_driven_periodicFrom`
+    applies verbatim), so its onset moves by one cell and its period at most
+    doubles; when the middle diagonal is black somewhere, the onset jumps to
+    that cell (`leftDiagonal_periodicFrom_step_of_black`). *Proved*: found by
+    Cadence on opus in an abandoned research attempt on `leftDiagonal_onset_le`
+    (run 20260907T201514Z), kept as `explorer/scratch_onset_dichotomy.lean`,
+    which compiles alone. The seed check's verdict on it as a route to the
+    wall is right: iterating it bounds the onset by the sum of the first-black
+    gaps, and bounding that sum by `k` is what remains open. Worth a node when
+    an onset argument wants it; sits under `leftDiagonal_onset_le`.
+
 ## Not credible or not verified
 
 - arXiv:2207.13237 (Das, "Rule 30: Solving the Chaos") claims an analytical

@@ -1,0 +1,5 @@
+
+leftDiagonal_pair_never_eventually_shiftedVesper   sonnet  proved            $0.77   15 turns
+leftDiagonal_onset_le             Cadence  opus    abandoned         $3.21   15 turns
+
+2 attempt(s), 1 closed, $3.98 in all

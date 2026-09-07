@@ -1,0 +1,15 @@
+
+node      leftDiagonal_onset_le
+identity  Cadence
+model     opus
+outcome   abandoned
+cost      $3.21
+turns     15
+estimate  wall
+session   641335a0-5eb0-4d1b-b4ac-691e4070c69f
+log       c:/Users/dibuj/dev/rule30/runs/20260907T201514Z/leftDiagonal_onset_le-1
+
+verifier:
+Not proved — the wall stands; but the file now holds a verified sharpening of the induction step (white branch costs one index, not one period), which removes the specific leak the node's description blames for the 2^k bound.
+
+Cadence (#2a6f77): closed 15, abandoned 2, $11.16, calibration 13/16

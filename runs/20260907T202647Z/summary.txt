@@ -1,0 +1,15 @@
+
+node      leftDiagonal_period_unbounded
+identity  Vesper
+model     opus
+outcome   proved
+cost      $1.74
+turns     12
+estimate  S
+session   4c4d2e2a-f7b3-4273-affc-8bde38325a43
+log       c:/Users/dibuj/dev/rule30/runs/20260907T202647Z
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Vesper (#2b3a67): closed 41, abandoned 1, $22.79, calibration 34/41
