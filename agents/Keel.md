@@ -1402,3 +1402,17 @@ shape, in the scorecard this time.
 **Two branches were each green and disagreed** only about a fixture that
 predated a new field; the merged suite is the only one that adjudicates,
 same as last night.
+
+**18:15Z — three small landings at `0e61dcf`, 484 of 484.** `bugs file
+<row.json>` validates a row with the board's own decoder and refuses,
+naming every fault, before it can break the board — built the same hour a
+hand-filed row with area "dag" refused the whole file and every board verb
+with it. A strict decoder that refuses the file is right; a verb that
+refuses the row is what makes it survivable. `under` on nodes and
+proposals, read by the index instead of a transitive-deps computation that
+rendered on zero nodes because `deps` was never the relation. And the seed
+check warns on a statement that mixes ℕ and ℤ or uses absolute value,
+matched on the seeder's text rather than Lean's elaborated form, said so in
+the doc comment, and measured over the sixty-five real declarations before
+shipping. Sextant, the first theorist, is live on the P1 frontier wall as I
+write this.
