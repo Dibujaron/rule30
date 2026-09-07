@@ -1433,3 +1433,12 @@ is still true; the two that were not and the one that dropped a message all
 looked like reuse. Rowan corrected one guess of mine on the way: the 118k
 tokens were cumulative cache creation across turns, not the brief, and I
 had named a driver from a number without asking what it measured.
+
+**19:40Z — two more from the theorist's first day, at `5fada35`.** An
+ending now names which ceiling ended it (the CLI's turns, its dollars, or
+the harness's rounds), decoded from the result subtype the loop had been
+discarding; and a second attack on one topic in a day gets its own numbered
+file instead of overwriting the first, which the fence would have allowed.
+Rowan found the second by reading what the path would resolve to before
+starting the session — the check that costs a minute before and a document
+after.
