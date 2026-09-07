@@ -98,6 +98,16 @@ pub fn declared() -> List(Written) {
         "archive_transcript",
       ],
     ),
+    Written(
+      what: "runs/<run-id>/<attempt>/proposals.json",
+      risk: "a worker's proposed sub-lemmas in the seeder's shape; written once per attempt from the report, so an edit landing between the write and the check below would be checked against bytes nobody wrote",
+      writers: ["write_proposals"],
+    ),
+    Written(
+      what: "runs/<run-id>/<attempt>/proposals-check.txt",
+      risk: "seed.check_file_in's report over proposals.json; derived, so an edit arriving before the next attempt at the same node is lost",
+      writers: ["check_proposals"],
+    ),
   ]
 }
 

@@ -15,8 +15,10 @@ import harness/guard
 import harness/guard_event
 import harness/log
 import harness/roster
+import harness/seed
 import harness/verify
 import harness/worker
+import lean_fixture
 import simplifile
 
 fn cfg() -> config.Config {
@@ -878,4 +880,168 @@ pub fn write_index_swallows_a_render_failure_but_keeps_the_import_test() {
   assert string.contains(events, "\"outcome\":\"failed\"")
   assert string.contains(events, "\"node\":\"probe_one\"")
   assert string.contains(events, "could not read")
+}
+
+// --- a worker's proposed sub-lemmas -------------------------------------------
+
+fn proposals_identity() -> roster.Identity {
+  roster.Identity(
+    name: "Vesper",
+    region: "P1",
+    created: "2026-09-05T00:00:00Z",
+    naming_reason: "a test never names itself",
+    opening: "",
+    color: Some("#123456"),
+  )
+}
+
+/// The seeder's shape, byte-compatible with `seed.decode_proposals`; the
+/// node's own restatement dropped and named; the check run and its honest
+/// failure — no `.lake` under this root — recorded rather than swallowed.
+pub fn write_proposals_writes_the_seeder_shape_and_records_the_check_test() {
+  let root = "build/test-runs/write-proposals"
+  let _ = simplifile.delete(root)
+  let assert Ok(Nil) = simplifile.create_directory_all(root <> "/runs")
+  let assert Ok(l) = log.open(root <> "/runs", "run-1")
+  let cfg = config.Config(..cfg(), repo_root: root, runs_root: root <> "/runs")
+  let identity = proposals_identity()
+  let report =
+    worker.Report(
+      outcome: "abandoned",
+      estimate: dag.L,
+      notebook: "",
+      journal: "",
+      bugs: [],
+      summary: "",
+      discarded: [],
+      proposals: [
+        worker.ProposedLemma(
+          name: "evolve_left_sixth_diagonal",
+          statement: "theorem evolve_left_sixth_diagonal (t : ℕ) : evolve (t + 5) (-(t : ℤ)) = false := by\n  sorry",
+          reason: "the seventh needs it",
+          size: dag.S,
+          disclaims: "",
+          route: None,
+          witness: Some(#("evolve (t + 5) (-(t : ℤ)) = false", [], "t < 12")),
+        ),
+        // Restates the node under the node's own name: refused, named.
+        worker.ProposedLemma(
+          name: "evolve_left_seventh_diagonal",
+          statement: "theorem evolve_left_seventh_diagonal : True := by\n  sorry",
+          reason: "r",
+          size: dag.M,
+          disclaims: "",
+          route: None,
+          witness: None,
+        ),
+      ],
+    )
+  dispatch.write_proposals(
+    cfg,
+    l,
+    identity,
+    "evolve_left_seventh_diagonal",
+    report,
+  )
+  let assert Ok(text) = simplifile.read(l.dir <> "/proposals.json")
+  // Byte-compatible with the seeder's decoder, and carrying only the survivor.
+  let assert Ok([p]) = seed.decode_proposals(text)
+  assert p.id == "evolve_left_sixth_diagonal"
+  assert p.lean_name == "evolve_left_sixth_diagonal"
+  assert p.reason == "the seventh needs it"
+  assert p.witness
+    == seed.Claims(seed.Witness(
+      expression: "evolve (t + 5) (-(t : ℤ)) = false",
+      imports: [],
+      range: "t < 12",
+    ))
+  // Provenance beside the array, which the decoder ignores.
+  assert string.contains(text, "\"node\": \"evolve_left_seventh_diagonal\"")
+    || string.contains(text, "\"node\":\"evolve_left_seventh_diagonal\"")
+  let assert Ok(events) = simplifile.read(l.dir <> "/events.jsonl")
+  assert string.contains(events, "\"kind\":\"proposals\"")
+  assert string.contains(events, "\"count\":1")
+  assert string.contains(events, "\"kind\":\"proposals_discarded\"")
+  assert string.contains(events, "evolve_left_seventh_diagonal")
+  // The check ran and failed honestly: this root has no `.lake`, and the
+  // failure is an event with a reason, not a crash and not a silence.
+  assert string.contains(events, "\"kind\":\"proposals_checked\"")
+  assert string.contains(events, "\"outcome\":\"failed\"")
+  assert string.contains(events, ".lake")
+  assert simplifile.is_file(l.dir <> "/proposals-check.txt") == Ok(False)
+}
+
+/// A report with no proposals writes nothing and logs nothing named
+/// `proposals` — the empty case must be silent, not an empty file and an
+/// empty-count event.
+pub fn write_proposals_with_none_writes_nothing_test() {
+  let root = "build/test-runs/write-proposals-none"
+  let _ = simplifile.delete(root)
+  let assert Ok(Nil) = simplifile.create_directory_all(root <> "/runs")
+  let assert Ok(l) = log.open(root <> "/runs", "run-1")
+  let cfg = config.Config(..cfg(), repo_root: root, runs_root: root <> "/runs")
+  let report =
+    worker.Report(
+      outcome: "proved",
+      estimate: dag.S,
+      notebook: "",
+      journal: "",
+      bugs: [],
+      summary: "",
+      discarded: [],
+      proposals: [],
+    )
+  dispatch.write_proposals(cfg, l, proposals_identity(), "n", report)
+  assert simplifile.is_file(l.dir <> "/proposals.json") == Ok(False)
+  let assert Ok(events) = simplifile.read(l.dir <> "/events.jsonl")
+  assert !string.contains(events, "proposals")
+}
+
+/// A cheaper, real check: against the built fixture project, a proposal
+/// with no route and no witness gets a check that actually ran — its
+/// report on disk, saying "none claimed" and "no witness supplied" rather
+/// than a refusal. Scratch `seed.check_file_in` writes lands under
+/// `harness/test/fixture-project/harness/`, which `.gitignore` already
+/// lists, and this test's own report says whether `git status` agreed.
+pub fn write_proposals_records_a_check_that_ran_test() {
+  let repo_root = lean_fixture.built()
+  let root = "build/test-runs/write-proposals-fixture"
+  let _ = simplifile.delete(root)
+  let assert Ok(Nil) = simplifile.create_directory_all(root)
+  let assert Ok(l) = log.open(root, "run-1")
+  let cfg = config.Config(..cfg(), repo_root:, runs_root: root)
+  let report =
+    worker.Report(
+      outcome: "abandoned",
+      estimate: dag.S,
+      notebook: "",
+      journal: "",
+      bugs: [],
+      summary: "",
+      discarded: [],
+      proposals: [
+        worker.ProposedLemma(
+          name: "harness_probe_child",
+          statement: "theorem harness_probe_child : True := by\n  sorry",
+          reason: "a fixture check that actually runs",
+          size: dag.S,
+          disclaims: "",
+          route: None,
+          witness: None,
+        ),
+      ],
+    )
+  dispatch.write_proposals(
+    cfg,
+    l,
+    proposals_identity(),
+    "harness_probe",
+    report,
+  )
+  let assert Ok(events) = simplifile.read(l.dir <> "/events.jsonl")
+  assert string.contains(events, "\"kind\":\"proposals_checked\"")
+  assert string.contains(events, "\"outcome\":\"written\"")
+  let assert Ok(check_text) = simplifile.read(l.dir <> "/proposals-check.txt")
+  assert string.contains(check_text, "none claimed")
+  assert string.contains(check_text, "no witness supplied")
 }

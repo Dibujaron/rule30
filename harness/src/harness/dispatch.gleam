@@ -25,6 +25,7 @@ import harness/lock
 import harness/log
 import harness/roster
 import harness/schedule.{type Plan}
+import harness/seed
 import harness/verify
 import harness/worker
 import harness/worker/brief
@@ -142,7 +143,7 @@ pub fn prove_one(
     _ -> Ok(Nil)
   })
 
-  write_channels(cfg, l, identity, node_id, model, attempt, report)
+  write_channels(cfg, l, l, identity, node_id, model, attempt, report)
   auto_file_signals(cfg, l, node_id, identity, attempt)
   let text = summary(d, l, identity, attempt, node_id)
   log.summary(l, text)
@@ -618,6 +619,7 @@ fn returned(
   write_channels(
     cfg,
     run_.run_log,
+    flight.attempt_log,
     flight.identity,
     node.id,
     flight.model,
@@ -1157,8 +1159,14 @@ fn record(node: dag.Node, attempt: dag.Attempt) -> dag.Node {
   }
 }
 
-/// The worker's channels — notebook, journal, bugs — each written from the
-/// report exactly as the worker wrote it.
+/// The worker's channels — notebook, journal, bugs, proposals — each written
+/// from the report exactly as the worker wrote it.
+///
+/// `l` is the run log, where the notebook heading, the journal, the
+/// `report_discarded` event and filed bugs go; `attempt_log` is the
+/// attempt's own log, where a worker's proposed sub-lemmas and their check
+/// are written. `prove_one` has one log that serves as both; a run's
+/// `returned` has two.
 ///
 /// One more row when the decoder had to leave something out: a single
 /// `report_discarded` event naming the entries of `bugs` that did not
@@ -1167,6 +1175,7 @@ fn record(node: dag.Node, attempt: dag.Attempt) -> dag.Node {
 fn write_channels(
   cfg: config.Config,
   l: log.Log,
+  attempt_log: log.Log,
   identity: roster.Identity,
   node_id: String,
   model: String,
@@ -1215,8 +1224,193 @@ fn write_channels(
           ])
       }
       file_reported_bugs(cfg, l, identity, node_id, attempt, r.bugs)
+      write_proposals(cfg, attempt_log, identity, node_id, r)
     }
   }
+}
+
+/// Where a worker's proposed sub-lemmas go, relative to the attempt
+/// directory: the seeder's `next.json` shape under a name that cannot be
+/// mistaken for the seeder's, so Rowan's landing script and the seeder path
+/// are one path. The check's report sits beside it.
+pub const proposals_file = "proposals.json"
+
+pub const proposals_check_file = "proposals-check.txt"
+
+/// A worker's proposed sub-lemmas: written to the attempt directory in the
+/// seeder's shape, checked by `seed.check_file_in` exactly as a seeder's
+/// would be, and both steps recorded as events in the attempt's
+/// `events.jsonl`. A proposal file nobody has checked is a hope; the check
+/// is what makes a failed attempt's output usable by the DAG.
+///
+/// Nothing here reads the rung or the outcome: a `proved` attempt with
+/// proposals writes them too, and a proposal is weighed by the check, not by
+/// which model made it.
+///
+/// One guard before the check, the only mechanical one: a proposal whose
+/// name is the node's own is a restatement and is dropped, named in a
+/// `proposals_discarded` event. A restatement under another name is what the
+/// check's report and the captain's reading are for.
+///
+/// The check's failure to RUN (no `.lake` under `repo_root`, an unwritable
+/// file) is an event with a reason, never a crash: the attempt's record is
+/// already written and a derived artifact does not get to suppress it.
+pub fn write_proposals(
+  cfg: config.Config,
+  attempt_log: log.Log,
+  identity: roster.Identity,
+  node_id: String,
+  report: worker.Report,
+) -> Nil {
+  case report.proposals {
+    [] -> Nil
+    proposals -> {
+      let #(restating, kept) =
+        list.partition(proposals, fn(p) { p.name == node_id })
+      case restating {
+        [] -> Nil
+        rs ->
+          log.event(attempt_log, "proposals_discarded", [
+            #("node", json.string(node_id)),
+            #("reason", json.string("restates the node under its own name")),
+            #("names", json.array(list.map(rs, fn(p) { p.name }), json.string)),
+          ])
+      }
+      case kept {
+        [] -> Nil
+        kept -> {
+          let path = attempt_log.dir <> "/" <> proposals_file
+          let text = proposals_json(node_id, identity, attempt_log, kept)
+          log.event(attempt_log, "proposals", [
+            #("node", json.string(node_id)),
+            #("from", json.string(identity.name)),
+            #("file", json.string(path)),
+            #("count", json.int(list.length(kept))),
+          ])
+          case simplifile.write(path, text) {
+            Error(e) ->
+              log.event(attempt_log, "proposals_checked", [
+                #("node", json.string(node_id)),
+                #("outcome", json.string("failed")),
+                #(
+                  "reason",
+                  json.string(
+                    "could not write "
+                    <> path
+                    <> ": "
+                    <> simplifile.describe_error(e),
+                  ),
+                ),
+              ])
+            Ok(Nil) -> check_proposals(cfg, attempt_log, node_id, path)
+          }
+        }
+      }
+    }
+  }
+}
+
+/// Run `seed.check_file_in` over the file `write_proposals` just wrote, and
+/// record the outcome as one more event: `written` with the report's path,
+/// or `failed` with the reason, never a crash.
+fn check_proposals(
+  cfg: config.Config,
+  attempt_log: log.Log,
+  node_id: String,
+  path: String,
+) -> Nil {
+  let out = attempt_log.dir <> "/" <> proposals_check_file
+  case seed.check_file_in(cfg.repo_root, path) {
+    Error(reason) ->
+      log.event(attempt_log, "proposals_checked", [
+        #("node", json.string(node_id)),
+        #("outcome", json.string("failed")),
+        #("reason", json.string(reason)),
+      ])
+    Ok(report_text) ->
+      case simplifile.write(out, report_text) {
+        Ok(Nil) ->
+          log.event(attempt_log, "proposals_checked", [
+            #("node", json.string(node_id)),
+            #("outcome", json.string("written")),
+            #("file", json.string(out)),
+          ])
+        Error(e) ->
+          log.event(attempt_log, "proposals_checked", [
+            #("node", json.string(node_id)),
+            #("outcome", json.string("failed")),
+            #(
+              "reason",
+              json.string(
+                "could not write "
+                <> out
+                <> ": "
+                <> simplifile.describe_error(e),
+              ),
+            ),
+          ])
+      }
+  }
+}
+
+/// The seeder's `next.json` shape, with provenance beside the array. The
+/// array's fields are exactly `seed.proposal_shape`'s so `seed.decode_proposals`
+/// reads this file unchanged; the top-level keys beside `proposals` are
+/// ignored by that decoder and are for the captain.
+fn proposals_json(
+  node_id: String,
+  identity: roster.Identity,
+  attempt_log: log.Log,
+  proposals: List(worker.ProposedLemma),
+) -> String {
+  let entry = fn(p: worker.ProposedLemma) {
+    let base = [
+      #("id", json.string(p.name)),
+      #("lean_name", json.string(p.name)),
+      #("statement", json.string(p.statement)),
+      #("reason", json.string(p.reason)),
+      #("size", json.string(dag.size_to_string(p.size))),
+    ]
+    let disclaims = case p.disclaims {
+      "" -> []
+      d -> [#("disclaims", json.string(d))]
+    }
+    let route = case p.route {
+      None -> []
+      Some(#(tactics, imports)) -> [
+        #(
+          "route",
+          json.object([
+            #("tactics", json.string(tactics)),
+            #("imports", json.array(imports, json.string)),
+          ]),
+        ),
+      ]
+    }
+    let witness = case p.witness {
+      None -> []
+      Some(#(expression, imports, range)) -> [
+        #(
+          "witness",
+          json.object([
+            #("expression", json.string(expression)),
+            #("imports", json.array(imports, json.string)),
+            #("range", json.string(range)),
+          ]),
+        ),
+      ]
+    }
+    json.object(list.flatten([base, disclaims, route, witness]))
+  }
+  json.object([
+    #("node", json.string(node_id)),
+    #("identity", json.string(identity.name)),
+    #("run", json.string(attempt_log.run_id)),
+    #("attempt_dir", json.string(attempt_log.dir)),
+    #("filed", json.string(log.now_iso())),
+    #("proposals", json.array(proposals, entry)),
+  ])
+  |> json.to_string
 }
 
 /// A worker's reported bugs, appended to the board with the provenance the
