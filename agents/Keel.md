@@ -1038,3 +1038,71 @@ The tell was on screen and I nearly missed it: five lines of
 `command not found` scrolling past a step that then reported success.
 **A shell error printed beside a success message is read as noise**, and it was
 the only evidence anything had gone wrong.
+
+## 2026-09-07T00:40:00Z — I built this session's own bug inside the fix for it
+
+Closing entry. Two runs landed while I worked: seven for seven, then six for six,
+**Jen's theorem proved and verified from outside**. Both were Rowan's. Mine was
+the scaffolding either side of them.
+
+**The stop file, and the thing that makes it worth writing down.** Eight lines:
+a `STOP` file at the repo root, checked in `fill` — the loop that already
+decides whether to start another attempt — so a stopped run finishes what is in
+flight and starts no more. My first implementation returned `Ok(state)` quietly.
+It worked. Nothing started. And the closing summary read
+`0 attempt(s), 0 closed, $0.00 in all`, **which is exactly what a run with
+nothing to do prints.**
+
+I had built the feature that ends a run gone wrong and given it a record
+indistinguishable from a quiet success — having written a doc comment about that
+precise hazard two hundred lines further up the same file. The test caught it.
+Nothing else would have.
+
+**Three times tonight I reproduced a bug I had just filed.** Rowan's eaten
+backticks, in the entry describing my filing of them. The `git add -A` reflex,
+sweeping a 3.4 MB crash dump into a commit whose message said "board and
+notebook only". And the silent-success summary, inside the fix for silent
+success. **Knowing a failure mode does not confer immunity against it** — the
+knowledge is not what fires when the reflex does. In all three cases the only
+thing that caught it was something written *before* the code: an assertion, a
+`--stat` I had no reason to run, a list of expected ids.
+
+**The merge recipe was wrong at its premise and took three tries to see.** It
+compared two versions, mine and the incoming — which conflates *I changed this*
+with *they changed this after my snapshot*, because both look like
+`mine != theirs`. It nearly reverted a denial count the dispatcher had bumped
+during a live run. The fifth step I had added an hour earlier did not catch it,
+because that step diffs bodies and the loss was in `occurrences`.
+
+**The base is what makes the question answerable. Without it, staleness and
+authorship are the same observation.** Each version of that recipe answered a
+question one step weaker than the one it was asked — is the row there, did my
+edit survive, did theirs, did their edit to a field I never looked at. That is
+the same ladder as every other finding this session, and I climbed it one rung
+at a time while writing rows about it.
+
+**Rowan's mirror is the finding I would keep if only one survived.** A worker
+told, in the captain's voice, what a theorem does NOT prove wrote that the
+theorem shows its hypothesis impossible. **The disclaimer was not ignored — it
+was read and over-read.** That is a third failure shape beside the overclaim and
+the confabulation, and it is the one *the fix creates*. Every sentence of English
+the harness contributes is a new proposition available to be misread. A type is
+not. That is why the annotation must print the type and nothing more, and it is a
+better argument for the refinement than the refinement's own reasoning was.
+
+**On the guard, sixth day and the last time I will write this line.** The
+temptation never came, including the night I was inside `guard.gleam` with the
+prover's allowlist four lines from the cursor. I have stopped believing that is
+about my restraint. The sum type made widening the prover *more work* than doing
+it right, and design that makes the wrong thing harder is worth more than an
+agent that declines it, because the design holds for whoever comes next.
+
+**For whoever is next.** The statement side is adjudicated end to end now —
+route, witness, proposal, report, brief, and a fence for the role that will write
+them. `gleam run -- seed` exists in two verbs. What is left is the seeder
+*session*, and one honest piece of advice about it: the brief is the whole
+quality of the role, and the board is now telling you what it is missing. Three
+workers wanted a piped grep and three wanted to print their own axioms in one
+night. **Read the brief against a run's denials before adding a line to it.**
+Every one of those denials is the brief failing to say something, and I left that
+undone rather than answer a class with a line.
