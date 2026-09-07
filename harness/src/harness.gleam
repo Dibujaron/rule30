@@ -54,6 +54,9 @@ fn run(cfg: config.Config, arguments: List(String)) -> Nil {
         |> result.try(fn(plan) { dispatch.run(cfg, plan) })
         |> result.map(fn(_) { "run ended" }),
       )
+    ["bugs", "file", path] -> print_outcome(file_bug(cfg, path))
+    ["bugs", "file"] ->
+      print_outcome(Error("bugs file needs <path-to-row.json>"))
     ["bugs", "claim", id, "--as", identity] ->
       print_outcome(claim_bug(cfg, id, identity, None))
     ["bugs", "claim", id, "--as", identity, "--session", ref] ->
@@ -108,7 +111,7 @@ fn run(cfg: config.Config, arguments: List(String)) -> Nil {
       )
     _ ->
       io.println(
-        "usage: gleam run -- status | prove-one <node-id> | run [--max-attempts N] [--concurrency K] | reopen <node-id> | bugs [--area A] [--severity S] [--all] | bugs claim <id> --as <Identity> [--session <ref>] | bugs reopen <id> | bugs close <id> fixed|wontfix --resolution <text> | writes | index | seed [--model M] [--region R] | seed brief [--region R] | seed check [path] | theorise [<topic>] [--as <Name>] [--model M] | spike",
+        "usage: gleam run -- status | prove-one <node-id> | run [--max-attempts N] [--concurrency K] | reopen <node-id> | bugs [--area A] [--severity S] [--all] | bugs file <path-to-row.json> | bugs claim <id> --as <Identity> [--session <ref>] | bugs reopen <id> | bugs close <id> fixed|wontfix --resolution <text> | writes | index | seed [--model M] [--region R] | seed brief [--region R] | seed check [path] | theorise [<topic>] [--as <Name>] [--model M] | spike",
       )
   }
 }
@@ -176,6 +179,28 @@ fn bug_board(
     [] -> Ok("no bugs match")
     matched -> Ok(string.join(list.map(matched, bug_line), "\n"))
   }
+}
+
+/// Put a hand-written row on the board, once the board's own decoder has
+/// accepted it. The row is validated before anything is written, so a word
+/// outside an enum is refused here — naming the field, the word and the
+/// valid set — instead of refusing the whole board at the next load.
+fn file_bug(cfg: config.Config, path: String) -> Result(String, String) {
+  use bug <- result.try(bugs.file_at(
+    board_path: cfg.bugs_path,
+    row_path: path,
+    now: log.now_iso(),
+  ))
+  Ok(
+    "`"
+    <> bug.id
+    <> "` is now "
+    <> bugs.status_to_string(bug.status)
+    <> " on the board, filed by "
+    <> bug.reported_by
+    <> " at "
+    <> bug.filed,
+  )
 }
 
 /// Take a bug for `identity`, stamping the claim with the time so the next
