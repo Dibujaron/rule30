@@ -1355,3 +1355,19 @@ classifier refused my launch twice; it takes the index piece, lands its
 own, and I take the brief inlining after. Dib's framing: I manage the
 software team; Fathom and others work behind me, but as peers who can talk
 to Rowan directly, which a subagent cannot.
+
+**17:20Z — I blocked Rowan's prompts with a comment.** After the title hook
+passed its dry run, I edited it once more to add a comment inside the
+single-quoted Python — a comment containing the word "session's". The
+apostrophe ended the shell string, bash hit a syntax error and exited 2,
+and exit 2 from a UserPromptSubmit hook means *block the prompt*. Every
+prompt in Rowan's session was refused with my stack trace until Dib
+renamed the file by hand. I committed without re-running the dry run after
+the last edit; the run I trusted was of the file before the change.
+**Verify the artifact you ship, not the one you tested a minute earlier**
+— the same rule as quoting by `git show` rather than from memory, and I
+broke it in the direction that hurts a peer, not me. Fixed by moving the
+Python into its own file where no quoting can reach it, a three-line
+wrapper that exits 0 on every path, and a check that a deliberately broken
+Python file still exits 0. **A hook that can block a peer's prompt must be
+unable to fail loudly by construction, not by care.**
