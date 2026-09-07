@@ -92,9 +92,10 @@ fn run(cfg: config.Config, arguments: List(String)) -> Nil {
         |> result.try(fn(parsed) { seed_session(cfg, parsed) }),
       )
     // `theorise` starts one theorist session — hand-started, never by the
-    // scheduler — on a topic, or on the P1 frontier when none is given, and
-    // reports where its attack document is once it ends. `theorize` is the
-    // same verb spelt the other way.
+    // scheduler — on a topic, or on the P1 frontier when none is given, as
+    // the named theorist or the eldest idle one (minting one when the
+    // roster has none), and reports where its attack document is once it
+    // ends. `theorize` is the same verb spelt the other way.
     ["theorise", ..flags] | ["theorize", ..flags] ->
       print_outcome(
         theorist.parse_flags(flags)
@@ -102,14 +103,14 @@ fn run(cfg: config.Config, arguments: List(String)) -> Nil {
       )
     _ ->
       io.println(
-        "usage: gleam run -- status | prove-one <node-id> | run [--max-attempts N] [--concurrency K] | reopen <node-id> | bugs [--area A] [--severity S] [--all] | bugs claim <id> --as <Identity> [--session <ref>] | bugs reopen <id> | bugs close <id> fixed|wontfix --resolution <text> | writes | seed [--model M] [--region R] | seed brief [--region R] | seed check [path] | theorise [<topic>] [--model M] | spike",
+        "usage: gleam run -- status | prove-one <node-id> | run [--max-attempts N] [--concurrency K] | reopen <node-id> | bugs [--area A] [--severity S] [--all] | bugs claim <id> --as <Identity> [--session <ref>] | bugs reopen <id> | bugs close <id> fixed|wontfix --resolution <text> | writes | seed [--model M] [--region R] | seed brief [--region R] | seed check [path] | theorise [<topic>] [--as <Name>] [--model M] | spike",
       )
   }
 }
 
-/// One theorist session on the parsed flags' model and topic, on the
-/// theorist's own guard port; the summary it returns names the attack
-/// document and whether it exists.
+/// One theorist session on the parsed flags' model, topic and persona, on
+/// the theorist's own guard port; the summary it returns names who ran,
+/// the attack document and whether it exists.
 fn theorist_session(
   cfg: config.Config,
   flags: theorist.Flags,
@@ -120,6 +121,7 @@ fn theorist_session(
       model: flags.model,
       port: theorist.default_port(cfg),
       topic: flags.topic,
+      persona: flags.persona,
     ),
   )
   |> result.map(fn(session) { session.summary })

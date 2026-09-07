@@ -278,6 +278,8 @@ pub fn region_description(region: String) -> String {
       "the density bookkeeping behind the balance conjecture: counting black cells and bounding ratios in ℝ"
     "framework" ->
       "the harness itself: the dispatcher, the guard, the verifier and the board every prover runs inside"
+    "theory" ->
+      "the whole board at once: what would have to be true for a wall to fall, which routes are already dead, and which claims survive the engine — an argument, never a proof"
     other -> other
   }
 }
