@@ -1,0 +1,15 @@
+
+node      leftSolve_eq_column
+identity  Vesper
+model     sonnet
+outcome   proved
+cost      $1.10
+turns     20
+estimate  M
+session   7f517051-1ae0-4bb9-876a-14283e5c4ed3
+log       c:/Users/dibuj/dev/rule30/runs/20260907T200945Z
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Vesper (#2b3a67): closed 39, abandoned 1, $20.28, calibration 33/39
