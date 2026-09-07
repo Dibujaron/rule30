@@ -22,7 +22,7 @@ import gleam/dynamic.{type Dynamic}
 import gleam/dynamic/decode
 import gleam/int
 import gleam/json
-import gleam/option.{None, Some}
+import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
 import harness/config
@@ -45,10 +45,49 @@ pub const identity = "Seeder"
 pub const session_name = "seed-1"
 
 /// What the verb is told beyond the config: the model to spend, the guard's
-/// port, and where the proposal goes — which is also the one file outside
-/// `explorer/` the guard lets the session write.
+/// port, where the proposal goes — which is also the one file outside
+/// `explorer/` the guard lets the session write — and the region of the
+/// board the tier is for, or `None` for the whole board.
 pub type Options {
-  Options(model: String, port: Int, proposal_path: String)
+  Options(
+    model: String,
+    port: Int,
+    proposal_path: String,
+    region: Option(String),
+  )
+}
+
+/// The `seed` verb's flags, parsed: `--model M` and `--region R`, in either
+/// order, either one absent. The model defaults to the top of the ladder
+/// because the brief is where the quality lives and a seeding pass is the
+/// part worth spending on; the region defaults to none, which is the whole
+/// board.
+pub type Flags {
+  Flags(model: String, region: Option(String))
+}
+
+pub const default_model = "opus"
+
+/// Parse the arguments after `seed`. An unknown flag or a flag without its
+/// value is refused, because a session started with a misspelt `--region`
+/// silently briefs the whole board and spends the pass on the wrong region.
+pub fn parse_flags(flags: List(String)) -> Result(Flags, String) {
+  parse_flags_into(flags, Flags(model: default_model, region: None))
+}
+
+fn parse_flags_into(flags: List(String), acc: Flags) -> Result(Flags, String) {
+  case flags {
+    [] -> Ok(acc)
+    ["--model", model, ..rest] -> parse_flags_into(rest, Flags(..acc, model:))
+    ["--region", region, ..rest] ->
+      parse_flags_into(rest, Flags(..acc, region: Some(region)))
+    [flag] if flag == "--model" || flag == "--region" ->
+      Error(flag <> " needs a value")
+    [other, ..] ->
+      Error(
+        "seed does not take `" <> other <> "`: seed [--model M] [--region R]",
+      )
+  }
 }
 
 /// The port a hand-started seeder's guard listens on. A run's guards count
@@ -164,8 +203,24 @@ pub fn role() -> worker.Role(Report) {
 /// knowledge; this carries the task and the exact file shape, because
 /// `seed.decode_proposals` is loud on a malformed file and a session that
 /// guesses the field names writes a proposal nothing can check.
-pub fn task_message(proposal_path: String) -> String {
+///
+/// With a `region`, the task says the tier is for that region and nothing
+/// else. A proposal carries no `region` field — the captain lands it under
+/// the region the pass was for — so the fence is stated in words here and
+/// in the brief, and not as a field the decoder would then have to check.
+pub fn task_message(proposal_path: String, region: Option(String)) -> String {
   "Propose the next tier. Your brief is in your system prompt: read the closed table and the provers' notes before writing anything, and explore with scripts under explorer/ and `lake env lean` on files there where a claim needs checking.\n\n"
+  <> case region {
+    None -> ""
+    Some(r) ->
+      "This tier is for region "
+      <> r
+      <> " and nothing else: every proposal must be a node of "
+      <> r
+      <> ", and the captain lands it under that region. A proposal outside "
+      <> r
+      <> " will not be landed, however true or cheap it is.\n\n"
+  }
   <> "Write your proposal to `"
   <> proposal_path
   <> "` as one JSON document of this exact shape:\n\n"
@@ -199,7 +254,11 @@ pub type Session {
 /// (no file, no `.lake`) is part of the summary rather than an error from
 /// this function, because the session happened and its record must say so.
 pub fn run(cfg: config.Config, options: Options) -> Result(Session, String) {
-  use brief_text <- result.try(seed.brief_at(cfg, options.proposal_path))
+  use brief_text <- result.try(seed.brief_at(
+    cfg,
+    options.proposal_path,
+    region: options.region,
+  ))
   use run_log <- result.try(log.open(cfg.runs_root, log.new_run_id()))
   use l <- result.try(log.open(run_log.dir, session_name))
   use brief_path <- result.try(worker.write_brief(l, session_name, brief_text))
@@ -226,6 +285,7 @@ pub fn run(cfg: config.Config, options: Options) -> Result(Session, String) {
     #("model", json.string(options.model)),
     #("port", json.int(options.port)),
     #("proposal", json.string(options.proposal_path)),
+    #("region", json.nullable(options.region, json.string)),
     #("log", json.string(l.dir)),
   ])
 
@@ -234,7 +294,7 @@ pub fn run(cfg: config.Config, options: Options) -> Result(Session, String) {
       cfg,
       l,
       worker.launch(cfg, options.model, g, brief_path, report_schema()),
-      task_message(options.proposal_path),
+      task_message(options.proposal_path, options.region),
       role(),
     )
 
@@ -271,6 +331,7 @@ fn summary(
       "",
       "seeder    " <> identity,
       "model     " <> options.model,
+      "region    " <> option.unwrap(options.region, "(whole board)"),
       "ended     " <> ended_words(ending.end),
       "cost      $" <> roster.usd(tally.cost_usd),
       "turns     " <> int.to_string(tally.turns),

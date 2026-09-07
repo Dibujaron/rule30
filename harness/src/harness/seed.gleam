@@ -51,6 +51,7 @@ import gleam/float
 import gleam/int
 import gleam/json
 import gleam/list
+import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
 import harness/config
@@ -934,6 +935,12 @@ fn is_holding(v: WitnessVerdict) -> Bool {
 /// is the only place that knowledge can enter, and every section below is here
 /// because leaving it out costs a worse tier a day later rather than an error
 /// today. That is the least checkable failure this project has.
+/// `region`, when given, aims the whole brief at one region of the board:
+/// the open section and the closed table carry only that region's nodes,
+/// their headings and counts say so, and a section near the top names the
+/// prize conjecture the region is about. Without it the brief is the whole
+/// board, and a seeder reading it follows the open walls — which is how a
+/// pass meant for P2 would end up proposing P1 again.
 pub fn brief(
   open open: List(dag.Node),
   closed closed: List(dag.Node),
@@ -941,115 +948,185 @@ pub fn brief(
   crystals crystals: Result(String, Nil),
   explorer_readme explorer_readme: String,
   proposal_path proposal_path: String,
+  region region: Option(String),
 ) -> String {
+  let open = in_region(open, region)
+  let closed = in_region(closed, region)
+  let where = case region {
+    None -> ""
+    Some(r) -> " in " <> r
+  }
+  let node_word = case region {
+    None -> "node"
+    Some(r) -> r <> " node"
+  }
   string.join(
-    [
-      "## What you are doing",
-      "You are proposing the next tier of theorem statements for a Lean 4",
-      "formalisation of Rule 30. You PROPOSE; a captain reviews and lands.",
-      "",
-      "Aim at what a proof of a prize conjecture's residual would NEED, not at",
-      "what is merely true and provable. The residuals are not abstract: they",
-      "are the open nodes in the next section, and a proposal is worth landing",
-      "exactly when a proof of one of them would cite it. **A tier of true,",
-      "cheap, unconnected lemmas is the failure mode here, and it looks like",
-      "progress while it happens.**",
-      "",
-      "The closed table further down is the whole record of what has closed, "
-        <> int.to_string(list.length(closed))
-        <> " closed as it",
-      "stands. Read it and ask which of them a proof of an open node would",
-      "actually cite. If the honest answer is none, that is the problem you are",
-      "being asked to fix.",
-      "",
-      "## What is open",
-      "Every node on the board nobody has closed, " <> open_count(open) <> ".",
-      "A `wall` is a node the scheduler never dispatches: it is not a task, it",
-      "is a target, and its description says what a decomposition must imply",
-      "and what has been measured. Read those descriptions as the",
-      "specification of the tier you are proposing.",
-      "",
-      open_section(open),
-      "",
-      "## What you may write and run",
-      "  write   anything under explorer/",
-      "  write   your proposal, at " <> proposal_path,
-      "  run     node <one path under explorer/>",
-      "  run     lake build [modules], lake env lean <file>",
-      "",
-      "You may NOT write Rule30/Statements.lean or blueprint/dag.json. That is",
-      "not a formality to route around: seeding sets direction, and direction",
-      "should not change while nobody is watching. Your output is a proposal",
-      "and a captain lands it. Nothing else you do is checked by anything.",
-      "",
-      "## The proposal format",
-      "The file at " <> proposal_path,
-      "must be exactly this shape, or the decoder refuses it before any check",
-      "runs and nothing you wrote is looked at:",
-      "",
-      proposal_shape(),
-      "",
-      "Required: `id`, `lean_name`, `statement`, `reason`. Optional, and to be",
-      "OMITTED rather than filled with a placeholder: `disclaims` (defaults to",
-      "empty), `route` (then `tactics` is required and `imports` optional), and",
-      "`witness` (then `expression` and `range` are required and `imports`",
-      "optional). One `{\"proposals\": [...]}` document, any number of entries.",
-      "",
-      "Each proposal carries an id, a lean_name, the statement text, and a",
-      "`reason`. The statement text is the declaration EXACTLY as it should",
-      "land in Rule30/Statements.lean — `theorem <lean_name> ... := by` with",
-      "`sorry` on its own line — because a route is checked against those",
-      "bytes and against nothing else, and the captain lands the same bytes.",
-      "The reason is REQUIRED and the route is OPTIONAL, and that is",
-      "the opposite of what it looks like it should be. Measured on the tier",
-      "seeded 2026-09-06: description quality dominated node difficulty as a",
-      "cost driver and it was not close. One node was seeded with a route its",
-      "captain had confirmed against a DIFFERENT form of the statement; haiku",
-      "spent 41 turns and died on it, and sonnet then closed it by implementing",
-      "the English reason and ignoring the route entirely.",
-      "",
-      "An unverified route misdirects in a captain's voice to a model with no",
-      "standing to doubt it, and forecloses a search a stronger model would win.",
-      "A correct reason costs nothing and leaves the search open. **If you",
-      "cannot state the reason, you have not finished thinking about the node.**",
-      "If you cannot supply a route, you have merely left it open, which is",
-      "fine and is recorded as claiming nothing.",
-      "",
-      "## Falsification witnesses, and the wall you will hit",
-      "Every proposal may carry a witness: a Bool-valued Lean expression over an",
-      "explicit finite range, run with `lake env lean` and `#eval`.",
-      "",
-      "**The range is not free.** `evolve t` is `rule30^[t]` over `Int -> Bool`,",
-      "so one cell at depth t costs 3^t neighbour evaluations. Measured against",
-      "the real definitions: t=14 is 3.8s, t=16 is 12s, t=18 is 84s, t=20 times",
-      "out at 120s. Usable depth is about t < 18 and the wall is sheer — two",
-      "steps costs a factor of seven.",
-      "",
-      "`List.all` short-circuits, so a FALSE witness returns almost instantly",
-      "and a TRUE one pays the full exponential. A witness that times out is",
-      "therefore preferentially a true one, and it is recorded as `unchecked`,",
-      "never as a pass. A statement whose claim only becomes interesting past",
-      "t=18 cannot carry a naive witness at all — say so rather than inventing",
-      "one, because `unchecked` stated plainly is worth more than coverage",
-      "pretended.",
-      "",
-      "## What has closed, and what it cost",
-      "Cost and model are the transferable part: they say which SHAPES are",
-      "cheap, which is what you are choosing between.",
-      "",
-      closed_table(closed),
-      "",
-      "## Why those proofs worked, in the provers' own words",
-      notes_section(notes),
-      "",
-      "## Literature seeds (blueprint/crystals.md)",
-      crystals_section(crystals),
-      "",
-      "## The engine",
-      explorer_readme,
-    ],
+    list.flatten([
+      [
+        "## What you are doing",
+        "You are proposing the next tier of theorem statements for a Lean 4",
+        "formalisation of Rule 30. You PROPOSE; a captain reviews and lands.",
+        "",
+        "Aim at what a proof of a prize conjecture's residual would NEED, not at",
+        "what is merely true and provable. The residuals are not abstract: they",
+        "are the open nodes in the next section, and a proposal is worth landing",
+        "exactly when a proof of one of them would cite it. **A tier of true,",
+        "cheap, unconnected lemmas is the failure mode here, and it looks like",
+        "progress while it happens.**",
+        "",
+        "The closed table further down is the whole record of what has closed"
+          <> where
+          <> ", "
+          <> int.to_string(list.length(closed))
+          <> " closed as it",
+        "stands. Read it and ask which of them a proof of an open node would",
+        "actually cite. If the honest answer is none, that is the problem you are",
+        "being asked to fix.",
+        "",
+      ],
+      region_section(region),
+      [
+        "## What is open" <> where,
+        "Every "
+          <> node_word
+          <> " on the board nobody has closed, "
+          <> open_count(open)
+          <> ".",
+        "A `wall` is a node the scheduler never dispatches: it is not a task, it",
+        "is a target, and its description says what a decomposition must imply",
+        "and what has been measured. Read those descriptions as the",
+        "specification of the tier you are proposing.",
+        "",
+        open_section(open),
+        "",
+        "## What you may write and run",
+        "  write   anything under explorer/",
+        "  write   your proposal, at " <> proposal_path,
+        "  run     node <one path under explorer/>",
+        "  run     lake build [modules], lake env lean <file>",
+        "",
+        "You may NOT write Rule30/Statements.lean or blueprint/dag.json. That is",
+        "not a formality to route around: seeding sets direction, and direction",
+        "should not change while nobody is watching. Your output is a proposal",
+        "and a captain lands it. Nothing else you do is checked by anything.",
+        "",
+        "## The proposal format",
+        "The file at " <> proposal_path,
+        "must be exactly this shape, or the decoder refuses it before any check",
+        "runs and nothing you wrote is looked at:",
+        "",
+        proposal_shape(),
+        "",
+        "Required: `id`, `lean_name`, `statement`, `reason`. Optional, and to be",
+        "OMITTED rather than filled with a placeholder: `disclaims` (defaults to",
+        "empty), `route` (then `tactics` is required and `imports` optional), and",
+        "`witness` (then `expression` and `range` are required and `imports`",
+        "optional). One `{\"proposals\": [...]}` document, any number of entries.",
+        "",
+        "Each proposal carries an id, a lean_name, the statement text, and a",
+        "`reason`. The statement text is the declaration EXACTLY as it should",
+        "land in Rule30/Statements.lean — `theorem <lean_name> ... := by` with",
+        "`sorry` on its own line — because a route is checked against those",
+        "bytes and against nothing else, and the captain lands the same bytes.",
+        "The reason is REQUIRED and the route is OPTIONAL, and that is",
+        "the opposite of what it looks like it should be. Measured on the tier",
+        "seeded 2026-09-06: description quality dominated node difficulty as a",
+        "cost driver and it was not close. One node was seeded with a route its",
+        "captain had confirmed against a DIFFERENT form of the statement; haiku",
+        "spent 41 turns and died on it, and sonnet then closed it by implementing",
+        "the English reason and ignoring the route entirely.",
+        "",
+        "An unverified route misdirects in a captain's voice to a model with no",
+        "standing to doubt it, and forecloses a search a stronger model would win.",
+        "A correct reason costs nothing and leaves the search open. **If you",
+        "cannot state the reason, you have not finished thinking about the node.**",
+        "If you cannot supply a route, you have merely left it open, which is",
+        "fine and is recorded as claiming nothing.",
+        "",
+        "## Falsification witnesses, and the wall you will hit",
+        "Every proposal may carry a witness: a Bool-valued Lean expression over an",
+        "explicit finite range, run with `lake env lean` and `#eval`.",
+        "",
+        "**The range is not free.** `evolve t` is `rule30^[t]` over `Int -> Bool`,",
+        "so one cell at depth t costs 3^t neighbour evaluations. Measured against",
+        "the real definitions: t=14 is 3.8s, t=16 is 12s, t=18 is 84s, t=20 times",
+        "out at 120s. Usable depth is about t < 18 and the wall is sheer — two",
+        "steps costs a factor of seven.",
+        "",
+        "`List.all` short-circuits, so a FALSE witness returns almost instantly",
+        "and a TRUE one pays the full exponential. A witness that times out is",
+        "therefore preferentially a true one, and it is recorded as `unchecked`,",
+        "never as a pass. A statement whose claim only becomes interesting past",
+        "t=18 cannot carry a naive witness at all — say so rather than inventing",
+        "one, because `unchecked` stated plainly is worth more than coverage",
+        "pretended.",
+        "",
+        "## What has closed" <> where <> ", and what it cost",
+        "Cost and model are the transferable part: they say which SHAPES are",
+        "cheap, which is what you are choosing between.",
+        "",
+        closed_table(closed),
+        "",
+        "## Why those proofs worked, in the provers' own words",
+        notes_section(notes),
+        "",
+        "## Literature seeds (blueprint/crystals.md)",
+        crystals_section(crystals),
+        "",
+        "## The engine",
+        explorer_readme,
+      ],
+    ]),
     "\n",
   )
+}
+
+/// The nodes of `region`, or all of them when no region is asked for.
+fn in_region(nodes: List(dag.Node), region: Option(String)) -> List(dag.Node) {
+  case region {
+    None -> nodes
+    Some(r) -> list.filter(nodes, fn(n) { n.region == r })
+  }
+}
+
+/// The section that says which region this tier is for, or nothing when the
+/// brief is the whole board. It names the conjecture in one sentence
+/// because a region id alone says nothing about what to aim at, and it says
+/// the fence out loud — a proposal outside the region is not landed — so a
+/// seeder that finds the region's open list empty proposes into the region
+/// rather than wandering to where the walls are.
+fn region_section(region: Option(String)) -> List(String) {
+  case region {
+    None -> []
+    Some(r) -> [
+      "## This tier is for " <> r,
+      "This seeding pass is aimed at one region of the board, "
+        <> r
+        <> ": "
+        <> conjecture_of(r),
+      "Only "
+        <> r
+        <> " nodes are listed below, open and closed. A proposal outside "
+        <> r
+        <> " will not be landed, however true or cheap it is.",
+      "",
+    ]
+  }
+}
+
+/// The prize conjecture a region is about, in one sentence, from
+/// `Rule30/Prize.lean` and `docs/prize.md`. A region that is not one of the
+/// three prizes says so rather than borrowing a conjecture.
+fn conjecture_of(region: String) -> String {
+  case region {
+    "P1" ->
+      "the aperiodicity conjecture — the centre column of Rule 30 never becomes periodic, however far out you look and however long you wait for the repetition to start."
+    "P2" ->
+      "the balance conjecture — the fraction of black cells among the first N cells of the centre column tends to exactly 1/2 as N grows."
+    "P3" ->
+      "the irreducibility conjecture — every correct algorithm for the nth cell of the centre column needs effort at least linear in n; its statement in Rule30/Prize.lean is a first approximation and not ready to be attacked."
+    _ -> "a region with no prize conjecture of its own on the board."
+  }
 }
 
 fn open_count(open: List(dag.Node)) -> String {
@@ -1173,18 +1250,41 @@ pub fn proposal_path(repo_root: String) -> String {
 /// wrong on a day nobody notices, and this one had exactly that bug within
 /// hours of being written.
 pub fn brief_for(cfg: config.Config) -> Result(String, String) {
-  brief_at(cfg, proposal_path(cfg.repo_root))
+  brief_at(cfg, proposal_path(cfg.repo_root), region: None)
 }
 
-/// `brief_for`, naming `proposal_path` as where the proposal goes. The
-/// seeder verb fences its session to one proposal file and briefs it from
-/// the same path through this, so the file the brief names and the file the
-/// guard permits cannot be two different files.
+/// `brief_for`, naming `proposal_path` as where the proposal goes, and
+/// optionally aimed at one `region` of the board. The seeder verb fences its
+/// session to one proposal file and briefs it from the same path through
+/// this, so the file the brief names and the file the guard permits cannot
+/// be two different files.
+///
+/// A region no node on the board carries is refused, not rendered: the
+/// brief it would produce lists nothing open and nothing closed, which reads
+/// as an empty region rather than as a typo.
 pub fn brief_at(
   cfg: config.Config,
   proposal_path: String,
+  region region: Option(String),
 ) -> Result(String, String) {
   use d <- result.try(dag.load(cfg.dag_path))
+  use _ <- result.try(case region {
+    None -> Ok(Nil)
+    Some(r) ->
+      case list.any(d.nodes, fn(n) { n.region == r }) {
+        True -> Ok(Nil)
+        False ->
+          Error(
+            "harness/seed: no node on the board has region `"
+            <> r
+            <> "`; the board's regions are "
+            <> string.join(
+              d.nodes |> list.map(fn(n) { n.region }) |> list.unique,
+              ", ",
+            ),
+          )
+      }
+  })
   let open = list.filter(d.nodes, fn(n) { n.status == dag.Open })
   let closed = list.filter(d.nodes, fn(n) { n.status == dag.Proved })
   let notes = proof_notes(cfg.repo_root)
@@ -1201,6 +1301,7 @@ pub fn brief_at(
     crystals: crystals,
     explorer_readme: readme,
     proposal_path: proposal_path,
+    region: region,
   ))
 }
 

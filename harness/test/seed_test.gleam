@@ -791,6 +791,33 @@ fn brief() -> String {
     crystals: Ok("# Seed crystals\n\nCandidate statements for future tiers."),
     explorer_readme: "the BigInt engine",
     proposal_path: "C:/r/blueprint/proposals/next.json",
+    region: option.None,
+  )
+}
+
+/// The same node in P2. The fixture's nodes are all P1, as the real board's
+/// walls are, so a regional test needs one of each.
+fn in_p2(node: dag.Node) -> dag.Node {
+  dag.Node(..node, region: "P2")
+}
+
+/// A board with one open and one closed node in each of P1 and P2, briefed
+/// for `region`.
+fn two_region_brief(region: option.Option(String)) -> String {
+  seed.brief(
+    open: [
+      open_node("leftDiagonal_period_le", dag.Wall, []),
+      in_p2(open_node("density_wall", dag.Wall, [])),
+    ],
+    closed: [
+      closed_node("evolve_left_edge", dag.M, "sonnet", 0.36),
+      in_p2(closed_node("centerColumnDensity_nonneg", dag.S, "haiku", 0.1)),
+    ],
+    notes: [],
+    crystals: Error(Nil),
+    explorer_readme: "",
+    proposal_path: "p",
+    region:,
   )
 }
 
@@ -849,6 +876,7 @@ pub fn the_brief_says_when_nothing_is_open_test() {
       crystals: Error(Nil),
       explorer_readme: "",
       proposal_path: "p",
+      region: option.None,
     )
   assert string.contains(b, "## What is open")
   assert string.contains(section(b, "## What is open"), "(nothing is open)")
@@ -874,6 +902,7 @@ pub fn the_brief_says_when_the_literature_seeds_are_absent_test() {
       crystals: Error(Nil),
       explorer_readme: "",
       proposal_path: "p",
+      region: option.None,
     )
   let seeds = section(b, "## Literature seeds (blueprint/crystals.md)")
   assert string.contains(seeds, "(no blueprint/crystals.md in this checkout)")
@@ -1055,6 +1084,7 @@ pub fn the_brief_derives_its_counts_rather_than_stating_them_test() {
       crystals: Error(Nil),
       explorer_readme: "",
       proposal_path: "p",
+      region: option.None,
     )
   assert string.contains(two, "2 closed")
   // No number that was true on one day and is not derived from the argument.
@@ -1073,8 +1103,61 @@ pub fn the_brief_derives_its_counts_rather_than_stating_them_test() {
       crystals: Error(Nil),
       explorer_readme: "",
       proposal_path: "p",
+      region: option.None,
     )
   assert string.contains(three, "3 closed")
+}
+
+// --- aiming at one region -----------------------------------------------------
+//
+// Rowan wanted one seeder aimed at P2, where four nodes are proved and
+// nothing is open. The whole-board brief says "aim at what a prize residual
+// needs" and then lists the open walls, which are all P1 — so a seeder read
+// it and proposed P1 again. `--region` is the fix: the brief names the
+// region and its conjecture, and lists nothing outside it.
+
+/// The region section sits right after "What you are doing", before any
+/// node is listed, and names the conjecture rather than just the id: "P2"
+/// tells a fresh session nothing about what to aim at.
+pub fn a_regional_brief_names_the_region_and_its_conjecture_test() {
+  let b = two_region_brief(option.Some("P2"))
+  let tier = section(b, "## This tier is for P2")
+  assert string.contains(tier, "balance")
+  assert string.contains(tier, "1/2")
+  assert string.contains(tier, "will not be landed")
+  let assert Ok(#(before, _)) = string.split_once(b, "## This tier is for P2")
+  assert string.contains(before, "## What you are doing")
+  assert !string.contains(before, "## What is open")
+}
+
+/// Only the region's nodes are listed, the headings say so, and the counts
+/// are of what is listed. The P1 nodes appear nowhere: a P1 wall in a P2
+/// brief is exactly the target the seeder would follow instead.
+pub fn a_regional_brief_lists_only_that_regions_nodes_test() {
+  let b = two_region_brief(option.Some("P2"))
+  let open = section(b, "## What is open in P2")
+  assert string.contains(open, "### density_wall")
+  assert string.contains(open, "1 open")
+  let closed = section(b, "## What has closed in P2, and what it cost")
+  assert string.contains(closed, "centerColumnDensity_nonneg  size=S")
+  assert string.contains(b, "1 closed")
+  assert !string.contains(b, "leftDiagonal_period_le")
+  assert !string.contains(b, "evolve_left_edge")
+}
+
+/// Without a region the brief is what it was: no region section, the plain
+/// headings, and both regions' nodes in both sections.
+pub fn a_brief_without_a_region_is_the_whole_board_test() {
+  let b = two_region_brief(option.None)
+  assert !string.contains(b, "This tier is for")
+  let open = section(b, "## What is open")
+  assert string.contains(open, "### density_wall")
+  assert string.contains(open, "### leftDiagonal_period_le")
+  assert string.contains(open, "2 open")
+  let closed = section(b, "## What has closed, and what it cost")
+  assert string.contains(closed, "centerColumnDensity_nonneg")
+  assert string.contains(closed, "evolve_left_edge")
+  assert string.contains(b, "2 closed")
 }
 
 // --- reading the proof notes --------------------------------------------------
@@ -1127,6 +1210,7 @@ pub fn costs_are_rendered_as_money_test() {
       crystals: Error(Nil),
       explorer_readme: "",
       proposal_path: "p",
+      region: option.None,
     )
   assert string.contains(b, "$0.80")
   assert !string.contains(b, "0.7975254")
@@ -1141,6 +1225,7 @@ pub fn a_small_cost_keeps_both_places_test() {
       crystals: Error(Nil),
       explorer_readme: "",
       proposal_path: "p",
+      region: option.None,
     )
   assert string.contains(b, "$0.07")
   // The prefix alone is not the check: "$0.0709461" contains "$0.07". This

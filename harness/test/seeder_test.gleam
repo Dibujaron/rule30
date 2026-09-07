@@ -17,12 +17,13 @@ import envoy
 import gleam/dynamic/decode
 import gleam/int
 import gleam/json
-import gleam/option.{None}
+import gleam/option.{None, Some}
 import gleam/result
 import gleam/string
 import harness/config
 import harness/dag.{Dag, Node}
 import harness/guard
+import harness/seed
 import harness/seeder
 import harness/shell
 import harness/worker
@@ -179,7 +180,12 @@ pub fn seed_starts_one_fenced_session_and_checks_its_proposal_after_it_test() {
   let assert Ok(session) =
     seeder.run(
       f.cfg,
-      seeder.Options(model: "haiku", port:, proposal_path: f.proposal_path),
+      seeder.Options(
+        model: "haiku",
+        port:,
+        proposal_path: f.proposal_path,
+        region: None,
+      ),
     )
 
   // The record is `runs/<id>/seed-1/`, with the event log, the generated
@@ -263,11 +269,63 @@ pub fn a_seeder_that_abandons_is_still_checked_test() {
         model: "haiku",
         port: ports.span(1),
         proposal_path: f.proposal_path,
+        region: None,
       ),
     )
   assert string.contains(session.summary, "ended     abandoned by the seeder")
   assert string.contains(session.summary, "check of " <> f.proposal_path)
   assert string.contains(session.summary, "cannot read")
+}
+
+// --- aiming at one region ---------------------------------------------------------
+
+/// `--region` and `--model` combine in either order, and each defaults on
+/// its own. A misspelt flag is refused rather than ignored, because a
+/// session briefed on the whole board by mistake spends the pass on the
+/// wrong region.
+pub fn seed_flags_parse_in_either_order_test() {
+  let assert Ok(a) = seeder.parse_flags(["--region", "P2", "--model", "haiku"])
+  let assert Ok(b) = seeder.parse_flags(["--model", "haiku", "--region", "P2"])
+  assert a == b
+  assert a == seeder.Flags(model: "haiku", region: Some("P2"))
+  assert seeder.parse_flags([])
+    == Ok(seeder.Flags(model: seeder.default_model, region: None))
+  assert seeder.parse_flags(["--region", "P2"])
+    == Ok(seeder.Flags(model: seeder.default_model, region: Some("P2")))
+  assert seeder.parse_flags(["--model", "haiku"])
+    == Ok(seeder.Flags(model: "haiku", region: None))
+  let assert Error(needs_value) = seeder.parse_flags(["--region"])
+  assert string.contains(needs_value, "--region")
+  let assert Error(unknown) = seeder.parse_flags(["--rejion", "P2"])
+  assert string.contains(unknown, "--rejion")
+}
+
+/// The task message carries the region as words: the proposal has no
+/// `region` field for the decoder to check, so the fence is stated to the
+/// session and not asked for as data.
+pub fn the_task_message_names_the_region_test() {
+  let aimed = seeder.task_message("p", Some("P2"))
+  assert string.contains(aimed, "region P2")
+  assert string.contains(aimed, "will not be landed")
+  assert !string.contains(aimed, "\"region\"")
+  let whole = seeder.task_message("p", None)
+  assert !string.contains(whole, "region")
+}
+
+/// The brief a regional session is started from names the region, and a
+/// region no node on the board carries is refused before any session
+/// starts — the fixture board has one P2 node and nothing else.
+pub fn a_regional_brief_is_refused_for_a_region_the_board_lacks_test() {
+  let f = fixture("region-brief", [])
+  let assert Ok(brief) =
+    seed.brief_at(f.cfg, f.proposal_path, region: Some("P2"))
+  assert string.contains(brief, "## This tier is for P2")
+  assert string.contains(brief, "## What has closed in P2, and what it cost")
+  assert string.contains(brief, "probe_closed")
+  let assert Error(reason) =
+    seed.brief_at(f.cfg, f.proposal_path, region: Some("P9"))
+  assert string.contains(reason, "`P9`")
+  assert string.contains(reason, "P2")
 }
 
 // --- the report -------------------------------------------------------------------
