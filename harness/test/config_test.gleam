@@ -1,3 +1,4 @@
+import envoy
 import gleam/option.{None}
 import harness/config
 import harness/dag.{type Node, Attempt, Node}
@@ -168,6 +169,68 @@ pub fn research_ceilings_default_to_120_turns_and_20_dollars_test() {
   assert cfg.research_max_budget_usd == 20.0
   assert cfg.research_max_turns > cfg.max_turns
   assert cfg.research_max_budget_usd >. cfg.max_budget_usd
+}
+
+/// The hand-started session kinds have their own ceilings, both above a
+/// prover's: a theorist's budget is hours, and a seeder's one pass over the
+/// board was 26 turns before it could scan diagonals. The first theorist
+/// ran under the prover's $4 and ended there, thirteen turns in.
+pub fn theorist_and_seeder_ceilings_default_above_a_provers_test() {
+  let assert Ok(cfg) = config.load()
+  assert cfg.theorist_max_turns == 600
+  assert cfg.theorist_max_budget_usd == 80.0
+  assert cfg.seeder_max_turns == 80
+  assert cfg.seeder_max_budget_usd == 12.0
+  assert cfg.theorist_max_turns > cfg.research_max_turns
+  assert cfg.theorist_max_budget_usd >. cfg.research_max_budget_usd
+  assert cfg.seeder_max_turns > cfg.max_turns
+  assert cfg.seeder_max_budget_usd >. cfg.max_budget_usd
+}
+
+/// Each of the four has its own `HARNESS_*` override, read at `load`.
+pub fn theorist_and_seeder_ceilings_come_from_the_environment_test() {
+  envoy.set("HARNESS_THEORIST_MAX_TURNS", "9")
+  envoy.set("HARNESS_THEORIST_MAX_BUDGET_USD", "2.5")
+  envoy.set("HARNESS_SEEDER_MAX_TURNS", "5")
+  envoy.set("HARNESS_SEEDER_MAX_BUDGET_USD", "3")
+  let loaded = config.load()
+  envoy.unset("HARNESS_THEORIST_MAX_TURNS")
+  envoy.unset("HARNESS_THEORIST_MAX_BUDGET_USD")
+  envoy.unset("HARNESS_SEEDER_MAX_TURNS")
+  envoy.unset("HARNESS_SEEDER_MAX_BUDGET_USD")
+  let assert Ok(cfg) = loaded
+  assert cfg.theorist_max_turns == 9
+  assert cfg.theorist_max_budget_usd == 2.5
+  assert cfg.seeder_max_turns == 5
+  // `3` is a reasonable thing to write for a dollar ceiling.
+  assert cfg.seeder_max_budget_usd == 3.0
+  // The prover's ceilings are untouched by the four.
+  assert cfg.max_turns == 40
+  assert cfg.max_budget_usd == 4.0
+}
+
+/// `for_theorist` and `for_seeder` swap in their pair and change nothing
+/// else, the way `for_attempt` does at a research rung.
+pub fn for_theorist_and_for_seeder_swap_in_their_own_ceilings_test() {
+  let assert Ok(base) = config.load()
+  let cfg =
+    config.Config(
+      ..base,
+      max_turns: 40,
+      max_budget_usd: 4.0,
+      theorist_max_turns: 600,
+      theorist_max_budget_usd: 80.0,
+      seeder_max_turns: 80,
+      seeder_max_budget_usd: 12.0,
+    )
+  let theorist = config.for_theorist(cfg)
+  assert theorist.max_turns == 600
+  assert theorist.max_budget_usd == 80.0
+  assert config.Config(..theorist, max_turns: 40, max_budget_usd: 4.0) == cfg
+  let seeder = config.for_seeder(cfg)
+  assert seeder.max_turns == 80
+  assert seeder.max_budget_usd == 12.0
+  assert config.Config(..seeder, max_turns: 40, max_budget_usd: 4.0) == cfg
 }
 
 pub fn bugs_path_sits_beside_the_dag_test() {

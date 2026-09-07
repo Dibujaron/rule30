@@ -84,7 +84,10 @@ fn fixture(name: String, script: List(List(String))) -> Fixture {
   envoy.unset("HARNESS_FAKE_MARKER")
   envoy.unset("HARNESS_FAKE_KILLED")
   envoy.unset("HARNESS_FAKE_IGNORE_EOF")
+  envoy.unset("HARNESS_FAKE_ARGS")
   let assert Ok(base) = config.load()
+  // The ceilings are pinned rather than loaded, so the test says which
+  // pair reached the command line whatever the environment holds.
   let cfg =
     config.Config(
       ..base,
@@ -96,6 +99,10 @@ fn fixture(name: String, script: List(List(String))) -> Fixture {
       roster_path: dir <> "/roster.json",
       agents_dir: dir <> "/agents",
       stop_path: dir <> "/STOP",
+      max_turns: 40,
+      max_budget_usd: 4.0,
+      seeder_max_turns: 80,
+      seeder_max_budget_usd: 12.0,
       turn_timeout_ms: 20_000,
     )
   Fixture(cfg:, dir:, proposal_path: dir <> "/proposals/next.json")
@@ -180,7 +187,9 @@ pub fn seed_starts_one_fenced_session_and_checks_its_proposal_after_it_test() {
       [init_line("seed-s"), result_line("seed-s", "proposed")],
     ])
   let port = ports.span(1)
-  let assert Ok(session) =
+  let args_path = f.dir <> "/args.json"
+  envoy.set("HARNESS_FAKE_ARGS", args_path)
+  let started =
     seeder.run(
       f.cfg,
       seeder.Options(
@@ -190,6 +199,8 @@ pub fn seed_starts_one_fenced_session_and_checks_its_proposal_after_it_test() {
         region: None,
       ),
     )
+  envoy.unset("HARNESS_FAKE_ARGS")
+  let assert Ok(session) = started
 
   // The record is `runs/<id>/seed-1/`, with the event log, the generated
   // settings and the brief, like an attempt's.
@@ -211,6 +222,20 @@ pub fn seed_starts_one_fenced_session_and_checks_its_proposal_after_it_test() {
   assert string.contains(events, "\"kind\":\"sent\"")
   assert string.contains(events, "Propose the next tier")
   assert string.contains(events, "\"kind\":\"stream\"")
+
+  // The session ran under the seeder's ceilings, not the prover's: the
+  // dispatch row records them under the names a prover's row uses, the
+  // shim saw them on its command line, and the summary prints them.
+  assert string.contains(events, "\"max_turns\":80")
+  assert string.contains(events, "\"max_budget_usd\":12.0")
+  assert !string.contains(events, "\"max_turns\":40")
+  let args = read(args_path)
+  assert string.contains(
+    args,
+    "\"--max-turns\",\"80\",\"--max-budget-usd\",\"12.0\"",
+  )
+  assert !string.contains(args, "\"--max-turns\",\"40\"")
+  assert string.contains(session.summary, "ceilings  80 turns, $12.0")
 
   // The guard is a Seeder guard on the port it was asked for: the settings
   // point the hooks at it, it allows a write under `explorer/`, and it

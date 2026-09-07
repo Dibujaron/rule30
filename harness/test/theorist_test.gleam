@@ -130,7 +130,10 @@ fn fixture(
   envoy.unset("HARNESS_FAKE_MARKER")
   envoy.unset("HARNESS_FAKE_KILLED")
   envoy.unset("HARNESS_FAKE_IGNORE_EOF")
+  envoy.unset("HARNESS_FAKE_ARGS")
   let assert Ok(base) = config.load()
+  // The ceilings are pinned rather than loaded, so the test says which
+  // pair reached the command line whatever the environment holds.
   let cfg =
     config.Config(
       ..base,
@@ -142,6 +145,10 @@ fn fixture(
       roster_path: repo <> "/agents/roster.json",
       agents_dir: repo <> "/agents",
       stop_path: dir <> "/STOP",
+      max_turns: 40,
+      max_budget_usd: 4.0,
+      theorist_max_turns: 600,
+      theorist_max_budget_usd: 80.0,
       turn_timeout_ms: 20_000,
     )
   Fixture(cfg:, dir:, repo:)
@@ -270,7 +277,11 @@ pub fn theorise_starts_one_fenced_session_and_reports_its_document_test() {
   let assert Ok(_) = simplifile.create_directory_all(f.repo <> "/docs/attacks")
   let assert Ok(_) = simplifile.write(attack, "# Attack\n\ntwenty-three")
   let port = ports.span(1)
-  let assert Ok(session) = theorist.run(f.cfg, options(port, "the transients"))
+  let args_path = f.dir <> "/args.json"
+  envoy.set("HARNESS_FAKE_ARGS", args_path)
+  let started = theorist.run(f.cfg, options(port, "the transients"))
+  envoy.unset("HARNESS_FAKE_ARGS")
+  let assert Ok(session) = started
   assert session.topic == "the transients"
   assert session.attack_path == attack
   // No `--as`: the eldest theorist on the roster, never the P1 prover.
@@ -302,6 +313,21 @@ pub fn theorise_starts_one_fenced_session_and_reports_its_document_test() {
   assert !string.contains(events, "\"kind\":\"naming\"")
   assert string.contains(events, "\"kind\":\"sent\"")
   assert string.contains(events, "Attack the topic `the transients`")
+
+  // The session ran under the theorist's ceilings, not the prover's: the
+  // dispatch row records them under the names a prover's row uses, the
+  // shim saw them on its command line, and the summary prints them. The
+  // first theorist ran under the prover's $4 and ended there.
+  assert string.contains(events, "\"max_turns\":600")
+  assert string.contains(events, "\"max_budget_usd\":80.0")
+  assert !string.contains(events, "\"max_turns\":40")
+  let args = read(args_path)
+  assert string.contains(
+    args,
+    "\"--max-turns\",\"600\",\"--max-budget-usd\",\"80.0\"",
+  )
+  assert !string.contains(args, "\"--max-turns\",\"40\"")
+  assert string.contains(session.summary, "ceilings  600 turns, $80.0")
 
   // The guard is a Theorist guard on the port it was asked for: it allows
   // the attack document, and it refuses the seeder's proposal file — the

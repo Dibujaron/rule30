@@ -20,6 +20,7 @@
 
 import gleam/dynamic.{type Dynamic}
 import gleam/dynamic/decode
+import gleam/float
 import gleam/int
 import gleam/json
 import gleam/option.{type Option, None, Some}
@@ -279,6 +280,9 @@ pub fn run(cfg: config.Config, options: Options) -> Result(Session, String) {
     options.port,
   ))
   use _ <- result.try(guard.write_settings(g, g.settings_path))
+  // The seeder's ceilings, not the prover's: `worker.launch` reads
+  // `max_turns` and `max_budget_usd` from whatever config it is handed.
+  let session_cfg = config.for_seeder(cfg)
   log.event(l, "dispatch", [
     #("role", json.string("seeder")),
     #("identity", json.string(identity)),
@@ -286,14 +290,16 @@ pub fn run(cfg: config.Config, options: Options) -> Result(Session, String) {
     #("port", json.int(options.port)),
     #("proposal", json.string(options.proposal_path)),
     #("region", json.nullable(options.region, json.string)),
+    #("max_turns", json.int(session_cfg.max_turns)),
+    #("max_budget_usd", json.float(session_cfg.max_budget_usd)),
     #("log", json.string(l.dir)),
   ])
 
   let #(tally, ending) =
     worker.drive(
-      cfg,
+      session_cfg,
       l,
-      worker.launch(cfg, options.model, g, brief_path, report_schema()),
+      worker.launch(session_cfg, options.model, g, brief_path, report_schema()),
       task_message(options.proposal_path, options.region),
       role(),
     )
@@ -311,16 +317,17 @@ pub fn run(cfg: config.Config, options: Options) -> Result(Session, String) {
     Ok(report) -> report
     Error(reason) -> "the check could not run: " <> reason
   }
-  let summary = summary(options, l, tally, ending, check)
+  let summary = summary(options, session_cfg, l, tally, ending, check)
   log.summary(run_log, summary)
   Ok(Session(summary:, guard: g, dir: l.dir))
 }
 
 /// The summary a captain reads: how the session ended, in words that never
-/// call a seeding session proved; what it cost; where its record is; and
-/// the check report under it.
+/// call a seeding session proved; the ceilings it ran under; what it cost;
+/// where its record is; and the check report under it.
 fn summary(
   options: Options,
+  cfg: config.Config,
   l: log.Log,
   tally: worker.Tally,
   ending: worker.Ending(Report),
@@ -333,6 +340,10 @@ fn summary(
       "model     " <> options.model,
       "region    " <> option.unwrap(options.region, "(whole board)"),
       "ended     " <> ended_words(ending.end),
+      "ceilings  "
+        <> int.to_string(cfg.max_turns)
+        <> " turns, $"
+        <> float.to_string(cfg.max_budget_usd),
       "cost      $" <> roster.usd(tally.cost_usd),
       "turns     " <> int.to_string(tally.turns),
       "session   " <> tally.session_id,
@@ -358,7 +369,11 @@ fn ended_words(end: worker.End) -> String {
       "finished — the seeder reported its proposal written; that is its claim about the file, and the check below is the only adjudication"
     worker.Abandoned -> "abandoned by the seeder"
     worker.TimedOut -> "timed out"
-    worker.BudgetExhausted -> "budget exhausted"
+    // The loop's `BudgetExhausted` does not say which ceiling: the CLI's
+    // turn ceiling, its dollar ceiling, or the harness's round budget. The
+    // notes carry the CLI's own result line when it was the CLI.
+    worker.BudgetExhausted ->
+      "stopped at a ceiling — turns, dollars or the harness's rounds; the notes below say which"
     worker.RateLimited -> "rate limited"
   }
 }

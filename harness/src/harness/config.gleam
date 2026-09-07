@@ -43,6 +43,15 @@ import simplifile
 /// (`for_attempt`): a probe that fails cheaply is what the ladder is for,
 /// but a search at a node nobody knows the proof of needs room to leave
 /// partial structure behind, and forty turns is not room.
+///
+/// `theorist_max_turns`, `theorist_max_budget_usd`, `seeder_max_turns` and
+/// `seeder_max_budget_usd` are the ceilings for the two hand-started
+/// session kinds (`for_theorist`, `for_seeder`). They replace the ordinary
+/// pair the same way the research pair does, because `worker.launch` reads
+/// `max_turns` and `max_budget_usd` and nothing else: a theorist or seeder
+/// started under the run's config unchanged runs under a prover's ceilings,
+/// which is how the first theorist ended at $4 with its document half
+/// written. The spec's line for a theorist is hours, not turns.
 pub type Config {
   Config(
     repo_root: String,
@@ -61,6 +70,10 @@ pub type Config {
     max_budget_usd: Float,
     research_max_turns: Int,
     research_max_budget_usd: Float,
+    theorist_max_turns: Int,
+    theorist_max_budget_usd: Float,
+    seeder_max_turns: Int,
+    seeder_max_budget_usd: Float,
     turn_timeout_ms: Int,
     max_verify_rounds: Int,
     rate_limit_ceiling: Float,
@@ -105,6 +118,16 @@ pub fn load() -> Result(Config, String) {
     // turn ceiling, not the dollar one, is what ends a research attempt.
     research_max_turns: env_int("HARNESS_RESEARCH_MAX_TURNS", 120),
     research_max_budget_usd: env_float("HARNESS_RESEARCH_MAX_BUDGET_USD", 20.0),
+    // A theorist's budget is hours on the strongest model: fifteen times an
+    // ordinary attempt's turns, and a dollar ceiling sized, like the
+    // research one, so that the turns bind before the dollars do. A seeder
+    // is a proposer on a budget — twice an ordinary attempt, since one pass
+    // over the whole board was 26 turns on 2026-09-07 and a pass that also
+    // scans diagonals needs more.
+    theorist_max_turns: env_int("HARNESS_THEORIST_MAX_TURNS", 600),
+    theorist_max_budget_usd: env_float("HARNESS_THEORIST_MAX_BUDGET_USD", 80.0),
+    seeder_max_turns: env_int("HARNESS_SEEDER_MAX_TURNS", 80),
+    seeder_max_budget_usd: env_float("HARNESS_SEEDER_MAX_BUDGET_USD", 12.0),
     turn_timeout_ms: env_int("HARNESS_TURN_TIMEOUT_MS", 900_000),
     max_verify_rounds: env_int("HARNESS_MAX_VERIFY_ROUNDS", 4),
     rate_limit_ceiling: env_float("HARNESS_RATE_LIMIT_CEILING", 0.9),
@@ -169,6 +192,29 @@ pub fn for_attempt(cfg: Config, node: dag.Node) -> Config {
       )
     False -> cfg
   }
+}
+
+/// The configuration a theorist session runs under: `cfg` with the
+/// theorist ceilings in place of the ordinary ones, and nothing else
+/// changed. Applied in `theorist.run` before `worker.launch`, which is the
+/// only reader of the two ceilings.
+pub fn for_theorist(cfg: Config) -> Config {
+  Config(
+    ..cfg,
+    max_turns: cfg.theorist_max_turns,
+    max_budget_usd: cfg.theorist_max_budget_usd,
+  )
+}
+
+/// The configuration a seeder session runs under: `cfg` with the seeder
+/// ceilings in place of the ordinary ones, and nothing else changed.
+/// Applied in `seeder.run` before `worker.launch`.
+pub fn for_seeder(cfg: Config) -> Config {
+  Config(
+    ..cfg,
+    max_turns: cfg.seeder_max_turns,
+    max_budget_usd: cfg.seeder_max_budget_usd,
+  )
 }
 
 /// How many attempts at this node count against its model ladder: the two

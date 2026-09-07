@@ -30,6 +30,7 @@
 
 import gleam/dynamic.{type Dynamic}
 import gleam/dynamic/decode
+import gleam/float
 import gleam/int
 import gleam/io
 import gleam/json
@@ -718,6 +719,9 @@ pub fn run(cfg: config.Config, options: Options) -> Result(Session, String) {
   ))
   use brief_text <- result.try(brief(cfg, identity, topic, attack))
   use brief_path <- result.try(worker.write_brief(l, session_name, brief_text))
+  // The theorist's ceilings, not the prover's: `worker.launch` reads
+  // `max_turns` and `max_budget_usd` from whatever config it is handed.
+  let session_cfg = config.for_theorist(cfg)
   log.event(l, "dispatch", [
     #("role", json.string("theorist")),
     #("identity", json.string(identity.name)),
@@ -725,14 +729,16 @@ pub fn run(cfg: config.Config, options: Options) -> Result(Session, String) {
     #("port", json.int(options.port)),
     #("topic", json.string(topic)),
     #("attack", json.string(attack)),
+    #("max_turns", json.int(session_cfg.max_turns)),
+    #("max_budget_usd", json.float(session_cfg.max_budget_usd)),
     #("log", json.string(l.dir)),
   ])
 
   let #(tally, ending) =
     worker.drive(
-      cfg,
+      session_cfg,
       l,
-      worker.launch(cfg, options.model, g, brief_path, report_schema()),
+      worker.launch(session_cfg, options.model, g, brief_path, report_schema()),
       task_message(topic, attack, obstructions),
       role(),
     )
@@ -740,7 +746,17 @@ pub fn run(cfg: config.Config, options: Options) -> Result(Session, String) {
   let size = document_size(attack)
   write_channels(cfg, run_log, identity, topic, options.model, ending, size)
   let summary =
-    summary(options, identity, topic, attack, l, tally, ending, size)
+    summary(
+      options,
+      session_cfg,
+      identity,
+      topic,
+      attack,
+      l,
+      tally,
+      ending,
+      size,
+    )
   log.summary(run_log, summary)
   Ok(Session(
     summary:,
@@ -817,9 +833,11 @@ fn document_size(path: String) -> Option(Int) {
 
 /// The summary a captain reads: who ran, the topic and where the document
 /// is, whether it exists, how the session ended in words that never call
-/// an argument proved, what it cost, and the next topic the theorist named.
+/// an argument proved, the ceilings it ran under, what it cost, and the
+/// next topic the theorist named.
 fn summary(
   options: Options,
+  cfg: config.Config,
   identity: roster.Identity,
   topic: String,
   attack: String,
@@ -849,6 +867,7 @@ fn summary(
         None -> "MISSING — nothing is at that path"
       },
       "ended     " <> ended_words(ending.end, size),
+      "ceilings  " <> ceilings(cfg),
       "cost      $" <> roster.usd(tally.cost_usd),
       "turns     " <> int.to_string(tally.turns),
       "session   " <> tally.session_id,
@@ -888,7 +907,18 @@ fn ended_words(end: worker.End, size: Option(Int)) -> String {
       "abandoned — the theorist reported its attack written, but no document exists at the attack path, so the claim is recorded as abandoned"
     worker.Abandoned, _ -> "abandoned by the theorist"
     worker.TimedOut, _ -> "timed out"
-    worker.BudgetExhausted, _ -> "budget exhausted"
+    // The loop's `BudgetExhausted` does not say which ceiling: the CLI's
+    // turn ceiling, its dollar ceiling, or the harness's round budget. The
+    // notes carry the CLI's own result line when it was the CLI.
+    worker.BudgetExhausted, _ ->
+      "stopped at a ceiling — turns, dollars or the harness's rounds; the notes below say which"
     worker.RateLimited, _ -> "rate limited"
   }
+}
+
+/// The two ceilings a session ran under, for the summary line.
+fn ceilings(cfg: config.Config) -> String {
+  int.to_string(cfg.max_turns)
+  <> " turns, $"
+  <> float.to_string(cfg.max_budget_usd)
 }
