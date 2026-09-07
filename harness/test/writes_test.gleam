@@ -125,6 +125,41 @@ pub fn a_declaration_is_not_a_call_site_test() {
   assert list.map(found, fn(s: Site) { s.line }) == [6]
 }
 
+/// A match arm is code. The CLI in `harness.gleam` is one `case` over the
+/// argv list, so a writer called from it sits on a line that begins `["` —
+/// the same two characters as a data line that only quotes names, which is
+/// what the prose filter was written to skip. The `index` arm went unlisted
+/// for as long as the index had one.
+pub fn a_writer_called_from_a_match_arm_is_a_call_site_test() {
+  let root = "build/test-runs/writes-arm/src"
+  let _ = simplifile.delete("build/test-runs/writes-arm")
+  let assert Ok(_) = simplifile.create_directory_all(root <> "/harness")
+  let assert Ok(_) =
+    simplifile.write(
+      root <> "/harness/cli.gleam",
+      "pub fn main(args: List(String)) {
+" <> "  case args {
+" <> "    [\"index\"] -> index.write(\"x\")
+" <> "    _ -> Nil
+" <> "  }
+" <> "}
+" <> "
+" <> "const names = [
+" <> "  \"index.write\",
+" <> "]
+",
+    )
+  let assert Ok(found) = writes.sites(root, "index.write")
+  assert list.map(found, fn(s: Site) { s.line }) == [3]
+}
+
+/// The real CLI arm, against the real source: `gleam run -- index` is a
+/// writer of the index, and the declaration's own risk line says so.
+pub fn the_cli_index_arm_is_a_writer_of_the_index_test() {
+  let assert Ok(found) = writes.sites(src_root(), "index.write")
+  assert list.any(found, fn(s: Site) { s.module == "harness.gleam" })
+}
+
 /// The report names every declared file, so a reader who runs it during a
 /// freeze gets the whole set rather than whichever entries happened to
 /// resolve.
