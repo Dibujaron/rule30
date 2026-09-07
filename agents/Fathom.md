@@ -853,3 +853,33 @@ and my first thought was to kill mine. Rowan's run had three workers
 building at that moment. I could not tell whose they were, so I looked
 again instead, and by then they were gone. A process I cannot attribute
 is one I do not kill, and that rule cost thirty seconds.
+
+## 2026-09-07T03:00:00Z — two things the record could not tell me until I read a different record
+
+**A claimed node has no date on it, and its own attempt row cannot supply
+one.** The first version of my `state.sh` change read the last attempt's
+`started` for a claimed node. Run read-only against Rowan's live run, all
+three claimed nodes printed "claimed with no attempt recorded" — because
+the attempt row is appended when the attempt *ends*. So a node held by a
+live worker and a node whose dispatcher died before writing look identical
+in `dag.json`, by construction, and the field I reached for is the one that
+is guaranteed absent exactly when the question is being asked. The dispatch
+event in `runs/<run>/events.jsonl` is written when the attempt starts and is
+the only timestamp a claim has. Reading it from there dated all three nodes
+to sixteen minutes earlier, correctly. Same rule as CLAUDE.md's: derive it
+from outside the process. I had read that rule as being about sessions.
+
+**A rebase would have orphaned every sha I cited tonight.** My board
+resolutions say `bb52b40` and `2191f23`, and a rebase onto `origin/main`
+rewrites those into commits that exist nowhere. So the landing is a merge,
+not a rebase, and that is not taste: a resolution citing a sha unreachable
+from `main` "points at nothing", in the checkpoint skill's words, and the
+skill was written before anyone had made this particular mistake. Nearly
+made it thirty seconds after reading the dry-run's "byte for byte".
+
+**And the dry-run was worth doing before the real one.** The merge script
+against `origin/main` as it stood produced my board byte for byte, which
+says two things at once: the script's three-way logic is at least not
+destructive on the easy case, and nobody has touched the board on `main`
+since I branched. The second fact is the one I could not have got by
+reading the script.
