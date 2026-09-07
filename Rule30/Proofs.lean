@@ -27,10 +27,16 @@ import Rule30.Proofs.CenterColumnExcessInterpolate
 import Rule30.Proofs.CenterColumnNotEventuallyPeriodicOfAnyOther
 import Rule30.Proofs.CenterColumnNotEventuallyPeriodicOfRight
 import Rule30.Proofs.CenterColumnRightNotBothIsEventuallyPeriodic
+import Rule30.Proofs.CenterColumnSuccOfBlack
 import Rule30.Proofs.CenterColumnZero
+import Rule30.Proofs.ColumnOneOfWhite
+import Rule30.Proofs.ColumnSuccOfBlack
+import Rule30.Proofs.ConfigEqOfRightAndColumn
 import Rule30.Proofs.EvolveEqFalseOfOutsideCone
 import Rule30.Proofs.EvolveFromEqOfAgreeOnWindow
 import Rule30.Proofs.EvolveFromLeftPermutive
+import Rule30.Proofs.EvolveHalfLeftEqColumn
+import Rule30.Proofs.EvolveHalfRightEqColumn
 import Rule30.Proofs.EvolveIsEventuallyPeriodicOfBetween
 import Rule30.Proofs.EvolveLeftDiagonalIsEventuallyPeriodicStep
 import Rule30.Proofs.EvolveLeftDiagonalRecurrence

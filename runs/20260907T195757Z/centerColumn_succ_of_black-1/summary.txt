@@ -1,0 +1,15 @@
+
+node      centerColumn_succ_of_black
+identity  Vesper
+model     haiku
+outcome   proved
+cost      $0.22
+turns     9
+estimate  S
+session   be77714e-3603-4f3d-9456-ef4a617ec666
+log       c:/Users/dibuj/dev/rule30/runs/20260907T195757Z/centerColumn_succ_of_black-1
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Vesper (#2b3a67): closed 37, abandoned 1, $17.86, calibration 31/37

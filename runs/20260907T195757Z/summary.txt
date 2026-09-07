@@ -1,0 +1,10 @@
+
+config_eq_of_right_and_column     Selvage  sonnet  proved            $0.87   19 turns
+column_succ_of_black              Vesper   haiku   proved            $0.56   33 turns
+column_one_of_white               Cadence  haiku   budget_exhausted  $0.64   41 turns
+centerColumn_succ_of_black        Vesper   haiku   proved            $0.22   9 turns
+column_one_of_white               Cadence  sonnet  proved            $0.54   11 turns
+evolveHalfLeft_eq_column          Selvage  sonnet  proved            $0.73   8 turns
+evolveHalfRight_eq_column         Vesper   sonnet  proved            $1.32   20 turns
+
+7 attempt(s), 6 closed, $4.87 in all

@@ -440,3 +440,25 @@ Restating the hypothesis at the reduced type is accepted by `exact`-level defeq 
 Final arithmetic: `have hpow : (2:ℕ)^(2*t+1) = 2^(2*t)*2 := pow_succ 2 (2*t)` then `omega` treats `2^(2*t)` as an atom and finishes. Same atom-hoisting idiom as [[isEventuallyPeriodic-of-periodic-step]]'s `hmul`.
 
 Imports: `Rule30.Basic`, `Rule30.Proofs.EvolveFromLeftPermutive`, `Mathlib.Data.Fintype.BigOperators`, `Mathlib.Tactic`.
+
+## 2026-09-07T20:01:48Z — column_succ_of_black (haiku, proved)
+
+**boolean simplification pattern**: when a goal has xor with concrete boolean values (like true), simp closes it directly without needing to name the lemmas (xor_true, etc.) — feed the concrete values into simp and let it find the reductions. **sideways_inverse at i=0**: the lemma normalizes 0-1 and 0+1 automatically after simp; use `simp only [Int.zero_sub, Int.zero_add]` if you need to pin those down for later reasoning, but simp catches them anyway. **unfold column**: is transparently an alias for evolveFrom, so unfolding both on h and the goal from the start keeps the two synchronized and prevents index-matching errors later.
+
+## 2026-09-07T20:03:00Z — centerColumn_succ_of_black (haiku, proved)
+
+**Unfolding + served lemma pattern**: When a theorem is a special case of a served lemma with a specific instantiation (here, initialConfig as the starting row), unfold the definitions to expose the equivalence and apply the general lemma. Works when the unfoldings are definitional, making the goal match the served lemma's conclusion without additional rewrites. This is simpler than the `column_succ_of_black` proof itself because centerColumn is already defined in terms of evolveFrom, no row argument to thread through.
+
+## 2026-09-07T20:09:05Z — evolveHalfRight_eq_column (sonnet, proved)
+
+evolveHalfRight_eq_column (sonnet, proved), first attempt on this node — mirror of the still-unclosed evolveHalfLeft_eq_column, which was not yet in Rule30/Proofs so there was no sibling proof to crib the exact tactic shape from, only the definitions in Basic.lean.
+
+**Route**: `induction t generalizing k with | zero => ... | succ t ih => rcases k with _ | k => ...`. Base case closes with `simp only [evolveHalfRight, column, evolveFrom, Function.iterate_zero_apply]` — no `rfl` needed even though it looks defeq; `simp only [defName]` on a pattern-matched def reliably invokes its equation lemmas regardless of whether the compiler used structural or well-founded recursion, so it's the safer default over `rfl`/`show` for these two-argument nested-match defs (`evolveHalfRight`/`evolveHalfLeft`/`leftSolve` all share this shape).
+
+**Per-branch shape**: state a `have hRHS : column X <pos> (t+1) = xor (column X <pos-1> t) (column X <pos> t || column X <pos+1> t) := by unfold column; rw [evolveFrom_succ, rule30_eq]` — this is the RHS's own one-step unfold, proved once so the main line doesn't have to fight `column` twice. Then `simp only [evolveHalfRight, ih <args>, hRHS]` unfolds the LHS's matching branch and folds in the induction hypothesis at each of the recursion's own sub-indices, landing both sides as `xor _ (_ || _)` with mismatched-looking but propositionally-equal ℤ index arguments (casts of different ℕ shapes that both denote the same integer). Close with two `rw [show <goal's exact LHS arg-index> = <goal's exact other-side arg-index> from by push_cast]` (or `by push_cast; ring` when a variable `k` is involved) — `rw` auto-tries `rfl` afterward and closes it once both sides' index arguments are textually identical.
+
+**THE GOTCHA, worth flagging loudly for whoever does the mirror (evolveHalfLeft_eq_column) or any other node with this exact shape**: for the literal-numeral branch (here, `k = 0`), `by push_cast; ring` inside a `rw [show ... from ...]` fails with "No goals to be solved" pointing *inside* the `by` block, not at the `rw` call — `push_cast` alone already normalizes `((0:ℕ):ℤ)+1-1` to `0` and closes the resulting `0 = 0` goal via its own trailing simp-closure, so the subsequent `ring` has nothing left and errors. Fix: use bare `by push_cast` (no `; ring`) for any bridging equation that's pure numerals; keep `; ring` only for the branch that has a genuine variable (`k`) needing associativity/commutativity rearranging, since there `push_cast` alone leaves a nontrivial goal for `ring` to close. Diagnosing this cost two build cycles — the error location (inside the `by` term, at the `ring` token) is the tell that push_cast already fully closed it, not that the rewrite itself is wrong.
+
+Self-check via the append-`#print axioms`-then-remove trick (documented across many prior P1 nodes): `propext, Quot.sound`, no `Classical.choice` — pure constructive index bookkeeping, consistent with every other node in the arbitrary-row/half-line family.
+
+Import list `Rule30.Basic`, `Mathlib.Tactic.Ring` sufficient — `push_cast` rode in on `Ring` as in every other node that's needed it.

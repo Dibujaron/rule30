@@ -1,0 +1,15 @@
+
+node      column_one_of_white
+identity  Cadence
+model     sonnet
+outcome   proved
+cost      $0.54
+turns     11
+estimate  S
+session   2db42286-c6e7-4b99-afaf-e366c873046a
+log       c:/Users/dibuj/dev/rule30/runs/20260907T195757Z/column_one_of_white-2
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Cadence (#2a6f77): closed 15, abandoned 1, $7.95, calibration 13/15

@@ -1,0 +1,20 @@
+{"ts":"2026-09-07T19:57:57Z","kind":"run","max_attempts":7,"concurrency":3}
+{"ts":"2026-09-07T19:57:57Z","kind":"dispatch","node":"column_succ_of_black","identity":"Vesper","model":"haiku","reason":"open leaf; unblocks 1; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4130,"log":"c:/Users/dibuj/dev/rule30/runs/20260907T195757Z/column_succ_of_black-1","in_flight":1}
+{"ts":"2026-09-07T19:57:57Z","kind":"dispatch","node":"column_one_of_white","identity":"Cadence","model":"haiku","reason":"open leaf; unblocks 0; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4131,"log":"c:/Users/dibuj/dev/rule30/runs/20260907T195757Z/column_one_of_white-1","in_flight":2}
+{"ts":"2026-09-07T19:57:57Z","kind":"dispatch","node":"config_eq_of_right_and_column","identity":"Selvage","model":"sonnet","reason":"open leaf; unblocks 0; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4132,"log":"c:/Users/dibuj/dev/rule30/runs/20260907T195757Z/config_eq_of_right_and_column-1","in_flight":3}
+{"ts":"2026-09-07T20:00:57Z","kind":"index","node":"config_eq_of_right_and_column","module":"Rule30.Proofs.ConfigEqOfRightAndColumn","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-07T20:00:57Z","kind":"theorem_index","node":"config_eq_of_right_and_column","file":"blueprint/index.md","outcome":"written"}
+{"ts":"2026-09-07T20:00:57Z","kind":"dispatch","node":"evolveHalfLeft_eq_column","identity":"Selvage","model":"sonnet","reason":"open leaf; unblocks 0; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4133,"log":"c:/Users/dibuj/dev/rule30/runs/20260907T195757Z/evolveHalfLeft_eq_column-1","in_flight":3}
+{"ts":"2026-09-07T20:01:48Z","kind":"index","node":"column_succ_of_black","module":"Rule30.Proofs.ColumnSuccOfBlack","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-07T20:01:48Z","kind":"theorem_index","node":"column_succ_of_black","file":"blueprint/index.md","outcome":"written"}
+{"ts":"2026-09-07T20:01:48Z","kind":"dispatch","node":"centerColumn_succ_of_black","identity":"Vesper","model":"haiku","reason":"open leaf; unblocks 0; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4134,"log":"c:/Users/dibuj/dev/rule30/runs/20260907T195757Z/centerColumn_succ_of_black-1","in_flight":3}
+{"ts":"2026-09-07T20:02:14Z","kind":"dispatch","node":"column_one_of_white","identity":"Cadence","model":"sonnet","reason":"open leaf; unblocks 0; ladder step 2","max_turns":40,"max_budget_usd":4.0,"port":4135,"log":"c:/Users/dibuj/dev/rule30/runs/20260907T195757Z/column_one_of_white-2","in_flight":3}
+{"ts":"2026-09-07T20:02:59Z","kind":"index","node":"centerColumn_succ_of_black","module":"Rule30.Proofs.CenterColumnSuccOfBlack","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-07T20:03:00Z","kind":"theorem_index","node":"centerColumn_succ_of_black","file":"blueprint/index.md","outcome":"written"}
+{"ts":"2026-09-07T20:03:00Z","kind":"dispatch","node":"evolveHalfRight_eq_column","identity":"Vesper","model":"sonnet","reason":"open leaf; unblocks 0; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4136,"log":"c:/Users/dibuj/dev/rule30/runs/20260907T195757Z/evolveHalfRight_eq_column-1","in_flight":3}
+{"ts":"2026-09-07T20:04:00Z","kind":"index","node":"column_one_of_white","module":"Rule30.Proofs.ColumnOneOfWhite","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-07T20:04:00Z","kind":"theorem_index","node":"column_one_of_white","file":"blueprint/index.md","outcome":"written"}
+{"ts":"2026-09-07T20:05:06Z","kind":"index","node":"evolveHalfLeft_eq_column","module":"Rule30.Proofs.EvolveHalfLeftEqColumn","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-07T20:05:06Z","kind":"theorem_index","node":"evolveHalfLeft_eq_column","file":"blueprint/index.md","outcome":"written"}
+{"ts":"2026-09-07T20:09:05Z","kind":"index","node":"evolveHalfRight_eq_column","module":"Rule30.Proofs.EvolveHalfRightEqColumn","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-07T20:09:05Z","kind":"theorem_index","node":"evolveHalfRight_eq_column","file":"blueprint/index.md","outcome":"written"}

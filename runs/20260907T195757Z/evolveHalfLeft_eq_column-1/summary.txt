@@ -1,0 +1,15 @@
+
+node      evolveHalfLeft_eq_column
+identity  Selvage
+model     sonnet
+outcome   proved
+cost      $0.73
+turns     8
+estimate  M
+session   27ed03fe-7f32-4c16-babb-83c5c4cb46d3
+log       c:/Users/dibuj/dev/rule30/runs/20260907T195757Z/evolveHalfLeft_eq_column-1
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Selvage (#3a6ea5): closed 5, abandoned 1, $4.39, calibration 4/5

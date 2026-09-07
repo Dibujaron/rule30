@@ -1,0 +1,15 @@
+
+node      evolveHalfRight_eq_column
+identity  Vesper
+model     sonnet
+outcome   proved
+cost      $1.32
+turns     20
+estimate  M
+session   e6928f68-f312-4962-9f0a-1ad882d2af37
+log       c:/Users/dibuj/dev/rule30/runs/20260907T195757Z/evolveHalfRight_eq_column-1
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Vesper (#2b3a67): closed 38, abandoned 1, $19.18, calibration 32/38
