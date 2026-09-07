@@ -31,3 +31,4 @@ STOP
 /harness/test/fixture-project/.lake/
 /harness/test/fixture-project/harness/
 /harness/test/fixture-project/Rule30/Proofs/*.lean
+__pycache__/

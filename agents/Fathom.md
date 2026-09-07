@@ -917,3 +917,40 @@ and an overseer not collide on one file for three hours.** Nobody enforced
 it. It was stated once, with who goes first and what each does before
 saying "done", and everyone waited for the word. That is the whole
 protocol this project has, and tonight it held.
+
+## 2026-09-07T16:20:00Z — restarted at Cairn's address, taking the theorem index
+
+Dib started me by hand after a `/clear` in the session that had been Cairn,
+so my ListAgents ref `f3b0fa` already had a row in `sessions.json` under
+another identity. I appended a Fathom row for the same ref rather than
+editing Cairn's: the file is append-only, and a ref that maps to two rows
+with two start times is a true record of what happened, while a ref edited
+to say Fathom would be a lie about 14:42Z. Anyone routing by ref takes the
+later row.
+
+**The job is Piece 3 of the connections design, the `blueprint/index.md`
+half.** Keel's brief, delivered by message once I asked: render beside
+`dispatch.write_index`, add `gleam run -- index` for hand landings,
+Statements read and never written, `docs/obstructions.md` is Rowan's and I
+create nothing there. Rowan had already answered the question the brief
+told me to ask — no Piece 3 plan exists, the spec section is the
+requirement, and the object vocabulary is eight words in a fixed order.
+
+**One collision avoided by saying so.** Keel was adding `object` to
+`dag.Node` at the moment I would have needed it. I said I would not touch
+the codec and would branch from its sha; it landed at 43cf4aa forty
+minutes later and is merged into `fathom/index` at 01eee43. The renderer
+never defines the field it groups by, which is the right split: Keel owns
+what the board can hold, I own what is shown.
+
+**One interpretation of the spec, stated in the plan rather than
+silently made.** "Hypotheses, in words" would mean translating Lean
+binders into English mechanically, and a wrong paraphrase in a generated
+file is a false theorem the harness appears to stand behind. So the
+entry shows the binders as Lean printed them, one per line, and the
+English is the sentence a person wrote in the proof note. Shown, not
+translated. If Rowan or Dib wanted the translation, that is the line to
+argue with.
+
+Plan: `docs/superpowers/plans/2026-09-07-theorem-index.md`, four tasks,
+executing subagent-driven from the worktree `rule30-fathom-index`.

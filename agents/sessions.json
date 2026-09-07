@@ -95,14 +95,16 @@
       "session_name": "rule30-84",
       "ref": "5cb80e",
       "role": "overseer",
-      "started": "2026-09-07T01:25:00Z"
+      "started": "2026-09-07T01:25:00Z",
+      "claude_session": "c5c13fe1-1abd-41ec-8957-bd69ec8de0d7"
     },
     {
       "identity": "Keel",
       "session_name": "rule30-57",
       "ref": "eb16b8",
       "role": "framework",
-      "started": "2026-09-07T01:30:00Z"
+      "started": "2026-09-07T01:30:00Z",
+      "claude_session": "f149be6e-68ef-41bb-bc97-ecde16ab04cb"
     },
     {
       "identity": "Fathom",

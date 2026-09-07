@@ -38,13 +38,26 @@ asking a third who it was.
 
    ```json
    { "identity": "Rowan", "session_name": "rule30-41", "ref": "9a93a2",
-     "role": "overseer", "started": "2026-09-06T18:45:00Z" }
+     "role": "overseer", "started": "2026-09-06T18:45:00Z",
+     "claude_session": "c5c13fe1-1abd-41ec-8957-bd69ec8de0d7" }
    ```
 
    `role` is `overseer`, `framework`, or `guide`. Dispatched provers are
    deliberately absent — they are short-lived, the scheduler already holds them
    as resources, and a message arriving mid-proof would reach a worker as an
    instruction from outside its brief.
+
+   `claude_session` is your Claude session UUID, which is the directory name
+   in the scratchpad path your system prompt gives you (the segment between
+   the project directory and `scratchpad`). It is what titles your window:
+   the project hook `.claude/hooks/session-title.sh` runs on every prompt,
+   looks the current session up by that UUID, and returns your identity as
+   the session title. Claude Code repaints the terminal title continuously
+   with its own summary, so nothing you print to the console can hold it;
+   the hook's title sits above that summary in its precedence. The same
+   title becomes your **ListAgents name**, so once it applies a peer can
+   `SendMessage Keel` instead of `rule30-57`. It applies on Dib's next
+   prompt after the row lands, not at once — say so when you report.
 5. **Never delete a row, including your own.** A stale row is inert: nothing
    reads this file to decide who is alive.
 
