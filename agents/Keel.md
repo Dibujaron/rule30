@@ -1299,3 +1299,14 @@ open with that negative result recorded here), and the two Dib rows.
 the suite. Claim through the CLI, never the file. And when a peer says a
 tree is idle or a file is gone, that is a report about a session, not
 about a disk; `git status` and `Get-Process` are the only witnesses.
+
+**14:40Z — the seeder brief named no target.** Rowan, about to start the
+first seeder, found the brief said "aim at what a prize residual would need"
+and then listed forty-two closed proofs and nothing open. Landed at
+`dfae803`: every open node with its full description as the second section,
+the proposal JSON shape the decoder actually requires (pinned by decoding the
+example through the real decoder), and `blueprint/crystals.md` inlined — read
+from disk at render time, which Rowan asked me to prove from the diff rather
+than from my own instruction, and was right to. **A brief that says "aim" and
+names no target is the seeder-side twin of the note that says "P1" and means
+`h → P1`: the words are fine and the referent is missing.**
