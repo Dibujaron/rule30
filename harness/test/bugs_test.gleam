@@ -426,6 +426,47 @@ pub fn append_does_not_dedupe_against_a_fixed_bug_test() {
   assert list.length(board.bugs) == 2
 }
 
+/// A `wontfix` row is a verdict that the behaviour is correct and will
+/// recur, so the next occurrence bumps that row rather than opening a
+/// question already answered. Like an error tracker's Ignored issue: it
+/// keeps counting and stays quiet.
+pub fn append_bumps_a_wontfix_row_instead_of_filing_a_new_one_test() {
+  let board =
+    Board([])
+    |> bugs.append(auto_bug("Denied", "guard:Bash", "2026-09-06T02:00:00Z"))
+  let assert [first] = board.bugs
+  let board = bugs.update(board, Bug(..first, status: bugs.Wontfix))
+  let board =
+    bugs.append(board, auto_bug("Denied", "guard:Bash", "2026-09-06T09:00:00Z"))
+  let assert [only] = board.bugs
+  assert only.status == bugs.Wontfix
+  assert only.occurrences == 2
+  assert only.filed == "2026-09-06T09:00:00Z"
+}
+
+/// The newest row carrying the signature holds the verdict. A signature
+/// once waved through as wontfix and later fixed is, on its next
+/// occurrence, a regression of that fix, not a recurrence of the wontfix.
+pub fn append_lets_the_newest_row_decide_between_wontfix_and_fixed_test() {
+  let board =
+    Board([
+      Bug(
+        ..auto_bug("Denied", "guard:Bash", "2026-09-06T02:00:00Z"),
+        id: "denied",
+        status: bugs.Wontfix,
+      ),
+      Bug(
+        ..auto_bug("Denied", "guard:Bash", "2026-09-06T05:00:00Z"),
+        id: "denied-2",
+        status: bugs.Fixed,
+      ),
+    ])
+  let board =
+    bugs.append(board, auto_bug("Denied", "guard:Bash", "2026-09-06T09:00:00Z"))
+  assert list.map(board.bugs, fn(b) { b.id })
+    == ["denied", "denied-2", "denied-3"]
+}
+
 pub fn append_never_dedupes_an_unsigned_bug_test() {
   let board =
     Board([])
