@@ -290,6 +290,58 @@ pub fn brief_states_the_constraints_test() {
   assert string.contains(text, "must be named exactly `centerColumn_zero`")
 }
 
+/// The worker is told the ceilings its session was actually launched with:
+/// the research ones at the top rung of a research node, the ordinary
+/// ones everywhere else.
+pub fn brief_states_the_attempts_own_turn_and_dollar_ceilings_test() {
+  let d = a_dag()
+  let assert Ok(n) = dag.get(d, "centerColumn_zero")
+  let base =
+    config.Config(
+      ..cfg(),
+      max_turns: 40,
+      max_budget_usd: 4.0,
+      research_max_turns: 120,
+      research_max_budget_usd: 20.0,
+    )
+  let ordinary = brief.text(base, d, n, ravel(), "")
+  assert string.contains(
+    ordinary,
+    "This attempt has at most 40 turns and a budget of $4.00",
+  )
+  // The same node marked research, its four rungs spent: the attempt runs
+  // under the research config, and the brief says so.
+  let spent =
+    Node(..n, research: True, attempts: [
+      Attempt(..gave_up(), model: "haiku"),
+      Attempt(..gave_up(), model: "sonnet"),
+      Attempt(..gave_up(), model: "opus"),
+      Attempt(..gave_up(), model: "fable"),
+    ])
+  let research =
+    brief.text(config.for_attempt(base, spent), d, spent, ravel(), "")
+  assert string.contains(
+    research,
+    "This attempt has at most 120 turns and a budget of $20.00",
+  )
+}
+
+fn gave_up() -> dag.Attempt {
+  Attempt(
+    identity: "Ravel",
+    session_id: "s",
+    model: "opus",
+    started: "t0",
+    ended: "t1",
+    outcome: dag.GaveUp,
+    estimate: dag.S,
+    reported: True,
+    cost_usd: 0.0,
+    turns: 1,
+    notes: "",
+  )
+}
+
 /// The row family `guard-denied-bash-not-permitted-*` /
 /// `guard-denied-edit-not-writable-*`: every denial in run 20260907T024158Z
 /// was correct — `cat`, `grep -rn`, `find`, `... 2>&1 | head -50`, a

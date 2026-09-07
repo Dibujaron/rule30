@@ -147,7 +147,7 @@ pub fn text(
     [
       who_you_are(node, identity, notebook),
       the_project(cfg),
-      your_constraints(node),
+      your_constraints(cfg, node),
       served_lemmas(d),
       prior_attempts(node),
       how_to_report(),
@@ -183,8 +183,17 @@ fn the_project(cfg: config.Config) -> String {
   <> claude_md
 }
 
-fn your_constraints(node: dag.Node) -> String {
-  "## Your constraints\n\n- The only file you may edit is `"
+/// `cfg` is the configuration this attempt runs under — the research
+/// ceilings at the top rung of a research node, the ordinary ones
+/// otherwise (`config.for_attempt`) — so the ceiling the worker is told is
+/// the one its session was launched with.
+fn your_constraints(cfg: config.Config, node: dag.Node) -> String {
+  "## Your constraints\n\n- This attempt has at most "
+  <> int.to_string(cfg.max_turns)
+  <> " turns and a budget of $"
+  <> roster.usd(cfg.max_budget_usd)
+  <> "; the session ends at whichever ceiling comes first, so leave the file building before it does.\n"
+  <> "- The only file you may edit is `"
   <> dag.proof_path(node)
   <> "`. Every other write is denied by a hook, not by convention. In particular, never edit `Rule30/Proofs.lean`, the index of closed proofs: the harness adds your import there when the node closes.\n"
   <> "- To read a file use the Read tool; to search use Grep or Glob. Bash `cat`, `grep`, `find`, `head` and `ls` are denied — not because reading is forbidden, but because Bash is allowed for exactly two commands: `lake build "

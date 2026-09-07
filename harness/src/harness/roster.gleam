@@ -190,8 +190,8 @@ pub fn scorecard(dag_: dag.Dag, name: String) -> Scorecard {
 ///
 /// Calibration — did the identity's re-pricing agree with the node's size —
 /// is scored for a reported attempt that closed the node at any rung or was
-/// made on the top rung of its ladder (`config.ladder`), and never for one
-/// the harness itself broke. The ladder is a cost optimiser: it tries the
+/// made on one of the top two rungs of its ladder (`config.ladder`), and
+/// never for one the harness itself broke. The ladder is a cost optimiser: it tries the
 /// cheapest model first because a cheap success is a bargain, not because a
 /// cheap failure means anything. A haiku that closes an `S` node confirms
 /// (or over-prices) the estimate exactly as an opus close would; a haiku
@@ -230,11 +230,17 @@ fn tally(acc: Scorecard, node: dag.Node, attempt: dag.Attempt) -> Scorecard {
   )
 }
 
-/// Was this attempt made with the last model on the node's ladder — the
-/// one whose failure the scheduler has nothing left to escalate to. A
-/// `Wall` node has no ladder, so nothing made there is on its top rung.
+/// Was this attempt made with one of the two strongest models on the
+/// node's ladder — for `S`, `M` and `L` that is opus and fable; a one-rung
+/// ladder has only its one. The strongest two count, not the last one
+/// alone, so that evidence gathered when opus topped every ladder keeps
+/// counting now that fable does. A `Wall` node has no ladder, so nothing
+/// made there is on its top rungs.
 fn on_top_rung(node: dag.Node, attempt: dag.Attempt) -> Bool {
-  list.last(config.ladder(node.size)) == Ok(attempt.model)
+  let rungs = config.ladder(node.size)
+  rungs
+  |> list.drop(int.max(0, list.length(rungs) - 2))
+  |> list.contains(attempt.model)
 }
 
 /// One line for the dispatcher's summary, e.g.
