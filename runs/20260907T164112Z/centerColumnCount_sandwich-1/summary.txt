@@ -1,0 +1,16 @@
+
+node      centerColumnCount_sandwich
+identity  Emmy
+model     haiku
+outcome   budget_exhausted
+cost      $0.63
+turns     41
+estimate  S
+session   6e57dd61-b367-4894-bf47-4af85cbb2577
+log       c:/Users/dibuj/dev/rule30/runs/20260907T164112Z/centerColumnCount_sandwich-1
+
+verifier:
+the CLI ended the session: {"duration_api_ms":297593,"stop_reason":"tool_use","session_id":"6e57dd61-b367-4894-bf47-4af85cbb2577","total_cost_usd":0.6279818,"usage":{"input_tokens":322,"cache_creation_input_tokens":82885,"cache_read_input_tokens":3186218,"output_tokens":28373,"output_tokens_details":{"thinking_tokens":14658},"server_tool_use":{"web_search_requests":0,"web_fetch_requests":0},"service_tier":"standard","cache_creation":{"ephemeral_1h_input_tokens":82885,"ephemeral_5m_input_tokens":0},"inference_geo":"not_available","iterations":[{"input_tokens":8,"output_tokens":101,"cache_read_input_tokens":100235,"cache_creation_input_tokens":656,"cache_creation":{"ephemeral_5m_input_tokens":0,"ephemeral_1h_input_tokens":656},"type":"message"}],"speed":"standard"},"modelUsage":{"claude-haiku-4-5-20251001":{"inputTokens":1655,"outputTokens":28387,"cacheReadInputTokens":3186218,"cacheCreationInputTokens":82885,"webSearchRequests":0,"costUSD":0.6279818,"contextWindow":200000,"maxOutputTokens":32000,"thinkingTokens":
+… (clipped; the full text is in events.jsonl)
+
+Emmy (#3d5a80): closed 6, abandoned 1, $1.85, calibration 6/6

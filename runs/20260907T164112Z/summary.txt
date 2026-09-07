@@ -1,0 +1,9 @@
+
+centerColumnCount_succ            Emmy     haiku   proved            $0.12   7 turns
+centerColumn_density_tendsto_half_iff_excessMarrow   sonnet  proved            $0.94   22 turns
+centerColumnCount_sandwich        Emmy     haiku   budget_exhausted  $0.63   41 turns
+centerColumnCount_sandwich        Emmy     sonnet  proved            $0.39   9 turns
+centerColumn_excess_interpolate   Emmy     sonnet  budget_exhausted  $1.36   41 turns
+centerColumn_excess_interpolate   Emmy     opus    proved            $0.89   9 turns
+
+6 attempt(s), 4 closed, $4.32 in all

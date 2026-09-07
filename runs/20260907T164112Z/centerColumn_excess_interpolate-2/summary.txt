@@ -1,0 +1,15 @@
+
+node      centerColumn_excess_interpolate
+identity  Emmy
+model     opus
+outcome   proved
+cost      $0.89
+turns     9
+estimate  S
+session   c4f0e925-3dd7-4161-b75b-2a68b71a9f0d
+log       c:/Users/dibuj/dev/rule30/runs/20260907T164112Z/centerColumn_excess_interpolate-2
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Emmy (#3d5a80): closed 8, abandoned 2, $4.48, calibration 7/8

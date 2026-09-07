@@ -17,9 +17,13 @@ import Rule30.Proofs.BoolDrivenPeriodicFromOfReset
 import Rule30.Proofs.BoolDrivenPeriodicFromOfReturn
 import Rule30.Proofs.BoolMapIterateThree
 import Rule30.Proofs.BoolXorDrivenPeriodicFrom
+import Rule30.Proofs.CenterColumnCountSandwich
+import Rule30.Proofs.CenterColumnCountSucc
 import Rule30.Proofs.CenterColumnDensityLeOne
 import Rule30.Proofs.CenterColumnDensityNonneg
 import Rule30.Proofs.CenterColumnDensitySucc
+import Rule30.Proofs.CenterColumnDensityTendstoHalfIffExcess
+import Rule30.Proofs.CenterColumnExcessInterpolate
 import Rule30.Proofs.CenterColumnNotEventuallyPeriodicOfAnyOther
 import Rule30.Proofs.CenterColumnNotEventuallyPeriodicOfRight
 import Rule30.Proofs.CenterColumnRightNotBothIsEventuallyPeriodic

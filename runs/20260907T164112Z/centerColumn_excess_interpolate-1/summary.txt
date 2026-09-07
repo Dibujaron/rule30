@@ -1,0 +1,16 @@
+
+node      centerColumn_excess_interpolate
+identity  Emmy
+model     sonnet
+outcome   budget_exhausted
+cost      $1.36
+turns     41
+estimate  M
+session   4b81fe7a-4c68-4fb4-a8d7-bda6fce0dd33
+log       c:/Users/dibuj/dev/rule30/runs/20260907T164112Z/centerColumn_excess_interpolate-1
+
+verifier:
+the CLI ended the session: {"duration_api_ms":222168,"stop_reason":"tool_use","session_id":"4b81fe7a-4c68-4fb4-a8d7-bda6fce0dd33","total_cost_usd":1.3555968000000003,"usage":{"input_tokens":80,"cache_creation_input_tokens":91325,"cache_read_input_tokens":3855484,"output_tokens":21728,"output_tokens_details":{"thinking_tokens":12498},"server_tool_use":{"web_search_requests":0,"web_fetch_requests":0},"service_tier":"standard","cache_creation":{"ephemeral_1h_input_tokens":91325,"ephemeral_5m_input_tokens":0},"inference_geo":"not_available","iterations":[{"input_tokens":2,"output_tokens":336,"cache_read_input_tokens":114642,"cache_creation_input_tokens":1163,"cache_creation":{"ephemeral_5m_input_tokens":0,"ephemeral_1h_input_tokens":1163},"type":"message"}],"speed":"standard"},"modelUsage":{"claude-haiku-4-5-20251001":{"inputTokens":1680,"outputTokens":16,"cacheReadInputTokens":0,"cacheCreationInputTokens":0,"webSearchRequests":0,"costUSD":0.00176,"contextWindow":200000,"maxOutputTokens":32000,"thinkingTokens":0,"ca
+… (clipped; the full text is in events.jsonl)
+
+Emmy (#3d5a80): closed 7, abandoned 2, $3.59, calibration 7/7
