@@ -19,6 +19,7 @@ import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
+import harness/config
 import harness/dag
 import simplifile
 
@@ -185,6 +186,17 @@ pub fn scorecard(dag_: dag.Dag, name: String) -> Scorecard {
   })
 }
 
+/// Fold one attempt into the scorecard.
+///
+/// Calibration — did the identity's re-pricing agree with the node's size —
+/// is scored only for an attempt made on the top rung of the node's ladder
+/// (`config.ladder`), and never for one the harness itself broke. The
+/// ladder is a cost optimiser: it tries the cheapest model first because a
+/// cheap success is a bargain, not because a cheap failure means anything.
+/// So a haiku that dies on an `S` node is a probe that missed, and scoring
+/// its estimate would let the cheapest model on the ladder set the number
+/// the overseer prices every future node with. Cost is summed regardless:
+/// a probe still had to be paid for.
 fn tally(acc: Scorecard, node: dag.Node, attempt: dag.Attempt) -> Scorecard {
   let closed = case attempt.outcome {
     dag.Closed -> acc.closed + 1
@@ -194,11 +206,15 @@ fn tally(acc: Scorecard, node: dag.Node, attempt: dag.Attempt) -> Scorecard {
     dag.GaveUp | dag.BudgetExhausted -> acc.abandoned + 1
     _ -> acc.abandoned
   }
-  let hits = case attempt.reported && attempt.estimate == node.size {
+  let evidence =
+    attempt.reported
+    && attempt.outcome != dag.HarnessFailed
+    && on_top_rung(node, attempt)
+  let hits = case evidence && attempt.estimate == node.size {
     True -> acc.calibration_hits + 1
     False -> acc.calibration_hits
   }
-  let total = case attempt.reported {
+  let total = case evidence {
     True -> acc.calibration_total + 1
     False -> acc.calibration_total
   }
@@ -210,6 +226,13 @@ fn tally(acc: Scorecard, node: dag.Node, attempt: dag.Attempt) -> Scorecard {
     calibration_hits: hits,
     calibration_total: total,
   )
+}
+
+/// Was this attempt made with the last model on the node's ladder — the
+/// one whose failure the scheduler has nothing left to escalate to. A
+/// `Wall` node has no ladder, so nothing made there is on its top rung.
+fn on_top_rung(node: dag.Node, attempt: dag.Attempt) -> Bool {
+  list.last(config.ladder(node.size)) == Ok(attempt.model)
 }
 
 /// One line for the dispatcher's summary, e.g.

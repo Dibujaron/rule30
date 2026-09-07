@@ -31,6 +31,14 @@ pub type Size {
 }
 
 /// How one dispatch attempt at a node ended.
+///
+/// Every constructor but the last is a claim about the worker or the node.
+/// `HarnessFailed` is a claim about the harness: the attempt happened and
+/// tells you nothing about the node, because something on the harness's
+/// side of the trust boundary broke it. It is the one outcome that neither
+/// spends a rung of the model ladder (`dispatch.failed_attempts`) nor scores
+/// the identity's calibration (`roster.scorecard`). `dispatch.attribute`
+/// is where an attempt earns it, and lists the signals that count.
 pub type Outcome {
   Closed
   GaveUp
@@ -38,6 +46,7 @@ pub type Outcome {
   BudgetExhausted
   RateLimited
   TimedOut
+  HarnessFailed
 }
 
 /// A record of one Claude Code session dispatched at a node.
@@ -308,6 +317,7 @@ pub fn outcome_to_string(o: Outcome) -> String {
     BudgetExhausted -> "budget_exhausted"
     RateLimited -> "rate_limited"
     TimedOut -> "timed_out"
+    HarnessFailed -> "harness_failed"
   }
 }
 
@@ -319,6 +329,7 @@ fn outcome_from_string(s: String) -> Result(Outcome, Nil) {
     "budget_exhausted" -> Ok(BudgetExhausted)
     "rate_limited" -> Ok(RateLimited)
     "timed_out" -> Ok(TimedOut)
+    "harness_failed" -> Ok(HarnessFailed)
     _ -> Error(Nil)
   }
 }

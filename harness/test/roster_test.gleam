@@ -247,7 +247,19 @@ fn count_occurrences(haystack: String, needle: String) -> Int {
 
 // --- scorecard --------------------------------------------------------------
 
+/// An attempt on the top rung of every ladder `config.ladder` has, so that
+/// it is calibration evidence wherever it lands; `at_rung` for the others.
 fn attempt(
+  who: String,
+  outcome: dag.Outcome,
+  estimate: dag.Size,
+  cost: Float,
+) -> dag.Attempt {
+  at_rung("opus", who, outcome, estimate, cost)
+}
+
+fn at_rung(
+  model: String,
   who: String,
   outcome: dag.Outcome,
   estimate: dag.Size,
@@ -256,7 +268,7 @@ fn attempt(
   Attempt(
     identity: who,
     session_id: "s",
-    model: "sonnet",
+    model:,
     started: "t0",
     ended: "t1",
     outcome:,
@@ -326,6 +338,59 @@ pub fn an_attempt_with_no_report_is_not_calibration_evidence_test() {
   let d = Dag([node_with("b", dag.M, [unreported])])
   let s = roster.scorecard(d, "Thessaly")
   assert s.calibration_hits == 0
+  assert s.calibration_total == 0
+}
+
+pub fn a_lower_rung_attempt_is_not_calibration_evidence_test() {
+  // The ladder is a cost optimiser: haiku goes first on an `S` node because
+  // a cheap win is a bargain, not because a cheap loss means anything. Its
+  // estimate is not a re-pricing of the node by a model that could judge
+  // it, so it must not move the identity's calibration either way — not as
+  // a hit when it happens to agree, not as a miss when it does not.
+  let d =
+    Dag([
+      node_with("a", dag.S, [
+        at_rung("haiku", "Thessaly", dag.BudgetExhausted, dag.S, 0.5),
+        at_rung("sonnet", "Thessaly", dag.GaveUp, dag.L, 1.25),
+        at_rung("opus", "Thessaly", dag.Closed, dag.S, 2.0),
+      ]),
+      node_with("b", dag.M, [
+        at_rung("sonnet", "Thessaly", dag.GaveUp, dag.M, 0.25),
+      ]),
+    ])
+  let s = roster.scorecard(d, "Thessaly")
+  // Probes still count as abandoned, and are still paid for.
+  assert s.abandoned == 3
+  assert s.cost_usd == 4.0
+  // Only the opus attempt on `a` is evidence, and it was a hit.
+  assert s.calibration_hits == 1
+  assert s.calibration_total == 1
+}
+
+pub fn a_harness_failed_attempt_is_neither_abandoned_nor_evidence_test() {
+  // The harness broke this one, so its outcome says nothing about the
+  // worker — but its cost was real.
+  let d =
+    Dag([
+      node_with("a", dag.S, [
+        attempt("Thessaly", dag.HarnessFailed, dag.L, 0.7),
+      ]),
+    ])
+  let s = roster.scorecard(d, "Thessaly")
+  assert s.closed == 0
+  assert s.abandoned == 0
+  assert s.cost_usd == 0.7
+  assert s.calibration_hits == 0
+  assert s.calibration_total == 0
+}
+
+pub fn nothing_made_at_a_wall_is_calibration_evidence_test() {
+  // A `Wall` has no ladder, so no rung is its top.
+  let d =
+    Dag([
+      node_with("w", dag.Wall, [attempt("Thessaly", dag.GaveUp, dag.Wall, 0.1)]),
+    ])
+  let s = roster.scorecard(d, "Thessaly")
   assert s.calibration_total == 0
 }
 
