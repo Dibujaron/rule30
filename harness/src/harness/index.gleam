@@ -208,10 +208,12 @@ fn header(d: dag.Dag) -> String {
   <> "One entry per theorem, grouped by the object the theorem is about. "
   <> "**What this says** is the sentence a person wrote — the proof note's, or "
   <> "the statement's docstring lead for a node still open. The hypotheses and "
-  <> "conclusion are the checked signature as Lean printed it, or the seeded "
-  <> "statement where no proof has been checked yet; they are shown, not "
-  <> "paraphrased. **Cited by** is read from `import` lines, so it is what "
-  <> "`lake build` compiled and not what the board planned.\n\n"
+  <> "conclusion are the checked signature as Lean printed it, where the "
+  <> "harness wrote one; for a proof that predates the checked-type block, "
+  <> "the statement text from `Rule30/Statements.lean`, marked as verified; "
+  <> "for an open node, the declaration as seeded, marked as not yet checked. They "
+  <> "are shown, not paraphrased. **Cited by** is read from `import` lines, "
+  <> "so it is what `lake build` compiled and not what the board planned.\n\n"
   <> int.to_string(total)
   <> " theorems on the board: "
   <> int.to_string(count(dag.Proved))
@@ -250,7 +252,7 @@ fn entry(
     Ok(text) -> #(signature(text), "")
     Error(Nil) ->
       case seed.declaration_without_proof(statements, node.lean_name) {
-        Ok(text) -> #(signature(text), " (seeded statement; not yet checked)")
+        Ok(text) -> #(signature(text), fallback_provenance(node.status))
         Error(Nil) -> #(Signature([], ""), " (no statement found)")
       }
   }
@@ -291,6 +293,20 @@ fn entry(
   <> dag.size_to_string(node.size)
   <> wall
   <> "\n"
+}
+
+/// The provenance suffix for a signature that fell back to the seeded
+/// declaration because no Checked type block was found. A proved node in
+/// this state is not doubtful — it predates the harness writing that block
+/// — so its label says verified rather than repeating the open-node wording
+/// that would read as doubt beside `**Status.** proved`.
+fn fallback_provenance(status: dag.Status) -> String {
+  case status {
+    dag.Proved ->
+      " (verified; statement text from Statements.lean, this proof "
+      <> "predates the checked-type block)"
+    _ -> " (seeded statement; not yet checked)"
+  }
 }
 
 /// The sentence after `**What this says.**` in a proof note, joined onto

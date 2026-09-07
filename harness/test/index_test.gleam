@@ -377,6 +377,40 @@ pub fn entry_folds_a_multi_line_dag_description_onto_one_line_test() {
   assert string.contains(text, "**What this says.** line one line two\n")
 }
 
+const two_status_statements = "theorem proved_no_checked_type (t : ℕ) : True := by
+  sorry
+
+theorem open_no_checked_type (t : ℕ) : True := by
+  sorry
+"
+
+/// Neither node here has a proof file, so both signatures fall back to the
+/// seeded declaration — the only difference between them is `status`. A
+/// `Proved` node in that state predates the checked-type block and reads as
+/// verified; an `Open` node in the same state keeps the "not yet checked"
+/// wording. Each label must land on its own entry and not the other's.
+pub fn entry_provenance_label_follows_status_not_proof_presence_test() {
+  let d =
+    Dag([
+      node("proved_no_checked_type", [], dag.S),
+      Node(..node("open_no_checked_type", [], dag.S), status: dag.Open),
+    ])
+  let text =
+    index.render(
+      index.Sources(d:, statements: two_status_statements, proofs: []),
+    )
+  let open =
+    between(text, "### open_no_checked_type", "### proved_no_checked_type")
+  let proved = between(text, "### proved_no_checked_type", "\n## ")
+  assert string.contains(open, "(seeded statement; not yet checked)")
+  assert !string.contains(open, "verified; statement text")
+  assert string.contains(
+    proved,
+    "(verified; statement text from Statements.lean, this proof predates the checked-type block)",
+  )
+  assert !string.contains(proved, "not yet checked")
+}
+
 pub fn write_in_renders_the_index_from_a_repository_root_test() {
   let root = "test/tmp/index-root"
   let _ = simplifile.delete(root)
@@ -404,7 +438,10 @@ pub fn write_in_renders_the_index_from_a_repository_root_test() {
   assert string.contains(text, "## Bookkeeping")
   assert string.contains(text, "**What this says.** True is true.")
   assert string.contains(text, "**Conclusion.** `True`")
-  assert string.contains(text, "(seeded statement; not yet checked)")
+  assert string.contains(
+    text,
+    "(verified; statement text from Statements.lean, this proof predates the checked-type block)",
+  )
   // Rendering again is byte-identical: nothing in the file is a clock.
   let assert Ok(_) = index.write_in(root, root <> "/blueprint/dag.json")
   let assert Ok(again) = simplifile.read(root <> "/blueprint/index.md")
