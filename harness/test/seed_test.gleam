@@ -129,6 +129,31 @@ pub fn a_route_without_its_import_fails_test() {
   assert string.contains(out, "Decidable")
 }
 
+/// **A route of `sorry` elaborates with EXIT 0.** Measured 2026-09-06 against
+/// `leanprover/lean4:v4.33.1`: the only sign is the line
+/// `warning: declaration uses \`sorry\``. So a route check that read the exit
+/// status alone would call this closed — which is `sorry`'s founding failure
+/// mode, a success report over nothing, at the statement gate. The verdict is
+/// its own arm so a reader cannot take it for a tactic that merely failed.
+pub fn a_sorry_route_is_not_closed_test() {
+  let assert seed.RouteUsesSorry(out) =
+    check("bool_map_iterate_three", Claimed(Route("sorry", [])))
+  assert string.contains(out, "declaration uses `sorry`")
+}
+
+pub fn the_report_names_a_sorry_route_as_such_test() {
+  let out =
+    seed.report([
+      seed.Checked(
+        proposal: a_proposal("eta"),
+        route: seed.RouteUsesSorry("warning: declaration uses `sorry`"),
+        witness: seed.Unchecked("no witness supplied"),
+      ),
+    ])
+  assert string.contains(out, "DOES NOT CLOSE")
+  assert string.contains(out, "`sorry`")
+}
+
 // --- the falsification witness ------------------------------------------------
 //
 // The calibration below is labelled the same way the route check's is, and for
@@ -190,22 +215,36 @@ pub fn witness_source_never_imports_the_statement_file_test() {
 /// shown to work — and here the negative is cheap to state and impossible to
 /// argue with: `centerColumn` is not constantly true, so a witness claiming it
 /// is must come back `Falsified`.
-fn check_w(expression: String, range: String) -> seed.WitnessVerdict {
+///
+/// `statement` is what the witness is judged as being ABOUT; a witness naming
+/// nothing from it is refused before Lean runs, so each calibration below
+/// supplies a statement that names what its witness evaluates.
+fn check_w(
+  statement: String,
+  expression: String,
+  range: String,
+) -> seed.WitnessVerdict {
   let assert Ok(lake) = shell.which("lake")
   seed.check_witness(
     repo(),
     lake,
     "witness_calibration",
+    statement,
     seed.Claims(seed.Witness(expression:, imports: [], range:)),
     180_000,
   )
 }
+
+const evolve_statement = "theorem witness_calibration (t : ℕ) : evolve t (-(t:Int)) = true := by\n  sorry"
+
+const center_statement = "theorem witness_calibration (t : ℕ) : centerColumn t = true := by\n  sorry"
 
 /// The known positive. `evolve_left_edge` is a closed node, so this is true —
 /// and t < 12 is inside the tractable range measured on 2026-09-06.
 pub fn a_true_witness_comes_back_holding_test() {
   let assert seed.WitnessHolds(range) =
     check_w(
+      evolve_statement,
       "(List.range 12).all (fun t => evolve t (-(t:Int)) == true)",
       "t < 12",
     )
@@ -219,21 +258,136 @@ pub fn a_true_witness_comes_back_holding_test() {
 /// whole reason this test exists rather than being assumed.
 pub fn a_false_witness_is_falsified_and_not_a_pass_test() {
   let assert seed.Falsified(_) =
-    check_w("(List.range 12).all (fun t => centerColumn t == true)", "t < 12")
+    check_w(
+      center_statement,
+      "(List.range 12).all (fun t => centerColumn t == true)",
+      "t < 12",
+    )
 }
 
 /// A witness that does not elaborate must not be reported as a statement that
 /// is false. Same split as `Denial`: the thing is wrong, versus I could not
 /// tell.
+///
+/// The statement names `no_such_function` too, so the witness gets past the
+/// placeholder check and the thing under test is Lean's verdict, not ours.
 pub fn a_witness_that_does_not_compile_is_broken_test() {
   let assert seed.WitnessBroken(_) =
-    check_w("(List.range 12).all (fun t => no_such_function t)", "t < 12")
+    check_w(
+      "theorem witness_calibration (t : ℕ) : no_such_function t = true := by\n  sorry",
+      "(List.range 12).all (fun t => no_such_function t)",
+      "t < 12",
+    )
 }
 
 pub fn no_witness_is_unchecked_not_a_pass_test() {
   let assert Ok(lake) = shell.which("lake")
   let assert seed.Unchecked(_) =
-    seed.check_witness(repo(), lake, "anything", seed.NoWitness, 1000)
+    seed.check_witness(
+      repo(),
+      lake,
+      "anything",
+      center_statement,
+      seed.NoWitness,
+      1000,
+    )
+}
+
+// --- placeholder witnesses ----------------------------------------------------
+//
+// A witness of `true` passes every checker that could ever be written — it
+// evaluates to `true` because it IS `true` — and Rowan nearly seeded two walls
+// with it as a stand-in. Nothing about exit status or stdout can catch it, so
+// it is caught before Lean runs, by asking whether the expression mentions
+// anything the statement is about.
+
+/// **The literal `true` is refused, and refused without running Lean.** The
+/// verdict is `WitnessPlaceholder`, not `Unchecked` — unchecked says the check
+/// could not be done, this says the witness was never about the statement.
+/// The 1 ms budget proves no Lean ran: a real check would time out on it.
+pub fn a_literal_true_witness_is_refused_as_a_placeholder_test() {
+  let assert Ok(lake) = shell.which("lake")
+  let assert seed.WitnessPlaceholder(expression) =
+    seed.check_witness(
+      repo(),
+      lake,
+      "witness_calibration",
+      center_statement,
+      seed.Claims(seed.Witness(expression: "true", imports: [], range: "n/a")),
+      1,
+    )
+  assert expression == "true"
+}
+
+/// A witness that names the statement's definition is not a placeholder, and
+/// the refusal must not fire on it — a check that refused real witnesses
+/// would be routed around by the next seeder in an afternoon.
+pub fn a_witness_naming_the_statements_definition_is_not_refused_test() {
+  assert seed.names_the_statement(
+    "(List.range 12).all (fun t => centerColumn t == true)",
+    "witness_calibration",
+    center_statement,
+  )
+  // The lean_name alone counts too.
+  assert seed.names_the_statement(
+    "witness_calibration",
+    "witness_calibration",
+    "",
+  )
+}
+
+/// Whole tokens, not substrings. `centerColumnDensity` contains `centerColumn`
+/// and is a different definition; a substring check would let a witness about
+/// the density stand in for one about the column.
+pub fn a_longer_identifier_does_not_count_as_mentioning_a_shorter_one_test() {
+  assert !seed.names_the_statement(
+    "centerColumnDensity 100 == 50",
+    "witness_calibration",
+    center_statement,
+  )
+  // And the other way round: the statement's `evolve_left_edge_holds` is not
+  // a mention of `evolve`.
+  assert !seed.names_the_statement(
+    "evolve 3 0",
+    "evolve_left_edge",
+    "theorem evolve_left_edge : evolve_left_edge_holds = true := by\n  sorry",
+  )
+}
+
+/// The stoplist is what makes `true` a placeholder even when the statement
+/// says `= true`: keywords, `Bool` literals and core types are in nearly every
+/// statement and name none of them. Binders are single letters here and are
+/// dropped for the same reason — `fun t => true` mentions `t` and nothing.
+pub fn keywords_literals_and_binders_are_not_names_test() {
+  assert seed.statement_names(center_statement) == ["centerColumn"]
+  assert !seed.names_the_statement(
+    "(List.range 4).all (fun t => true)",
+    "witness_calibration",
+    center_statement,
+  )
+}
+
+pub fn identifiers_split_on_everything_but_identifier_characters_test() {
+  assert seed.identifiers("(List.range 4).all (fun t => f^[3] = f')")
+    == ["List", "range", "4", "all", "fun", "t", "f", "3", "f'"]
+}
+
+/// The report must say the witness was refused and why, and must not count it
+/// as unchecked — an unchecked row invites a bigger timeout, a placeholder row
+/// invites a real witness.
+pub fn the_report_names_a_placeholder_witness_test() {
+  let out =
+    seed.report([
+      seed.Checked(
+        proposal: a_proposal("theta"),
+        route: seed.NoRoute,
+        witness: seed.WitnessPlaceholder("true"),
+      ),
+    ])
+  assert string.contains(out, "PLACEHOLDER")
+  assert string.contains(out, "names nothing from the statement")
+  assert string.contains(out, "1 placeholder")
+  assert !string.contains(out, "unchecked")
 }
 
 /// **A timeout is `Unchecked`, never `Falsified`.** The most important line in
@@ -258,6 +412,7 @@ pub fn a_timed_out_witness_is_unchecked_not_falsified_test() {
       repo(),
       lake,
       "witness_timeout",
+      center_statement,
       seed.Claims(seed.Witness(
         expression: "(List.range 12).all (fun t => centerColumn t == true)",
         imports: [],
@@ -275,7 +430,10 @@ fn proposal_json(fields: String) -> String {
   "{\"proposals\":[{" <> fields <> "}]}"
 }
 
-const full_proposal = "\"id\":\"foo_bar\",\"lean_name\":\"foo_bar\",\"statement\":\"theorem foo_bar : True := by\\n  sorry\",\"reason\":\"True is true.\",\"route\":{\"tactics\":\"trivial\",\"imports\":[]},\"witness\":{\"expression\":\"true\",\"imports\":[],\"range\":\"n/a\"}"
+/// A complete proposal. The witness names `centerColumn`, which the statement
+/// is about — this fixture used to carry the literal `true`, which is exactly
+/// the placeholder the checker now refuses.
+const full_proposal = "\"id\":\"foo_bar\",\"lean_name\":\"foo_bar\",\"statement\":\"theorem foo_bar : centerColumn 0 = true := by\\n  sorry\",\"reason\":\"The centre cell starts on.\",\"route\":{\"tactics\":\"rfl\",\"imports\":[]},\"witness\":{\"expression\":\"centerColumn 0 == true\",\"imports\":[],\"range\":\"t = 0\"}"
 
 pub fn a_full_proposal_decodes_test() {
   let assert Ok([p]) = seed.decode_proposals(proposal_json(full_proposal))

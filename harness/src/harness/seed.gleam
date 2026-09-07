@@ -69,9 +69,18 @@ pub type Claim {
 }
 
 /// The verdict on one claimed route.
+///
+/// `RouteUsesSorry` is its own arm and not a `RouteFailed`, because it is the
+/// one failure Lean reports as a success: a route containing `sorry` (or a
+/// tactic that falls back to one) elaborates with a warning and EXIT 0, so a
+/// checker that read only the exit status would call it closed. That is
+/// `sorry`'s founding failure mode — a build that says success over nothing —
+/// arriving at the statement gate, and it gets a verdict a reader cannot
+/// mistake for "the tactics were wrong".
 pub type RouteVerdict {
   RouteClosed
   RouteFailed(output: String)
+  RouteUsesSorry(output: String)
   StatementNotFound(lean_name: String)
   NoRoute
 }
@@ -79,6 +88,20 @@ pub type RouteVerdict {
 /// Every proof file in this project starts here, so every route is checked
 /// against at least this much. Deliberately *not* `Rule30.Statements`.
 const base_import = "Rule30.Basic"
+
+/// What `lean` prints when a declaration's proof contains `sorry`, captured
+/// 2026-09-06 from `leanprover/lean4:v4.33.1` by elaborating
+/// `theorem bool_map_iterate_three (f : Bool → Bool) : f^[3] = f := by sorry`
+/// under `lake env lean`:
+///
+///     <file>:2:8: warning: declaration uses `sorry`
+///     exit=0
+///
+/// The backticks are Lean's own quoting and are part of the match. A toolchain
+/// bump that rewords this warning turns `RouteUsesSorry` back into
+/// `RouteClosed` silently, which is why the capture is dated and the test
+/// `a_sorry_route_is_not_closed_test` runs against the real toolchain.
+const sorry_warning = "declaration uses `sorry`"
 
 /// Lift a declaration out of `Rule30/Statements.lean` verbatim, minus its
 /// trailing `sorry` line, ready for a route to be appended.
@@ -187,7 +210,16 @@ pub fn check_route(
             Error(msg) -> RouteFailed(msg)
             Ok(shell.Run(status:, output:)) if status != 0 ->
               RouteFailed(output)
-            Ok(_) -> RouteClosed
+            // Exit 0 is necessary and not sufficient: `sorry` elaborates
+            // cleanly and warns. The warning is checked rather than the
+            // tactic text because it also catches a `sorry` a tactic
+            // introduced on the route's behalf, which a text scan of what
+            // the captain wrote would not see.
+            Ok(shell.Run(output:, ..)) ->
+              case string.contains(output, sorry_warning) {
+                True -> RouteUsesSorry(output)
+                False -> RouteClosed
+              }
           }
         }
       }
@@ -223,11 +255,127 @@ pub type WitnessClaim {
 /// 3^t neighbour evaluations, so the usable depth is about t < 18 — measured
 /// 2026-09-06: t=16 in 12s, t=18 in 84s, t=20 over 120s. Most claims about
 /// periodicity live past that.
+///
+/// `WitnessPlaceholder` is refused before Lean ever runs, and is not an
+/// `Unchecked`: unchecked says the check could not be done, this says the
+/// witness was never about the statement. The literal `true` passes every
+/// checker that could ever be written, and it was nearly seeded twice as a
+/// stand-in "to fill in later". See `names_the_statement` for exactly what is
+/// and is not caught.
 pub type WitnessVerdict {
   WitnessHolds(range: String)
   Falsified(output: String)
   WitnessBroken(output: String)
   Unchecked(reason: String)
+  WitnessPlaceholder(expression: String)
+}
+
+/// Does `expression` mention at least one name that the statement is about?
+///
+/// **What is checked.** The statement text and the expression are both split
+/// into identifier tokens — maximal runs of ASCII letters, digits, `_` and
+/// `'` — so `centerColumn` is one token and `centerColumnDensity` is a
+/// different one, never a match for it. From the statement's tokens, these
+/// are dropped: anything starting with a digit, anything one character long
+/// (in this project's statements a one-letter name is a binder like `f` or
+/// `t`, never a definition), and the `stoplist` of Lean keywords, `Bool`
+/// literals and core types that appear in nearly every statement and say
+/// nothing about which one. `lean_name` is added to what remains. The
+/// expression passes if it contains one of those, as a whole token.
+///
+/// **What is not caught.** A witness that names the right definition and then
+/// evaluates something unrelated — `centerColumn 0 == centerColumn 0` — passes
+/// this and every other syntactic check; only reading it catches that. A
+/// non-ASCII name (`α`, `x₁`) is split at the non-ASCII character and so is
+/// not a name here; the statements this project seeds use ASCII definition
+/// names, and if that changes this comment is wrong before the code is.
+///
+/// This is the TypeScript `includes` you would write first, made honest
+/// about token boundaries: it says "the witness talks about the statement's
+/// subject", nothing stronger, and is here to stop a `true` from ever
+/// reaching `#eval`.
+pub fn names_the_statement(
+  expression: String,
+  lean_name: String,
+  statement: String,
+) -> Bool {
+  let names = [lean_name, ..statement_names(statement)]
+  identifiers(expression)
+  |> list.any(fn(token) { list.contains(names, token) })
+}
+
+/// The identifier tokens of a statement that are specific to it: not a
+/// keyword, not a literal, not a core type, not a digit run, not a single
+/// character. See `names_the_statement` for why each class is excluded.
+pub fn statement_names(statement: String) -> List(String) {
+  identifiers(statement)
+  |> list.filter(fn(token) {
+    string.length(token) > 1
+    && !starts_with_digit(token)
+    && !list.contains(stoplist, token)
+  })
+  |> list.unique
+}
+
+/// Lean keywords, `Bool`/`Prop` literals and core types that appear in nearly
+/// every statement. A witness that mentions only these — `true`, or
+/// `(List.range 4).all (fun _ => true)` — is about nothing in particular.
+const stoplist = [
+  "theorem", "lemma", "def", "example", "by", "sorry", "fun", "let", "have",
+  "show", "from", "if", "then", "else", "match", "with", "do", "at", "in",
+  "true", "false", "True", "False", "Bool", "Nat", "Int", "List", "Prop", "Type",
+  "Decidable", "decide", "rfl", "range", "all", "any", "not", "and", "or",
+]
+
+/// Maximal runs of ASCII letters, digits, `_` and `'` in `text`, in order.
+/// Everything else — spaces, punctuation, operators, and any non-ASCII
+/// character — separates tokens.
+pub fn identifiers(text: String) -> List(String) {
+  let #(tokens, current) =
+    text
+    |> string.to_graphemes
+    |> list.fold(#([], ""), fn(acc, g) {
+      let #(tokens, current) = acc
+      case is_identifier_char(g) {
+        True -> #(tokens, current <> g)
+        False ->
+          case current {
+            "" -> #(tokens, "")
+            _ -> #([current, ..tokens], "")
+          }
+      }
+    })
+  let tokens = case current {
+    "" -> tokens
+    _ -> [current, ..tokens]
+  }
+  list.reverse(tokens)
+}
+
+fn is_identifier_char(g: String) -> Bool {
+  case g {
+    "_" | "'" -> True
+    _ ->
+      case string.to_utf_codepoints(g) {
+        [cp] -> {
+          let n = string.utf_codepoint_to_int(cp)
+          { n >= 48 && n <= 57 }
+          || { n >= 65 && n <= 90 }
+          || { n >= 97 && n <= 122 }
+        }
+        _ -> False
+      }
+  }
+}
+
+fn starts_with_digit(token: String) -> Bool {
+  case string.to_utf_codepoints(string.slice(token, 0, 1)) {
+    [cp] -> {
+      let n = string.utf_codepoint_to_int(cp)
+      n >= 48 && n <= 57
+    }
+    _ -> False
+  }
 }
 
 /// The Lean source a witness is judged on: proof-file imports, then `#eval`.
@@ -289,35 +437,54 @@ pub fn witness_verdict(
 /// exactly the statements too expensive to check. For the same reason the
 /// budget cannot be tuned by watching how long checks take — the ones that
 /// time out are the ones you most wanted an answer to.
+///
+/// `statement` is the declaration text the witness is meant to be about. A
+/// witness that names nothing from it is refused as `WitnessPlaceholder`
+/// before any file is written or any Lean is run — see `names_the_statement`.
 pub fn check_witness(
   repo_root: String,
   lake: String,
   lean_name: String,
+  statement: String,
   claim: WitnessClaim,
   timeout_ms: Int,
 ) -> WitnessVerdict {
   case claim {
     NoWitness -> Unchecked("no witness supplied")
-    Claims(witness) -> {
-      let dir = repo_root <> "/harness/build/checks/seed"
-      // A per-call token, for the reason `verify_test`'s fixture carries one:
-      // two sessions on this machine share one checkout, and a path derived
-      // only from the node name is one absolute path with no lock on it. That
-      // collision was measured on 2026-09-06 and cost four spurious failures.
-      let path = dir <> "/witness_" <> lean_name <> "_" <> token() <> ".lean"
-      let assert Ok(_) = simplifile.create_directory_all(dir)
-      let assert Ok(_) = simplifile.write(path, witness_source(witness))
-      case shell.run(lake, ["env", "lean", path], repo_root, timeout_ms) {
-        // Every failure to *run* is `Unchecked`, never `Falsified`. A timeout
-        // is the common one and the dangerous one — `shell.run` reports it as
-        // `Error("timeout after N ms")` — because timing out correlates with
-        // the statement being true, so treating it as anything but "I could
-        // not tell" would systematically pass the claims worth checking.
-        Error(msg) -> Unchecked(msg)
-        Ok(shell.Run(status:, output:)) ->
-          witness_verdict(witness.range, status, output)
+    Claims(witness) ->
+      case names_the_statement(witness.expression, lean_name, statement) {
+        False -> WitnessPlaceholder(witness.expression)
+        True -> run_witness(repo_root, lake, lean_name, witness, timeout_ms)
       }
-    }
+  }
+}
+
+/// Write the witness source and run it. Only reached by a witness that
+/// `names_the_statement`; the verdict is read from what Lean printed.
+fn run_witness(
+  repo_root: String,
+  lake: String,
+  lean_name: String,
+  witness: Witness,
+  timeout_ms: Int,
+) -> WitnessVerdict {
+  let dir = repo_root <> "/harness/build/checks/seed"
+  // A per-call token, for the reason `verify_test`'s fixture carries one:
+  // two sessions on this machine share one checkout, and a path derived
+  // only from the node name is one absolute path with no lock on it. That
+  // collision was measured on 2026-09-06 and cost four spurious failures.
+  let path = dir <> "/witness_" <> lean_name <> "_" <> token() <> ".lean"
+  let assert Ok(_) = simplifile.create_directory_all(dir)
+  let assert Ok(_) = simplifile.write(path, witness_source(witness))
+  case shell.run(lake, ["env", "lean", path], repo_root, timeout_ms) {
+    // Every failure to *run* is `Unchecked`, never `Falsified`. A timeout
+    // is the common one and the dangerous one — `shell.run` reports it as
+    // `Error("timeout after N ms")` — because timing out correlates with
+    // the statement being true, so treating it as anything but "I could
+    // not tell" would systematically pass the claims worth checking.
+    Error(msg) -> Unchecked(msg)
+    Ok(shell.Run(status:, output:)) ->
+      witness_verdict(witness.range, status, output)
   }
 }
 
@@ -497,6 +664,7 @@ pub fn check_proposal(
       repo_root,
       lake,
       proposal.lean_name,
+      proposal.statement,
       proposal.witness,
       timeout_ms,
     ),
@@ -515,6 +683,7 @@ pub fn report(checked: List(Checked)) -> String {
   let counts =
     [
       #("falsified", list.count(checked, fn(c) { is_falsified(c.witness) })),
+      #("placeholder", list.count(checked, fn(c) { is_placeholder(c.witness) })),
       #("broken check", list.count(checked, fn(c) { is_broken(c.witness) })),
       #("unchecked", list.count(checked, fn(c) { is_unchecked(c.witness) })),
       #("holds", list.count(checked, fn(c) { is_holding(c.witness) })),
@@ -554,13 +723,17 @@ fn route_line(v: RouteVerdict) -> String {
     NoRoute -> "none claimed"
     RouteClosed -> "closes the statement"
     RouteFailed(output) -> "DOES NOT CLOSE — " <> first_line(output)
+    RouteUsesSorry(_) ->
+      "DOES NOT CLOSE — the route itself uses `sorry`, which Lean accepts "
+      <> "with exit 0 and a warning"
     StatementNotFound(name) -> "BROKEN CHECK — no declaration named " <> name
   }
 }
 
-/// The four witness verdicts, worded so no two of them can be skimmed as the
+/// The five witness verdicts, worded so no two of them can be skimmed as the
 /// same thing. `Falsified` is about the statement; `WitnessBroken` is about the
-/// check; `Unchecked` is about neither and is the expected common case.
+/// check; `Unchecked` is about neither and is the expected common case;
+/// `WitnessPlaceholder` is about the witness and was never run.
 fn witness_line(v: WitnessVerdict) -> String {
   case v {
     WitnessHolds(range) -> "holds over " <> range
@@ -569,6 +742,10 @@ fn witness_line(v: WitnessVerdict) -> String {
     WitnessBroken(output) ->
       "BROKEN CHECK, says nothing about the statement — " <> first_line(output)
     Unchecked(why) -> "unchecked — " <> why
+    WitnessPlaceholder(expression) ->
+      "PLACEHOLDER, refused without running — names nothing from the "
+      <> "statement: "
+      <> first_line(expression)
   }
 }
 
@@ -595,6 +772,13 @@ fn is_falsified(v: WitnessVerdict) -> Bool {
 fn is_broken(v: WitnessVerdict) -> Bool {
   case v {
     WitnessBroken(_) -> True
+    _ -> False
+  }
+}
+
+fn is_placeholder(v: WitnessVerdict) -> Bool {
+  case v {
+    WitnessPlaceholder(_) -> True
     _ -> False
   }
 }
