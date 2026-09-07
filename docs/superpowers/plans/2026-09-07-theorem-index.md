@@ -16,7 +16,7 @@
 - `gleam test` from this worktree needs no `HARNESS_REPO_ROOT`; tests that read files read `harness/test/fixture-project/` or a directory they create under `harness/test/tmp/` (gitignored; create it if absent) and never the live checkout.
 - Gleam formatting is enforced by `gleam format`; run `gleam format` in `harness/` before every commit.
 - Statements are READ and never written. `Rule30/Statements.lean`, `Rule30/Proofs/*.lean` and `blueprint/dag.json` are inputs. The only file this feature writes is `blueprint/index.md`.
-- The renderer reads `node.object`, an `Option(String)` on `dag.Node` that Keel is adding on `keel/dag-object` with round-trip encode/decode and no validation of values. **Task 3 must not start until that sha is on `origin/main` and merged into this branch** (`git merge origin/main`, never rebase — shas are cited in messages). Tasks 1 and 2 do not mention the field. The object vocabulary Rowan uses, in the order the spec fixes: `configuration`, `row`, `column`, `leftDiagonal`, `rightDiagonal`, `machine`, `bookkeeping`, `prize`. A node with no object is listed under "Unclassified" so the omission is visible; a value outside the vocabulary gets its own group after the known ones, verbatim, for the same reason.
+- The renderer reads `node.object`, an `Option(String)` on `dag.Node` that Keel is adding on `keel/dag-object` with round-trip encode/decode and no validation of values. That sha (`43cf4aa`) is merged into this branch at `01eee43`, so every task sees the field; the `node` test helper in Task 2 must pass `object: None`. The object vocabulary Rowan uses, in the order the spec fixes: `configuration`, `row`, `column`, `leftDiagonal`, `rightDiagonal`, `machine`, `bookkeeping`, `prize`. A node with no object is listed under "Unclassified" so the omission is visible; a value outside the vocabulary gets its own group after the known ones, verbatim, for the same reason.
 - Commit messages are prefixed `Fathom: ` and end with the session trailer:
   ```
   Co-Authored-By: Claude Fable 5.1 <noreply@anthropic.com>
@@ -667,7 +667,7 @@ git commit -m "Fathom: index.gleam, citations from import lines and the walls a 
 
 ### Task 3: The rendered file
 
-**Precondition:** Keel's `object: Option(String)` on `dag.Node` is on `origin/main`. Run `git fetch origin && git merge origin/main` in the worktree first and confirm `grep -n "object" harness/src/harness/dag.gleam` shows the field. If it is not there, stop and say so; do not add the field yourself.
+**Precondition, already met:** Keel's `object: Option(String)` on `dag.Node` landed at `43cf4aa` and is merged into this branch at `01eee43`; `dag.gleam:115` has the field and every test fixture's `Node(` constructor already passes `object: None`.
 
 **Files:**
 - Modify: `harness/src/harness/index.gleam`
@@ -772,7 +772,7 @@ pub fn render_header_states_every_count_with_its_denominator_test() {
       node("c", [], dag.S),
     ])
   let text = index.render(index.Sources(d:, statements: "", proofs: []))
-  assert string.contains(text, "3 theorems on the board: 2 proved, 1 open, 0 claimed, 0 abandoned")
+  assert string.contains(text, "3 theorems on the board: 2 proved, 1 open, 0 claimed, 0 blocked, 0 abandoned")
   assert string.contains(text, "1 of 3 without an object")
 }
 
@@ -799,7 +799,7 @@ fn between(text: String, from: String, to: String) -> String {
 }
 ```
 
-Add `import gleam/int`, `import gleam/string`, `import gleam/list`, `import harness/verify` to the test module as needed. Check `dag.Status` has exactly the variants the header names (`Open`, `Claimed`, `Proved`, `Abandoned`) by reading `dag.gleam:20-30` and match the header line to what is there.
+Add `import gleam/int`, `import gleam/string`, `import gleam/list`, `import harness/verify` to the test module as needed. `dag.Status` has exactly `Open`, `Claimed`, `Proved`, `Blocked`, `Abandoned` (`dag.gleam:16-22`); the header names all five.
 
 - [ ] **Step 2: Run the tests to see `render` missing**
 
@@ -918,6 +918,8 @@ fn header(d: dag.Dag) -> String {
   <> " open, "
   <> int.to_string(count(dag.Claimed))
   <> " claimed, "
+  <> int.to_string(count(dag.Blocked))
+  <> " blocked, "
   <> int.to_string(count(dag.Abandoned))
   <> " abandoned. "
   <> int.to_string(without)
@@ -1074,7 +1076,7 @@ pub fn write_in_refuses_a_root_with_no_statement_file_test() {
 }
 ```
 
-Check the exact JSON shape `dag.decode` accepts by reading `dag.gleam`'s decoder (`grep -n "decode.field" harness/src/harness/dag.gleam`) and fix the fixture JSON to match before running. `test/tmp` is gitignored — confirm with `git check-ignore harness/test/tmp/x`; if it is not, add `harness/test/tmp/` to `.gitignore` in the same commit.
+Check the exact JSON shape `dag.decode` accepts by reading `dag.gleam`'s decoder (`grep -n "decode.field" harness/src/harness/dag.gleam`) and fix the fixture JSON to match before running. `harness/test/tmp/` is NOT gitignored today (`git check-ignore harness/test/tmp/x` exits 1): add the line `harness/test/tmp/` to the repository's `.gitignore` in this task and stage it with the commit.
 
 - [ ] **Step 2: Run the tests to see `write_in` missing**
 
