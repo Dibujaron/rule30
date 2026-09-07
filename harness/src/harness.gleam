@@ -71,32 +71,47 @@ fn run(cfg: config.Config, arguments: List(String)) -> Nil {
     // wants the check without a session, and a session that has written a
     // proposal wants the check without re-running itself.
     ["seed", "brief"] -> print_outcome(seed.brief_for(cfg))
+    ["seed", "brief", "--region", region] ->
+      print_outcome(seed.brief_at(
+        cfg,
+        seed.proposal_path(cfg.repo_root),
+        region: Some(region),
+      ))
     ["seed", "check"] ->
       print_outcome(seed.check_file(cfg, seed.proposal_path(cfg.repo_root)))
     ["seed", "check", path] -> print_outcome(seed.check_file(cfg, path))
     // `seed` alone starts one seeder session — hand-started, never by the
-    // scheduler — and runs `seed check` over its proposal once it ends. The
-    // model defaults to the top of the ladder because the brief is where
-    // the quality lives and a seeding pass is the part worth spending on.
-    ["seed"] -> print_outcome(seed_session(cfg, "opus"))
-    ["seed", "--model", model] -> print_outcome(seed_session(cfg, model))
+    // scheduler — and runs `seed check` over its proposal once it ends.
+    // `--model M` picks the model (see `seeder.default_model` for why the
+    // default is the top of the ladder) and `--region R` aims the pass at
+    // one region of the board, in either order.
+    ["seed", ..flags] ->
+      print_outcome(
+        seeder.parse_flags(flags)
+        |> result.try(fn(parsed) { seed_session(cfg, parsed) }),
+      )
     _ ->
       io.println(
-        "usage: gleam run -- status | prove-one <node-id> | run [--max-attempts N] [--concurrency K] | reopen <node-id> | bugs [--area A] [--severity S] [--all] | bugs claim <id> --as <Identity> [--session <ref>] | bugs reopen <id> | bugs close <id> fixed|wontfix --resolution <text> | writes | seed [--model M] | seed brief | seed check [path] | spike",
+        "usage: gleam run -- status | prove-one <node-id> | run [--max-attempts N] [--concurrency K] | reopen <node-id> | bugs [--area A] [--severity S] [--all] | bugs claim <id> --as <Identity> [--session <ref>] | bugs reopen <id> | bugs close <id> fixed|wontfix --resolution <text> | writes | seed [--model M] [--region R] | seed brief [--region R] | seed check [path] | spike",
       )
   }
 }
 
-/// One seeder session on `model`, fenced to the default proposal path, on
-/// the seeder's own guard port; the summary it returns ends with the check
-/// report over that proposal.
-fn seed_session(cfg: config.Config, model: String) -> Result(String, String) {
+/// One seeder session on the parsed flags' model, aimed at their region if
+/// one was given, fenced to the default proposal path, on the seeder's own
+/// guard port; the summary it returns ends with the check report over that
+/// proposal.
+fn seed_session(
+  cfg: config.Config,
+  flags: seeder.Flags,
+) -> Result(String, String) {
   seeder.run(
     cfg,
     seeder.Options(
-      model:,
+      model: flags.model,
       port: seeder.default_port(cfg),
       proposal_path: seed.proposal_path(cfg.repo_root),
+      region: flags.region,
     ),
   )
   |> result.map(fn(session) { session.summary })
