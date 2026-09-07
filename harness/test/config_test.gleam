@@ -245,3 +245,52 @@ pub fn stop_path_defaults_to_stop_at_the_repo_root_test() {
   let assert Ok(cfg) = config.load()
   assert cfg.stop_path == cfg.repo_root <> "/STOP"
 }
+
+/// A connector runs under the theorist's ceilings unless given its own:
+/// with no `HARNESS_CONNECTOR_*` set the pair equals the theorist's, and
+/// follows it when the theorist's is overridden.
+pub fn connector_ceilings_default_to_the_theorists_test() {
+  let assert Ok(cfg) = config.load()
+  assert cfg.connector_max_turns == cfg.theorist_max_turns
+  assert cfg.connector_max_budget_usd == cfg.theorist_max_budget_usd
+  envoy.set("HARNESS_THEORIST_MAX_TURNS", "9")
+  envoy.set("HARNESS_THEORIST_MAX_BUDGET_USD", "2.5")
+  let loaded = config.load()
+  envoy.unset("HARNESS_THEORIST_MAX_TURNS")
+  envoy.unset("HARNESS_THEORIST_MAX_BUDGET_USD")
+  let assert Ok(cfg) = loaded
+  assert cfg.connector_max_turns == 9
+  assert cfg.connector_max_budget_usd == 2.5
+}
+
+/// Given its own pair, the connector takes it and the theorist's is untouched.
+pub fn connector_ceilings_come_from_their_own_environment_when_given_test() {
+  envoy.set("HARNESS_CONNECTOR_MAX_TURNS", "7")
+  envoy.set("HARNESS_CONNECTOR_MAX_BUDGET_USD", "3")
+  let loaded = config.load()
+  envoy.unset("HARNESS_CONNECTOR_MAX_TURNS")
+  envoy.unset("HARNESS_CONNECTOR_MAX_BUDGET_USD")
+  let assert Ok(cfg) = loaded
+  assert cfg.connector_max_turns == 7
+  assert cfg.connector_max_budget_usd == 3.0
+  assert cfg.theorist_max_turns == 600
+  assert cfg.theorist_max_budget_usd == 80.0
+}
+
+/// `for_connector` swaps in its pair and changes nothing else, the way
+/// `for_theorist` does.
+pub fn for_connector_swaps_in_the_connector_ceilings_test() {
+  let assert Ok(base) = config.load()
+  let cfg =
+    config.Config(
+      ..base,
+      max_turns: 40,
+      max_budget_usd: 4.0,
+      connector_max_turns: 500,
+      connector_max_budget_usd: 70.0,
+    )
+  let connector = config.for_connector(cfg)
+  assert connector.max_turns == 500
+  assert connector.max_budget_usd == 70.0
+  assert config.Config(..connector, max_turns: 40, max_budget_usd: 4.0) == cfg
+}
