@@ -1,0 +1,17 @@
+
+theorist  Sextant
+model     fable
+topic     centerColumn_other_isEventuallyPeriodic_of_center: the pair of columns 0 and 1 under the cone constraint
+attack    c:/Users/dibuj/dev/rule30/docs/attacks/2026-09-07-centercolumn-other-iseventuallyperiodic-of-center-the-pair-of-columns-0-and-1-under-the-cone-constraint.md
+document  exists, 23699 bytes
+ended     finished — the theorist reported its attack written; that is its claim about the document, and a captain's reading is the only adjudication
+ceilings  600 turns, $80.0
+cost      $12.30
+turns     48
+session   bfefef2b-c170-43ac-8845-f5c01ca16841
+log       c:/Users/dibuj/dev/rule30/runs/20260907T185518Z/theorist-1
+
+Document written with four surviving candidates (a column-0/right-half bijection, the black-time reduction of the cone constraint to column 0 and the left half-line, the left half-line conjecture swept to period 240, and a kernel-checked finite exclusion for all number-like configurations), one new obstruction entry, and eight dead claims with witnesses.
+
+next topic, in the theorist's words:
+Attack the transients of the left diagonals under a periodic boundary, because C2 and C3 together say that is where the residual now sits: at every black time of column 0, column -1 is prescribed, and column -1 at time `t` is the index-1 cell of left diagonal `t - 1`, which by the onset recount is inside the transient of every diagonal past `k = 17`. The walls `leftDiagonal_onset_le` and `leftDiagonal_period_le` are about the length and period of the settled part; nobody has a statement about the content of the unsettled part, and the half-line picture is the right place to look for one, because there the boundary is a free parameter and the diagonal recurrence `evolve_left_diagonal_recurrence` still holds for every cell at `x ≤ -1`. The concrete question: for the half-line grown from a white start with boundary `c`, write the index-1 cell of diagonal `k` as a function of `c (0..k)`; measure how many of those `k + 1` bits it actually depends on and whether the dependence on `c k` is affine (it is the leftmost input of the diagonal's first step, so it should be). If column -1 at time `t` is affine in `c t` with a coefficient that is a function of the settled diagonals, the black-time test becomes a linear recurrence with 2-adic coefficients against a `p`-periodic forcing, and that is the first form of the residual anyone could compute with. Before that, a captain should seed `leftSolve`, `evolveHalfLeft`, their agreement theorems, and C2, so the half-line is on the board in checkable form.
