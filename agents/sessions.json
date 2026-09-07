@@ -149,6 +149,14 @@
       "role": "overseer",
       "started": "2026-09-07T17:48:00Z",
       "claude_session": "6f575d42-08ac-4252-a73c-4dd927309585"
+    },
+    {
+      "identity": "Fathom",
+      "session_name": "rule30-e7",
+      "ref": "6d6b0e",
+      "role": "framework",
+      "started": "2026-09-07T19:45:00Z",
+      "claude_session": "e84921ea-5fb4-477b-abea-a7a3b0d60d6f"
     }
   ]
 }
