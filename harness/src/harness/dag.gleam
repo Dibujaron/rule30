@@ -90,6 +90,13 @@ pub type Attempt {
 /// that run has written its closing summary, after which the claim is
 /// certainly stale. Its absence proves nothing — the run may be live or may
 /// have died without writing — which is why `claimed_at` is there too.
+///
+/// `object` is what the theorem is *about* — `row`, `column`,
+/// `leftDiagonal`, `machine`, and so on — set by hand on the board by the
+/// captain and read by the index renderer, which groups entries by it. The
+/// harness never sets it and never checks the value: it only carries it,
+/// so that a run's `save` gives back exactly what the captain wrote. `None`
+/// is a node nobody has classified yet, and the file carries no key for it.
 pub type Node {
   Node(
     id: String,
@@ -105,6 +112,7 @@ pub type Node {
     claimed_by: Option(String),
     claimed_at: Option(String),
     claimed_run: Option(String),
+    object: Option(String),
   )
 }
 
@@ -472,6 +480,15 @@ fn node_decoder() -> decode.Decoder(Node) {
     None,
     decode.optional(decode.string),
   )
+  // Absent on every node the captain has not classified. The value is not
+  // checked against any vocabulary: the renderer that groups by it is the
+  // place an unknown word shows up, and a decoder that refused one would
+  // take the whole board down over a label.
+  use object <- decode.optional_field(
+    "object",
+    None,
+    decode.optional(decode.string),
+  )
   decode.success(Node(
     id:,
     region:,
@@ -486,6 +503,7 @@ fn node_decoder() -> decode.Decoder(Node) {
     claimed_by:,
     claimed_at:,
     claimed_run:,
+    object:,
   ))
 }
 
@@ -510,22 +528,33 @@ fn attempt_to_json(attempt: Attempt) -> json.Json {
   ])
 }
 
+/// `object` is the one field written only when it is `Some`: a node the
+/// captain has not classified carries no `object` key on disk, and a save
+/// must not invent one — `null` would put a key on every unclassified node
+/// that the hand-written board does not have.
 fn node_to_json(node: Node) -> json.Json {
-  json.object([
-    #("id", json.string(node.id)),
-    #("region", json.string(node.region)),
-    #("lean_name", json.string(node.lean_name)),
-    #("description", json.string(node.description)),
-    #("deps", json.array(node.deps, json.string)),
-    #("status", json.string(status_to_string(node.status))),
-    #("size", json.string(size_to_string(node.size))),
-    #("proof_file", json.nullable(node.proof_file, json.string)),
-    #("attempts", json.array(node.attempts, attempt_to_json)),
-    #("verified", json.nullable(node.verified, json.string)),
-    #("claimed_by", json.nullable(node.claimed_by, json.string)),
-    #("claimed_at", json.nullable(node.claimed_at, json.string)),
-    #("claimed_run", json.nullable(node.claimed_run, json.string)),
-  ])
+  let object = case node.object {
+    Some(o) -> [#("object", json.string(o))]
+    None -> []
+  }
+  json.object(list.append(
+    [
+      #("id", json.string(node.id)),
+      #("region", json.string(node.region)),
+      #("lean_name", json.string(node.lean_name)),
+      #("description", json.string(node.description)),
+      #("deps", json.array(node.deps, json.string)),
+      #("status", json.string(status_to_string(node.status))),
+      #("size", json.string(size_to_string(node.size))),
+      #("proof_file", json.nullable(node.proof_file, json.string)),
+      #("attempts", json.array(node.attempts, attempt_to_json)),
+      #("verified", json.nullable(node.verified, json.string)),
+      #("claimed_by", json.nullable(node.claimed_by, json.string)),
+      #("claimed_at", json.nullable(node.claimed_at, json.string)),
+      #("claimed_run", json.nullable(node.claimed_run, json.string)),
+    ],
+    object,
+  ))
 }
 
 fn dag_to_json(dag: Dag) -> json.Json {

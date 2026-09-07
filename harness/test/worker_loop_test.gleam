@@ -154,6 +154,7 @@ fn a_node() -> dag.Node {
     claimed_by: None,
     claimed_at: None,
     claimed_run: None,
+    object: None,
   )
 }
 

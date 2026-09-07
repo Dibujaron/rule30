@@ -170,12 +170,14 @@ boundary). Three statements, in Cairn's words with Rowan's numbering:
     *Computed*. In principle `decide` on a compact `Nat` row model (item 20);
     kernel evaluation cost unknown; `native_decide` is forbidden. Try
     `p ≤ 16, T₀ ≤ 50, t < 300` first.
-20. **A `Nat` model of rows.** `rowNat 0 = 1`, `rowNat (t+1) = rowNat t ^^^ ((2 * rowNat t) ||| (4 * rowNat t))`,
+20. **A `Nat` model of rows.** `rowNat 0 = 1`, `rowNat (t+1) = (4 * rowNat t) ^^^ ((2 * rowNat t) ||| rowNat t)`,
     with `centerColumn t = testBit (rowNat t) t`; OEIS A110240, A269160.
     Provable consequence: `3 * rowNat n < rowNat (n+1) < 5 * rowNat n` for
     `n ≥ 1` (rows `t ≥ 2` begin `110`). *Stated without proof on OEIS*;
     induction, fiddly bit arithmetic. Its value is as a `decide`-friendly
-    engine, matching what `explorer/` does with BigInt.
+    engine, matching what `explorer/` does with BigInt. The earlier formula
+    here was the mirror image (rule 86) and passed every symmetric check;
+    caught by a kernel `decide` against `evolve` on 2026-09-07.
 21. **Morse–Hedlund reformulation.** If the centre column is eventually
     periodic then its number of distinct length-`n` factors is bounded.
     Classical; induction. A lemma, not a target: the contrapositive premise

@@ -37,6 +37,7 @@ fn node(id: String, size: dag.Size, attempts: List(dag.Attempt)) -> dag.Node {
     claimed_by: None,
     claimed_at: None,
     claimed_run: None,
+    object: None,
   )
 }
 
@@ -193,6 +194,7 @@ fn a_dag() -> dag.Dag {
       claimed_by: None,
       claimed_at: None,
       claimed_run: None,
+      object: None,
     ),
     node("centerColumn_zero", dag.S, [
       Attempt(
