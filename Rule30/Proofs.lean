@@ -14,6 +14,7 @@ module whose node has been retired.
 -/
 import Rule30.Proofs.BoolDrivenEventuallyTwoPeriodic
 import Rule30.Proofs.BoolMapIterateThree
+import Rule30.Proofs.BoolXorDrivenPeriodicFrom
 import Rule30.Proofs.CenterColumnDensityLeOne
 import Rule30.Proofs.CenterColumnDensityNonneg
 import Rule30.Proofs.CenterColumnDensitySucc
@@ -44,5 +45,7 @@ import Rule30.Proofs.IsEventuallyPeriodicShift
 import Rule30.Proofs.NotEvolvePeriodAdjacent
 import Rule30.Proofs.NotIsEventuallyPeriodicAdjacent
 import Rule30.Proofs.NotIsEventuallyPeriodicPair
+import Rule30.Proofs.PeriodicFromMul
+import Rule30.Proofs.RightDiagonalRecurrence
 import Rule30.Proofs.StripEventuallyPeriodic
 import Rule30.Proofs.StripSucc
