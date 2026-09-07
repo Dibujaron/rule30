@@ -19,8 +19,13 @@ import gleam/http/response.{type Response}
 import gleam/int
 import gleam/json
 import gleam/list
+import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
+import harness/guard_event.{
+  type Denial, BuildLockTimeout, Malformed, NotPermitted, NotWritable,
+  Unauthorized,
+}
 import harness/lock
 import harness/log
 import mist
@@ -31,7 +36,7 @@ import simplifile
 ///
 /// `holder` is the **node id**, not an identity: the dispatcher passes
 /// `node_id`, and one attempt sits at one node, so the node id is already a
-/// unique lock name. `event_fields` logs it as `node` so a decision row says
+/// unique lock name. `event` logs it as `node` so a decision row says
 /// which node it came from without the reader having to know which attempt
 /// directory it was found in.
 pub type Rules {
@@ -70,49 +75,6 @@ pub type Guard {
   Guard(port: Int, token: String, settings_path: String)
 }
 
-/// Why a call was refused.
-///
-/// `Deny` used to carry only a sentence. A sentence is for the worker, who
-/// reads it once and changes what it does; it is useless to everything
-/// downstream, which has to *group* denials — and `dispatch.auto_file_signals`
-/// therefore filed one bug per tool, merging a permanent grammar refusal and a
-/// transient lock timeout under the single signature `guard:Bash`. The split
-/// that matters is not what to tell the worker, it is whether retrying the
-/// same call could ever succeed.
-pub type Denial {
-  /// The command is not in the `lake` grammar. Retrying is pointless: the
-  /// worker asked for something it is never allowed to have.
-  NotPermitted
-  /// The path is not the one file this worker may edit. Also permanent.
-  NotWritable
-  /// The build lock did not come free in time. Nothing was wrong with the
-  /// call, and the identical call would very likely succeed later — this is
-  /// the one denial that says nothing about the worker.
-  BuildLockTimeout
-  /// The hook body could not be read or parsed. Neither the worker's fault
-  /// nor a policy refusal: something upstream sent us something we could not
-  /// read, and failing closed is the safe response to that.
-  Malformed
-  /// A bad token, or a request to an endpoint that is not the hook. Should
-  /// never come from a briefed worker at all.
-  Unauthorized
-}
-
-/// A short stable key for one denial, for log rows and bug signatures.
-/// Deliberately not `string.inspect`: an inspect of a constructor is a
-/// rendering that changes when the constructor is renamed, and a signature
-/// that changes silently is how a board stops receiving a class of bug
-/// without anyone noticing.
-pub fn denial_slug(d: Denial) -> String {
-  case d {
-    NotPermitted -> "not_permitted"
-    NotWritable -> "not_writable"
-    BuildLockTimeout -> "build_lock_timeout"
-    Malformed -> "malformed"
-    Unauthorized -> "unauthorized"
-  }
-}
-
 /// What to do with one hook call.
 pub type Decision {
   /// Let the tool call through unchanged.
@@ -121,7 +83,9 @@ pub type Decision {
   AcquireBuild
   /// Block the tool call, and tell Claude Code why. `kind` is for the
   /// record and `reason` is for the worker; they are different audiences and
-  /// collapsing them was the defect.
+  /// collapsing them was the defect. `kind` is `guard_event.Denial`, the
+  /// vocabulary the dispatcher reads the row back in, so a refusal the guard
+  /// can express is one the board can name.
   Deny(kind: Denial, reason: String)
   /// A `lake build` just finished: give the build lock back.
   ReleaseBuild
@@ -564,10 +528,9 @@ fn respond_to_hook(
     Error(_) -> #("", "", "")
   }
   let decision = apply_side_effects(decide(rules, body), rules, lock, log)
-  log.event(
+  guard_event.write(
     log,
-    "guard",
-    event_fields(rules, event_name, tool_name, attempted, decision),
+    event(rules, event_name, tool_name, attempted, decision),
   )
   json_response(200, decision_json(decision, event_name))
 }
@@ -589,10 +552,10 @@ fn attempted_of(hi: HookInput) -> String {
 /// place for it. Long values are cut rather than dropped, and say that they
 /// were: a silently shortened command is a well-formed row that is wrong.
 ///
-/// Applied in `event_fields` rather than where the value is produced. The cap
-/// is a property of the *row*, and enforcing it at one call site left it true
-/// only along the path that call site takes — which a test calling
-/// `event_fields` directly then broke, correctly.
+/// Applied in `event` rather than where the value is produced. The cap is a
+/// property of the *row*, and enforcing it at one call site left it true
+/// only along the path that call site takes — which a test calling `event`
+/// directly then broke, correctly.
 const max_attempted_chars = 400
 
 fn truncate(value: String) -> String {
@@ -602,39 +565,38 @@ fn truncate(value: String) -> String {
   }
 }
 
-/// The fields logged for one guard decision. Pulled out of `respond_to_hook`
+/// The row logged for one guard decision. Pulled out of `respond_to_hook`
 /// so it can be tested without standing up the HTTP server.
 ///
-/// `dispatch.denied_tools` reads these rows back to auto-file guard bugs, so
-/// the key names are a contract with another module, not just a format. Two
-/// of them are load-bearing beyond being present. `denial` is the stable slug
-/// rather than an inspect of the constructor, so a rename cannot silently
-/// change a bug signature; it is `""` for anything that was not a denial,
-/// which is what `dispatch` keys on instead of matching the substring
-/// `"Deny("` inside `decision`. `attempted` is what the worker asked for, so
-/// a filed bug can be read without the transcript.
-pub fn event_fields(
+/// `dispatch.guard_denials` reads these rows back to auto-file guard bugs.
+/// The row's shape is `guard_event`'s, shared with the reader, so the only
+/// choices made here are the values. Two are load-bearing. `denial` is the
+/// typed kind of the refusal, written as its stable slug rather than an
+/// inspect of the constructor, so a rename cannot silently change a bug
+/// signature. `attempted` is what the worker asked for, so a filed bug can
+/// be read without the transcript.
+pub fn event(
   rules: Rules,
   event_name: String,
   tool_name: String,
   attempted: String,
   decision: Decision,
-) -> List(#(String, json.Json)) {
-  [
-    #("node", json.string(rules.holder)),
-    #("event", json.string(event_name)),
-    #("tool", json.string(tool_name)),
-    #("attempted", json.string(truncate(attempted))),
-    #("denial", json.string(denial_of(decision))),
-    #("decision", json.string(string.inspect(decision))),
-  ]
+) -> guard_event.GuardEvent {
+  guard_event.GuardEvent(
+    node: rules.holder,
+    event: event_name,
+    tool: tool_name,
+    attempted: truncate(attempted),
+    denial: denial_of(decision),
+    decision: string.inspect(decision),
+  )
 }
 
-/// The slug for a decision that was a denial, and `""` for one that was not.
-fn denial_of(decision: Decision) -> String {
+/// The denial behind a decision, if it was one.
+fn denial_of(decision: Decision) -> Option(Denial) {
   case decision {
-    Deny(kind:, ..) -> denial_slug(kind)
-    Allow | AcquireBuild | ReleaseBuild | Archive(..) -> ""
+    Deny(kind:, ..) -> Some(kind)
+    Allow | AcquireBuild | ReleaseBuild | Archive(..) -> None
   }
 }
 
