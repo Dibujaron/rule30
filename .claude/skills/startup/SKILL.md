@@ -42,10 +42,12 @@ asking a third who it was.
      "claude_session": "c5c13fe1-1abd-41ec-8957-bd69ec8de0d7" }
    ```
 
-   `role` is `overseer`, `framework`, or `guide`. Dispatched provers are
-   deliberately absent — they are short-lived, the scheduler already holds them
-   as resources, and a message arriving mid-proof would reach a worker as an
-   instruction from outside its brief.
+   `role` is `overseer`, `framework`, or `guide`. Sessions the harness starts
+   — provers, theorists, seeders — are deliberately absent: they are
+   short-lived, the harness already holds them as resources, and a message
+   arriving mid-attempt would reach one as an instruction from outside its
+   brief. They still appear in `ListAgents`, as a bare name with no row, which
+   is why Job 3 below checks the report before messaging anything.
 
    `claude_session` is your Claude session UUID, which is the directory name
    in the scratchpad path your system prompt gives you (the segment between
@@ -71,7 +73,8 @@ Read-only — no fetch, no checkout, no ref moves. Run `git fetch origin --prune
 first if you want the remote columns to be current, but only if no harness run
 is in flight.
 
-It prints four things, each of which is a way work goes missing:
+It prints five things, four of which are ways work goes missing and one of
+which is a way a peer gets contaminated:
 
 | Section | What it means |
 |---|---|
@@ -79,6 +82,7 @@ It prints four things, each of which is a way work goes missing:
 | Branches not merged into `origin/main` | A finding nobody can cite, because it has no sha in `main`. |
 | Worktrees with uncommitted changes | Either someone working right now or someone who died mid-edit — **this cannot tell you which, so ask the session.** |
 | Held claims | A `claimed` DAG node or bug whose holder may be dead. **This is the one that loses a peer rather than losing work** — a session waiting on a claim will not go looking. |
+| Live guarded sessions | Attempts under `runs/` with an event in the last 30 minutes and no `summary.txt`: a prover, theorist or seeder that is live or just was. **Never message one.** It has no row in `agents/sessions.json` by design, so without this section it looks exactly like an unknown session. |
 | Registered sessions | To diff against `ListAgents` by eye. |
 
 **This is the part a dying session could not have done for itself.** It reports
@@ -91,9 +95,16 @@ session runs about every other session can.
 
 Compare `ListAgents` against the roster the script printed.
 
-- **A live ref with no row is an unknown session.** Message it and ask who it
-  is. Do not infer an identity from a session name, and do not assume it is
-  idle.
+- **A live ref with no row, started when a live guarded session did, is that
+  session.** Never message it. The report's *live guarded sessions* section
+  lists every attempt with a recent event and no summary; `ListAgents` gives
+  each ref a start age; match them. On 2026-09-07 a framework session skipped
+  this, messaged a live theorist five minutes after starting, and cost it a
+  turn and a guard denial — with the arrival itself recorded nowhere
+  (`startup-tells-you-to-message-an-unknown-session-and-a-live-theorist-is-one`).
+- **Any other live ref with no row is an unknown session.** Message it and
+  ask who it is. Do not infer an identity from a session name, and do not
+  assume it is idle.
 - **A row with no live session is inert.** Leave it.
 
 Then, before you touch anything shared — `harness/`, `.claude/`, the DAG,
@@ -116,6 +127,7 @@ otherwise" — so the peer can measure the deadline it is being held to.
 |---|---|
 | "I'll register once I know what I'm doing" | Registration is cheap and the session may not get a later moment. Do it first. |
 | "The name in ListAgents tells me who that is" | It tells you an address. Names get recycled; identities do not. Look up the ref. |
+| "No row, so it's an unknown session; the skill says ask" | Or it is a prover, theorist or seeder mid-attempt, which has no row on purpose. Check the live guarded sessions section first; a message into one cannot be taken back and leaves no record. |
 | "That row looks stale, I'll tidy it" | Never delete a row. Nothing reads this file for liveness, so a stale row costs nothing and deleting one can cost a message. |
 | "The report says a worktree is dirty, so someone crashed" | Or someone is typing in it right now. Ask before acting on it. |
 | "No branches are unlanded, so nothing is stranded" | Check the *unpushed* section too. A landed-but-unpushed `main` is the one that bit this project. |

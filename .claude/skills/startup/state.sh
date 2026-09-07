@@ -190,7 +190,50 @@ cat <<'NOTE'
 NOTE
 echo
 
-# --- 5. Who is supposed to be here -------------------------------------------
+# --- 5. Sessions that must not be messaged -----------------------------------
+# A dispatched prover, theorist or seeder is absent from agents/sessions.json
+# by design, so it shows in ListAgents as a bare name with no row — the exact
+# shape Job 3 calls an unknown session and says to message. On 2026-09-07 a
+# framework session did, five minutes after starting, into a live theorist;
+# the arrival left no record, the guard denied the reply, and a turn was
+# lost. The attempt's events.jsonl is the one thing that can tell them
+# apart: a guarded session writes an event per tool call and has no
+# summary.txt until it ends. Five runs from 2026-09-05/06 never wrote a
+# summary at all, so absence of one is not enough on its own; recency is
+# the test, and the window is generous because a theorist can think for a
+# while between calls.
+echo "== LIVE GUARDED SESSIONS (dispatched; absent from sessions.json by design; NEVER message one) =="
+found=0
+runs_root=${STARTUP_RUNS:-runs}
+window_m=30
+now=$(date -u +%s)
+for ev in "$runs_root"/*/*/events.jsonl; do
+  [ -f "$ev" ] || continue
+  attempt=${ev%/events.jsonl}
+  run=${attempt%/*}
+  [ -f "$run/summary.txt" ] && continue
+  [ -f "$attempt/summary.txt" ] && continue
+  last=$(tail -1 "$ev" | grep -oE '"ts": *"[^"]*"' | head -1 | sed 's/.*: *"//; s/"//')
+  [ -n "$last" ] || continue
+  then=$(date -u -d "$last" +%s 2>/dev/null) || continue
+  m=$(( (now - then) / 60 ))
+  [ "$m" -le "$window_m" ] || continue
+  printf '  %-40s last event %s (%s), no summary.txt
+'     "${attempt#"$runs_root"/}" "$last" "$(ago "$last")"
+  found=1
+done
+[ "$found" -eq 0 ] && echo "  (none — no attempt has written an event in the last ${window_m}m without a summary)"
+cat <<'NOTE'
+  Each row is a session started by the harness — a prover, a theorist or a
+  seeder — that is live or was within the window. It has no row in
+  agents/sessions.json and never will. A message to it reaches a worker as
+  an instruction from outside its brief, is recorded nowhere in its events,
+  and cannot be taken back. Match a rowless ListAgents ref against these by
+  start time before treating it as unknown.
+NOTE
+echo
+
+# --- 6. Who is supposed to be here -------------------------------------------
 # Printed so you can diff it against ListAgents by eye. This file cannot know
 # who is alive and does not try; ListAgents is the only authority on that.
 echo "== REGISTERED SESSIONS (agents/sessions.json — NOT a liveness list) =="
@@ -203,5 +246,7 @@ else
 fi
 echo
 echo "Cross-reference these against ListAgents yourself:"
-echo "  * a live ref with no row here is an UNKNOWN SESSION — ask who it is"
+echo "  * a live ref with no row here, started when a LIVE GUARDED SESSION above"
+echo "    did, is that session — never message it"
+echo "  * any other live ref with no row here is an UNKNOWN SESSION — ask who it is"
 echo "  * a row here with no live session is inert, not a problem; never delete it"
