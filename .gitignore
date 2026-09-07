@@ -32,3 +32,6 @@ STOP
 /harness/test/fixture-project/harness/
 /harness/test/fixture-project/Rule30/Proofs/*.lean
 __pycache__/
+
+# Scratch trees the test suite writes and deletes at each run.
+harness/test/tmp/

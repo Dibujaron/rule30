@@ -23,9 +23,11 @@ import gleam/option.{None, Some}
 import gleam/result
 import gleam/set
 import gleam/string
+import harness/config
 import harness/dag
 import harness/seed
 import harness/verify
+import simplifile
 
 /// A theorem's signature: its binders, one string each, exactly as Lean
 /// printed them, and its conclusion. The binders are shown rather than
@@ -40,6 +42,74 @@ pub type Signature {
 /// proof file under `Rule30/Proofs/` as `#(file name, text)`.
 pub type Sources {
   Sources(d: dag.Dag, statements: String, proofs: List(#(String, String)))
+}
+
+/// Where the index lives, relative to the repository root.
+pub const index_path = "blueprint/index.md"
+
+/// The sources under a repository root. The statement file is required:
+/// an index rendered without it would print every open node as
+/// "(no statement found)" and look like a board with no statements rather
+/// than a renderer pointed at the wrong tree.
+pub fn sources_in(
+  repo_root: String,
+  dag_path: String,
+) -> Result(Sources, String) {
+  use d <- result.try(dag.load(dag_path))
+  let statements_path = repo_root <> "/Rule30/Statements.lean"
+  use statements <- result.try(
+    simplifile.read(statements_path)
+    |> result.map_error(fn(e) {
+      "could not read "
+      <> statements_path
+      <> ": "
+      <> simplifile.describe_error(e)
+    }),
+  )
+  let dir = repo_root <> "/Rule30/Proofs"
+  let proofs =
+    simplifile.read_directory(dir)
+    |> result.unwrap([])
+    |> list.filter(string.ends_with(_, ".lean"))
+    |> list.sort(string.compare)
+    |> list.filter_map(fn(name) {
+      simplifile.read(dir <> "/" <> name)
+      |> result.map(fn(text) { #(name, text) })
+      |> result.replace_error(Nil)
+    })
+  Ok(Sources(d:, statements:, proofs:))
+}
+
+/// Render the index from the repository at `repo_root` and write it to
+/// `blueprint/index.md` there. `Ok` is a one-line summary with its
+/// denominator, for the CLI.
+pub fn write_in(repo_root: String, dag_path: String) -> Result(String, String) {
+  use sources <- result.try(sources_in(repo_root, dag_path))
+  let path = repo_root <> "/" <> index_path
+  use _ <- result.try(
+    simplifile.write(path, render(sources))
+    |> result.map_error(fn(e) {
+      "could not write " <> path <> ": " <> simplifile.describe_error(e)
+    }),
+  )
+  let total = list.length(sources.d.nodes)
+  let without = list.count(sources.d.nodes, fn(n) { n.object == None })
+  Ok(
+    "wrote "
+    <> index_path
+    <> ": "
+    <> int.to_string(total)
+    <> " theorems, "
+    <> int.to_string(without)
+    <> " of "
+    <> int.to_string(total)
+    <> " without an object",
+  )
+}
+
+/// `write_in` at the configured repository.
+pub fn write(cfg: config.Config) -> Result(String, String) {
+  write_in(cfg.repo_root, cfg.dag_path)
 }
 
 /// The object vocabulary in the order the spec fixes, each with the heading
@@ -166,7 +236,7 @@ fn entry(
     |> result.try(seed.note_of)
     |> result.try(what_it_says)
     |> result.lazy_or(fn() { docstring_lead(statements, node.lean_name) })
-    |> result.unwrap(node.description)
+    |> result.unwrap(one_line(node.description))
   let #(sig, provenance) = case result.try(proof, checked_type) {
     Ok(text) -> #(signature(text), "")
     Error(Nil) ->

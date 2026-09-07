@@ -20,6 +20,7 @@ import harness/config
 import harness/dag
 import harness/guard
 import harness/guard_event
+import harness/index
 import harness/lock
 import harness/log
 import harness/roster
@@ -580,6 +581,7 @@ fn returned(
         #("node", json.string(node.id)),
         #("module", json.string(dag.proof_module(node))),
         #("file", json.string(proofs_index)),
+        #("theorem_index", json.string(index.index_path)),
       ])
       case run_.env.index(recorded) {
         Ok(Nil) -> Nil
@@ -741,24 +743,31 @@ fn index_proof(
     #("node", json.string(node.id)),
     #("module", json.string(dag.proof_module(node))),
     #("file", json.string(proofs_index)),
+    #("theorem_index", json.string(index.index_path)),
   ])
   write_index(cfg, node)
 }
 
-/// The write behind `index_proof`, without the event.
+/// The write behind `index_proof`, without the event: the `import` line into
+/// `Rule30/Proofs.lean`, then `blueprint/index.md` re-rendered from the
+/// board so the two indexes are always written by the same step. The import
+/// goes first and is never undone by a render failure.
 fn write_index(cfg: config.Config, node: dag.Node) -> Result(Nil, String) {
   let path = cfg.repo_root <> "/" <> proofs_index
   let existing = simplifile.read(path) |> result.unwrap("")
   let updated = with_import(existing, dag.proof_module(node))
-  simplifile.write(path, updated)
-  |> result.map_error(fn(e) {
-    "could not add "
-    <> dag.proof_module(node)
-    <> " to "
-    <> path
-    <> ": "
-    <> simplifile.describe_error(e)
-  })
+  use _ <- result.try(
+    simplifile.write(path, updated)
+    |> result.map_error(fn(e) {
+      "could not add "
+      <> dag.proof_module(node)
+      <> " to "
+      <> path
+      <> ": "
+      <> simplifile.describe_error(e)
+    }),
+  )
+  index.write(cfg) |> result.replace(Nil)
 }
 
 /// `existing` with `import <module>` present exactly once, the imports

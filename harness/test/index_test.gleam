@@ -5,6 +5,7 @@ import gleam/string
 import harness/dag.{type Node, Dag, Node}
 import harness/index.{Signature}
 import harness/verify
+import simplifile
 
 const note = "**What this says.** The left edge is black at every time.
 **Why it is true.** Its left neighbour is outside the cone.
@@ -320,6 +321,60 @@ pub fn render_is_deterministic_test() {
   let s = index.Sources(d:, statements: "", proofs: [])
   assert index.render(s) == index.render(s)
   assert position(index.render(s), "### a") < position(index.render(s), "### b")
+}
+
+pub fn entry_folds_a_multi_line_dag_description_onto_one_line_test() {
+  // No proof file, no docstring: the fallback is the DAG's own `description`,
+  // and it must be joined onto one line like the other two sources are.
+  let d = Dag([node("no_source", [], dag.S)])
+  let assert Ok(n) = dag.get(d, "no_source")
+  let d = dag.update(d, dag.Node(..n, description: "line one\nline two"))
+  let text = index.render(index.Sources(d:, statements: "", proofs: []))
+  assert string.contains(text, "**What this says.** line one line two\n")
+}
+
+pub fn write_in_renders_the_index_from_a_repository_root_test() {
+  let root = "test/tmp/index-root"
+  let _ = simplifile.delete(root)
+  let assert Ok(Nil) = simplifile.create_directory_all(root <> "/Rule30/Proofs")
+  let assert Ok(Nil) = simplifile.create_directory_all(root <> "/blueprint")
+  let assert Ok(Nil) =
+    simplifile.write(
+      root <> "/Rule30/Statements.lean",
+      "/-- **The probe.** -/\ntheorem harness_probe : True := by\n  sorry\n",
+    )
+  let assert Ok(Nil) =
+    simplifile.write(
+      root <> "/Rule30/Proofs/HarnessProbe.lean",
+      "import Rule30.Basic\n\n/-!\n**What this says.** True is true.\n**Why it is true.** By `trivial`.\n**Where the work is.** Nowhere.\n-/\n\ntheorem harness_probe : True := by\n  trivial\n",
+    )
+  let assert Ok(Nil) =
+    simplifile.write(
+      root <> "/blueprint/dag.json",
+      "{\"nodes\": [{\"id\": \"harness_probe\", \"region\": \"P1\", \"lean_name\": \"harness_probe\", \"description\": \"d\", \"deps\": [], \"status\": \"proved\", \"size\": \"S\", \"proof_file\": \"Rule30/Proofs/HarnessProbe.lean\", \"attempts\": [], \"verified\": null, \"claimed_by\": null, \"claimed_at\": null, \"claimed_run\": null, \"object\": \"bookkeeping\"}]}",
+    )
+  let assert Ok(summary) = index.write_in(root, root <> "/blueprint/dag.json")
+  assert string.contains(summary, "blueprint/index.md")
+  assert string.contains(summary, "1 theorems")
+  let assert Ok(text) = simplifile.read(root <> "/blueprint/index.md")
+  assert string.contains(text, "## Bookkeeping")
+  assert string.contains(text, "**What this says.** True is true.")
+  assert string.contains(text, "**Conclusion.** `True`")
+  assert string.contains(text, "(seeded statement; not yet checked)")
+  // Rendering again is byte-identical: nothing in the file is a clock.
+  let assert Ok(_) = index.write_in(root, root <> "/blueprint/dag.json")
+  let assert Ok(again) = simplifile.read(root <> "/blueprint/index.md")
+  assert again == text
+}
+
+pub fn write_in_refuses_a_root_with_no_statement_file_test() {
+  let root = "test/tmp/index-empty"
+  let _ = simplifile.delete(root)
+  let assert Ok(Nil) = simplifile.create_directory_all(root <> "/blueprint")
+  let assert Ok(Nil) =
+    simplifile.write(root <> "/blueprint/dag.json", "{\"nodes\": []}")
+  let assert Error(reason) = index.write_in(root, root <> "/blueprint/dag.json")
+  assert string.contains(reason, "Statements.lean")
 }
 
 fn position(text: String, needle: String) -> Int {
