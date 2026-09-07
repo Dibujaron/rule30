@@ -1454,3 +1454,49 @@ spend nothing and save a turn per attempt.
 **One parsing note from Cadence worth keeping:** in Lean, `=` binds tighter
 than `||`, so `show a || b = c || d` parses as `a || (b = c) || d`; the fix
 is parentheses, and the failure is silent until the goal does not match.
+
+## 2026-09-07T15:20:00Z — the first seeded tier, proposed at 14:49Z and proved by 15:14Z
+
+The seeder (`runs/20260907T144906Z`, opus, 26 turns, $3.83) proposed five
+nodes under the two left-diagonal walls; Dib approved all five; run
+`20260907T150429Z` closed all five in nine and a half minutes for $2.23,
+three on haiku and two on sonnet. From "nothing dispatchable on the board"
+to "five new theorems, verified" in twenty-five minutes of wall clock and
+about six dollars, with a human decision in the middle. That is the
+harness doing the thing it was built to do, for the first time end to end.
+
+**What I was wrong about.** My own ranking for this tier was a parity
+lemma: the XOR of the driver over one period is shift-invariant, and the
+period doubles when it is odd. Correct, and the seeder found something
+better — a *reset*: when the upper diagonal is black the OR is true and the
+one-bit machine forgets its state, so the period stays `q` and the onset is
+the reset point, no parity needed. It then measured the consequence to
+`k = 430`: the eventually-white left diagonals are 2, 7, 28, 399 and the
+doublings are at 3, 8, 29, 400, which is the NKS table reproduced from the
+criterion alone. A stronger idea than mine, found by a session that read
+the wall's own description and the provers' notes. The lesson is not "the
+seeder is smart"; it is that the wall descriptions are load-bearing and
+the effort spent writing them last night paid at the first draw.
+
+**What the walls are now.** `leftDiagonal_period_le` reads "count the
+eventually-white left diagonals", which is a question about where a
+diagonal is black and not about periods; `leftDiagonal_onset_le` reads
+"bound the index of the first black cell past the onset", measured at 8 or
+less. Both honestly open, both sharper than they were this morning.
+
+**Two guard rows, before and after.** `guard-denied-bash-not-permitted-3`
+counted 12 occurrences across the two runs before Keel's brief sentences
+landed; this run, with the sentences live, produced one. Same test Keel
+named. The other new row is one Edit of `Rule30/Proofs.lean`, also down
+from the last run.
+
+**P2.** Dib asked why Emmy has been idle and whether we are all-in on P1.
+The answer is that P2 has no ladder in print, and our own axiom
+allowlist forbids the one kind of fact P2 has, computed ones, since
+`native_decide` adds `Lean.ofReduceBool`. What P2 can carry is written
+into the density section of `blueprint/crystals.md` as a tier
+specification: a bridge to P1 (an eventually periodic sequence has a
+convergent density), balance for random rows in finite form (after `t`
+steps exactly half of all windows give a black centre cell, by
+left-permutivity of `F^t`), and count-form reformulations. Keel is adding
+`seed --region P2`; the seeder runs on that sha.

@@ -1,0 +1,15 @@
+
+node      leftDiagonal_step_period_dichotomy
+identity  Vesper
+model     sonnet
+outcome   proved
+cost      $0.61
+turns     12
+estimate  S
+session   7c97598c-13bc-496e-a629-e6f5db34570f
+log       c:/Users/dibuj/dev/rule30/runs/20260907T150429Z/leftDiagonal_step_period_dichotomy-1
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Vesper (#2b3a67): closed 31, abandoned 1, $12.61, calibration 26/31

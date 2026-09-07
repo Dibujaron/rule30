@@ -13,6 +13,8 @@ and skipping a line that is already present. Edit it by hand only to remove a
 module whose node has been retired.
 -/
 import Rule30.Proofs.BoolDrivenEventuallyTwoPeriodic
+import Rule30.Proofs.BoolDrivenPeriodicFromOfReset
+import Rule30.Proofs.BoolDrivenPeriodicFromOfReturn
 import Rule30.Proofs.BoolMapIterateThree
 import Rule30.Proofs.BoolXorDrivenPeriodicFrom
 import Rule30.Proofs.CenterColumnDensityLeOne
@@ -44,6 +46,9 @@ import Rule30.Proofs.IsEventuallyPeriodicOfPeriodicStep
 import Rule30.Proofs.IsEventuallyPeriodicShift
 import Rule30.Proofs.LeftDiagonalPeriodicFromPow
 import Rule30.Proofs.LeftDiagonalPeriodicFromStep
+import Rule30.Proofs.LeftDiagonalPeriodicFromStepOfBlack
+import Rule30.Proofs.LeftDiagonalRecurrence
+import Rule30.Proofs.LeftDiagonalStepPeriodDichotomy
 import Rule30.Proofs.NotEvolvePeriodAdjacent
 import Rule30.Proofs.NotIsEventuallyPeriodicAdjacent
 import Rule30.Proofs.NotIsEventuallyPeriodicPair

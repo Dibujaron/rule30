@@ -1,0 +1,8 @@
+
+leftDiagonal_recurrence           Cadence  haiku   proved            $0.24   17 turns
+bool_driven_periodicFrom_of_returnVesper   haiku   proved            $0.30   13 turns
+bool_driven_periodicFrom_of_reset Vesper   haiku   proved            $0.34   14 turns
+leftDiagonal_periodicFrom_step_of_blackVesper   sonnet  proved            $0.74   16 turns
+leftDiagonal_step_period_dichotomyVesper   sonnet  proved            $0.61   12 turns
+
+5 attempt(s), 5 closed, $2.23 in all

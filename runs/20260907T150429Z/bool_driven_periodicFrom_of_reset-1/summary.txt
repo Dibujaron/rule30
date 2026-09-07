@@ -1,0 +1,15 @@
+
+node      bool_driven_periodicFrom_of_reset
+identity  Vesper
+model     haiku
+outcome   proved
+cost      $0.34
+turns     14
+estimate  S
+session   0019aec5-dea6-42bd-ad0c-796990e69938
+log       c:/Users/dibuj/dev/rule30/runs/20260907T150429Z/bool_driven_periodicFrom_of_reset-1
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Vesper (#2b3a67): closed 29, abandoned 1, $11.27, calibration 26/29

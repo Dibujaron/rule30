@@ -225,14 +225,73 @@ boundary). Three statements, in Cairn's words with Rowan's numbering:
 
 ## Density (P2) — what exists
 
+Read this section as the specification of a P2 tier. P2 has four proved
+nodes (`centerColumn_zero`, `centerColumnDensity_nonneg`,
+`centerColumnDensity_le_one`, `centerColumnDensity_succ`), every one of
+them `Finset.card` bookkeeping that never touches the automaton, and
+nothing open. Nothing in print proves anything about the centre column's
+density, for rule 30 or for any chaotic rule; what is known is computed.
+**One rule of this project closes off the computed facts:** a computed
+fact becomes a Lean theorem only through `native_decide`, whose axiom
+`Lean.ofReduceBool` is outside the allowlist (`propext`, `Classical.choice`,
+`Quot.sound`), and kernel evaluation of `evolve` stops being usable at
+depth about 18. So "the first million centre cells are balanced to one per
+cent" cannot be a node, however true. Do not propose it. What can be
+proposed is below: bridges to P1, balance for random rows, and
+reformulations, all provable, none of them the prize.
+
 29. **Row density** (OEIS A070952): purely empirical, `b(t)/t ∈ [0.85, 1.16]`
     for `100 ≤ t < 1100`; no proved asymptotic anywhere. Only `b(t) ≥ 3` for
-    `t ≥ 1` is trivially provable.
+    `t ≥ 1` and `b(t) ≤ 2t + 1` (the cone) are provable, and neither is
+    worth a node.
 30. **XOR lemma for random initial conditions.** For an i.i.d. fair initial
     configuration, `P(evolve t 0 = 1) = 1/2` for all `t ≥ 1` under any
     left-permutive rule. Chan-López & Martín-Ruiz, arXiv:2604.00165 (2026),
     Theorem 3. *Proved*, two lines; statable with Mathlib probability. Says
-    nothing about the single-cell case.
+    nothing about the single-cell case. Its finite form is item 34, which
+    needs no probability at all.
+31. **Bridge to P1: an eventually periodic sequence has a convergent
+    density.** If `IsEventuallyPeriodic f` then the running density of `f`
+    converges, to (black cells in one period) / (period), a rational. In the
+    direction P1 would cite: a centre column whose density does not converge
+    is not eventually periodic. *Folklore*; the count over `N` terms of a
+    `PeriodicFrom f p N0` sequence is `(N / p) * r` up to a bounded error,
+    which is induction, and the limit is then `Filter.Tendsto` over a
+    floor-division bound, which is real math in Lean. Two nodes: the count
+    bound (S–M, pure `Nat`) and the limit (M, real analysis). The first
+    node in P2 that would be cited from P1.
+32. **The limit in count form.** `Tendsto centerColumnDensity atTop (nhds (1/2))`
+    is equivalent to `∀ ε > 0, ∃ N0, ∀ N ≥ N0, |2 * count N - N| ≤ ε * N`
+    where `count N` is the black-cell count in `range N`. *Trivial* from
+    `Metric.tendsto_atTop` and one division; worth a node because every
+    later P2 statement can then be stated over `count` in `ℕ` and never
+    divide, the way `centerColumnDensity_succ` already had to be multiplied
+    through by `N`.
+33. **Count over a window.** `count (N + k) = count N + (black cells in
+    [N, N + k))` and `count (N + k) - count N ≤ k`. *Trivial*; induction on
+    `k` from `centerColumnDensity_succ`'s card recurrence. Supply for 31.
+34. **Balance for random rows, finite form: after `t` steps, exactly half of
+    all windows give a black centre cell.** Over the `2^(2t+1)` assignments
+    of the cells at positions `-t..t`, exactly `2^(2t)` make `evolve t 0`
+    black. *Proved* in effect by left-permutivity: `F^t` is left-permutive
+    with left radius `t` (item 24), so flipping the leftmost cell of the
+    window flips the output, and the assignments pair off. Needs two
+    definitions or lemmas not yet in `Rule30/Basic.lean`: that `evolve t x 0`
+    depends only on `x` restricted to `[-t, t]` (the cone lemma for an
+    arbitrary configuration, not just the single seed), and a window type
+    to count over. Difficulty M–L; the most interesting statement P2 can
+    carry, and the reason one half is the expected answer. **Disclaimer to
+    land with it:** the single black cell is one window out of `2^(2t+1)`,
+    the least random one, and this says nothing about it.
+35. **Left-permutivity of the local rule.** For fixed centre and right
+    inputs, the two values of the left input give the two different
+    outputs; equivalently exactly 4 of the 8 local inputs give black.
+    *Trivial* (`decide`); the base of 34 and of crystal 3.
+36. **Every word has exactly 4 preimages** (crystal 3, in its P2 role): rule
+    30 maps the uniform distribution on words of length `n + 2` onto the
+    uniform distribution on words of length `n`. A random row stays random.
+    *Proved* (Hedlund 1969; Wolfram 1986 §4); induction on `n`, solving
+    leftward by 35. Difficulty M. Shares its induction with 34.
 
 ## Not credible or not verified
 
