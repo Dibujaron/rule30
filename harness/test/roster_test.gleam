@@ -134,6 +134,24 @@ pub fn naming_prompt_asks_for_a_colour_and_its_reason_test() {
   assert string.contains(p, "#rrggbb")
 }
 
+pub fn naming_prompt_asks_a_theory_mint_to_name_itself_as_a_theorist_test() {
+  let alone =
+    roster.naming_prompt("theory", roster.region_description("theory"), [])
+  assert string.contains(alone, "a small team of theorists")
+  assert !string.contains(alone, "prover")
+  let joined =
+    roster.naming_prompt("theory", roster.region_description("theory"), [
+      "Aster",
+    ])
+  assert string.contains(
+    joined,
+    "This region already has a theorist named Aster.",
+  )
+  assert !string.contains(joined, "prover")
+  let prover = roster.naming_prompt("P1", roster.region_description("P1"), [])
+  assert string.contains(prover, "a small team of provers")
+}
+
 pub fn naming_prompt_names_the_siblings_when_the_region_has_them_test() {
   let alone = roster.naming_prompt("P2", roster.region_description("P2"), [])
   assert !string.contains(alone, "already")
