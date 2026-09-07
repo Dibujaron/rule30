@@ -812,6 +812,83 @@ theorem centerColumn_excess_interpolate (M N : ℕ) (h : M ≤ N) :
         + ((N : ℤ) - (M : ℤ)) := by
   sorry
 
+/-! ## P1 — the half-lines and the sideways solve: the seam at the origin
+
+Seeded 2026-09-07 from blueprint/crystals.md items 38–40, after Sextant's
+second attack on centerColumn_other_isEventuallyPeriodic_of_center. The
+definitions are in Rule30/Basic.lean under "The two half-lines and the
+sideways solve". Each half of the picture is driven by the centre column
+alone; columns 0 and 1 rebuild everything to their left; and the rule at
+the origin splits by the centre's colour, deleting column 1 at black times
+and prescribing it at white ones. -/
+
+/-- **The left half-line is exact.** Grown from the true left side of any
+row with the true centre column as its boundary, it reproduces every cell
+left of the origin at every time: a cell at `x ≤ -1` never reads anything
+right of position `0`. Induction on `t`, generalising `k`, with `rule30_eq`
+at each cell and `evolveFrom_succ` to read one more step; the `k = 0` case
+is where the boundary is read. -/
+theorem evolveHalfLeft_eq_column (X : Config) (t k : ℕ) :
+    evolveHalfLeft (column X 0) (fun k => X (-((k : ℤ) + 1))) t k
+      = column X (-((k : ℤ) + 1)) t := by
+  sorry
+
+/-- **The right half-line is exact.** The mirror of `evolveHalfLeft_eq_column`
+for the cells right of the origin: a cell at `x ≥ 1` never reads anything
+left of position `0`. Same induction on `t` generalising `k`, with one
+asymmetry a blind mirroring gets wrong: on this side the boundary `c t` is
+the *left* argument of the `xor`, not a disjunct inside the `||`, because
+position `0` is the left neighbour of position `1`. -/
+theorem evolveHalfRight_eq_column (X : Config) (t k : ℕ) :
+    evolveHalfRight (column X 0) (fun k => X ((k : ℤ) + 1)) t k
+      = column X ((k : ℤ) + 1) t := by
+  sorry
+
+/-- **The sideways solve is exact.** Columns `0` and `1` of any row rebuild
+every column to their left: `leftSolve` at `k` is column `-k`. Two-step
+induction on `k`, generalising `t` (the `k + 2` case uses the hypothesis at
+`k + 1` at time `t + 1` as well as at `t`), from `sideways_inverse` at
+position `-k`, reading `rule30 (evolveFrom X t)` as `evolveFrom X (t + 1)`
+by `evolveFrom_succ`. -/
+theorem leftSolve_eq_column (X : Config) (k t : ℕ) :
+    leftSolve (column X 0) (column X 1) k t = column X (-(k : ℤ)) t := by
+  sorry
+
+/-- **At a black centre cell the next centre cell is the complement of the
+cell to its left**, and column `1` plays no part. `sideways_inverse` at
+`i = 0` with the centre `true`, so the OR is `true` and the XOR is a
+negation. -/
+theorem column_succ_of_black (X : Config) (t : ℕ) (h : column X 0 t = true) :
+    column X 0 (t + 1) = !(column X (-1) t) := by
+  sorry
+
+/-- **At a white centre cell, column `1` is forced** by the centre column
+and column `-1`: `sideways_inverse` at `i = 0` with the centre `false`, so
+the OR is column `1` alone and the equation can be solved for it. -/
+theorem column_one_of_white (X : Config) (t : ℕ) (h : column X 0 t = false) :
+    column X 1 t = xor (column X 0 (t + 1)) (column X (-1) t) := by
+  sorry
+
+/-- **A row is rigid from the right.** Two rows that agree everywhere right
+of the origin and have the same centre column are the same row. If they
+differed, `Function.ne_iff` gives a differing position, which is `≤ 0` by
+`hright`; take the least `m` with a difference at `-m` (`Nat.find`, since
+`Bool` equality is decidable): every position right of `-m` agrees, so
+`rightmost_difference_moves_right` carries the difference to the origin in
+`m` steps, where the centre columns would differ. -/
+theorem config_eq_of_right_and_column (X Y : Config)
+    (hright : ∀ k : ℕ, X ((k : ℤ) + 1) = Y ((k : ℤ) + 1))
+    (hcol : ∀ t : ℕ, column X 0 t = column Y 0 t) :
+    X = Y := by
+  sorry
+
+/-- **The seed's own black-time law.** `column_succ_of_black` on the single
+seed: whenever the centre cell is black, the next centre cell is the
+complement of the cell just left of centre. -/
+theorem centerColumn_succ_of_black (t : ℕ) (h : centerColumn t = true) :
+    centerColumn (t + 1) = !(evolve t (-1)) := by
+  sorry
+
 /-- A trivially true statement that exists only so the harness's verifier
 tests have something to prove without touching a real node's proof file. It
 is deliberately absent from `blueprint/dag.json`. -/

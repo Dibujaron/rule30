@@ -222,3 +222,73 @@ error that is easy to make here (the mirror image is rule 86 and passes
 every symmetric check). The general statement is `rowCell_eq_evolve`. -/
 example : ∀ t : Fin 7, ∀ x : Fin 13, rowCell t ((x : ℤ) - 6) = evolve t ((x : ℤ) - 6) := by
   decide
+
+/-! ## The two half-lines and the sideways solve
+
+Each half of the picture is driven by the centre column alone. A cell at
+position `x ≥ 1` reads only positions `x - 1`, `x`, `x + 1`, all `≥ 0`, so
+the right half `x ≥ 1`, given its own row 0 and the centre column as a
+boundary, evolves without ever looking left of the origin; the left half is
+the mirror. And columns 0 and 1 together determine everything to their
+left, one column per step of `sideways_inverse`. The three definitions below
+make these views into functions of `ℕ` alone, so they can be stated and
+computed without a `Config`; the agreement theorems in `Statements.lean`
+tie each back to `column`.
+
+In TypeScript terms, `evolve` is a loop over the whole infinite row, and
+`evolveHalfLeft c w` is the same loop over a half-open array whose closed
+end reads `c t` instead of a neighbour. The seam is that the boundary is a
+*given* sequence here, not something the loop computes — which is exactly
+why the half-line can be fed a boundary that no row would produce. -/
+
+/-- The left half-line: `evolveHalfLeft c w t k` is the cell at position
+`-(k + 1)` after `t` steps, grown from row 0 `w` (`w k` is the cell at
+`-(k + 1)`) with the boundary column `c` standing in for position `0`. -/
+def evolveHalfLeft (c w : ℕ → Bool) : ℕ → ℕ → Bool
+  | 0, k => w k
+  | t + 1, 0 => xor (evolveHalfLeft c w t 1) (evolveHalfLeft c w t 0 || c t)
+  | t + 1, k + 1 =>
+      xor (evolveHalfLeft c w t (k + 2))
+        (evolveHalfLeft c w t (k + 1) || evolveHalfLeft c w t k)
+
+/-- The right half-line: `evolveHalfRight c y t k` is the cell at position
+`k + 1` after `t` steps, grown from row 0 `y` (`y k` is the cell at `k + 1`)
+with the boundary column `c` standing in for position `0`. -/
+def evolveHalfRight (c y : ℕ → Bool) : ℕ → ℕ → Bool
+  | 0, k => y k
+  | t + 1, 0 => xor (c t) (evolveHalfRight c y t 0 || evolveHalfRight c y t 1)
+  | t + 1, k + 1 =>
+      xor (evolveHalfRight c y t k)
+        (evolveHalfRight c y t (k + 1) || evolveHalfRight c y t (k + 2))
+
+/-- The sideways solve: `leftSolve c d k t` is the cell at position `-k` at
+time `t`, rebuilt from column `0` (`c`) and column `1` (`d`) alone by
+`sideways_inverse`, one column per step leftward: the cell at `-(k + 1)` is
+the cell at `-k` one step later, XOR (the cell at `-k` OR the cell at
+`-k + 1`). Column `1` is read only in the first step. -/
+def leftSolve (c d : ℕ → Bool) : ℕ → ℕ → Bool
+  | 0, t => c t
+  | 1, t => xor (c (t + 1)) (c t || d t)
+  | k + 2, t =>
+      xor (leftSolve c d (k + 1) (t + 1))
+        (leftSolve c d (k + 1) t || leftSolve c d k t)
+
+/-- The three models agree with the row model on the single seed for the
+first steps. Kernel computations kept in the file as guards against an
+orientation error (a mirrored half-line passes every symmetric check); the
+general statements are `evolveHalfLeft_eq_column`, `evolveHalfRight_eq_column`
+and `leftSolve_eq_column`. -/
+example : ∀ t : Fin 8, ∀ k : Fin 8,
+    evolveHalfLeft (fun t => rowCell t 0) (fun _ => false) t k
+      = rowCell t (-((k : ℤ) + 1)) := by
+  decide
+
+example : ∀ t : Fin 8, ∀ k : Fin 8,
+    evolveHalfRight (fun t => rowCell t 0) (fun _ => false) t k
+      = rowCell t ((k : ℤ) + 1) := by
+  decide
+
+example : ∀ k : Fin 7, ∀ t : Fin 7,
+    leftSolve (fun t => rowCell t 0) (fun t => rowCell t 1) k t
+      = rowCell t (-(k : ℤ)) := by
+  decide
