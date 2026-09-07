@@ -10,7 +10,11 @@
 //// The model ladder also lives here: the cheapest model that could
 //// plausibly close a node goes first, and a failed attempt escalates. The
 //// ladder is keyed to node size, never to identity — an identity is a
-//// notebook, and the notebook is what spans models.
+//// notebook, and the notebook is what spans models. The ladder is a cost
+//// optimiser, and for a research node (`dag.Node.research`) its top rung
+//// is repeatable: once the cheap rungs are spent every further attempt is
+//// at the top, under the research budget, and the node is never abandoned
+//// for having exhausted the ladder.
 
 import envoy
 import gleam/float
@@ -32,6 +36,13 @@ import simplifile
 /// Gitignored — committing it would halt every run. The dispatcher reads
 /// this field and nothing else, so a test fixture that redirects it into
 /// its own directory cannot halt a live run, whatever its `repo_root` is.
+///
+/// `max_turns` and `max_budget_usd` are the ceilings one ordinary attempt
+/// runs under. `research_max_turns` and `research_max_budget_usd` replace
+/// them for an attempt at the top rung of a research node
+/// (`for_attempt`): a probe that fails cheaply is what the ladder is for,
+/// but a search at a node nobody knows the proof of needs room to leave
+/// partial structure behind, and forty turns is not room.
 pub type Config {
   Config(
     repo_root: String,
@@ -48,6 +59,8 @@ pub type Config {
     guard_port: Int,
     max_turns: Int,
     max_budget_usd: Float,
+    research_max_turns: Int,
+    research_max_budget_usd: Float,
     turn_timeout_ms: Int,
     max_verify_rounds: Int,
     rate_limit_ceiling: Float,
@@ -87,30 +100,100 @@ pub fn load() -> Result(Config, String) {
     guard_port: env_int("HARNESS_GUARD_PORT", 4130),
     max_turns: env_int("HARNESS_MAX_TURNS", 40),
     max_budget_usd: env_float("HARNESS_MAX_BUDGET_USD", 4.0),
+    // Three times the turns of an ordinary attempt, on a model priced at
+    // about twice the rung below it: the dollar ceiling is sized so that the
+    // turn ceiling, not the dollar one, is what ends a research attempt.
+    research_max_turns: env_int("HARNESS_RESEARCH_MAX_TURNS", 120),
+    research_max_budget_usd: env_float("HARNESS_RESEARCH_MAX_BUDGET_USD", 20.0),
     turn_timeout_ms: env_int("HARNESS_TURN_TIMEOUT_MS", 900_000),
     max_verify_rounds: env_int("HARNESS_MAX_VERIFY_ROUNDS", 4),
     rate_limit_ceiling: env_float("HARNESS_RATE_LIMIT_CEILING", 0.9),
   ))
 }
 
-/// The models to try at a node of this size, cheapest first. `Wall` is
-/// never dispatched, so its ladder is empty.
+/// The models to try at a node of this size, cheapest first, ending on the
+/// strongest model the CLI offers. `Wall` is never dispatched, so its
+/// ladder is empty.
 pub fn ladder(size: dag.Size) -> List(String) {
   case size {
-    dag.S -> ["haiku", "sonnet", "opus"]
-    dag.M -> ["sonnet", "opus"]
-    dag.L -> ["opus"]
+    dag.S -> ["haiku", "sonnet", "opus", "fable"]
+    dag.M -> ["sonnet", "opus", "fable"]
+    dag.L -> ["opus", "fable"]
     dag.Wall -> []
   }
 }
 
 /// The model for the next attempt at a node of this size, given how many
-/// attempts have already failed there. `Error(Nil)` means the ladder is
-/// exhausted and the node should be abandoned.
-pub fn model_for(size: dag.Size, failed_attempts: Int) -> Result(String, Nil) {
-  ladder(size)
-  |> list.drop(failed_attempts)
+/// attempts have already failed there (`failed_attempts`). Every rung gets
+/// one attempt, and `Error(Nil)` means the ladder is exhausted and the node
+/// should be abandoned — except at a `research` node, where the top rung is
+/// repeatable: once the lower rungs are spent every further attempt is at
+/// the top, and the only `Error` is a `Wall`, whose ladder is empty.
+pub fn model_for(
+  size: dag.Size,
+  failed_attempts: Int,
+  research research: Bool,
+) -> Result(String, Nil) {
+  let rungs = ladder(size)
+  let step = case research {
+    True -> int.min(failed_attempts, list.length(rungs) - 1)
+    False -> failed_attempts
+  }
+  rungs
+  |> list.drop(step)
   |> list.first
+}
+
+/// Is the next attempt at `node` a research attempt: the node is marked
+/// `research` and its ladder's lower rungs are spent, so the attempt is at
+/// the repeatable top rung. This is the one predicate behind the research
+/// budget (`for_attempt`) and the scheduler's preference for a persona that
+/// has not tried the node yet (`schedule.who_for_node`).
+pub fn on_research_rung(node: dag.Node) -> Bool {
+  node.research
+  && failed_attempts(node) >= list.length(ladder(node.size)) - 1
+  && ladder(node.size) != []
+}
+
+/// The configuration the next attempt at `node` runs under: `cfg` as it
+/// is, or with the research ceilings in place of the ordinary ones when
+/// `on_research_rung`. Everything else — paths, ports, timeouts — is the
+/// run's and does not change per attempt.
+pub fn for_attempt(cfg: Config, node: dag.Node) -> Config {
+  case on_research_rung(node) {
+    True ->
+      Config(
+        ..cfg,
+        max_turns: cfg.research_max_turns,
+        max_budget_usd: cfg.research_max_budget_usd,
+      )
+    False -> cfg
+  }
+}
+
+/// How many attempts at this node count against its model ladder: the two
+/// outcomes that mean a model was given the node and could not close it.
+///
+/// A `RateLimited` or `TimedOut` attempt is a pause, not a verdict on the
+/// model — the spec's line is that nothing is lost to a rate limit. Counting
+/// one would escalate the ladder for free and, at an ordinary `L` node,
+/// spend a rung the node never got. A `HarnessFailed` attempt is not a
+/// verdict on anything: the harness broke it, and escalating on it would
+/// manufacture the very evidence of difficulty it does not carry.
+pub fn failed_attempts(node: dag.Node) -> Int {
+  list.count(node.attempts, fn(a) { burns_a_rung(a.outcome) })
+}
+
+/// Does an attempt that ended this way spend a rung of the ladder.
+pub fn burns_a_rung(o: dag.Outcome) -> Bool {
+  case o {
+    dag.GaveUp | dag.BudgetExhausted -> True
+    dag.Closed
+    | dag.Reduced
+    | dag.RateLimited
+    | dag.TimedOut
+    | dag.HarnessFailed -> False
+  }
 }
 
 /// The repo root when `HARNESS_REPO_ROOT` is unset: the parent of the

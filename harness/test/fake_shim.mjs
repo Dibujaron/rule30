@@ -19,6 +19,9 @@
 //                         real shim kills claude's process tree. A test that
 //                         sees this marker knows the child is gone rather
 //                         than orphaned.
+//   HARNESS_FAKE_ARGS     optional path. Written at startup with the JSON
+//                         array of arguments this process was given, so a
+//                         test can see the `--max-turns` the harness chose.
 //   HARNESS_FAKE_IGNORE_EOF  when set, `__EOF__` is recorded but not obeyed,
 //                         so a test can drive the harness's escalation from
 //                         "close politely" to "kill".
@@ -37,6 +40,12 @@ const scriptPath = process.env.HARNESS_FAKE_SCRIPT;
 const markerPath = process.env.HARNESS_FAKE_MARKER;
 const killedPath = process.env.HARNESS_FAKE_KILLED;
 const ignoreEof = !!process.env.HARNESS_FAKE_IGNORE_EOF;
+const argsPath = process.env.HARNESS_FAKE_ARGS;
+
+// The one thing recorded about the ignored arguments: what they were. A
+// test that sets HARNESS_FAKE_ARGS can then prove which ceilings the
+// harness actually launched the session under.
+if (argsPath) writeFileSync(argsPath, JSON.stringify(process.argv.slice(2)));
 
 if (!scriptPath) {
   process.stderr.write("fake_shim: HARNESS_FAKE_SCRIPT is not set\n");

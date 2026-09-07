@@ -255,7 +255,7 @@ fn attempt(
   estimate: dag.Size,
   cost: Float,
 ) -> dag.Attempt {
-  at_rung("opus", who, outcome, estimate, cost)
+  at_rung("fable", who, outcome, estimate, cost)
 }
 
 fn at_rung(
@@ -300,6 +300,7 @@ fn node_with(
     claimed_at: None,
     claimed_run: None,
     object: None,
+    research: False,
   )
 }
 

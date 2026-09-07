@@ -25,6 +25,7 @@ fn node(
     claimed_at: None,
     claimed_run: None,
     object: None,
+    research: False,
   )
 }
 
@@ -75,6 +76,7 @@ pub fn round_trip_json_test() {
         claimed_at: Some("2026-09-07T03:00:00Z"),
         claimed_run: Some("20260907T030000Z"),
         object: Some("row"),
+        research: False,
       ),
     ])
   let assert Ok(back) = dag.decode(dag.encode(d))
@@ -116,6 +118,9 @@ pub fn a_node_without_an_object_decodes_to_none_and_stays_keyless_test() {
   let assert Ok(n) = dag.get(d, "plain")
   assert n.object == None
   assert !string.contains(dag.encode(d), "object")
+  // The same for `research`: absent is an ordinary node, and stays absent.
+  assert n.research == False
+  assert !string.contains(dag.encode(d), "research")
   let assert Ok(again) = dag.decode(dag.encode(d))
   assert again == d
 }
@@ -234,4 +239,26 @@ pub fn served_is_proved_only_test() {
   let d =
     Dag([node("a", [], dag.Proved, dag.S), node("b", [], dag.Open, dag.S)])
   assert list.map(dag.served(d), fn(n) { n.id }) == ["a"]
+}
+
+pub fn a_research_node_keeps_its_mark_through_a_save_test() {
+  // The captain marks a node `research` by hand; the harness only carries
+  // the mark, and a save must write it back exactly once, as `true`.
+  let n = Node(..node("hard_lemma", [], dag.Open, dag.L), research: True)
+  let text = dag.encode(Dag([n]))
+  assert string.contains(text, "\"research\":true")
+  let assert Ok(back) = dag.decode(text)
+  assert back == Dag([n])
+  let assert Ok(again) = dag.get(back, "hard_lemma")
+  assert again.research == True
+  // An explicit `false` on disk reads as an ordinary node and is dropped on
+  // the way back out, like an absent key.
+  let explicit =
+    "{\"nodes\":[{\"id\":\"plain\",\"region\":\"P1\",\"lean_name\":\"plain\","
+    <> "\"description\":\"d\",\"deps\":[],\"status\":\"open\",\"size\":\"S\","
+    <> "\"proof_file\":null,\"attempts\":[],\"verified\":null,\"research\":false}]}"
+  let assert Ok(d) = dag.decode(explicit)
+  let assert Ok(plain) = dag.get(d, "plain")
+  assert plain.research == False
+  assert !string.contains(dag.encode(d), "research")
 }

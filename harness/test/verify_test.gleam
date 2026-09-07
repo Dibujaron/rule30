@@ -71,6 +71,7 @@ fn harness_probe(id: String) -> Node {
     claimed_at: None,
     claimed_run: None,
     object: None,
+    research: False,
   )
 }
 
@@ -169,6 +170,7 @@ fn a_node(lean_name: String) -> Node {
     claimed_at: None,
     claimed_run: None,
     object: None,
+    research: False,
   )
 }
 

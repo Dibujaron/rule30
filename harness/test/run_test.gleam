@@ -54,6 +54,7 @@ fn probe(id: String, deps: List(String)) -> dag.Node {
     claimed_at: None,
     claimed_run: None,
     object: None,
+    research: False,
   )
 }
 
@@ -106,10 +107,21 @@ fn fixture_with_roster(
   port: Int,
   roster_: roster.Roster,
 ) -> Fixture {
+  fixture_with_board(name, script, port, roster_, board())
+}
+
+/// `fixture` with both the roster and the board chosen by the test.
+fn fixture_with_board(
+  name: String,
+  script: List(List(String)),
+  port: Int,
+  roster_: roster.Roster,
+  board_: dag.Dag,
+) -> Fixture {
   let dir = "build/test-runs/run/" <> name
   let _ = simplifile.delete(dir)
   let assert Ok(_) = simplifile.create_directory_all(dir <> "/agents")
-  let assert Ok(_) = dag.save(board(), dir <> "/dag.json")
+  let assert Ok(_) = dag.save(board_, dir <> "/dag.json")
   let assert Ok(_) = roster.save(roster_, dir <> "/roster.json")
   let script_path = dir <> "/script.json"
   let assert Ok(_) =
@@ -122,6 +134,7 @@ fn fixture_with_roster(
   envoy.unset("HARNESS_FAKE_MARKER")
   envoy.unset("HARNESS_FAKE_KILLED")
   envoy.unset("HARNESS_FAKE_IGNORE_EOF")
+  envoy.unset("HARNESS_FAKE_ARGS")
   let assert Ok(base) = config.load()
   let cfg =
     config.Config(
@@ -632,4 +645,108 @@ pub fn no_stop_file_means_the_run_proceeds_test() {
       ),
     )
   assert node_after(f, "probe_one").status == dag.Proved
+}
+
+// --- research nodes -----------------------------------------------------------
+
+fn gave_up(who: String, model: String) -> dag.Attempt {
+  dag.Attempt(
+    identity: who,
+    session_id: "s",
+    model:,
+    started: "t0",
+    ended: "t1",
+    outcome: dag.GaveUp,
+    estimate: dag.S,
+    reported: True,
+    cost_usd: 0.0,
+    turns: 1,
+    notes: "",
+  )
+}
+
+/// **A research node is never ladder-exhausted, and its top rung is
+/// repeatable — under its own ceilings, by a persona that has not tried it.**
+///
+/// Two `S` leaves whose ladders are spent by Scripted: `probe_spent` is
+/// ordinary, `probe_deep` is research. Every rung of `S` has been burned at
+/// both, so `probe_spent` has one fable attempt left and `probe_deep` has
+/// its top rung, again. Both sessions give up.
+pub fn a_research_node_is_retried_at_its_top_rung_under_the_research_ceilings_test() {
+  let spent = [
+    gave_up("Scripted", "haiku"),
+    gave_up("Scripted", "sonnet"),
+    gave_up("Scripted", "opus"),
+  ]
+  let board_ =
+    Dag([
+      Node(..probe("probe_spent", []), attempts: spent),
+      Node(
+        ..probe("probe_deep", []),
+        research: True,
+        attempts: list.append(spent, [gave_up("Scripted", "fable")]),
+      ),
+    ])
+  let f =
+    fixture_with_board(
+      "research-rung",
+      [[init_line("s"), result_line("s", "abandoned")]],
+      ports.span(16),
+      roster.Roster([scripted_identity(), understudy()]),
+      board_,
+    )
+  let args_path = f.dir <> "/args.json"
+  envoy.set("HARNESS_FAKE_ARGS", args_path)
+  let cfg =
+    config.Config(
+      ..f.cfg,
+      max_turns: 40,
+      max_budget_usd: 4.0,
+      research_max_turns: 7,
+      research_max_budget_usd: 1.5,
+    )
+  let assert Ok(text) =
+    dispatch.run_with(
+      cfg,
+      Plan(max_attempts: 2, concurrency: 1),
+      env(f, verify.BuildFailed("never consulted")),
+    )
+  envoy.unset("HARNESS_FAKE_ARGS")
+  assert string.contains(text, "2 attempt(s)")
+
+  // The ordinary node went first — research goes last — and, its ladder now
+  // spent to the top, it is abandoned.
+  let spent_after = node_after(f, "probe_spent")
+  assert spent_after.status == dag.Abandoned
+  let assert [_, _, _, fourth] = spent_after.attempts
+  assert fourth.model == "fable"
+  assert fourth.identity == "Scripted"
+  assert fourth.outcome == dag.GaveUp
+
+  // The research node was retried at its top rung, by the persona that had
+  // not tried it, and is back on the board rather than abandoned.
+  let deep_after = node_after(f, "probe_deep")
+  assert deep_after.status == dag.Open
+  assert deep_after.claimed_by == None
+  let assert [_, _, _, _, fifth] = deep_after.attempts
+  assert fifth.model == "fable"
+  assert fifth.identity == "Understudy"
+  assert fifth.outcome == dag.GaveUp
+
+  // The record says which ceilings each attempt ran under, and why.
+  let events = all_events(f)
+  assert string.contains(events, "\"max_turns\":40")
+  assert string.contains(events, "\"max_turns\":7")
+  assert string.contains(events, "\"max_budget_usd\":1.5")
+  assert string.contains(
+    events,
+    "research node at its top rung, attempt 2 there",
+  )
+  // And the session itself was launched under them: the shim saw the
+  // research attempt's `--max-turns`, not the run's.
+  let args = read(args_path)
+  assert string.contains(
+    args,
+    "\"--max-turns\",\"7\",\"--max-budget-usd\",\"1.5\"",
+  )
 }
