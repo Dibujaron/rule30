@@ -123,3 +123,59 @@ half-line grown from a white start with boundary `b ≡ true`, whose rows
 
 **Recorded** 2026-09-07 by Sextant, from the attack document
 `docs/attacks/2026-09-07-centercolumn-other-iseventuallyperiodic-of-center-the-pair-of-columns-0-and-1-under-the-cone-constraint.md`.
+
+## The settled part of the left diagonals does not depend on the centre column
+
+**The natural attempt.** The residual is about a periodic centre column,
+and the centre column is the boundary that drives the half-line `x ≤ -1`.
+Every left diagonal of that half-line is eventually periodic, with the
+same recurrence and the same period-doubling criterion as the seed's, so
+look for the signature of a periodic boundary in the settled parts of the
+diagonals: their periods, their onsets, the words they settle into, or the
+places where the period doubles, and hope some statistic of the settled
+region is impossible when the boundary repeats.
+
+**Why it fails.** The settled region carries almost no information about
+the boundary at all. Write `S_k` for the periodic function on `ℤ` that
+diagonal `k` agrees with from its onset on. Because the diagonal
+recurrence `leftDiagonal_recurrence` holds on the settled words for every
+index, `S_k` is the *unique* periodic solution driven by `S_{k-2}` and
+`S_{k-1}` whenever `S_{k-1}` has a black cell (the reset lemma
+`bool_driven_periodicFrom_of_reset` is the uniqueness), and one of exactly
+two solutions when `S_{k-1}` is white: a shift by half the new period
+when the period doubles, a complement when it does not. So the whole
+settled region of any configuration white far to the left is the seed's
+up to a shift along the diagonals, chosen by one bit at each
+eventually-white diagonal; those are at `k - 1 = 2, 7, 28, 399, 53207,
+58286, 87866` below `k = 200,000` (`explorer/forbit.mjs`, which runs the
+recurrence alone and reads the picture only at those seven places, and
+reproduces NKS p. 871's doublings and Rowland 2006's branch at his
+column 53209). Rowland 2006 §6 states the observation ("there is really
+only one left side of rule 30") and its proof idea. Measured on twenty
+boundaries, periodic, random and degenerate, to diagonal 2,400
+(`explorer/boundarysettled.mjs`): every settled word is the seed's up to a
+shift, the branch points are at the same `k`, the periods are identical,
+the onsets grow at `0.26k`–`0.33k` for all of them, and the boundary
+disagrees with its own settled picture at the centre at rate `0.48`–`0.52`
+whether it is the true column, a random sequence, `(10)^∞`, or a single
+pulse per 155 steps. A periodic boundary is invisible in every statistic
+of the settled region.
+
+**What it would take.** A statement about the deviation `E = picture xor S`,
+which is the transient region: `S` is itself a rule 30 evolution (of the
+row `Σ(x) = S_x(-x)`, `x ≥ 0`, white on the left; `explorer/settledpicture.mjs`),
+so `E` is the damage pattern between two evolutions of number-like
+configurations, its left front is the regular-region boundary (measured
+at `0.20t`–`0.235t` to `t = 2,000`), and the residual is the statement
+that the boundary column of that damage pattern, `c xor s` with
+`s(t) = S_t(0)`, cannot be `s xor (periodic)`. Nothing on the board or in
+print bounds a left damage front (crystals A3), and nothing is known about
+`s`. What the settled region *does* determine is itself: no two pairs of
+adjacent left diagonals ever eventually agree, so the eventual periods
+are unbounded (the attack document's C1, C2); that is a fact about the
+region the residual does not live in.
+
+**Recorded** 2026-09-07 by Sextant, from the attack document
+`docs/attacks/2026-09-07-centercolumn-other-iseventuallyperiodic-of-center-the-transients-of-the-left-diagonals-under-a-periodic-boundary.md`.
+One correction to the entry above: its rows `1`, `11`, `011`, `0011`,
+`11011` are written with cell `-1` leftmost, not rightmost.

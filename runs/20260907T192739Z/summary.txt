@@ -1,0 +1,17 @@
+
+theorist  Sextant
+model     fable
+topic     centerColumn_other_isEventuallyPeriodic_of_center: the transients of the left diagonals under a periodic boundary
+attack    c:/Users/dibuj/dev/rule30/docs/attacks/2026-09-07-centercolumn-other-iseventuallyperiodic-of-center-the-transients-of-the-left-diagonals-under-a-periodic-boundary.md
+document  exists, 21409 bytes
+ended     finished — the theorist reported its attack written; that is its claim about the document, and a captain's reading is the only adjudication
+ceilings  600 turns, $80.0
+cost      $12.73
+turns     49
+session   68a2f69a-9d23-4924-9f81-2ab65f89ce99
+log       c:/Users/dibuj/dev/rule30/runs/20260907T192739Z/theorist-1
+
+Document written with four surviving candidates (two new theorems about the settled left diagonals, one Rowland restatement with phase, one framing definition), a new obstruction entry, and a firm negative on the topic: a periodic boundary is invisible to the settled region.
+
+next topic, in the theorist's words:
+Attack `s`, the centre column of the settled configuration `Σ` (C4): whether it is eventually periodic, and if not, what its failure to be periodic has to do with the seed's. Everything in this session says the boundary's information lives in the damage band, and the damage band is driven at the seam by `e = c xor s`; `s` is universal up to the branch bits, computable from the recurrence alone to any depth (`explorer/forbit.mjs` gives it to 200,000 for the seed's branch), and nobody has looked at it. Two concrete questions the engine can answer first: whether `Σ`'s own black-time test against its own left half-line holds (it must, since `S` is an evolution of a configuration white on `x ≤ -1`; the check is a test of the definitions), and whether `s` shares any structure with `c` beyond `t = 17`, where they part (`e(1..17) = 0`). If `s` is provably not eventually periodic by an argument that does not go through P1, then P1's residual becomes "`c` and `s` cannot differ by a periodic sequence", which is a statement about a damage pattern with a known left front, and that is a different wall from the one we have. Before that, a captain should seed C1 as a node beside `leftDiagonal_period_le`, because it is the one theorem here with a complete route, and C2 after it.
