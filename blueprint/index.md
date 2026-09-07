@@ -381,7 +381,7 @@ One entry per theorem, grouped by the object the theorem is about. **What this s
 - `(k : ℕ)`
 **Conclusion.** `∃ p > 0, ∃ N ≤ k, PeriodicFrom (leftDiagonal k) p N`
 **Cited by.** nothing yet
-**Status.** open, size wall
+**Status.** open, size L
 
 ### leftDiagonal_period_le
 
@@ -390,7 +390,7 @@ One entry per theorem, grouped by the object the theorem is about. **What this s
 - `(k : ℕ)`
 **Conclusion.** `∃ p > 0, p ≤ k + 1 ∧ ∃ N, PeriodicFrom (leftDiagonal k) p N`
 **Cited by.** nothing yet
-**Status.** open, size wall
+**Status.** open, size L
 
 ### leftDiagonal_periodicFrom_pow
 
@@ -424,7 +424,7 @@ One entry per theorem, grouped by the object the theorem is about. **What this s
 - `(hblack : leftDiagonal (m + 1) (j + 1) = true)`
 **Conclusion.** `PeriodicFrom (leftDiagonal (m + 2)) q (j + 1)`
 **Cited by.** leftDiagonal_step_period_dichotomy
-**Status.** proved, size M
+**Status.** proved, size M, under the wall leftDiagonal_period_le
 
 ### leftDiagonal_recurrence
 
@@ -433,7 +433,7 @@ One entry per theorem, grouped by the object the theorem is about. **What this s
 - `(m i : ℕ)`
 **Conclusion.** `leftDiagonal (m + 2) (i + 1) = (leftDiagonal m (i + 2) ^^ (leftDiagonal (m + 1) (i + 1) || leftDiagonal (m + 2) i))`
 **Cited by.** leftDiagonal_periodicFrom_step_of_black
-**Status.** proved, size S
+**Status.** proved, size S, under the wall leftDiagonal_period_le
 
 ### leftDiagonal_step_period_dichotomy
 
@@ -444,7 +444,7 @@ One entry per theorem, grouped by the object the theorem is about. **What this s
 - `(h1 : PeriodicFrom (leftDiagonal (m + 1)) q N)`
 **Conclusion.** `(∃ M, PeriodicFrom (leftDiagonal (m + 2)) q M) ∨ ∀ j ≥ N + 1, leftDiagonal (m + 1) j = false`
 **Cited by.** nothing yet
-**Status.** proved, size M
+**Status.** proved, size M, under the wall leftDiagonal_period_le
 
 ## Right diagonal
 
@@ -533,7 +533,7 @@ One entry per theorem, grouped by the object the theorem is about. **What this s
 - `(hbj : b j = true)`
 **Conclusion.** `PeriodicFrom x p (j + 1)`
 **Cited by.** leftDiagonal_periodicFrom_step_of_black
-**Status.** proved, size S
+**Status.** proved, size S, under the wall leftDiagonal_period_le
 
 ### bool_driven_periodicFrom_of_return
 
@@ -548,7 +548,7 @@ One entry per theorem, grouped by the object the theorem is about. **What this s
 - `(hret : x (M + p) = x M)`
 **Conclusion.** `PeriodicFrom x p M`
 **Cited by.** bool_driven_periodicFrom_of_reset
-**Status.** proved, size S
+**Status.** proved, size S, under the wall leftDiagonal_period_le
 
 ### bool_map_iterate_three
 
