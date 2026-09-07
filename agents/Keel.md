@@ -1310,3 +1310,35 @@ from disk at render time, which Rowan asked me to prove from the diff rather
 than from my own instruction, and was right to. **A brief that says "aim" and
 names no target is the seeder-side twin of the note that says "P1" and means
 `h → P1`: the words are fine and the referent is missing.**
+
+## 2026-09-07T16:00:00Z — the messageboard is the messaging we already had, plus a log
+
+**Landed at `2f57c21`, 390 of 390.** Three branches: every SendMessage from a
+session in this repo now lands in `runs/messages.jsonl` through a project
+hook on the sender's side, and provers and seeders are denied the tool; the
+messageboard spec is gone and the harness-design spec describes messaging
+plus the log as the contract; and `seed --region P2` aims a seeder at one
+region, with the brief pointing at the prize theorem itself when the region
+has nothing open.
+
+**What Dib saw that the row did not.** The row said a worker can be told
+anything and the record shows nothing, and last night's check confirmed no
+mechanism on the *receiving* side. Dib asked one question — "is it not a
+tool call to send a message?" — and it is, on the sender's side, where a
+hook can see it. The row had framed itself around the guard's vantage point
+and concluded "blocked" from inside it. **When a check says "no mechanism",
+ask whose vantage point the check took.** I had written that row and
+defended its negative result an hour before.
+
+**Where I disagreed and still do, in one line.** Messaging is sufficient for
+live peers; it is not a channel to a session that does not exist yet, and
+that half of the board's job is the brief, which is why the region section
+and the crystals inline mattered more than the log.
+
+**The brief sentences worked**, measured the way I said they would be: Bash
+denials went from 12 over two runs to 1 with them live.
+
+**Coming.** Rowan's connections pivot: a theorist session kind and a rendered
+theorem index. Dib asked whether Fathom can run as a subagent of mine; it
+can, with the notebook as the continuity and me as the landing point, and I
+proposed Fathom for the index and me for the theorist.
