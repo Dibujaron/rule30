@@ -18,6 +18,7 @@ import harness/claude
 import harness/config
 import harness/dag
 import harness/dispatch
+import harness/index
 import harness/log
 import harness/schedule
 import harness/seed
@@ -66,6 +67,10 @@ fn run(cfg: config.Config, arguments: List(String)) -> Nil {
       print_outcome(Error("bugs close needs --resolution <text>"))
     ["bugs", ..flags] -> print_outcome(bug_board(cfg, flags))
     ["writes"] -> print_outcome(writes.report(cfg))
+    // `index` re-renders `blueprint/index.md` from the board as it stands,
+    // for a landing done by hand. The dispatcher renders it itself at every
+    // close, so this is never needed after a run.
+    ["index"] -> print_outcome(index.write(cfg))
     // `seed brief` and `seed check` are read-only and take no build lock —
     // `lake env lean` reads oleans. They are separate verbs rather than
     // stages of one command on purpose: a captain writing a tier by hand
@@ -103,7 +108,7 @@ fn run(cfg: config.Config, arguments: List(String)) -> Nil {
       )
     _ ->
       io.println(
-        "usage: gleam run -- status | prove-one <node-id> | run [--max-attempts N] [--concurrency K] | reopen <node-id> | bugs [--area A] [--severity S] [--all] | bugs claim <id> --as <Identity> [--session <ref>] | bugs reopen <id> | bugs close <id> fixed|wontfix --resolution <text> | writes | seed [--model M] [--region R] | seed brief [--region R] | seed check [path] | theorise [<topic>] [--as <Name>] [--model M] | spike",
+        "usage: gleam run -- status | prove-one <node-id> | run [--max-attempts N] [--concurrency K] | reopen <node-id> | bugs [--area A] [--severity S] [--all] | bugs claim <id> --as <Identity> [--session <ref>] | bugs reopen <id> | bugs close <id> fixed|wontfix --resolution <text> | writes | index | seed [--model M] [--region R] | seed brief [--region R] | seed check [path] | theorise [<topic>] [--as <Name>] [--model M] | spike",
       )
   }
 }

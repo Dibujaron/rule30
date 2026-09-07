@@ -54,7 +54,7 @@ pub type Site {
 /// subject of a freeze. A raw write anywhere else is a writer nobody declared.
 pub const implementations = [
   "bugs.gleam", "dag.gleam", "roster.gleam", "log.gleam", "guard.gleam",
-  "dispatch.gleam", "worker.gleam", "verify.gleam", "seed.gleam",
+  "dispatch.gleam", "worker.gleam", "verify.gleam", "seed.gleam", "index.gleam",
 ]
 
 /// The hand-maintained half, and the only hand-maintained half.
@@ -77,13 +77,18 @@ pub fn declared() -> List(Written) {
     ),
     Written(
       what: "agents/<Name>.md",
-      risk: "the dispatcher appends a notebook entry from a worker's report; an identity's notebook is not exclusively its own during a run",
+      risk: "the dispatcher appends a notebook entry from a worker's report, and `theorise` from a theorist's; an identity's notebook is not exclusively its own during a run",
       writers: ["roster.append_notebook"],
     ),
     Written(
       what: "Rule30/Proofs.lean",
       risk: "an import line is added for every node that closes",
       writers: ["write_index"],
+    ),
+    Written(
+      what: "blueprint/index.md",
+      risk: "rewritten whole from the board at every landing and by `gleam run -- index`; derived, so an edit arriving before the next render is lost",
+      writers: ["write_in", "index.write"],
     ),
     Written(
       what: "runs/<run-id>/**",

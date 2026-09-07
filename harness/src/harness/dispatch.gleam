@@ -20,6 +20,7 @@ import harness/config
 import harness/dag
 import harness/guard
 import harness/guard_event
+import harness/index
 import harness/lock
 import harness/log
 import harness/roster
@@ -174,8 +175,10 @@ pub const lock_held_message = "the build lock was held by another worker for ten
 
 /// The real thing: `verify.verify` under the build lock, `verify.annotate`
 /// outside it — it edits one comment block, and `lake` will re-elaborate
-/// that one module on its next build — and `Rule30/Proofs.lean`.
-pub fn live_env(cfg: config.Config) -> Env {
+/// that one module on its next build — and `Rule30/Proofs.lean`. `l` is the
+/// run's own log: `index` closes over it so a render it triggers reports
+/// against the same `events.jsonl` as everything else the run does.
+pub fn live_env(cfg: config.Config, l: log.Log) -> Env {
   Env(
     verifier: fn(build_lock: Subject(lock.Msg)) {
       fn(node: dag.Node) {
@@ -193,7 +196,7 @@ pub fn live_env(cfg: config.Config) -> Env {
     annotate: fn(node, statement) {
       verify.annotate(cfg.repo_root, node, statement)
     },
-    index: fn(node) { write_index(cfg, node) },
+    index: fn(node) { write_index(cfg, l, node) },
   )
 }
 
@@ -204,7 +207,8 @@ pub fn live_env(cfg: config.Config) -> Env {
 /// only just became one because a sibling closed its dependency. The `Ok`
 /// is the run's closing summary.
 pub fn run(cfg: config.Config, plan: Plan) -> Result(String, String) {
-  run_with(cfg, plan, live_env(cfg))
+  use l <- result.try(log.open(cfg.runs_root, log.new_run_id()))
+  run_with_log(cfg, plan, live_env(cfg, l), l)
 }
 
 /// `run` with its environment injected.
@@ -213,9 +217,22 @@ pub fn run_with(
   plan: Plan,
   env: Env,
 ) -> Result(String, String) {
+  use run_log <- result.try(log.open(cfg.runs_root, log.new_run_id()))
+  run_with_log(cfg, plan, env, run_log)
+}
+
+/// `run_with`, given the run's log already opened — the one thing `run`
+/// needs before it, since `live_env`'s index writer closes over it too, and
+/// the two must share the same `events.jsonl` rather than each opening its
+/// own.
+fn run_with_log(
+  cfg: config.Config,
+  plan: Plan,
+  env: Env,
+  run_log: log.Log,
+) -> Result(String, String) {
   use d <- result.try(dag.load(cfg.dag_path))
   use roster_ <- result.try(roster.load(cfg.roster_path))
-  use run_log <- result.try(log.open(cfg.runs_root, log.new_run_id()))
   use build_lock <- result.try(
     lock.start(240_000)
     |> result.map_error(fn(e) {
@@ -732,7 +749,7 @@ fn run_summary(state: RunState) -> String {
   )
 }
 
-// --- the proofs index ---------------------------------------------------------
+// --- indexing a closed proof: the Proofs.lean import and the theorem index --
 
 /// Where the import list of every closed proof lives, relative to the repo
 /// root. `Rule30.lean` imports it, so `lake build` from the root builds the
@@ -740,8 +757,9 @@ fn run_summary(state: RunState) -> String {
 pub const proofs_index = "Rule30/Proofs.lean"
 
 /// Add a closed node's module to `Rule30/Proofs.lean`, so the next root
-/// `lake build` compiles it. A proof nothing imports is a proof nobody
-/// notices has rotted.
+/// `lake build` compiles it, and re-render `blueprint/index.md` from the
+/// board. A proof nothing imports is a proof nobody notices has rotted; an
+/// index nobody re-renders is one nobody notices has drifted.
 fn index_proof(
   cfg: config.Config,
   l: log.Log,
@@ -752,23 +770,59 @@ fn index_proof(
     #("module", json.string(dag.proof_module(node))),
     #("file", json.string(proofs_index)),
   ])
-  write_index(cfg, node)
+  write_index(cfg, l, node)
 }
 
-/// The write behind `index_proof`, without the event.
-fn write_index(cfg: config.Config, node: dag.Node) -> Result(Nil, String) {
+/// The write behind `index_proof`, without its event: the `import` line into
+/// `Rule30/Proofs.lean`, then `blueprint/index.md` re-rendered from the
+/// board so the two indexes are always written by the same step. The import
+/// is the caller's failure — it means the next `lake build` will not see the
+/// proof, so it is returned as `Error` exactly as before. The render is a
+/// derived artifact, not a record of what happened: a failure to read
+/// `Statements.lean`, load the board, or write the file is printed to
+/// stderr and recorded as its own `theorem_index` event on `l` — `outcome`
+/// `"written"` or `"failed"`, the latter carrying `reason` — but never
+/// propagated, so it can never suppress the attempt's own record
+/// (`write_channels`, `auto_file_signals`, the summary, the printed
+/// outcome) for a node that was in fact proved and imported. The next
+/// landing, or a `gleam run -- index` by hand, re-renders it.
+fn write_index(
+  cfg: config.Config,
+  l: log.Log,
+  node: dag.Node,
+) -> Result(Nil, String) {
   let path = cfg.repo_root <> "/" <> proofs_index
   let existing = simplifile.read(path) |> result.unwrap("")
   let updated = with_import(existing, dag.proof_module(node))
-  simplifile.write(path, updated)
-  |> result.map_error(fn(e) {
-    "could not add "
-    <> dag.proof_module(node)
-    <> " to "
-    <> path
-    <> ": "
-    <> simplifile.describe_error(e)
-  })
+  use _ <- result.try(
+    simplifile.write(path, updated)
+    |> result.map_error(fn(e) {
+      "could not add "
+      <> dag.proof_module(node)
+      <> " to "
+      <> path
+      <> ": "
+      <> simplifile.describe_error(e)
+    }),
+  )
+  case index.write(cfg) {
+    Ok(_) ->
+      log.event(l, "theorem_index", [
+        #("node", json.string(node.id)),
+        #("file", json.string(index.index_path)),
+        #("outcome", json.string("written")),
+      ])
+    Error(reason) -> {
+      io.println_error("harness/dispatch: " <> reason)
+      log.event(l, "theorem_index", [
+        #("node", json.string(node.id)),
+        #("file", json.string(index.index_path)),
+        #("outcome", json.string("failed")),
+        #("reason", json.string(reason)),
+      ])
+    }
+  }
+  Ok(Nil)
 }
 
 /// `existing` with `import <module>` present exactly once, the imports
