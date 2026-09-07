@@ -189,14 +189,16 @@ pub fn scorecard(dag_: dag.Dag, name: String) -> Scorecard {
 /// Fold one attempt into the scorecard.
 ///
 /// Calibration — did the identity's re-pricing agree with the node's size —
-/// is scored only for an attempt made on the top rung of the node's ladder
-/// (`config.ladder`), and never for one the harness itself broke. The
-/// ladder is a cost optimiser: it tries the cheapest model first because a
-/// cheap success is a bargain, not because a cheap failure means anything.
-/// So a haiku that dies on an `S` node is a probe that missed, and scoring
-/// its estimate would let the cheapest model on the ladder set the number
-/// the overseer prices every future node with. Cost is summed regardless:
-/// a probe still had to be paid for.
+/// is scored for a reported attempt that closed the node at any rung or was
+/// made on the top rung of its ladder (`config.ladder`), and never for one
+/// the harness itself broke. The ladder is a cost optimiser: it tries the
+/// cheapest model first because a cheap success is a bargain, not because a
+/// cheap failure means anything. A haiku that closes an `S` node confirms
+/// (or over-prices) the estimate exactly as an opus close would; a haiku
+/// that dies there is a probe that missed, and scoring its estimate would
+/// let the cheapest model on the ladder set the number the overseer prices
+/// every future node with. Cost is summed regardless: a probe still had to
+/// be paid for.
 fn tally(acc: Scorecard, node: dag.Node, attempt: dag.Attempt) -> Scorecard {
   let closed = case attempt.outcome {
     dag.Closed -> acc.closed + 1
@@ -209,7 +211,7 @@ fn tally(acc: Scorecard, node: dag.Node, attempt: dag.Attempt) -> Scorecard {
   let evidence =
     attempt.reported
     && attempt.outcome != dag.HarnessFailed
-    && on_top_rung(node, attempt)
+    && { on_top_rung(node, attempt) || attempt.outcome == dag.Closed }
   let hits = case evidence && attempt.estimate == node.size {
     True -> acc.calibration_hits + 1
     False -> acc.calibration_hits

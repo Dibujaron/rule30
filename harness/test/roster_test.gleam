@@ -367,6 +367,22 @@ pub fn a_lower_rung_attempt_is_not_calibration_evidence_test() {
   assert s.calibration_total == 1
 }
 
+pub fn a_close_on_a_cheap_rung_is_calibration_evidence_test() {
+  // Only a lower-rung failure is a probe. A haiku that closes an `S` node
+  // and re-prices it as `S` confirms the estimate exactly as an opus close
+  // would, so it is a hit.
+  let d =
+    Dag([
+      node_with("a", dag.S, [
+        at_rung("haiku", "Thessaly", dag.Closed, dag.S, 0.1),
+      ]),
+    ])
+  let s = roster.scorecard(d, "Thessaly")
+  assert s.closed == 1
+  assert s.calibration_hits == 1
+  assert s.calibration_total == 1
+}
+
 pub fn a_harness_failed_attempt_is_neither_abandoned_nor_evidence_test() {
   // The harness broke this one, so its outcome says nothing about the
   // worker — but its cost was real.
