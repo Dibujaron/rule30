@@ -1452,3 +1452,64 @@ landed at `d405573`: the premise was half right, the route check lacked the
 token and the witness check already had one, and the agent said so rather
 than fixing what the row described. The board has one live row, Fathom's.
 Nothing I hold outlives this session.
+
+## 2026-09-07T20:30:00Z — the fifth wontfix on one signature, and the board that kept asking
+
+Dib said there was a new ticket. There were two open rows: Fathom's writes
+match-arm row, which Fathom had messaged me it was taking a minute after
+filing it, and `guard-denied-bash-not-permitted-5`, auto-filed from
+Rowan's half-line run. I took the second.
+
+**The premise held and the verdict was the fourth of its kind.** Run
+20260907T195757Z: three of seven attempts each tried one shell operator
+once — two haiku workers opened with `lake build ... 2>&1 | head -50`, one
+sonnet worker with `ls | grep ; ls` — and every one complied on the next
+turn. The brief they were dispatched under says the operators by name and
+says to read `lake build`'s tail from the tool result
+(`briefs/column_succ_of_black-1.md`, line 875). Measured with
+`grep -h '"denial":"not_permitted"' runs/*/*/events.jsonl` minus stream
+lines: ten denials in five attempts the run before the brief rewrite
+(74d2a84), at most one per attempt since. The brief works; what is left is
+a first-turn reflex. Wontfix, guard and brief unchanged.
+
+**The defect was the board, not the guard.** Five rows for this signature
+in twenty-three hours, three closed wontfix with one reasoning, because
+`bugs.append` deduped only against a *live* row and opened a fresh one
+whenever the last row was closed — a rule the doc comment justified for
+`fixed` alone ("so a regression is visibly a regression") and the code
+applied to `wontfix` too. Those are opposite verdicts about recurrence.
+Fixed at `b13f4fc`: the newest row carrying a signature decides, bumped
+unless it is `fixed`. The anchor I gave Dib is an error tracker's
+Resolved versus Ignored — a resolved issue reopens on the next event, an
+ignored one keeps counting and stays quiet. Closure test written first
+and seen failing at `f901d27` (a one-row pattern match found two rows),
+523 of 523 after, total announced and matched. From the next run on, a
+`not_permitted` denial bumps `-5` instead of opening a `-6`.
+
+**My own earlier resolution was well-formed and wrong.** Closing `-4`
+this afternoon I wrote "these five occurrences are one worker (Cadence at
+leftDiagonal_recurrence, run 161211Z) repeating". The events say one
+denial at that node in run 150429Z, two in 161211Z at two other nodes,
+two from the seeder in 161217Z: five bumps onto one open row from three
+runs and five workers, none repeating. I read `occurrences` as a count
+over the row's `node` and it is a count over everything that happened
+while the row was open. `filed` is the same trap — it is the last bump,
+not the filing — and the three fields had no doc comment saying either.
+They do now, on the same branch, and the trap grows with this change,
+because a wontfix row will keep counting for days. The number was true;
+what I had not asked was what it was measured over.
+
+**Two memories corrected.** The suite from a worktree no longer touches
+the live checkout: the stop fixture has its own path, test guards take a
+free port and never 4130, Lean runs against `fixture-project/`. I ran the
+full suite beside Rowan's live run and a live theorist, then checked
+from outside — no `STOP` in the checkout, no stop event, the open attempt
+still writing events afterwards. The memory that said the suite halts a
+live run, and the scratch-root recipe it forced, are rewritten to say so
+and to keep the one part that survives: read the announced total first.
+
+Branch `keel/wontfix-signature` is pushed and waits for Rowan's run and
+theorist to end before it lands; Rowan asked for that and I said yes.
+Rowan has also handed me the connector build, approved by Dib, with the
+spec on main at `docs/superpowers/specs/2026-09-07-connector-design.md`;
+that is next.

@@ -74,6 +74,11 @@ pub type Bug {
     body: String,
     reported_by: String,
     source: Source,
+    /// Where it was FIRST seen. On a signed row that `append` has bumped,
+    /// these three still name the first occurrence, while `filed` and
+    /// `occurrences` have moved on — so a row can name one node and carry a
+    /// count gathered over several runs and nodes. Read the count against
+    /// the events, not against these fields.
     node: Option(String),
     run: Option(String),
     session_id: Option(String),
@@ -82,7 +87,11 @@ pub type Bug {
     /// agents describing the same friction in their own words are two pieces
     /// of evidence, so those carry `None` and never dedupe.
     signature: Option(String),
+    /// When it was LAST seen: `append` refreshes it on every bump, so on a
+    /// signed row it is the latest occurrence, not the filing time.
     filed: String,
+    /// Every occurrence `append` folded into this row while it was open,
+    /// claimed or wontfix — across runs, nodes and personas alike.
     occurrences: Int,
     status: BugStatus,
     resolution: Option(String),
