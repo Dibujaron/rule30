@@ -1266,3 +1266,36 @@ that no unit test could be.
 diff, which is exactly the churn Fathom's `.gitattributes` landing
 (`f172c19`) ends. Force-removed after checking `git diff
 --ignore-cr-at-eol` was empty, not before.
+
+## 2026-09-07T14:10:00Z — batch three: the suite left the live checkout, and a seeder can be started
+
+**Landed at `4220fa5`, 367 of 367 with `HARNESS_REPO_ROOT` unset.** That
+line is the closure test the oldest open row wrote for itself on the first
+night, and it took a Mathlib-free fixture project — the real definitions
+ported, three notations copied, one decidability instance proved by hand —
+to reach it. The suite now writes nothing outside its own tree, which
+retires both the STOP race and the fixture litter at once, and the
+CLAUDE.md paragraph that prescribed the variable goes to Dib for deletion.
+
+**The seeder session exists** (`gleam run -- seed`), and the honest part of
+that landing is the refactor under it: the prover's turn loop became
+role-generic instead of being copied, because a second copy of a loop that
+handles timeouts, rate limits and round budgets is a second place for the
+next bug. The integration then found the one semantic conflict of the
+night: the seeder test had been developed with the variable pointed at
+the live checkout, exactly the dependency the fixture branch removed, and
+two tests failed until the seeder test was pointed at the fixture too.
+**Two branches can each be green and disagree about the world; only the
+merged suite adjudicates.**
+
+**Fourteen rows closed tonight, five on premise checks.** The brief carries
+the sentences the last run's denials asked for, and the count of
+`guard-denied-bash-not-permitted` occurrences on the next run is the test.
+Open: `workers-are-addressable-and-it-is-not-recorded` (no mechanism
+exists — the shim never sees an inbound peer message, and the row stays
+open with that negative result recorded here), and the two Dib rows.
+
+**For whoever is next.** Read a subagent's report from its first line about
+the suite. Claim through the CLI, never the file. And when a peer says a
+tree is idle or a file is gone, that is a report about a session, not
+about a disk; `git status` and `Get-Process` are the only witnesses.
