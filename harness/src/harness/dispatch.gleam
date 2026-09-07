@@ -56,7 +56,9 @@ pub fn prove_one(
           // crashed mid-attempt leaves its node claimed with nothing left
           // running, and nothing else ever clears it.
           dag.Claimed ->
-            ". If no attempt is actually running, `gleam run -- reopen "
+            " ("
+            <> claim_text(cfg, node, log.now_iso())
+            <> "). If no attempt is actually running, `gleam run -- reopen "
             <> node_id
             <> "` puts it back on the board."
           _ -> ""
@@ -113,11 +115,7 @@ pub fn prove_one(
   ])
 
   let claimed =
-    dag.Node(
-      ..node,
-      status: dag.Claimed,
-      proof_file: Some(dag.proof_path(node)),
-    )
+    dag.claim(node, by: identity.name, at: log.now_iso(), run: l.run_id)
   let d = dag.update(d, claimed)
   use _ <- result.try(dag.save(d, cfg.dag_path))
 
@@ -497,10 +495,11 @@ fn start(
         #("in_flight", json.int(list.length(state.running) + 1)),
       ])
       let claimed =
-        dag.Node(
-          ..node,
-          status: dag.Claimed,
-          proof_file: Some(dag.proof_path(node)),
+        dag.claim(
+          node,
+          by: identity.name,
+          at: log.now_iso(),
+          run: run_.run_log.run_id,
         )
       let d = dag.update(state.d, claimed)
       use _ <- result.try(dag.save(d, cfg.dag_path))
@@ -641,7 +640,7 @@ fn crashed(
     dag.get(state.d, flight.node_id)
     |> result.replace_error("`" <> flight.node_id <> "` vanished from the DAG"),
   )
-  let d = dag.update(state.d, dag.Node(..node, status: dag.Open))
+  let d = dag.update(state.d, dag.release(node, dag.Open))
   use _ <- result.try(dag.save(d, run_.cfg.dag_path))
   log.event(run_.run_log, "crashed", [
     #("node", json.string(node.id)),
@@ -809,16 +808,21 @@ pub fn reopen(cfg: config.Config, node_id: String) -> Result(String, String) {
   )
   case node.status {
     dag.Claimed -> {
-      let reopened = dag.Node(..node, status: dag.Open)
+      let held = claim_text(cfg, node, log.now_iso())
+      let reopened = dag.release(node, dag.Open)
       use _ <- result.try(dag.save(dag.update(d, reopened), cfg.dag_path))
       // The DAG is the source of truth, so a hand edit to it is an event
-      // with a reason, like every dispatch decision.
+      // with a reason, like every dispatch decision — and this one names
+      // the claim it discarded, since the node no longer does.
       use l <- result.try(log.open(cfg.runs_root, log.new_run_id()))
       log.event(l, "reopen", [
         #("node", json.string(node_id)),
         #("from", json.string(dag.status_to_string(node.status))),
         #("to", json.string(dag.status_to_string(dag.Open))),
         #("attempts", json.int(list.length(node.attempts))),
+        #("claimed_by", json.nullable(node.claimed_by, json.string)),
+        #("claimed_at", json.nullable(node.claimed_at, json.string)),
+        #("claimed_run", json.nullable(node.claimed_run, json.string)),
         #(
           "reason",
           json.string(
@@ -829,10 +833,13 @@ pub fn reopen(cfg: config.Config, node_id: String) -> Result(String, String) {
       Ok(
         "`"
         <> node_id
-        <> "` was claimed with "
+        <> "` was "
+        <> held
+        <> ", with "
         <> int.to_string(list.length(node.attempts))
-        <> " attempt(s) recorded and is now open. A claim outlives the run "
-        <> "that made it, so this is how a crashed attempt gets its node back.",
+        <> " attempt(s) recorded, and is now open with that claim cleared. "
+        <> "A claim outlives the run that made it, so this is how a crashed "
+        <> "attempt gets its node back.",
       )
     }
     other ->
@@ -843,6 +850,44 @@ pub fn reopen(cfg: config.Config, node_id: String) -> Result(String, String) {
         <> dag.status_to_string(other)
         <> ", not claimed; only a claimed node can be reopened",
       )
+  }
+}
+
+/// A claimed node's claim, for a human: who holds it, since when and how
+/// long ago, which run, and the one liveness fact readable from outside the
+/// process — whether that run has already written its closing summary.
+/// `runs/<run>/summary.txt` present means the run ended and the claim is
+/// stale for certain; absent means the run is live or died without writing,
+/// and the age is the only clue. A node claimed before claims had a record
+/// says so rather than inventing one.
+///
+/// Public for `status`, `reopen` and the `prove_one` refusal, which all say
+/// the same thing about the same claim.
+pub fn claim_text(cfg: config.Config, node: dag.Node, now: String) -> String {
+  case node.claimed_by, node.claimed_at, node.claimed_run {
+    None, None, None -> "claimed, with no holder, time or run recorded"
+    by, at, run -> {
+      let at = option.unwrap(at, "?")
+      let ended = case run {
+        Some(id) ->
+          case
+            simplifile.is_file(cfg.runs_root <> "/" <> id <> "/summary.txt")
+          {
+            Ok(True) -> ", which has ended: this claim is stale"
+            _ -> ", not ended (live, or died without writing)"
+          }
+        None -> ""
+      }
+      "held by "
+      <> option.unwrap(by, "?")
+      <> " since "
+      <> at
+      <> " ("
+      <> log.age_text(then: at, now:)
+      <> "), run "
+      <> option.unwrap(run, "?")
+      <> ended
+    }
   }
 }
 
@@ -858,6 +903,7 @@ pub fn reopen(cfg: config.Config, node_id: String) -> Result(String, String) {
 /// so it gets its own section instead.
 pub fn status(cfg: config.Config) -> Result(String, String) {
   use d <- result.try(dag.load(cfg.dag_path))
+  let now = log.now_iso()
   // Pad to the longest id actually present (with a little gutter), not a
   // constant: a constant narrower than some id fuses that id into the
   // column that follows it.
@@ -877,6 +923,10 @@ pub fn status(cfg: config.Config) -> Result(String, String) {
       <> "attempts="
       <> int.to_string(list.length(n.attempts))
       <> rungs_tried(n)
+      <> case n.status {
+        dag.Claimed -> "  " <> claim_text(cfg, n, now)
+        _ -> ""
+      }
     })
   let leaf_line = fn(n: dag.Node) {
     "  "
@@ -1013,17 +1063,18 @@ fn backfill_color(
 /// Fold one attempt into its node. A closed attempt proves the node; every
 /// other outcome puts it back on the board, unless the ladder has no model
 /// left for it — then it is abandoned, because an open leaf nothing can be
-/// dispatched at is not an open leaf.
+/// dispatched at is not an open leaf. Whichever way, the attempt has ended,
+/// so the claim is released with it.
 fn record(node: dag.Node, attempt: dag.Attempt) -> dag.Node {
   let attempts = list.append(node.attempts, [attempt])
   let node = dag.Node(..node, attempts:)
   case attempt.outcome {
     dag.Closed ->
-      dag.Node(..node, status: dag.Proved, verified: Some(log.now_iso()))
+      dag.Node(..dag.release(node, dag.Proved), verified: Some(log.now_iso()))
     _ ->
       case config.model_for(node.size, failed_attempts(node)) {
-        Ok(_) -> dag.Node(..node, status: dag.Open)
-        Error(Nil) -> dag.Node(..node, status: dag.Abandoned)
+        Ok(_) -> dag.release(node, dag.Open)
+        Error(Nil) -> dag.release(node, dag.Abandoned)
       }
   }
 }

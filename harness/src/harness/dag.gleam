@@ -6,7 +6,7 @@ import gleam/dynamic/decode
 import gleam/int
 import gleam/json
 import gleam/list
-import gleam/option.{type Option}
+import gleam/option.{type Option, None, Some}
 import gleam/order
 import gleam/result
 import gleam/string
@@ -73,6 +73,23 @@ pub type Attempt {
 }
 
 /// One Lean lemma in the proof DAG.
+///
+/// The DAG is a build graph and a `Claimed` node is a task the scheduler has
+/// handed out and not yet had back. The three `claimed_*` fields are the
+/// claim's own record: who holds it, since when, and which run
+/// (`runs/<claimed_run>/`) is holding it. They are `Some` exactly while the
+/// node is `Claimed` and `None` otherwise — `claim` sets all three and
+/// `release` clears them, and every status change out of `Claimed` goes
+/// through `release`. The `attempts` rows cannot stand in for them: an
+/// attempt is appended when it ends, so a node held by a live run has no
+/// row for the attempt holding it.
+///
+/// The run id is the checkable half. A dispatched prover is not a registered
+/// session, so the one thing outside the process that can vouch for a claim
+/// is the run directory: `runs/<claimed_run>/summary.txt` exists only once
+/// that run has written its closing summary, after which the claim is
+/// certainly stale. Its absence proves nothing — the run may be live or may
+/// have died without writing — which is why `claimed_at` is there too.
 pub type Node {
   Node(
     id: String,
@@ -85,6 +102,9 @@ pub type Node {
     proof_file: Option(String),
     attempts: List(Attempt),
     verified: Option(String),
+    claimed_by: Option(String),
+    claimed_at: Option(String),
+    claimed_run: Option(String),
   )
 }
 
@@ -169,6 +189,35 @@ pub fn update(dag: Dag, node: Node) -> Dag {
       }
     }),
   )
+}
+
+/// `node` handed out: `Claimed`, pointed at its proof file, and carrying who
+/// holds it (`by`, the persona), since when (`at`, an ISO-8601 `Z` time) and
+/// under which run (`run`, the `runs/<run>` directory name). Called at the
+/// moment a worker is about to be launched, and nowhere else.
+pub fn claim(
+  node: Node,
+  by by: String,
+  at at: String,
+  run run: String,
+) -> Node {
+  Node(
+    ..node,
+    status: Claimed,
+    proof_file: Some(proof_path(node)),
+    claimed_by: Some(by),
+    claimed_at: Some(at),
+    claimed_run: Some(run),
+  )
+}
+
+/// `node` with its claim handed back and `status` set. The scheduler no
+/// longer holds this task — the attempt ended, the attempt's process died,
+/// or a hand `reopen` decided the holder is gone — so the three claim
+/// fields are cleared together. Whatever the outcome, a node that is not
+/// `Claimed` carries no claim.
+pub fn release(node: Node, status: Status) -> Node {
+  Node(..node, status:, claimed_by: None, claimed_at: None, claimed_run: None)
 }
 
 /// Is this node open and ready to work on: itself `Open`, every dependency
@@ -405,6 +454,24 @@ fn node_decoder() -> decode.Decoder(Node) {
   use proof_file <- decode.field("proof_file", decode.optional(decode.string))
   use attempts <- decode.field("attempts", decode.list(attempt_decoder()))
   use verified <- decode.field("verified", decode.optional(decode.string))
+  // Absent on rows written before a claim had a record of its own; a node
+  // claimed then is a node whose holder, time and run are unknown, and
+  // `None` says exactly that.
+  use claimed_by <- decode.optional_field(
+    "claimed_by",
+    None,
+    decode.optional(decode.string),
+  )
+  use claimed_at <- decode.optional_field(
+    "claimed_at",
+    None,
+    decode.optional(decode.string),
+  )
+  use claimed_run <- decode.optional_field(
+    "claimed_run",
+    None,
+    decode.optional(decode.string),
+  )
   decode.success(Node(
     id:,
     region:,
@@ -416,6 +483,9 @@ fn node_decoder() -> decode.Decoder(Node) {
     proof_file:,
     attempts:,
     verified:,
+    claimed_by:,
+    claimed_at:,
+    claimed_run:,
   ))
 }
 
@@ -452,6 +522,9 @@ fn node_to_json(node: Node) -> json.Json {
     #("proof_file", json.nullable(node.proof_file, json.string)),
     #("attempts", json.array(node.attempts, attempt_to_json)),
     #("verified", json.nullable(node.verified, json.string)),
+    #("claimed_by", json.nullable(node.claimed_by, json.string)),
+    #("claimed_at", json.nullable(node.claimed_at, json.string)),
+    #("claimed_run", json.nullable(node.claimed_run, json.string)),
   ])
 }
 

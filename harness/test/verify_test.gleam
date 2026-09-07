@@ -92,6 +92,9 @@ fn harness_probe(id: String) -> Node {
     proof_file: None,
     attempts: [],
     verified: None,
+    claimed_by: None,
+    claimed_at: None,
+    claimed_run: None,
   )
 }
 
@@ -205,6 +208,9 @@ fn a_node(lean_name: String) -> Node {
     proof_file: None,
     attempts: [],
     verified: None,
+    claimed_by: None,
+    claimed_at: None,
+    claimed_run: None,
   )
 }
 

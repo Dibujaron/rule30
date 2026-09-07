@@ -7,9 +7,11 @@
 //// Append failures are not fatal — they are printed to stderr and
 //// swallowed, since a broken log should not take down a run.
 
+import gleam/int
 import gleam/io
 import gleam/json
 import gleam/result
+import gleam/string
 import simplifile
 
 /// A run's log directory and id.
@@ -135,6 +137,75 @@ pub fn summary(log: Log, text: String) -> Nil {
 /// The current UTC time, shaped like `"2026-09-05T21:15:00Z"`.
 pub fn now_iso() -> String {
   now_iso_ffi()
+}
+
+/// Whole seconds from one `now_iso`-shaped time (`2026-09-05T21:15:00Z`) to
+/// another, negative if `to` is the earlier one. `Error` for anything that
+/// is not that exact shape — a claim stamped by hand in some other format
+/// gets "age unknown" from `age_text`, not a plausible number.
+///
+/// Pure so a test can pin both ends: the clock stays in the caller.
+pub fn seconds_between(from from: String, to to: String) -> Result(Int, Nil) {
+  use a <- result.try(epoch_seconds(from))
+  use b <- result.try(epoch_seconds(to))
+  Ok(b - a)
+}
+
+/// `seconds_between(then, now)` rendered for a status line: `12m ago`,
+/// `3h 07m ago`, `2d 05h ago`; `age unknown` when either end does not parse.
+pub fn age_text(then then: String, now now: String) -> String {
+  case seconds_between(from: then, to: now) {
+    Error(Nil) -> "age unknown"
+    Ok(s) -> {
+      let m = s / 60
+      let pad = fn(n: Int) { string.pad_start(int.to_string(n), 2, "0") }
+      case m {
+        _ if m >= 1440 ->
+          int.to_string(m / 1440) <> "d " <> pad({ m % 1440 } / 60) <> "h ago"
+        _ if m >= 60 -> int.to_string(m / 60) <> "h " <> pad(m % 60) <> "m ago"
+        _ -> int.to_string(m) <> "m ago"
+      }
+    }
+  }
+}
+
+/// Seconds since 1970-01-01T00:00:00Z for an ISO-8601 `Z` time, by the
+/// days-from-civil formula (Howard Hinnant's), which needs no calendar
+/// library and no clock.
+fn epoch_seconds(iso: String) -> Result(Int, Nil) {
+  case string.split(iso, "T") {
+    [date, time] ->
+      case string.split(date, "-"), string.split(time, ":") {
+        [y, mo, d], [h, mi, s] -> {
+          use y <- result.try(int.parse(y))
+          use mo <- result.try(int.parse(mo))
+          use d <- result.try(int.parse(d))
+          use h <- result.try(int.parse(h))
+          use mi <- result.try(int.parse(mi))
+          use s <- result.try(int.parse(string.replace(s, "Z", "")))
+          use _ <- result.try(case mo >= 1 && mo <= 12 && d >= 1 && d <= 31 {
+            True -> Ok(Nil)
+            False -> Error(Nil)
+          })
+          let y = case mo <= 2 {
+            True -> y - 1
+            False -> y
+          }
+          let era = y / 400
+          let yoe = y - era * 400
+          let mp = case mo > 2 {
+            True -> mo - 3
+            False -> mo + 9
+          }
+          let doy = { 153 * mp + 2 } / 5 + d - 1
+          let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy
+          let days = era * 146_097 + doe - 719_468
+          Ok(days * 86_400 + h * 3600 + mi * 60 + s)
+        }
+        _, _ -> Error(Nil)
+      }
+    _ -> Error(Nil)
+  }
 }
 
 /// A monotonic millisecond counter. Not a wall clock — the origin is

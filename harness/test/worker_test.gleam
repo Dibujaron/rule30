@@ -34,6 +34,9 @@ fn node(id: String, size: dag.Size, attempts: List(dag.Attempt)) -> dag.Node {
     proof_file: None,
     attempts:,
     verified: None,
+    claimed_by: None,
+    claimed_at: None,
+    claimed_run: None,
   )
 }
 
@@ -182,6 +185,9 @@ fn a_dag() -> dag.Dag {
       proof_file: Some("Rule30/Proofs/EvolveLeftEdge.lean"),
       attempts: [],
       verified: Some("2026-09-05T20:00:00Z"),
+      claimed_by: None,
+      claimed_at: None,
+      claimed_run: None,
     ),
     node("centerColumn_zero", dag.S, [
       Attempt(
