@@ -54,6 +54,7 @@ fn probe(id: String, deps: List(String)) -> dag.Node {
     claimed_at: None,
     claimed_run: None,
     object: None,
+    under: None,
     research: False,
   )
 }

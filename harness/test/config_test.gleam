@@ -18,6 +18,7 @@ fn node(size: dag.Size, research: Bool, attempts: List(dag.Attempt)) -> Node {
     claimed_at: None,
     claimed_run: None,
     object: None,
+    under: None,
     research:,
   )
 }

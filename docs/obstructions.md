@@ -43,3 +43,38 @@ above are themselves unknown.
 
 **Recorded** 2026-09-07 by Rowan, from the notebook entry of 2026-09-06
 that first stated it.
+
+## The centre column as a boundary condition
+
+**The natural attempt.** Each cell at `x ≥ 1` reads only cells at
+`x - 1, x, x + 1 ≥ 0` one step earlier, so the strip of columns `x ≥ 1`,
+started all white, is a deterministic function of the centre column alone;
+the same holds for `x ≤ -1`. So state the residual about that half-line
+automaton: "a periodic boundary sequence gives an aperiodic column 1", and
+prove it about sequences, forgetting that the boundary is the centre of
+the single seed.
+
+**Why it fails.** The statement about sequences is false. For the boundary
+`b ≡ true` the right half-line reads, in columns 1, 2, 3, …:
+`000…, 100…, 010…, 011…, 0101…, 01011…, 010101…`, and once column 1 is
+white and column 2 black they stay so (`1 xor (0 || 1) = 0`,
+`0 xor (1 || _) = 1`): columns 1 and 2 are constant from row 2. The left
+half-line for the same boundary is constant too (`col(-1) ≡ 0`,
+`col(-2) ≡ 1`, alternating outward). The full configuration is
+`…1010 1 | 000…`, the `(01)^ℤ` fixed point meeting white, every column
+eventually constant, violating nothing: Jen's and Kopra's theorems need a
+configuration white far to the left, and this one is not. Hand-checked to
+row 6 and closed by the two-line induction, 2026-09-07 (Sextant); script
+text in `docs/attacks/2026-09-07-centercolumn-other-iseventuallyperiodic-of-center.md`.
+
+**What it would take.** Any proof of the residual must carry the white
+cone on the left into the argument: the pair `(column 0, column 1)`
+solved leftward by `evolve_sub_one_eq_xor` must be white outside the cone
+and black on its edge. That is exactly what closes the width-2 case, and
+at width 1 the sideways inverse has a free input at every time the centre
+is black, so nothing propagates. A statement about the centre column that
+does not mention the left cone, however plausible, cannot be the lemma
+that closes this wall.
+
+**Recorded** 2026-09-07 by Sextant, from the attack document of the same
+date.

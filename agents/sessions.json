@@ -141,6 +141,14 @@
       "role": "guide",
       "started": "2026-09-07T16:50:00Z",
       "claude_session": "8224fa7f-cd3b-4d3a-af00-f08eadc889d5"
+    },
+    {
+      "identity": "Rowan",
+      "session_name": "rule30-84",
+      "ref": "5cb80e",
+      "role": "overseer",
+      "started": "2026-09-07T17:48:00Z",
+      "claude_session": "6f575d42-08ac-4252-a73c-4dd927309585"
     }
   ]
 }

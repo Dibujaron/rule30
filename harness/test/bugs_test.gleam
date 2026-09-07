@@ -4,6 +4,7 @@ import gleam/option.{None, Some}
 import gleam/result
 import gleam/string
 import harness/bugs.{type Bug, Board, Bug}
+import simplifile
 
 fn bug(id: String, status: bugs.BugStatus) -> Bug {
   Bug(
@@ -591,4 +592,173 @@ fn good_row(id: String) -> String {
   <> "\"node\":null,\"run\":null,\"session_id\":null,\"signature\":null,"
   <> "\"filed\":\"2026-09-07T00:00:00Z\",\"occurrences\":1,\"status\":\"open\","
   <> "\"resolution\":null,\"fixed\":null}"
+}
+
+// --- filing a row by hand --------------------------------------------------
+//
+// `bugs file` exists because on 2026-09-07 one hand-edited row with the
+// area "dag" made the whole board refuse to decode, and every `bugs` verb
+// with it. The verb runs the board's own row decoder over the row before
+// anything is written, so the refusal happens to the one row instead of to
+// the board.
+
+/// The six fields a reporter writes; everything else is the verb's to fill.
+fn minimal_row(id: String, area: String) -> String {
+  "{\"id\":\""
+  <> id
+  <> "\",\"title\":\"Guard denies lake env lean\",\"area\":\""
+  <> area
+  <> "\",\"severity\":\"friction\",\"body\":\"the body\","
+  <> "\"reported_by\":\"Rowan\"}"
+}
+
+/// A scratch board and row on disk, one directory per test so the tests
+/// cannot see each other's files. Returns the two paths.
+fn scratch(name: String, board: bugs.Board, row: String) -> #(String, String) {
+  let dir = "build/test-runs/bugs/" <> name
+  let _ = simplifile.delete(dir)
+  let assert Ok(_) = simplifile.create_directory_all(dir)
+  let board_path = dir <> "/bugs.json"
+  let row_path = dir <> "/row.json"
+  let assert Ok(_) = bugs.save(board, board_path)
+  let assert Ok(_) = simplifile.write(row_path, row)
+  #(board_path, row_path)
+}
+
+pub fn file_a_minimal_row_fills_the_defaults_and_round_trips_test() {
+  let #(board_path, row_path) =
+    scratch(
+      "minimal",
+      Board([]),
+      minimal_row("guard-denies-lake-env-lean", "guard"),
+    )
+  let assert Ok(bug) =
+    bugs.file_at(board_path:, row_path:, now: "2026-09-07T10:00:00Z")
+  assert bug.id == "guard-denies-lake-env-lean"
+  assert bug.title == "Guard denies lake env lean"
+  assert bug.area == bugs.Guard
+  assert bug.severity == bugs.Friction
+  assert bug.body == "the body"
+  assert bug.reported_by == "Rowan"
+  assert bug.source == bugs.Hand
+  assert bug.node == None
+  assert bug.run == None
+  assert bug.session_id == None
+  assert bug.signature == None
+  assert bug.filed == "2026-09-07T10:00:00Z"
+  assert bug.occurrences == 1
+  assert bug.status == bugs.Open
+  assert bug.resolution == None
+  assert bug.fixed == None
+  assert bug.claimed_by == None
+  assert bug.claimed_at == None
+  assert bug.claimed_ref == None
+  // What was written is what `load` reads back: the whole point of running
+  // the board's decoder before the save.
+  assert bugs.load(board_path) == Ok(Board([bug]))
+}
+
+/// A row that sets a field the verb would have filled keeps its own value,
+/// and that value is checked like any other.
+pub fn file_keeps_a_default_field_the_row_does_set_test() {
+  let row =
+    "{\"id\":\"seen-twice\",\"title\":\"t\",\"area\":\"verify\","
+    <> "\"severity\":\"blocks\",\"body\":\"b\",\"reported_by\":\"Rowan\","
+    <> "\"node\":\"evolve_left_edge\",\"occurrences\":2}"
+  let #(board_path, row_path) = scratch("kept", Board([]), row)
+  let assert Ok(bug) =
+    bugs.file_at(board_path:, row_path:, now: "2026-09-07T10:00:00Z")
+  assert bug.node == Some("evolve_left_edge")
+  assert bug.occurrences == 2
+  assert bug.source == bugs.Hand
+}
+
+/// Today's cause, refused at the row instead of at the board: the message
+/// names the field, the word that was written, and the words that would
+/// have been accepted.
+pub fn file_refuses_an_area_outside_the_enum_naming_the_set_test() {
+  let #(board_path, row_path) =
+    scratch("area", Board([]), minimal_row("some-id", "dag"))
+  let assert Error(reason) =
+    bugs.file_at(board_path:, row_path:, now: "2026-09-07T10:00:00Z")
+  assert string.contains(reason, "area: \"dag\" is not an area")
+  assert string.contains(
+    reason,
+    "guard, dispatch, verify, brief, board, hooks, docs, other",
+  )
+}
+
+pub fn file_refuses_an_id_already_on_the_board_test() {
+  let #(board_path, row_path) =
+    scratch(
+      "dup",
+      Board([bug("taken", bugs.Open)]),
+      minimal_row("taken", "guard"),
+    )
+  let assert Error(reason) =
+    bugs.file_at(board_path:, row_path:, now: "2026-09-07T10:00:00Z")
+  assert string.contains(reason, "id: `taken` is already on the board")
+}
+
+pub fn file_refuses_an_id_that_is_not_a_slug_test() {
+  let #(board_path, row_path) =
+    scratch("slug", Board([]), minimal_row("Not A Slug", "guard"))
+  let assert Error(reason) =
+    bugs.file_at(board_path:, row_path:, now: "2026-09-07T10:00:00Z")
+  assert string.contains(
+    reason,
+    "id: `Not A Slug` is not a slug of lowercase letters, digits and dashes",
+  )
+}
+
+pub fn file_refuses_a_file_that_is_not_a_json_object_test() {
+  let #(board_path, row_path) = scratch("list", Board([]), "[]")
+  let assert Error(reason) =
+    bugs.file_at(board_path:, row_path:, now: "2026-09-07T10:00:00Z")
+  assert string.contains(reason, "not a JSON object")
+  let #(board_path, row_path) = scratch("prose", Board([]), "not json at all")
+  let assert Error(reason) =
+    bugs.file_at(board_path:, row_path:, now: "2026-09-07T10:00:00Z")
+  assert string.contains(reason, "not JSON")
+}
+
+/// Every problem in one refusal, so the row is fixed in one edit rather
+/// than one problem per run.
+pub fn file_names_every_problem_at_once_test() {
+  let row =
+    "{\"id\":\"Bad Id\",\"title\":\"t\",\"area\":\"guard\","
+    <> "\"severity\":\"high\",\"reported_by\":\"Rowan\"}"
+  let #(board_path, row_path) = scratch("all", Board([]), row)
+  let assert Error(reason) =
+    bugs.file_at(board_path:, row_path:, now: "2026-09-07T10:00:00Z")
+  assert string.contains(reason, "3 problems")
+  assert string.contains(
+    reason,
+    "severity: \"high\" is not a severity; one of blocks, friction, papercut",
+  )
+  assert string.contains(reason, "body: missing")
+  assert string.contains(reason, "id: `Bad Id` is not a slug")
+}
+
+/// A refusal writes nothing: the board file is byte-for-byte what it was,
+/// for every kind of refusal above.
+pub fn the_board_is_unchanged_after_any_refusal_test() {
+  let board = Board([bug("taken", bugs.Open)])
+  [
+    #("unchanged-area", minimal_row("some-id", "dag")),
+    #("unchanged-dup", minimal_row("taken", "guard")),
+    #("unchanged-slug", minimal_row("Not A Slug", "guard")),
+    #("unchanged-list", "[]"),
+    #("unchanged-prose", "not json at all"),
+    #("unchanged-missing", "{\"id\":\"only-an-id\"}"),
+  ]
+  |> list.each(fn(case_) {
+    let #(name, row) = case_
+    let #(board_path, row_path) = scratch(name, board, row)
+    let assert Ok(before) = simplifile.read(board_path)
+    let assert Error(_) =
+      bugs.file_at(board_path:, row_path:, now: "2026-09-07T10:00:00Z")
+    let assert Ok(after) = simplifile.read(board_path)
+    assert after == before
+  })
 }

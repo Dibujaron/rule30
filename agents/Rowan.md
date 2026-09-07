@@ -1552,3 +1552,77 @@ found four text fixes and one misfiled object. Keel's title hook blocked
 every prompt in my session for a stretch, which cost one lost review
 report and nothing else; Keel filed and closed it with the mechanism. The
 theorist role and the index are Keel's and Fathom's, in progress.
+
+## 2026-09-07T17:45:00Z — the theorist has its inputs; the walls are decided; a restart next
+
+Everything the theorist needs is on main: `docs/theorist-brief.md` (the
+task, three disciplines, six fixed sections, a persona with a notebook at
+Dib's suggestion), `docs/sources.md` with eleven papers staged as text in a
+gitignored `sources/`, `blueprint/index.md` from Fathom (64 theorems by
+object, one sentence each, cited-by, status; the "not yet checked" label on
+old proved nodes fixed at 7185b77), `docs/obstructions.md` with its
+corrected first entry, and Keel's `theorise` command with fable at the top
+of every ladder. The P2 count tier closed four of four ($4.32); Marrow was
+minted. Board: 64 nodes, 60 proved, 4 walls.
+
+**Two mistakes of mine today, both the same shape.** I filed a board row by
+hand with area `dag`, which is not in the board's enum; the decoder is
+strict by design and every `bugs` verb failed until Keel changed one word.
+And I wrote in the prover cookbook that `omega` sees through `|x|`; it
+does not, and the check I ran before committing caught it. Same lesson as
+the mirror-image row model this morning: a confident sentence about a tool
+is a hypothesis until the tool has said yes. I have asked Keel for a
+validating `bugs file` so the first cannot recur.
+
+**The walls.** Size `wall` is never dispatched, research flag or no, so a
+wall that should be attacked needs a dispatchable size. I made the two
+structured walls (`leftDiagonal_onset_le`, `leftDiagonal_period_le`) size
+L with research; the two P1 residuals stay walls. Reason: a repeated fable
+attempt on the prize itself, before any theorist has said what to try, is
+twenty dollars a draw on a lottery, and the theorist exists so that the top
+rung is pointed rather than sprayed.
+
+**Cast friction.** Two of three budget exhaustions today were casts; the
+cookbook (every name checked against the pin) and the ℕ-first captain
+rule in `crystals.md` are the fix, inlined into every prover brief by
+Keel; the seed-check warning follows.
+
+**Next, in order:** restart this session to load the message-logging hook
+Dib decided on; re-register; start the first theorist on the P1 frontier
+(`theorise`, fable, a minted theory persona), then a second on the period
+wall; no prover run until a theorist has reported. Nothing on the board is
+novel yet, and Dib has asked to be told the moment something is.
+
+## 2026-09-07T17:55:00Z — the first theorist is live
+
+Restarted (new Claude session, same ListAgents ref, which the sessions
+file did not anticipate: I appended a second row for the same ref rather
+than editing the old one). Startup was clean: nothing unpushed, no branch
+unlanded, one bug held by a live Fathom. The message-logging hook is
+loaded: my announcements to Keel, Fathom and Cairn appear in
+`runs/messages.jsonl` under my new session id.
+
+Then `gleam run -- theorise`, no arguments, detached with `Start-Process`
+per my own earlier lesson. Run `20260907T175146Z`: the naming ceremony
+minted **Sextant** into the theory region ($0.55, fable), and the
+dispatch went out at 17:52Z on the default topic, the P1 frontier wall
+`centerColumn_other_isEventuallyPeriodic_of_center`, guard on port 4330.
+Its attack document will be `docs/attacks/2026-09-07-<slug>.md`.
+
+**The freeze I announced is narrower than the prover freeze**, and I
+named the mechanism instead of the rule: the BEAM in the shared checkout
+loads modules lazily, so a `gleam build`, `gleam test` or any `gleam run`
+there could hand the live process a different module than it started
+with. Fast-forwards of main are fine — the theorist's hooks are the guard
+over HTTP, not `.claude/hooks`, and its brief was assembled at start.
+Keel added the consequence I had not spelled out: every `bugs` verb from
+the shared checkout rebuilds there, so board verbs run from a worktree
+with `HARNESS_REPO_ROOT` pointed at the shared tree until I report the
+end.
+
+Two watches armed: one for `summary.txt` or the process (pid 40332)
+disappearing, with the liveness predicate proved both ways first; one on
+the theorist's events for guard denials, tool errors and rate limits.
+Next: read Sextant's document when it lands, move any surviving claim to
+`blueprint/crystals.md` with its depth, then a second theorist on the
+period wall. Nothing on the board is novel yet.

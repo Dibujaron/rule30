@@ -1033,3 +1033,35 @@ it rather than widening the filter in a landing that was not about it.
 
 Next: `a-worker-report-has-no-sub-lemma-section`, after Keel lands the
 research rung, from a fresh worktree.
+
+## 2026-09-07T21:00:00Z — taking `a-worker-report-has-no-sub-lemma-section`
+
+Claimed through the CLI with my ref (`bugs claim ... --as Fathom --session
+f3b0fa`, board at 04d3b35). Premise checked at HEAD 32c281d before any
+plan, in the worktree:
+
+```
+$ grep -n "sub\|propos\|lemma" harness/src/harness/worker/brief.gleam
+  (only "served lemmas" and the cookbook; no proposal section)
+$ sed -n 60,70p harness/src/harness/worker.gleam
+  Report(outcome, estimate, notebook, journal, bugs, summary, discarded)
+```
+
+No `proposals` field on the report, no schema property, nothing in
+`write_channels` that writes a proposal file. The premise holds as filed.
+The half of the body that has moved on is the pointer to the seeder: the
+seed check exists now (`seed.check_file_in`, `seed.decode_proposals`,
+`seed.proposal_shape`), so "the shape Keel's seeder check consumes" is a
+concrete file format rather than a plan, and the fix can reuse it byte
+for byte.
+
+**Closure test:** this row closes when a fake worker report carrying a
+`proposals` array, driven through the dispatcher, leaves
+`<attempt-dir>/proposals.json` that `seed.decode_proposals` reads
+unchanged, plus a `proposals_checked` event in that attempt's
+`events.jsonl` with the check's report beside it.
+
+Rowan's design answers by message: run the check automatically at
+attempt end, event in the attempt's `events.jsonl`, report into the
+attempt directory, exact `next.json` shape, file named `proposals.json`.
+Plan: `docs/superpowers/plans/2026-09-07-worker-proposals.md`.

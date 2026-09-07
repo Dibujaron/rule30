@@ -8,6 +8,8 @@
 //// dispatcher from what it already knows, so a worker cannot file under
 //// another identity or claim a node it was not dispatched to.
 
+import gleam/dict.{type Dict}
+import gleam/dynamic.{type Dynamic}
 import gleam/dynamic/decode
 import gleam/int
 import gleam/json
@@ -280,6 +282,204 @@ fn add(board: Board, bug: Bug) -> Board {
     list.append(board.bugs, [Bug(..bug, id: unique_id(board, slug(bug.title)))]),
   )
 }
+
+/// Put one hand-written row on the board, or say everything wrong with it.
+///
+/// `text` is one JSON object. The six fields a reporter knows — `id`,
+/// `title`, `area`, `severity`, `body`, `reported_by` — are required; every
+/// other field is filled when absent (`source` "hand", `filed` `now`,
+/// `occurrences` 1, `status` open, the rest null) and taken as written when
+/// present. The filled row is then checked by the board's own row decoder,
+/// so what is accepted here is exactly what `load` will accept later: a
+/// word outside an enum is refused now, naming the field, the word and the
+/// valid set, instead of refusing the whole board at the next load.
+///
+/// Every problem is reported in one refusal — a missing field, a bad enum
+/// value, an id already on the board, an id that is not a slug of lowercase
+/// letters, digits and dashes — so a row is fixed in one edit. The id is
+/// the reporter's, not slugged from the title as `append` does: a row filed
+/// by hand is cited by id in commit messages before it is filed.
+pub fn file(
+  board: Board,
+  text: String,
+  now: String,
+) -> Result(#(Board, Bug), String) {
+  use row <- result.try(parse_row(text))
+  let filled = fill_defaults(row, now)
+  let decoded = decode.run(filled, bug_decoder())
+  let problems =
+    list.append(
+      case decoded {
+        Ok(_) -> []
+        Error(errors) -> list.map(errors, fn(e) { describe(e, row) })
+      },
+      case decode.run(filled, id_only_decoder()) {
+        Ok(id) -> id_problems(board, id)
+        Error(_) -> []
+      },
+    )
+  case decoded, problems {
+    Ok(bug), [] -> Ok(#(Board(list.append(board.bugs, [bug])), bug))
+    _, _ ->
+      Error(
+        "not filed; "
+        <> int.to_string(list.length(problems))
+        <> case problems {
+          [_] -> " problem"
+          _ -> " problems"
+        }
+        <> " with the row, and the board is unchanged:\n  "
+        <> string.join(problems, "\n  "),
+      )
+  }
+}
+
+/// `file`, from the board at `board_path` and the row at `row_path`, saving
+/// the board only when the row was accepted. A refusal leaves the file
+/// byte-for-byte as it was, which is the property a caller relies on when
+/// they fix the row and run it again.
+pub fn file_at(
+  board_path board_path: String,
+  row_path row_path: String,
+  now now: String,
+) -> Result(Bug, String) {
+  use text <- result.try(
+    simplifile.read(row_path)
+    |> result.map_error(fn(e) {
+      "could not read `" <> row_path <> "`: " <> simplifile.describe_error(e)
+    }),
+  )
+  use board <- result.try(load(board_path))
+  use #(filed, bug) <- result.try(file(board, text, now))
+  use _ <- result.try(save(filed, board_path))
+  Ok(bug)
+}
+
+/// The row as a JSON object, or why it is not one.
+fn parse_row(text: String) -> Result(Dict(String, Dynamic), String) {
+  case json.parse(text, decode.dict(decode.string, decode.dynamic)) {
+    Ok(row) -> Ok(row)
+    Error(json.UnableToDecode([first, ..])) ->
+      Error(
+        "the row file is not a JSON object: found "
+        <> first.found
+        <> ", and a row is one {...} with id, title, area, severity, body "
+        <> "and reported_by",
+      )
+    Error(e) -> Error("the row file is not JSON: " <> string.inspect(e))
+  }
+}
+
+/// The row with every field a reporter need not write filled in, as the
+/// `Dynamic` the board's row decoder reads. A key the row does carry is
+/// left as written, so a captain who does set `status` or `node` has it
+/// checked rather than overwritten.
+fn fill_defaults(row: Dict(String, Dynamic), now: String) -> Dynamic {
+  [
+    #("source", dynamic.string(source_to_string(Hand))),
+    #("node", dynamic.nil()),
+    #("run", dynamic.nil()),
+    #("session_id", dynamic.nil()),
+    #("signature", dynamic.nil()),
+    #("filed", dynamic.string(now)),
+    #("occurrences", dynamic.int(1)),
+    #("status", dynamic.string(status_to_string(Open))),
+    #("resolution", dynamic.nil()),
+    #("fixed", dynamic.nil()),
+    #("claimed_by", dynamic.nil()),
+    #("claimed_at", dynamic.nil()),
+    #("claimed_ref", dynamic.nil()),
+  ]
+  |> list.fold(row, fn(row, entry) {
+    let #(key, value) = entry
+    case dict.has_key(row, key) {
+      True -> row
+      False -> dict.insert(row, key, value)
+    }
+  })
+  |> dict.to_list
+  |> list.map(fn(entry) { #(dynamic.string(entry.0), entry.1) })
+  |> dynamic.properties
+}
+
+/// One decoder error as a line naming the field, and for an enum the word
+/// that was written and the words that would have been accepted.
+fn describe(error: decode.DecodeError, row: Dict(String, Dynamic)) -> String {
+  let field = string.join(error.path, ".")
+  let written = fn() {
+    case dict.get(row, field) {
+      Ok(value) ->
+        case decode.run(value, decode.string) {
+          Ok(s) -> "\"" <> s <> "\""
+          Error(_) -> string.inspect(value)
+        }
+      Error(Nil) -> "(nothing)"
+    }
+  }
+  let not_one_of = fn(what: String, names: List(String)) {
+    field
+    <> ": "
+    <> written()
+    <> " is not "
+    <> what
+    <> "; one of "
+    <> string.join(names, ", ")
+  }
+  case error.expected, error.found {
+    "Field", "Nothing" -> field <> ": missing"
+    "Area", _ -> not_one_of("an area", list.map(all_areas, area_to_string))
+    "Severity", _ ->
+      not_one_of("a severity", list.map(all_severities, severity_to_string))
+    "BugStatus", _ ->
+      not_one_of("a status", list.map(all_statuses, status_to_string))
+    "Source", _ ->
+      not_one_of("a source", list.map(all_sources, source_to_string))
+    expected, found -> field <> ": expected " <> expected <> ", found " <> found
+  }
+}
+
+/// What is wrong with a proposed id, on this board: nothing, or one line
+/// per fault.
+fn id_problems(board: Board, id: String) -> List(String) {
+  list.flatten([
+    case is_slug(id) {
+      True -> []
+      False -> [
+        "id: `"
+        <> id
+        <> "` is not a slug of lowercase letters, digits and dashes",
+      ]
+    },
+    case taken(board, id) {
+      True -> ["id: `" <> id <> "` is already on the board"]
+      False -> []
+    },
+  ])
+}
+
+fn is_slug(id: String) -> Bool {
+  id != ""
+  && list.all(string.to_graphemes(id), fn(g) {
+    string.contains(does: slug_chars <> "-", contain: g)
+  })
+}
+
+const all_areas = [
+  Guard,
+  Dispatch,
+  Verify,
+  Brief,
+  BoardArea,
+  Hooks,
+  Docs,
+  Other,
+]
+
+const all_severities = [Blocks, Friction, Papercut]
+
+const all_statuses = [Open, Claimed, Fixed, Wontfix]
+
+const all_sources = [Worker, Harness, Hand]
 
 fn is_live(bug: Bug) -> Bool {
   bug.status == Open || bug.status == Claimed

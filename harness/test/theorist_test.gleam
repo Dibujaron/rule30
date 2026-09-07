@@ -50,6 +50,7 @@ fn node(id: String, region: String, size: dag.Size, status: dag.Status) {
     claimed_at: None,
     claimed_run: None,
     object: None,
+    under: None,
     research: False,
   )
 }
