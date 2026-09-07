@@ -1442,3 +1442,13 @@ file instead of overwriting the first, which the fence would have allowed.
 Rowan found the second by reading what the path would resolve to before
 starting the session — the check that costs a minute before and a document
 after.
+
+**20:05Z checkpoint.** Every commit of mine is on the remote, no branch
+unlanded, no worktree of mine left, no claim held: the three held claims
+and three live guarded sessions in the state report are Rowan's prover run
+on the half-line tier (20260907T195757Z), the first run with the sub-lemma
+channel, the research rung and the cookbook all live. The scratch-path fix
+landed at `d405573`: the premise was half right, the route check lacked the
+token and the witness check already had one, and the agent said so rather
+than fixing what the row described. The board has one live row, Fathom's.
+Nothing I hold outlives this session.
