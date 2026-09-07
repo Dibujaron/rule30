@@ -1236,7 +1236,7 @@ right.
 Nothing held on my account: no lock, no claim, no branch off `main`,
 everything pushed, shared checkout clean on `main`.
 
-## 2026-09-07T02:30:00Z — the two bodies, and a tier chosen by the engine
+## 2026-09-07T01:40:00Z — the two bodies, and a tier chosen by the engine
 
 Dib brought a note from a contributor, flashcolor: the rule 30 triangle looks
 like two triangles with different rules, a regular one on the left and a
@@ -1309,10 +1309,49 @@ proof-note annotation at `5ee56fc` and flagged that CLAUDE.md's "exactly
 these three headings and nothing else" is now false by one harness block;
 that clause is Dib's to change and I have raised it.
 
-**Addendum, 03:00Z.** All three research agents are back; the consolidated
+**Addendum, 01:50Z.** All three research agents are back; the consolidated
 list is `blueprint/crystals.md`, thirty items, ranked. Keel reports the
 account's session limit hit at about 02:55Z and resets at 06:20Z, so the
 diagonal tier is seeded, pushed and *not dispatched*: a run now would record
 only rate-limited attempts. First thing after the reset: `run
 --max-attempts 10 --concurrency 3`, after telling Keel and Fathom to keep
 out of the shared checkout for its duration.
+
+## 2026-09-07T02:10:00Z — the first run on the tier, stopped on purpose
+
+Run `20260907T015318Z`, three haiku workers, started the minute the account
+limit lifted. Ten minutes in, no attempt closed, and the attempt logs said
+why: **a failed build never releases the build lock.** The guard releases in
+the `PostToolUse` hook, and Claude Code fires that hook only when the tool
+call succeeds; a `lake build` that exits nonzero fires `PostToolUseFailure`,
+which the guard never registered. So the lock sits with its holder until the
+holder's next *successful* build, and every sibling waits 240 seconds and is
+denied. Last night's six-for-six run hid it because every node closed on its
+first build. I read the timeline, then the source, then wrote `STOP` — the
+lever Keel built last night, used for the first time, for exactly the case
+it was built for: in-flight attempts finish, nothing new starts.
+
+What I was wrong about, in order. I first read a `Write` guard event as a
+denial of the worker's own proof file; it was an `Allow` with the denial
+field empty. I looked at the value and not at the column. Second: I had
+assumed a run that closed six nodes in fifteen minutes had exercised the
+lock under contention. It had exercised it under *success*, which is a
+different denominator. Third, and the one that cost real time: I thought a
+guard timeout was the guard being slow. It was the guard being correct
+about a lock nobody released.
+
+Keel has the mechanism and is building both parts of the fix — the missing
+hook, and a defensive release on the holder's next tool call, so a missed
+hook can never hold the lock past one action. Cairn passed on Dib's
+damage-cone idea with an honest assessment attached; the exact local law of
+the left front (the difference advances left exactly when the cell beside it
+is white) is in `crystals.md` as A2 and is the best new statement of the
+night. I reversed my own ruling on the lock-timeout wording at Keel's
+request: a worker can act on "another worker held the lock" by retrying,
+and my earlier text could only produce abandonment.
+
+Held right now, with expiry: Keel and Fathom are holding every landing and
+every touch of the shared checkout on my word until I announce the run has
+ended; both have agreed that if I go quiet for an hour they check `runs/`
+and proceed. Two board rows are drafted on disk in my scratchpad, not
+filed, because the dispatcher owns `bugs.json` until the run ends.

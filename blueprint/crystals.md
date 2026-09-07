@@ -78,6 +78,34 @@ Rowland 2006 Lemma 2 / Theorem 1), the walls `leftDiagonal_onset_le` and
     amphichiral. *Trivial* (`decide`). Worth stating against the generic
     256-rule definitions so symmetry-transported theorems come free.
 
+### The damage cone, from Cairn and Dib (2026-09-07)
+
+Flip one cell of a random row; the set where the two pictures disagree is a
+cone whose right edge advances exactly 1 per row and whose left edge
+advances about 0.24 on average (Cairn measured 0.236 to 0.253 over five
+trials of 20,000 rows on 400,000-cell rows; NKS p. 949 gives 0.2428, and
+notes it is *similar but not identical* to the 0.252 of the regular-region
+boundary). Three statements, in Cairn's words with Rowan's numbering:
+
+- **A1. Left-permutivity as a `Config → Config` fact.**
+  `rule30_ne_of_left_ne (c d : Config) (i : ℤ) (hl : c (i - 1) ≠ d (i - 1)) (hc : c i = d i) (hr : c (i + 1) = d (i + 1)) : rule30 c i ≠ rule30 d i`.
+  `rule30_eq` twice and a `Bool` case split. Corollary worth its own node:
+  if `c, d` differ at `i` and agree everywhere right of it, they differ at
+  `i + 1` one step later, so the rightmost disagreement moves right by
+  exactly one per row. This is item 2 above in its cleanest form.
+- **A2. The exact local law of the left edge.** If `c, d` agree at `i - 2`
+  and `i - 1` and differ at `i`, then `rule30 c (i - 1) ≠ rule30 d (i - 1) ↔ c (i - 1) = false`.
+  The front advances left exactly when the cell beside it is white, and it
+  can retreat, which is why the mean is below a half. Same proof shape.
+  This is the deterministic content behind the 0.24 and is not in any of
+  the thirty items above.
+- **A3. Do not seed a bound on the left speed below 1.** The worst case is
+  speed exactly 1, witnessed by `c` all white and `d = initialConfig`: the
+  difference pattern is the single-seed picture and `evolve_left_edge`
+  already says its edge moves at 1. Any bound below 1 is an average under
+  the Bernoulli measure (Shereshevsky 1992), nobody has proved one for rule
+  30, and even the statement needs Mathlib probability.
+
 ## Tier B — the single-cell pattern (edges, rows, columns)
 
 11. **Rows `2^n` and `2^n - 1` restart the right edge.** Row `2^n - 1` ends in
