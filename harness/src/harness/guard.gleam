@@ -7,7 +7,11 @@
 //// A worker may only edit its one assigned proof file and may only run
 //// `lake build …` / `lake env …`; everything else is denied. `lake build`
 //// also serialises through the shared `lock` actor so two workers never
-//// build at once.
+//// build at once — and a build that cannot get that lock within
+//// `build_lock_wait_ms` is turned away with a message that says the command
+//// was permitted and to run it again, which is a different message from
+//// the one a forbidden command gets, because it asks for the opposite
+//// response.
 
 import gleam/bit_array
 import gleam/bytes_tree
@@ -468,16 +472,62 @@ pub fn archive_transcript(
   Ok(destination)
 }
 
+/// How long a `lake build` waits for the shared build lock before the guard
+/// gives up on it and turns the call away. Four minutes: long enough that a
+/// sibling's ordinary build finishes inside it, short enough to fit under the
+/// 280-second `curl -m` in `hook_command`, since a hook that outlives its
+/// own transport is a denial the worker never gets to read.
+pub const build_lock_wait_ms = 240_000
+
+/// The shared build lock as the HTTP handler sees it: the actor, and how long
+/// one `lake build` may wait on it. Bundled so `start_with` can hand a test a
+/// short wait without a fifth argument threading through every handler.
+type BuildLock {
+  BuildLock(actor: Subject(lock.Msg), wait_ms: Int)
+}
+
+/// What a worker is told when its `lake build` was permitted but the lock
+/// did not come free. Generated here, from the wait actually used, rather
+/// than written at the call site: this is the one denial that is not the
+/// worker's fault, and the text has to carry that or the worker will treat
+/// it like the grammar refusal it otherwise resembles — which is permanent,
+/// and whose correct response (stop) is the opposite of this one's (retry).
+///
+/// It says three things, in this order, because a worker reads the first
+/// clause and acts: the command was allowed; a sibling worker held the lock;
+/// run the same command again.
+pub fn build_lock_busy_reason(waited_ms: Int) -> String {
+  "harness guard: your command was permitted and nothing about it needs to change. "
+  <> "Another worker held the shared build lock for the "
+  <> int.to_string(waited_ms / 1000)
+  <> " seconds this guard waited, so this call was turned away without running. "
+  <> "This is contention, not a rule you broke: wait a little and run the same command again."
+}
+
 /// Start the guard: a fresh token, an HTTP server on `port` bound to
-/// `127.0.0.1`, logging every decision to `log`.
+/// `127.0.0.1`, logging every decision to `log`. A `lake build` waits
+/// `build_lock_wait_ms` for the lock.
 pub fn start(
   rules: Rules,
   lock: Subject(lock.Msg),
   log: log.Log,
   port: Int,
 ) -> Result(Guard, String) {
+  start_with(rules, lock, log, port, build_lock_wait_ms)
+}
+
+/// `start`, with the build-lock wait chosen by the caller. Exists so a test
+/// can drive the timeout path in milliseconds; the dispatcher uses `start`.
+pub fn start_with(
+  rules: Rules,
+  lock: Subject(lock.Msg),
+  log: log.Log,
+  port: Int,
+  build_lock_wait_ms: Int,
+) -> Result(Guard, String) {
   let token = token_ffi()
-  let handler = fn(req) { handle_request(req, rules, lock, log, token) }
+  let build = BuildLock(actor: lock, wait_ms: build_lock_wait_ms)
+  let handler = fn(req) { handle_request(req, rules, build, log, token) }
   use _started <- result.try(
     mist.new(handler)
     |> mist.bind("127.0.0.1")
@@ -496,12 +546,12 @@ pub fn start(
 fn handle_request(
   req: Request(mist.Connection),
   rules: Rules,
-  lock: Subject(lock.Msg),
+  build: BuildLock,
   log: log.Log,
   token: String,
 ) -> Response(mist.ResponseData) {
   case req.method, req.path {
-    Post, "/hook" -> authorize(req, rules, lock, log, token)
+    Post, "/hook" -> authorize(req, rules, build, log, token)
     _, _ -> deny_response(404, Unauthorized, "harness guard: not found")
   }
 }
@@ -509,12 +559,12 @@ fn handle_request(
 fn authorize(
   req: Request(mist.Connection),
   rules: Rules,
-  lock: Subject(lock.Msg),
+  build: BuildLock,
   log: log.Log,
   token: String,
 ) -> Response(mist.ResponseData) {
   case request.get_header(req, "x-harness-token") {
-    Ok(t) if t == token -> handle_hook(req, rules, lock, log)
+    Ok(t) if t == token -> handle_hook(req, rules, build, log)
     _ ->
       deny_response(
         403,
@@ -534,7 +584,7 @@ const max_hook_body_bytes = 16_777_216
 fn handle_hook(
   req: Request(mist.Connection),
   rules: Rules,
-  lock: Subject(lock.Msg),
+  build: BuildLock,
   log: log.Log,
 ) -> Response(mist.ResponseData) {
   case mist.read_body(req, max_hook_body_bytes) {
@@ -548,7 +598,7 @@ fn handle_hook(
             Malformed,
             "harness guard: could not read hook input",
           )
-        Ok(body) -> respond_to_hook(body, rules, lock, log)
+        Ok(body) -> respond_to_hook(body, rules, build, log)
       }
   }
 }
@@ -556,14 +606,14 @@ fn handle_hook(
 fn respond_to_hook(
   body: String,
   rules: Rules,
-  lock: Subject(lock.Msg),
+  build: BuildLock,
   log: log.Log,
 ) -> Response(mist.ResponseData) {
   let #(event_name, tool_name, attempted) = case parse_hook_input(body) {
     Ok(hi) -> #(hi.event, hi.tool_name, attempted_of(hi))
     Error(_) -> #("", "", "")
   }
-  let decision = apply_side_effects(decide(rules, body), rules, lock, log)
+  let decision = apply_side_effects(decide(rules, body), rules, build, log)
   log.event(
     log,
     "guard",
@@ -640,23 +690,26 @@ fn denial_of(decision: Decision) -> String {
 
 /// Turn `AcquireBuild`/`ReleaseBuild` into actual lock operations, and
 /// `Archive` into a copied transcript. An `AcquireBuild` that times out
-/// becomes a `Deny`, so the worker never thinks it holds a lock it does not;
-/// an archive that fails is logged and the compaction proceeds, because
-/// blocking a session over a missing log file would cost more than the file.
+/// becomes a `Deny(BuildLockTimeout, ..)`, so the worker never thinks it
+/// holds a lock it does not — the hook wire has only allow and deny, so a
+/// "not right now" still has to travel as a deny, and `build_lock_busy_reason`
+/// is what stops it reading as a "never". An archive that fails is logged and
+/// the compaction proceeds, because blocking a session over a missing log
+/// file would cost more than the file.
 fn apply_side_effects(
   decision: Decision,
   rules: Rules,
-  lock: Subject(lock.Msg),
+  build: BuildLock,
   l: log.Log,
 ) -> Decision {
   case decision {
     AcquireBuild ->
-      case lock.acquire(lock, rules.holder, 240_000) {
+      case lock.acquire(build.actor, rules.holder, build.wait_ms) {
         True -> AcquireBuild
-        False -> Deny(BuildLockTimeout, "build lock timeout")
+        False -> Deny(BuildLockTimeout, build_lock_busy_reason(build.wait_ms))
       }
     ReleaseBuild -> {
-      lock.release(lock, rules.holder)
+      lock.release(build.actor, rules.holder)
       ReleaseBuild
     }
     Archive(session_id:, transcript_path:) -> {

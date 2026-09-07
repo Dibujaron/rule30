@@ -270,6 +270,27 @@ pub fn a_lock_timeout_and_a_grammar_refusal_have_different_slugs_test() {
   assert guard.denial_slug(guard.BuildLockTimeout) == "build_lock_timeout"
 }
 
+/// The worker-facing half of the same distinction. A grammar refusal and a
+/// lock timeout both travel as a hook `deny`, so the text is the only thing a
+/// worker has to tell "never" from "not right now" — and the two ask for
+/// opposite responses. The busy text must say the command was permitted, that
+/// no rule was broken, and to run the same command again; and it must not
+/// carry the grammar refusal's sentence, which is the one that says "only".
+pub fn the_busy_reason_says_permitted_and_retry_not_forbidden_test() {
+  let busy = guard.build_lock_busy_reason(guard.build_lock_wait_ms)
+  assert string.contains(busy, "permitted")
+  assert string.contains(busy, "not a rule you broke")
+  assert string.contains(busy, "run the same command again")
+  assert string.contains(busy, "240 seconds")
+  let forbidden =
+    "{\"hook_event_name\":\"PreToolUse\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"curl http://x\"}}"
+  let assert guard.Deny(kind: guard.NotPermitted, reason: grammar) =
+    guard.decide(rules, forbidden)
+  assert grammar != busy
+  assert !string.contains(busy, "only 'lake build")
+  assert !string.contains(grammar, "run the same command again")
+}
+
 /// A command longer than the cap is cut, and says so. A silently shortened
 /// command is a well-formed log row that is wrong.
 pub fn a_very_long_command_is_truncated_and_says_so_test() {
@@ -304,24 +325,35 @@ pub fn a_very_long_command_is_truncated_and_says_so_test() {
 fn start_on_free_port(
   lock_actor: Subject(lock.Msg),
   run_log: log.Log,
+  build_lock_wait_ms: Int,
   attempts: Int,
 ) -> guard.Guard {
-  case guard.start(rules, lock_actor, run_log, ports.span(1)), attempts {
+  case
+    guard.start_with(
+      rules,
+      lock_actor,
+      run_log,
+      ports.span(1),
+      build_lock_wait_ms,
+    ),
+    attempts
+  {
     Ok(started), _ -> started
-    Error(_), n if n > 1 -> start_on_free_port(lock_actor, run_log, n - 1)
+    Error(_), n if n > 1 ->
+      start_on_free_port(lock_actor, run_log, build_lock_wait_ms, n - 1)
     Error(e), _ ->
       panic as { "guard.start found no free port in 8 attempts: " <> e }
   }
 }
 
-pub fn guard_http_denies_rm_over_hook_endpoint_test() {
-  let assert Ok(lock_actor) = lock.start(60_000)
-  let assert Ok(run_log) = log.open("build/test-runs", "guard")
-  let started = start_on_free_port(lock_actor, run_log, 8)
-  assert started.settings_path == run_log.dir <> "/settings.json"
+/// POST one PreToolUse `Bash` hook body to a running guard, the way Claude
+/// Code's hook does, and return what the hook would print back.
+fn post_bash_hook(started: guard.Guard, command: String) -> String {
   let assert Ok(curl) = shell.which("curl")
   let body =
-    "{\"hook_event_name\":\"PreToolUse\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"rm -rf /\"}}"
+    "{\"hook_event_name\":\"PreToolUse\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\""
+    <> command
+    <> "\"}}"
   let assert Ok(r) =
     shell.run(
       curl,
@@ -338,6 +370,66 @@ pub fn guard_http_denies_rm_over_hook_endpoint_test() {
       ".",
       5000,
     )
-  assert string.contains(r.output, "deny")
+  r.output
+}
+
+pub fn guard_http_denies_rm_over_hook_endpoint_test() {
+  let assert Ok(lock_actor) = lock.start(60_000)
+  let assert Ok(run_log) = log.open("build/test-runs", "guard")
+  let started =
+    start_on_free_port(lock_actor, run_log, guard.build_lock_wait_ms, 8)
+  assert started.settings_path == run_log.dir <> "/settings.json"
+  let output = post_bash_hook(started, "rm -rf /")
+  assert string.contains(output, "deny")
   let assert Ok(_) = simplifile.delete("build/test-runs")
+}
+
+/// The whole path, over the wire and into the log, for the one denial that
+/// is not the worker's fault. A sibling holds the lock; this worker's
+/// `lake build` — the command its brief permits — is turned away. What comes
+/// back must still be a `deny` (a worker that proceeds believing it holds a
+/// lock it does not is the failure worth keeping), but its text must be the
+/// busy text and not the grammar text, and the row in `events.jsonl` must
+/// carry `build_lock_timeout` where a forbidden command's row carries
+/// `not_permitted` — that field is what `dispatch.guard_denials` reads, and
+/// before it the two were one signature.
+///
+/// The sibling must still hold the lock afterwards: turning the call away is
+/// not the same as taking the lock from whoever has it.
+pub fn a_busy_build_lock_is_denied_as_busy_not_as_forbidden_test() {
+  let dir = "build/test-runs-busy-lock"
+  let _ = simplifile.delete(dir)
+  let assert Ok(lock_actor) = lock.start(60_000)
+  assert lock.acquire(lock_actor, "sibling", 1000)
+  let assert Ok(run_log) = log.open(dir, "guard")
+  let started = start_on_free_port(lock_actor, run_log, 200, 8)
+
+  let busy = post_bash_hook(started, "lake build Rule30.Proofs.X")
+  assert string.contains(busy, "\"permissionDecision\":\"deny\"")
+  assert string.contains(busy, "run the same command again")
+  assert string.contains(busy, "not a rule you broke")
+  assert !string.contains(busy, "only 'lake build")
+
+  let forbidden = post_bash_hook(started, "curl http://x")
+  assert string.contains(forbidden, "\"permissionDecision\":\"deny\"")
+  assert string.contains(forbidden, "only 'lake build")
+  assert !string.contains(forbidden, "run the same command again")
+
+  // The sibling was not evicted by the refusal.
+  assert lock.acquire(lock_actor, "probe", 50) == False
+
+  let assert Ok(events) = simplifile.read(run_log.dir <> "/events.jsonl")
+  let rows =
+    string.split(events, "\n")
+    |> list.filter(fn(line) { string.contains(line, "\"kind\":\"guard\"") })
+  assert list.length(rows) == 2
+  let assert [timeout_row, grammar_row] = rows
+  assert string.contains(timeout_row, "\"denial\":\"build_lock_timeout\"")
+  assert string.contains(
+    timeout_row,
+    "\"attempted\":\"lake build Rule30.Proofs.X\"",
+  )
+  assert string.contains(grammar_row, "\"denial\":\"not_permitted\"")
+  assert !string.contains(grammar_row, "build_lock_timeout")
+  let assert Ok(_) = simplifile.delete(dir)
 }
