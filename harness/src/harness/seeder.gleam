@@ -62,8 +62,8 @@ pub fn default_port(cfg: config.Config) -> Int {
 
 /// What a seeder reports at the end of every turn. `outcome` is the seeder's
 /// claim about its file — `proposed` once the proposal is written — and
-/// never a claim about the tier. No size estimate, no notebook, no posts and
-/// no bugs: a seeder has no node to price, no roster entry to keep a
+/// never a claim about the tier. No size estimate, no notebook and no bugs:
+/// a seeder has no node to price, no roster entry to keep a
 /// notebook under, and its one voice outside the session is the journal.
 pub type Report {
   Report(outcome: String, summary: String, journal: String)

@@ -50,9 +50,9 @@ pub type ReportedBug {
 /// What a worker reports at the end of every turn. `outcome` is the worker's
 /// claim, not the harness's finding.
 ///
-/// `discarded` is the decoder's own confession: one short line per `posts`
-/// or `bugs` entry it could not read and therefore left out, and one line
-/// for either field written as something other than an array. It is empty
+/// `discarded` is the decoder's own confession: one short line per `bugs`
+/// entry it could not read and therefore left out, and one line for the
+/// field written as something other than an array. It is empty
 /// for a clean report. The worker never writes it — it is what the harness
 /// knows about the gap between what the worker sent and what survived, and
 /// the dispatcher logs it into the attempt so a clean `bugs: []` can be told
@@ -63,7 +63,6 @@ pub type Report {
     estimate: dag.Size,
     notebook: String,
     journal: String,
-    posts: List(String),
     bugs: List(ReportedBug),
     summary: String,
     discarded: List(String),
@@ -82,9 +81,8 @@ fn report_decoder() -> decode.Decoder(Report) {
   use summary <- decode.optional_field("summary", "", decode.string)
   use notebook <- decode.optional_field("notebook", "", decode.string)
   use journal <- decode.optional_field("journal", "", decode.string)
-  // `posts` and `bugs` are both read as arrays of undecoded elements and
-  // then decoded one element at a time, rather than with
-  // `decode.list(decode.string)` / `decode.list(reported_bug_decoder())`
+  // `bugs` is read as an array of undecoded elements and then decoded one
+  // element at a time, rather than with `decode.list(reported_bug_decoder())`
   // embedded directly. Two routes make that necessary, and both of them end
   // by discarding `outcome`:
   //
@@ -99,27 +97,23 @@ fn report_decoder() -> decode.Decoder(Report) {
   //     per-element failure and so survives the treatment above.
   //     `dynamic_list` closes that one.
   //
-  // The promise both of these keep: nothing a worker writes in `posts` or
-  // `bugs` may cost the turn's proof outcome. Those two fields are optional
-  // extras; `outcome`, `notebook` and `journal` are the turn's work.
+  // The promise both of these keep: nothing a worker writes in `bugs` may
+  // cost the turn's proof outcome. That field is an optional extra;
+  // `outcome`, `notebook` and `journal` are the turn's work.
   //
   // What that promise must not cost is the record. Every entry dropped on
   // either route is named in `discarded`, so a report that reached the
   // dispatcher with fewer bugs than the worker wrote says so.
-  use raw_posts <- decode.optional_field("posts", Ok([]), dynamic_list())
   use raw_bugs <- decode.optional_field("bugs", Ok([]), dynamic_list())
-  let #(posts, dropped_posts) = survivors("posts", raw_posts, decode.string)
-  let #(bugs, dropped_bugs) =
-    survivors("bugs", raw_bugs, reported_bug_decoder())
+  let #(bugs, discarded) = survivors("bugs", raw_bugs, reported_bug_decoder())
   decode.success(Report(
     outcome:,
     estimate:,
     notebook:,
     journal:,
-    posts:,
     bugs:,
     summary:,
-    discarded: list.append(dropped_posts, dropped_bugs),
+    discarded:,
   ))
 }
 
@@ -137,7 +131,7 @@ fn dynamic_list() -> decode.Decoder(Result(List(Dynamic), Nil)) {
 
 /// Decode one field's entries independently, keeping those that decode and
 /// naming, in order, each one that does not: `bugs[2]: expected String at
-/// title, found Int`, or `posts: not an array` for the whole field. The
+/// title, found Int`, or `bugs: not an array` for the whole field. The
 /// entries are the first element of the pair, the reasons the second.
 fn survivors(
   field: String,

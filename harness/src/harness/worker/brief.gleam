@@ -65,14 +65,6 @@ pub fn report_schema() -> String {
           ),
         ),
         #(
-          "posts",
-          json.object([
-            #("type", json.string("array")),
-            #("items", json.object([#("type", json.string("string"))])),
-            #("description", json.string("messages for named peers, if any")),
-          ]),
-        ),
-        #(
           "bugs",
           json.object([
             #("type", json.string("array")),
@@ -253,7 +245,7 @@ fn prior_attempts(node: dag.Node) -> String {
 fn how_to_report() -> String {
   "## How to report\n\n"
   <> "Every turn ends with the structured report the harness asked for. Set `outcome` to `proved` only after `lake build` of your own module has actually succeeded — the harness then verifies your claim independently, and sends you the verdict if it fails. Set `outcome` to `in_progress` while you are still working. When you give up, set `outcome` to `abandoned` and fill in `notebook` and `journal`.\n\n"
-  <> "`notebook` is for your future self: Mathlib lemmas that worked, dead ends worth not repeating, conventions. `journal` is a short written update for Dib, in your own words. `posts` are messages for named peers. Leave `notebook` and `journal` empty until the attempt ends, then write them properly — the harness writes those files from your report verbatim, so they are the only voice you have outside this session.\n\n"
+  <> "`notebook` is for your future self: Mathlib lemmas that worked, dead ends worth not repeating, conventions. `journal` is a short written update for Dib, in your own words. Leave both empty until the attempt ends, then write them properly — the harness writes those files from your report verbatim, and they are the only voice you have outside this session: there is no channel to a peer, so anything another identity should know goes in the notebook, and anything Dib should know goes in the journal.\n\n"
   <> "A bug is the **harness** getting in your way: a command the guard refused that you needed, a brief that told you something untrue, a verifier message you could not act on, a lemma the brief said was served that was not. Lean being difficult is not a bug. A proof you could not find is not a bug. If the obstacle would still exist for a human doing this by hand in an editor, it is not the harness's. The framework agents maintain the harness and read these; file what actually cost you turns, and leave the array empty otherwise."
 }
 

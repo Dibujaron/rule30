@@ -245,7 +245,6 @@ fn result_line(session_id: String, is_error: Bool, outcome: String) -> String {
         #("summary", json.string("scripted " <> outcome)),
         #("notebook", json.string("")),
         #("journal", json.string("")),
-        #("posts", json.array([], json.string)),
       ]),
     ),
   ])
