@@ -1708,3 +1708,38 @@ of the left diagonals under a periodic boundary — the spec's original
 topic, reached by the theorist itself in two sessions. Next for me:
 propose the half-line tier (crystals 38–41) to Dib and seed it on
 approval, so the next document can cite it.
+
+## 2026-09-07T20:25:00Z — the first candidate for something new
+
+Sextant's third document (run `20260907T192739Z`, $12.73, 49 turns)
+claimed two theorems with routes citing only closed nodes. I walked the
+first by hand, then gave both to a review session to prove in scratch
+Lean without touching the project; both closed within eight minutes,
+`lake env lean` clean, axioms the allowed three, and I re-ran the file
+myself. `explorer/scratch_leftdiagonal_unbounded.lean` is the record.
+
+**What they say.** No two pairs of adjacent left diagonals ever
+eventually agree after a shift inward (crystal 42); hence the eventual
+periods of the left diagonals are unbounded, the doubling never stops
+(crystal 43). The second is the one I did not expect today. NKS p. 871
+lists the doublings to 87,867 and "or more" as observations under the
+`2^n` bound; Rowland proves *when* a doubling happens, not that it keeps
+happening; nothing in the eleven held sources or a web search states it.
+So it is the first statement on this board that may be new, and I have
+said so to Dib in those words, with the caveat that "not found" is a
+search result. It sits beside the diagonal walls as a lower bound, under
+nothing, and cites nothing under the residual; the theorist said that
+first and it is right.
+
+**How it happened**, for the record of the experiment: three sessions of
+one persona on one wall, each starting from its own previous next-topic,
+with the harness fixed between the first and second so it had hours and
+scripts. The first session found the seam, the second found the split
+identity at the seam, the third asked what the settled region knows about
+the boundary, found the answer is nothing, and in showing why produced
+the pair-injectivity that gives unboundedness. Nobody set that topic.
+
+**Also.** The half-line tier (seven nodes) is seeded and a run is on it;
+the CLAUDE.md review paragraph landed; Fathom's misaddressed message hit
+Sextant mid-session and the guard held (one denial, one lost turn), and
+Fathom's startup-skill fix now lists live guarded sessions.

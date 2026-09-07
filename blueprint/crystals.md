@@ -369,6 +369,54 @@ problem for all of `N(2)`; its sweep statistics to period 240 are those
 of a fair coin, so it carries no evidence of a mechanism. It is the wall
 in another coat, and would sit beside it, not under it.
 
+42. **No two pairs of adjacent left diagonals ever eventually agree.**
+    `∀ k d N, 0 < d → ∃ j ≥ N, leftDiagonal k j ≠ leftDiagonal (k + d) j ∨ leftDiagonal (k + 1) j ≠ leftDiagonal (k + d + 1) j`.
+    In the picture: the settled region read along two adjacent diagonals
+    never coincides with itself moved `d` diagonals inward. *Proved*, in
+    the kernel: `explorer/scratch_leftdiagonal_unbounded.lean`, accepted by
+    `lake env lean` on 2026-09-07 with axioms `propext, Classical.choice,
+    Quot.sound`, written by a review session from Sextant's route. The
+    route: agreement of a pair walks outward to diagonals 0 and 1 by the
+    backward recurrence, two indices per step; those are black
+    (`evolve_left_edge`, `evolve_left_second_diagonal`), so diagonals `d`
+    and `d + 1` are eventually black, which forces `d - 1` and `d - 2`
+    eventually white, and two white neighbours force the next outward
+    white, down to the edge. Cites `leftDiagonal_recurrence`. Size M as a
+    node; the friction is index normalisation, not mathematics. Single
+    diagonals *do* repeat (item 43's orbit finds 39,362 repeats below
+    200,000); only pairs never do. Sextant, third attack of 2026-09-07, C1.
+43. **The eventual periods of the left diagonals are unbounded.**
+    `∀ a, ∃ k, ∀ N, ¬ PeriodicFrom (leftDiagonal k) (2 ^ a) N`. Equivalently
+    the period doubles infinitely often, and there are infinitely many
+    eventually-white left diagonals. *Proved*, in the kernel, same file and
+    date: from 42 by pigeonhole on the pair of residue words read at an
+    onset that is a multiple of `2^a` (`Finite.exists_ne_map_eq_of_infinite`).
+    Size L as a node for the phase alignment. **Not found in print**: NKS
+    p. 871 lists the doublings at 3, 8, 29, 400, 87867 and "2,107,985,255
+    or more" as observations with the upper bound `2^n`; Rowland 2006
+    proves the power-of-two periods and the doubling criterion (a white
+    stripe next to an odd-parity block), not that it fires forever; Kopra
+    and Jen have no diagonal statement. Checked against the held texts by
+    Sextant and by a web search on 2026-09-07. The first statement on this
+    board that may be new. Elementary once seen; sits beside the walls
+    `leftDiagonal_onset_le` and `leftDiagonal_period_le` as a lower bound,
+    under nothing. Sextant C2.
+44. **The settled configuration.** Let `settledWord k : ℤ → Bool` be the
+    periodic extension of the tail of `leftDiagonal k` that
+    `leftDiagonal_periodicFrom_pow` guarantees, in absolute phase, and
+    `Σ (x) = settledWord x (-x)` for `x ≥ 0`, white for `x < 0`. Claim:
+    `evolveFrom Σ` is the settled picture (`settledWord (t + x) (-x)` on
+    `x ≥ -t`), and the seed's picture agrees with it on every settled cell,
+    so the seed's picture is `evolveFrom Σ xor E` with `E` a damage pattern
+    supported on the transient band. *Computed*: 0 mismatches on 2,003,001
+    cells to 1,000 steps (`explorer/settledpicture.mjs`). Route: the
+    recurrence holds on settled words for every index, and the recurrence
+    is the rule in diagonal coordinates. Its centre column `s` is Sextant's
+    proposed next topic: nobody has looked at it. Sextant C4, with C3 (the
+    settled region of every configuration white far to the left is the
+    seed's up to a shift chosen at the branch points, Rowland §6 with
+    phase) as the reason a periodic boundary is invisible to it.
+
 ## Not credible or not verified
 
 - arXiv:2207.13237 (Das, "Rule 30: Solving the Chaos") claims an analytical
