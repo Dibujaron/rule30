@@ -304,6 +304,18 @@ reformulations, all provable, none of them the prize.
     *Proved* (Hedlund 1969; Wolfram 1986 §4); induction on `n`, solving
     leftward by 35. Difficulty M. Shares its induction with 34.
 
+37. **Kopra's right-half recurrence theorems.** For any configuration
+    that is white far to the left and not identically white, write `R t`
+    for the right half of row `t`, the one-sided sequence `i ↦ evolve t i`
+    for `i ≥ 0` (Kopra's `frac`, a sequence, not a real number; the real
+    is only his motivating analogy with `frac((p/q)^i)`). Then (a) `R t = R 0`
+    for only finitely many `t`, and (b) the sequence `t ↦ R t` has
+    infinitely many limit points in the space of one-sided sequences.
+    Kopra, arXiv:2202.13809, Theorems 4.5 and 4.7; both rest on Theorem 3.5
+    (item 18) plus Lemmas 4.2–4.4 and the Morse–Hedlund theorem. *Proved*;
+    real math, above item 18 in cost. Found by Cairn 2026-09-07 checking
+    literature coverage; not on the DAG, not previously here.
+
 ## Not credible or not verified
 
 - arXiv:2207.13237 (Das, "Rule 30: Solving the Chaos") claims an analytical

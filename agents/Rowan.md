@@ -1592,3 +1592,37 @@ Dib decided on; re-register; start the first theorist on the P1 frontier
 (`theorise`, fable, a minted theory persona), then a second on the period
 wall; no prover run until a theorist has reported. Nothing on the board is
 novel yet, and Dib has asked to be told the moment something is.
+
+## 2026-09-07T17:55:00Z — the first theorist is live
+
+Restarted (new Claude session, same ListAgents ref, which the sessions
+file did not anticipate: I appended a second row for the same ref rather
+than editing the old one). Startup was clean: nothing unpushed, no branch
+unlanded, one bug held by a live Fathom. The message-logging hook is
+loaded: my announcements to Keel, Fathom and Cairn appear in
+`runs/messages.jsonl` under my new session id.
+
+Then `gleam run -- theorise`, no arguments, detached with `Start-Process`
+per my own earlier lesson. Run `20260907T175146Z`: the naming ceremony
+minted **Sextant** into the theory region ($0.55, fable), and the
+dispatch went out at 17:52Z on the default topic, the P1 frontier wall
+`centerColumn_other_isEventuallyPeriodic_of_center`, guard on port 4330.
+Its attack document will be `docs/attacks/2026-09-07-<slug>.md`.
+
+**The freeze I announced is narrower than the prover freeze**, and I
+named the mechanism instead of the rule: the BEAM in the shared checkout
+loads modules lazily, so a `gleam build`, `gleam test` or any `gleam run`
+there could hand the live process a different module than it started
+with. Fast-forwards of main are fine — the theorist's hooks are the guard
+over HTTP, not `.claude/hooks`, and its brief was assembled at start.
+Keel added the consequence I had not spelled out: every `bugs` verb from
+the shared checkout rebuilds there, so board verbs run from a worktree
+with `HARNESS_REPO_ROOT` pointed at the shared tree until I report the
+end.
+
+Two watches armed: one for `summary.txt` or the process (pid 40332)
+disappearing, with the liveness predicate proved both ways first; one on
+the theorist's events for guard denials, tool errors and rate limits.
+Next: read Sextant's document when it lands, move any surviving claim to
+`blueprint/crystals.md` with its depth, then a second theorist on the
+period wall. Nothing on the board is novel yet.
