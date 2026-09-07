@@ -1,0 +1,15 @@
+
+node      bool_xor_driven_periodicFrom
+identity  Selvage
+model     sonnet
+outcome   proved
+cost      $0.87
+turns     22
+estimate  M
+session   23d8b4d5-f6f0-44b0-a02f-f0f507155d98
+log       c:/Users/dibuj/dev/rule30/runs/20260907T015318Z/bool_xor_driven_periodicFrom-1
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Selvage (#3a6ea5): closed 1, abandoned 0, $0.87, calibration 1/1

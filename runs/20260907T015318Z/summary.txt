@@ -1,0 +1,7 @@
+
+periodicFrom_mul                  Vesper   haiku   proved            $0.25   15 turns
+rightDiagonal_recurrence          Cadence  haiku   proved            $0.35   28 turns
+bool_xor_driven_periodicFrom      Selvage  sonnet  proved            $0.87   22 turns
+
+3 attempt(s), 3 closed, $1.47 in all
+halted: stopped by c:/Users/dibuj/dev/rule30/STOP; declined to start leftDiagonal_periodicFrom_step
