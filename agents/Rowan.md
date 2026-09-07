@@ -1666,7 +1666,7 @@ Also today: crystal 37 (Kopra's right-half recurrence, found by Cairn),
 `under` on the five first-tier nodes, and the `bugs file` line in
 CLAUDE.md approved by Dib. Cairn's session ended around 18:50Z.
 
-## 2026-09-07T19:55:00Z — Sextant's second session adjudicated; a third started
+## 2026-09-07T19:28:00Z — Sextant's second session adjudicated; a third started
 
 Run `20260907T185518Z`, 48 turns, $12.30, finished on its own report
 under Keel's ceilings; the recovered-report path was not needed. The
@@ -1703,7 +1703,7 @@ scratch worktree: 48.6 s for 503 tests, seed_test 17.8 s of it (33 Lean
 calls), everything else under 2.5 s. The hour per row is review passes
 and serial landings, not tests. Said so; changed nothing.
 
-**Third session** started 19:52Z on Sextant's next topic, the transients
+**Third session** started 19:27Z on Sextant's next topic, the transients
 of the left diagonals under a periodic boundary — the spec's original
 topic, reached by the theorist itself in two sessions. Next for me:
 propose the half-line tier (crystals 38–41) to Dib and seed it on
