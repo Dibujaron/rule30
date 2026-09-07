@@ -85,6 +85,14 @@ pub type Bug {
     status: BugStatus,
     resolution: Option(String),
     fixed: Option(String),
+    /// Who holds this bug. Set by `claim` when the status becomes `Claimed`,
+    /// cleared by `reopen`. A `Claimed` row with no holder is a claim made
+    /// by hand-editing the file, so nobody can be asked whether it is still
+    /// alive.
+    claimed_by: Option(String),
+    /// When the claim was made, ISO-8601 with a `Z` like `filed`. Set and
+    /// cleared alongside `claimed_by`.
+    claimed_at: Option(String),
   )
 }
 
@@ -265,6 +273,116 @@ pub fn update(board: Board, bug: Bug) -> Board {
       }
     }),
   )
+}
+
+/// Take bug `id` for `by`, stamping who and when so a later reader can ask
+/// whether the holder is still alive. Only an `Open` bug can be claimed: a
+/// `Claimed` one is someone else's, and a settled one wants no work.
+pub fn claim(
+  board: Board,
+  id: String,
+  by: String,
+  now: String,
+) -> Result(Board, String) {
+  use bug <- result.try(
+    get(board, id) |> result.replace_error("no bug `" <> id <> "` on the board"),
+  )
+  case bug.status {
+    Open ->
+      Ok(update(
+        board,
+        Bug(..bug, status: Claimed, claimed_by: Some(by), claimed_at: Some(now)),
+      ))
+    Claimed ->
+      Error(
+        "`"
+        <> id
+        <> "` is already claimed"
+        <> case bug.claimed_by, bug.claimed_at {
+          Some(who), Some(when) -> " by " <> who <> " since " <> when
+          Some(who), None -> " by " <> who
+          None, _ -> " by hand, with no holder recorded"
+        },
+      )
+    settled ->
+      Error(
+        "`"
+        <> id
+        <> "` is "
+        <> status_to_string(settled)
+        <> "; a settled bug is not claimed, and reopen is not the tool for "
+        <> "it either",
+      )
+  }
+}
+
+/// Put a `Claimed` bug back on the board, clearing who held it and since
+/// when. A claim outlives the session that made it, and nothing else ever
+/// clears the status, so this is the manual undo for a session that died
+/// holding a bug. Only `Claimed` is reopened: a `Fixed` or `Wontfix` bug is
+/// a decision, not a stale claim.
+pub fn reopen(board: Board, id: String) -> Result(Board, String) {
+  use bug <- result.try(
+    get(board, id) |> result.replace_error("no bug `" <> id <> "` on the board"),
+  )
+  case bug.status {
+    Claimed ->
+      Ok(update(
+        board,
+        Bug(..bug, status: Open, claimed_by: None, claimed_at: None),
+      ))
+    other ->
+      Error(
+        "`"
+        <> id
+        <> "` is "
+        <> status_to_string(other)
+        <> ", not claimed; only a claimed bug can be reopened",
+      )
+  }
+}
+
+/// Settle bug `id` as `Fixed` or `Wontfix`, recording the verdict's reason
+/// and when it was reached. The claim fields are left as they are: a closed
+/// bug's holder is the record of who worked it, and nobody reads a settled
+/// row to ask whether its holder is alive.
+pub fn close(
+  board: Board,
+  id: String,
+  status: BugStatus,
+  resolution: String,
+  now: String,
+) -> Result(Board, String) {
+  use verdict <- result.try(case status {
+    Fixed | Wontfix -> Ok(status)
+    other ->
+      Error(
+        "a bug is closed as fixed or wontfix, not " <> status_to_string(other),
+      )
+  })
+  use bug <- result.try(
+    get(board, id) |> result.replace_error("no bug `" <> id <> "` on the board"),
+  )
+  case is_live(bug) {
+    True ->
+      Ok(update(
+        board,
+        Bug(
+          ..bug,
+          status: verdict,
+          resolution: Some(resolution),
+          fixed: Some(now),
+        ),
+      ))
+    False ->
+      Error(
+        "`"
+        <> id
+        <> "` is already "
+        <> status_to_string(bug.status)
+        <> "; a settled bug is not closed again",
+      )
+  }
 }
 
 /// Every bug still wanting work — `open` or `claimed` — newest first.
@@ -495,6 +613,19 @@ fn bug_decoder() -> decode.Decoder(Bug) {
   use status <- decode.field("status", status_decoder())
   use resolution <- decode.field("resolution", decode.optional(decode.string))
   use fixed <- decode.field("fixed", decode.optional(decode.string))
+  // Optional *keys*, not just nullable values: rows written before the
+  // claim fields existed, and rows claimed by hand, have neither key, and a
+  // board that refuses to load deletes nothing but also helps nobody.
+  use claimed_by <- decode.optional_field(
+    "claimed_by",
+    None,
+    decode.optional(decode.string),
+  )
+  use claimed_at <- decode.optional_field(
+    "claimed_at",
+    None,
+    decode.optional(decode.string),
+  )
   decode.success(Bug(
     id:,
     title:,
@@ -512,6 +643,8 @@ fn bug_decoder() -> decode.Decoder(Bug) {
     status:,
     resolution:,
     fixed:,
+    claimed_by:,
+    claimed_at:,
   ))
 }
 
@@ -538,6 +671,8 @@ fn bug_to_json(bug: Bug) -> json.Json {
     #("status", json.string(status_to_string(bug.status))),
     #("resolution", json.nullable(bug.resolution, json.string)),
     #("fixed", json.nullable(bug.fixed, json.string)),
+    #("claimed_by", json.nullable(bug.claimed_by, json.string)),
+    #("claimed_at", json.nullable(bug.claimed_at, json.string)),
   ])
 }
 

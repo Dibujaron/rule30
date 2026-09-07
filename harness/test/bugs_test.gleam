@@ -23,6 +23,8 @@ fn bug(id: String, status: bugs.BugStatus) -> Bug {
     status:,
     resolution: None,
     fixed: None,
+    claimed_by: None,
+    claimed_at: None,
   )
 }
 
@@ -39,6 +41,11 @@ pub fn round_trip_json_test() {
         occurrences: 4,
         resolution: Some("widened the allowlist, 1a2b3c4"),
         fixed: Some("2026-09-06T03:00:00Z"),
+      ),
+      Bug(
+        ..bug("held", bugs.Claimed),
+        claimed_by: Some("Keel"),
+        claimed_at: Some("2026-09-06T04:00:00Z"),
       ),
       Bug(
         ..bug("c", bugs.Wontfix),
@@ -69,6 +76,170 @@ pub fn unknown_status_fails_the_decode_test() {
 
 pub fn empty_board_round_trips_test() {
   assert bugs.decode(bugs.encode(Board([]))) == Ok(Board([]))
+}
+
+/// A row with neither `claimed_by` nor `claimed_at` key decodes with both
+/// `None`. This pins compatibility with the live board: every row filed
+/// before the claim fields existed lacks the keys, and so does the row that
+/// was claimed by hand-editing the file. The decoder must treat an absent
+/// key like a `null`, not like a malformed row, because a board that refuses
+/// to load is a board nobody can claim or reopen anything on.
+pub fn a_row_without_the_claim_keys_decodes_with_no_holder_test() {
+  let text = "{\"bugs\":[" <> good_row("legacy") <> "]}"
+  let assert Ok(board) = bugs.decode(text)
+  let assert [b] = board.bugs
+  assert b.claimed_by == None
+  assert b.claimed_at == None
+}
+
+// --- claiming and reopening ------------------------------------------------
+
+pub fn claim_on_an_open_bug_stamps_status_holder_and_time_test() {
+  let board = Board([bug("a", bugs.Open)])
+  let assert Ok(board) =
+    bugs.claim(board, "a", "Fathom", "2026-09-06T05:00:00Z")
+  let assert Ok(b) = bugs.get(board, "a")
+  assert b.status == bugs.Claimed
+  assert b.claimed_by == Some("Fathom")
+  assert b.claimed_at == Some("2026-09-06T05:00:00Z")
+}
+
+pub fn claim_on_a_claimed_bug_fails_naming_the_holder_test() {
+  let board =
+    Board([
+      Bug(
+        ..bug("a", bugs.Claimed),
+        claimed_by: Some("Keel"),
+        claimed_at: Some("2026-09-06T04:00:00Z"),
+      ),
+    ])
+  let assert Error(reason) =
+    bugs.claim(board, "a", "Fathom", "2026-09-06T05:00:00Z")
+  assert string.contains(reason, "Keel")
+  assert string.contains(reason, "2026-09-06T04:00:00Z")
+}
+
+/// The live board has exactly this row: `claimed` by a hand edit, no holder.
+pub fn claim_on_a_hand_claimed_bug_fails_saying_no_holder_test() {
+  let board = Board([bug("a", bugs.Claimed)])
+  let assert Error(reason) =
+    bugs.claim(board, "a", "Fathom", "2026-09-06T05:00:00Z")
+  assert string.contains(reason, "no holder")
+}
+
+pub fn claim_on_a_fixed_bug_fails_test() {
+  let board = Board([bug("a", bugs.Fixed)])
+  let assert Error(reason) =
+    bugs.claim(board, "a", "Fathom", "2026-09-06T05:00:00Z")
+  assert string.contains(reason, "settled")
+}
+
+pub fn claim_of_an_unknown_id_fails_naming_the_id_test() {
+  let assert Error(reason) =
+    bugs.claim(Board([]), "nope", "Fathom", "2026-09-06T05:00:00Z")
+  assert string.contains(reason, "`nope`")
+}
+
+pub fn reopen_on_a_claimed_bug_clears_holder_and_time_test() {
+  let board =
+    Board([
+      Bug(
+        ..bug("a", bugs.Claimed),
+        claimed_by: Some("Keel"),
+        claimed_at: Some("2026-09-06T04:00:00Z"),
+      ),
+    ])
+  let assert Ok(board) = bugs.reopen(board, "a")
+  let assert Ok(b) = bugs.get(board, "a")
+  assert b.status == bugs.Open
+  assert b.claimed_by == None
+  assert b.claimed_at == None
+}
+
+pub fn reopen_on_an_open_bug_fails_test() {
+  let assert Error(reason) = bugs.reopen(Board([bug("a", bugs.Open)]), "a")
+  assert string.contains(reason, "not claimed")
+}
+
+pub fn reopen_of_an_unknown_id_fails_naming_the_id_test() {
+  let assert Error(reason) = bugs.reopen(Board([]), "nope")
+  assert string.contains(reason, "`nope`")
+}
+
+pub fn close_open_as_fixed_stamps_status_resolution_and_time_test() {
+  let assert Ok(board) =
+    bugs.close(
+      Board([bug("a", bugs.Open)]),
+      "a",
+      bugs.Fixed,
+      "landed in 1a2b3c4",
+      "2026-09-06T06:00:00Z",
+    )
+  let assert Ok(b) = bugs.get(board, "a")
+  assert b.status == bugs.Fixed
+  assert b.resolution == Some("landed in 1a2b3c4")
+  assert b.fixed == Some("2026-09-06T06:00:00Z")
+}
+
+/// The holder stays on a closed row: it is the record of who worked it.
+pub fn close_claimed_as_wontfix_keeps_the_holder_test() {
+  let board =
+    Board([
+      Bug(
+        ..bug("a", bugs.Claimed),
+        claimed_by: Some("Keel"),
+        claimed_at: Some("2026-09-06T04:00:00Z"),
+      ),
+    ])
+  let assert Ok(board) =
+    bugs.close(
+      board,
+      "a",
+      bugs.Wontfix,
+      "correct behaviour",
+      "2026-09-06T06:00:00Z",
+    )
+  let assert Ok(b) = bugs.get(board, "a")
+  assert b.status == bugs.Wontfix
+  assert b.claimed_by == Some("Keel")
+  assert b.claimed_at == Some("2026-09-06T04:00:00Z")
+}
+
+pub fn close_on_a_fixed_bug_fails_naming_its_status_test() {
+  let assert Error(reason) =
+    bugs.close(
+      Board([bug("a", bugs.Fixed)]),
+      "a",
+      bugs.Wontfix,
+      "again",
+      "2026-09-06T06:00:00Z",
+    )
+  assert string.contains(reason, "already fixed")
+}
+
+pub fn close_with_open_as_the_verdict_fails_test() {
+  let assert Error(reason) =
+    bugs.close(
+      Board([bug("a", bugs.Open)]),
+      "a",
+      bugs.Open,
+      "nonsense",
+      "2026-09-06T06:00:00Z",
+    )
+  assert string.contains(reason, "fixed or wontfix")
+}
+
+/// A claim survives the file: what `claim` stamps, `load` after `save` still
+/// carries, so the holder is readable by the session that comes after.
+pub fn a_claim_round_trips_through_json_test() {
+  let assert Ok(board) =
+    bugs.claim(
+      Board([bug("a", bugs.Open)]),
+      "a",
+      "Keel",
+      "2026-09-06T05:00:00Z",
+    )
+  assert bugs.decode(bugs.encode(board)) == Ok(board)
 }
 
 /// Every `Severity`, both directions. Cheap insurance against a string

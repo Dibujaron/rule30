@@ -90,6 +90,13 @@ sessions exist, the guard sees only what a dispatched worker does, and no lock
 covers these files. Naming the collision is the whole mechanism; there is no
 other one.
 
+Say it as an announcement or as a question, and know which. "I am taking
+`bugs.gleam`" is an announcement and needs no reply. "Any objection? Otherwise
+I proceed" is neither: it expires at your own next tool call, which only you
+can see, so the peer cannot beat it. If you genuinely want an answer, name the
+wall-clock moment the default fires — "I land at 20:45Z unless you say
+otherwise" — so the peer can measure the deadline it is being held to.
+
 ## Red flags
 
 | Thought | Reality |

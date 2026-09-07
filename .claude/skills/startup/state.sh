@@ -21,6 +21,22 @@ cd "$MAIN_ROOT" || exit 1
 echo "REPO STATE  $(date -u +%Y-%m-%dT%H:%M:%SZ)  (read-only; remote data is as of your last fetch)"
 echo
 
+# "2h 05m ago" from an ISO-8601 `Z` timestamp or a Unix epoch. Age is the one
+# property of a held thing that can be read without the holder's cooperation,
+# so every held row below carries it: a claim with no age looks busy forever,
+# a claim that says "3h ago" looks like what it probably is.
+ago() {
+  local then now m
+  case "$1" in
+    *Z) then=$(date -u -d "$1" +%s 2>/dev/null) ;;
+    *)  then=$1 ;;
+  esac
+  if [ -z "${then:-}" ]; then echo "age unknown"; return; fi
+  now=$(date -u +%s)
+  m=$(( (now - then) / 60 ))
+  if [ "$m" -ge 60 ]; then echo "$((m / 60))h $((m % 60))m ago"; else echo "${m}m ago"; fi
+}
+
 # --- 1. Work that exists on one disk -----------------------------------------
 # The highest-value line in this report. On 2026-09-06 `main` sat eight commits
 # ahead of its remote while three sessions cited shas that were on one disk.
@@ -81,7 +97,25 @@ while read -r path; do
   dirty=$(git -C "$path" status --porcelain -uall 2>/dev/null | wc -l | tr -d ' ')
   [ "$dirty" = "0" ] && continue
   branch=$(git -C "$path" rev-parse --abbrev-ref HEAD 2>/dev/null)
-  printf '  %-46s %s file(s) on %s\n' "$path" "$dirty" "$branch"
+  # When the newest dirty file was last written. "2m ago" is someone typing;
+  # "3h ago" with no live session is a death. Neither is proof — a session
+  # can sit in a long `lake build` between its last edit and its commit — but
+  # age is the one thing about this state that the observer can measure.
+  newest=0
+  while IFS= read -r line; do
+    f=${line:3}
+    f=${f##* -> }
+    f=${f#\"}
+    f=${f%\"}
+    t=$(stat -c %Y -- "$path/$f" 2>/dev/null) || continue
+    [ "$t" -gt "$newest" ] && newest=$t
+  done < <(git -C "$path" status --porcelain -uall 2>/dev/null)
+  if [ "$newest" -gt 0 ]; then
+    age="last written $(ago "$newest")"
+  else
+    age="only deletions, nothing on disk to date"
+  fi
+  printf '  %-46s %s file(s) on %s, %s\n' "$path" "$dirty" "$branch" "$age"
   found=1
 done < <(git worktree list --porcelain | awk '/^worktree /{print $2}')
 [ "$found" -eq 0 ] && echo "  (none — every worktree is clean)"
@@ -102,12 +136,15 @@ if [ -f blueprint/dag.json ]; then
     case "$rec" in *'"status":"claimed"'*) ;; *) continue ;; esac
     n=$(printf '%s' "$rec" | grep -oE '^\{"id":"[^"]*"' | sed 's/.*:"//; s/"//')
     who=$(printf '%s' "$rec" | grep -oE '"identity":"[^"]*"' | tail -1 | sed 's/.*:"//; s/"//')
+    # The last attempt's start is the nearest thing a node claim has to a
+    # timestamp: the dispatcher claims the node and starts the attempt in
+    # the same step.
+    started=$(printf '%s' "$rec" | grep -oE '"started":"[^"]*"' | tail -1 | sed 's/.*:"//; s/"//')
     if [ -n "$who" ]; then
-      printf '  dag node   %-34s last attempt by %s
-' "$n" "$who"
+      printf '  dag node   %-34s last attempt by %s, started %s (%s)\n' \
+        "$n" "$who" "${started:-?}" "$(ago "${started:-}")"
     else
-      printf '  dag node   %-34s claimed with no attempt recorded
-' "$n"
+      printf '  dag node   %-34s claimed with no attempt recorded\n' "$n"
     fi
     found=1
   done < <(sed 's/{"id":/\n{"id":/g' blueprint/dag.json)
@@ -116,7 +153,17 @@ if [ -f blueprint/bugs.json ]; then
   while read -r rec; do
     case "$rec" in *'"status": "claimed"'*|*'"status":"claimed"'*) ;; *) continue ;; esac
     b=$(printf '%s' "$rec" | grep -oE '^\{ *"id": *"[^"]*"' | sed 's/.*"id": *"//; s/"//')
-    printf '  bug        %s\n' "${b:-<unparsed>}"
+    # `bugs claim` stamps both of these; a hand edit of the file stamps
+    # neither, and that absence is itself information about how it was
+    # claimed.
+    who=$(printf '%s' "$rec" | grep -oE '"claimed_by": *"[^"]*"' | sed 's/.*: *"//; s/"//')
+    since=$(printf '%s' "$rec" | grep -oE '"claimed_at": *"[^"]*"' | sed 's/.*: *"//; s/"//')
+    if [ -n "$who" ]; then
+      printf '  bug        %-34s claimed by %s since %s (%s)\n' \
+        "${b:-<unparsed>}" "$who" "${since:-?}" "$(ago "${since:-}")"
+    else
+      printf '  bug        %-34s claimed by hand, no holder or time recorded\n' "${b:-<unparsed>}"
+    fi
     found=1
   done < <(sed 's/{ *"id":/\n{"id":/g' blueprint/bugs.json)
 fi
@@ -124,8 +171,8 @@ fi
 cat <<'NOTE'
   A claim does NOT record a session ref, so nothing here can be checked
   automatically against ListAgents. Ask the named identity whether it is still
-  working. If its session is gone: `gleam run -- reopen <node>` for a node; a
-  bug has no reopen yet (see `a-claimed-bug-has-no-reopen`).
+  working. If its session is gone: `gleam run -- reopen <node>` for a node,
+  `gleam run -- bugs reopen <id>` for a bug.
 
   A promise made only in a peer message — a held build lock, an agreed file
   boundary — appears NOWHERE in this report and cannot. If a peer has gone

@@ -18,6 +18,7 @@ import harness/claude
 import harness/config
 import harness/dag
 import harness/dispatch
+import harness/log
 import harness/schedule
 import harness/seed
 import harness/writes
@@ -50,6 +51,15 @@ fn run(cfg: config.Config, arguments: List(String)) -> Nil {
         |> result.try(fn(plan) { dispatch.run(cfg, plan) })
         |> result.map(fn(_) { "run ended" }),
       )
+    ["bugs", "claim", id, "--as", identity] ->
+      print_outcome(claim_bug(cfg, id, identity))
+    ["bugs", "claim", _] ->
+      print_outcome(Error("bugs claim needs --as <Identity>"))
+    ["bugs", "reopen", id] -> print_outcome(reopen_bug(cfg, id))
+    ["bugs", "close", id, verdict, "--resolution", text] ->
+      print_outcome(close_bug(cfg, id, verdict, text))
+    ["bugs", "close", _, _] | ["bugs", "close", _, _, "--resolution"] ->
+      print_outcome(Error("bugs close needs --resolution <text>"))
     ["bugs", ..flags] -> print_outcome(bug_board(cfg, flags))
     ["writes"] -> print_outcome(writes.report(cfg))
     // `seed brief` and `seed check` are read-only and take no build lock —
@@ -63,7 +73,7 @@ fn run(cfg: config.Config, arguments: List(String)) -> Nil {
     ["seed", "check", path] -> print_outcome(seed.check_file(cfg, path))
     _ ->
       io.println(
-        "usage: gleam run -- status | prove-one <node-id> | run [--max-attempts N] [--concurrency K] | reopen <node-id> | bugs [--area A] [--severity S] [--all] | writes | seed brief | seed check [path] | spike",
+        "usage: gleam run -- status | prove-one <node-id> | run [--max-attempts N] [--concurrency K] | reopen <node-id> | bugs [--area A] [--severity S] [--all] | bugs claim <id> --as <Identity> | bugs reopen <id> | bugs close <id> fixed|wontfix --resolution <text> | writes | seed brief | seed check [path] | spike",
       )
   }
 }
@@ -94,6 +104,77 @@ fn bug_board(
   }
 }
 
+/// Take a bug for `identity`, stamping the claim with the time so the next
+/// reader can tell a live holder from a dead one.
+fn claim_bug(
+  cfg: config.Config,
+  id: String,
+  identity: String,
+) -> Result(String, String) {
+  use board <- result.try(bugs.load(cfg.bugs_path))
+  let now = log.now_iso()
+  use claimed <- result.try(bugs.claim(board, id, identity, now))
+  use _ <- result.try(bugs.save(claimed, cfg.bugs_path))
+  Ok("`" <> id <> "` is now claimed by " <> identity <> " since " <> now)
+}
+
+/// Put a claimed bug back on the board. The bug module's `reopen` refuses
+/// anything but `Claimed`; this only adds who was holding it to the message.
+fn reopen_bug(cfg: config.Config, id: String) -> Result(String, String) {
+  use board <- result.try(bugs.load(cfg.bugs_path))
+  use before <- result.try(
+    bugs.get(board, id)
+    |> result.replace_error("no bug `" <> id <> "` on the board"),
+  )
+  use reopened <- result.try(bugs.reopen(board, id))
+  use _ <- result.try(bugs.save(reopened, cfg.bugs_path))
+  let held = case before.claimed_by, before.claimed_at {
+    Some(who), Some(when) -> "was claimed by " <> who <> " since " <> when
+    Some(who), None -> "was claimed by " <> who
+    None, _ -> "was claimed by hand, with no holder recorded,"
+  }
+  Ok(
+    "`"
+    <> id
+    <> "` "
+    <> held
+    <> " and is now open. A claim outlives the session that made it, so "
+    <> "this is how a dead session's bug gets back on the board.",
+  )
+}
+
+/// Settle a bug with a verdict and the reason for it. The verdict is parsed
+/// here so a typo is refused before the board is even loaded.
+fn close_bug(
+  cfg: config.Config,
+  id: String,
+  verdict: String,
+  resolution: String,
+) -> Result(String, String) {
+  use status <- result.try(case bugs.status_from_string(verdict) {
+    Ok(bugs.Fixed) -> Ok(bugs.Fixed)
+    Ok(bugs.Wontfix) -> Ok(bugs.Wontfix)
+    _ -> Error("bugs close takes fixed or wontfix")
+  })
+  use board <- result.try(bugs.load(cfg.bugs_path))
+  use closed <- result.try(bugs.close(
+    board,
+    id,
+    status,
+    resolution,
+    log.now_iso(),
+  ))
+  use _ <- result.try(bugs.save(closed, cfg.bugs_path))
+  Ok(
+    "`"
+    <> id
+    <> "` is now "
+    <> bugs.status_to_string(status)
+    <> ": "
+    <> resolution,
+  )
+}
+
 fn bug_line(bug: bugs.Bug) -> String {
   string.join(
     [
@@ -107,6 +188,15 @@ fn bug_line(bug: bugs.Bug) -> String {
         n -> " (x" <> int.to_string(n) <> ")"
       },
       "  — " <> bug.reported_by,
+      case bug.claimed_by {
+        None -> ""
+        Some(who) ->
+          "  [claimed by "
+          <> who
+          <> " since "
+          <> option.unwrap(bug.claimed_at, "?")
+          <> "]"
+      },
     ],
     "",
   )

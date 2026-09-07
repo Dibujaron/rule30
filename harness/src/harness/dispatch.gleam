@@ -1091,6 +1091,8 @@ fn file_reported_bugs(
                   status: bugs.Open,
                   resolution: None,
                   fixed: None,
+                  claimed_by: None,
+                  claimed_at: None,
                 ),
               )
             })
@@ -1159,6 +1161,8 @@ fn auto_file(
             status: bugs.Open,
             resolution: None,
             fixed: None,
+            claimed_by: None,
+            claimed_at: None,
           ),
         )
       case bugs.save(board, cfg.bugs_path) {

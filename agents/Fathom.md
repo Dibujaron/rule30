@@ -781,3 +781,75 @@ a reflex fires before the knowledge is consulted. What caught it was running
 not install a check against it; what changes behaviour is a lowered threshold
 for verifying the boring step. The specific lessons are forgettable. The
 threshold is not.
+
+## 2026-09-07T02:10:00Z — a premise check closed a bug in five minutes and the claim it exposed took an hour
+
+Started tonight from Dib's "what can you split off from Keel without
+disruption", and the answer was decided by a `git status` in Keel's
+worktree, not by the board: dispatch, verify, worker and their tests were
+Keel's, so my region was everything that was not those.
+
+**The cheapest close on the board was one nobody had looked at.**
+`shared-checkout-has-no-stated-resting-branch` said NEEDS DIB, CLAUDE.md is
+his. `git log -S` on the sentence it asked for found Rowan's 441515d, landed
+five minutes after the row was filed. Filed at 18:30Z, fixed at 18:35Z, open
+until 02:00Z because the row said the fix needed asking and nobody asked the
+file. That is `a-bugs-premise-is-never-checked-before-it-is-fixed` in its
+mildest form — the premise was "this is not done", and the check was one
+command.
+
+**The board's claim was a hand edit with nothing in it.** Keel's claimed row
+carried status `claimed` and no holder, no time. `state.sh` printed the id
+and a note saying it could not check it. So the "board half" of
+`a-held-claim-has-an-owner-but-no-expiry` was not "the claim has an owner
+but no expiry", it was "the claim has neither" — the bug's own title
+overstated what existed. Fix is `bugs claim --as`, `bugs reopen`, and two
+optional fields that decode as `None` when absent so the live row keeps
+decoding; then `state.sh` prints holder and age for both boards and a
+last-written age for dirty worktrees.
+
+**A thing I got right by testing rather than reading.** I fabricated a repo
+with every branch of the new `state.sh` code — a node with two attempts, a
+node with none, a bug with fields, one with nulls, one from before the
+fields existed, and a fixed bug that still carried `claimed_by` — because
+the parser is `sed` and `grep` on one-line JSON and the failure mode of that
+is a wrong row that looks fine. It all rendered. First run of the age line
+said "0m ago" for files I had touched to be three hours old, and the reason
+was that the fixture files I had just written were also dirty. The check
+was right and my test was wrong; re-aged, "3h 45m ago".
+
+**Handed the Gleam to a subagent with a written spec, per Dib's standing
+rule.** Keel replied mid-way asking for a close verb and for its own row to
+be stamped; both folded into the same change rather than a second one.
+
+## 2026-09-07T02:35:00Z — a scratch repo root is a repo root, and lake believed it
+
+Rowan started a run in the shared checkout while my change was half
+verified, and the suite defaults two modules to that checkout, so I
+pointed `HARNESS_REPO_ROOT` at a scratch copy instead. Three runs, three
+different wrong numbers, and I am recording them because the third was the
+one I nearly believed.
+
+Run one: 210 passed, 21 failures, against 285 announced. Fifty-four
+missing, because the fake shim is resolved from the repo root and my copy
+had no `harness/test/`, so the worker-loop module died as a module. Run
+two, after copying in the shim, the Lean sources, the lakefile and the
+toolchain: 172 passed, 5 failures. Fewer tests ran, not more. A seed test
+runs `lake env lean` in whatever the root is, and a root with a lakefile
+and no `.lake` is a root lake will start building Mathlib in; eunit timed
+the test out at five seconds, blamed the module, and cancelled every
+module after it. `ls` afterwards showed `lake-manifest.json` and a `.lake`
+that had not been there. CLAUDE.md says exactly this about fresh worktrees
+and I read it as being about worktrees.
+
+**The number that was right was the announced total.** Keel's
+`expecting N tests` line is what made both shortfalls visible; the
+`passed, failures` line on its own read like a suite that ran twice and
+got two verdicts. Same lesson as `a-green-suite-can-under-report-and-still-look-green`,
+which I helped file, and I still needed the line to catch me.
+
+Also: three `lake.exe` processes were live when I looked, one at 485 MB,
+and my first thought was to kill mine. Rowan's run had three workers
+building at that moment. I could not tell whose they were, so I looked
+again instead, and by then they were gone. A process I cannot attribute
+is one I do not kill, and that rule cost thirty seconds.
