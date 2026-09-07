@@ -6,10 +6,12 @@
 //// have nothing to say to each other — the loop reasons about events and
 //// verdicts, this module only about words.
 ////
-//// The brief carries `CLAUDE.md` whole and the identity's notebook
-//// verbatim. Neither is trimmed or paraphrased: the notebook is that
-//// identity's own continuity, and summarising it would be the harness
-//// putting words in an agent's mouth.
+//// The brief carries `CLAUDE.md` whole, the identity's notebook verbatim,
+//// and `docs/prover-cookbook.md` whole. None is trimmed or paraphrased: the
+//// notebook is that identity's own continuity, and summarising it would be
+//// the harness putting words in an agent's mouth; the cookbook is the cast
+//// lemmas checked against this Mathlib pin, and a paraphrase would be a
+//// second list of names nobody checked.
 
 import gleam/int
 import gleam/json
@@ -148,6 +150,7 @@ pub fn text(
       who_you_are(node, identity, notebook),
       the_project(cfg),
       your_constraints(cfg, node),
+      cast_cookbook(cfg),
       served_lemmas(d),
       prior_attempts(node),
       how_to_report(),
@@ -211,6 +214,35 @@ fn your_constraints(cfg: config.Config, node: dag.Node) -> String {
   <> node.lean_name
   <> "` and have exactly the stated type. A weakened or generalized restatement fails, even one you could prove."
 }
+
+/// `docs/prover-cookbook.md` inlined, or one line saying it is absent. Read
+/// from `cfg.repo_root` at render time rather than pasted into source, so
+/// the brief carries whatever the checkout's cookbook says today. It sits
+/// right after the constraints because it is what a worker needs while
+/// writing tactics, and before the served list because a lemma name from
+/// the cookbook is checked against the pin where a guessed one is not.
+fn cast_cookbook(cfg: config.Config) -> String {
+  let heading =
+    "## Casts and names, checked against this pin
+
+"
+  case
+    simplifile.read(cfg.repo_root <> "/" <> cookbook_file)
+    |> result.replace_error(Nil)
+  {
+    Ok(text) ->
+      heading
+      <> "This is `"
+      <> cookbook_file
+      <> "` from the repository root, whole. Read it before writing any cast, absolute value or `omega` call: the lemma names in it are real for this project's Mathlib pin, and a name that is not in it is worth one `exact?` before it is worth a second guess.
+
+"
+      <> text
+    Error(Nil) -> heading <> "(no " <> cookbook_file <> " in this checkout)"
+  }
+}
+
+const cookbook_file = "docs/prover-cookbook.md"
 
 fn served_lemmas(d: dag.Dag) -> String {
   let lines =
