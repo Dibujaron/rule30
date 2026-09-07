@@ -46,3 +46,11 @@ pub fn bugs_path_sits_beside_the_dag_test() {
   let assert Ok(cfg) = config.load()
   assert cfg.bugs_path == cfg.repo_root <> "/blueprint/bugs.json"
 }
+
+/// The captain's stop file is `STOP` at the repository root — the place a
+/// person who has just realised a run is going wrong can reach without
+/// reading anything. A fixture redirects this field; a real run never does.
+pub fn stop_path_defaults_to_stop_at_the_repo_root_test() {
+  let assert Ok(cfg) = config.load()
+  assert cfg.stop_path == cfg.repo_root <> "/STOP"
+}

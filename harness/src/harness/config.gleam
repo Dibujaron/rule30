@@ -24,6 +24,14 @@ import simplifile
 
 /// One resolved run configuration. Paths are absolute; `lake` comes from
 /// `PATH`.
+///
+/// `stop_path` is where a captain writes to end a run: `STOP` at the
+/// repository root by default. At the root and in capitals because the
+/// situation it exists for is a person who has just realised a live run is
+/// doing something wrong, and needs to act before reading anything.
+/// Gitignored — committing it would halt every run. The dispatcher reads
+/// this field and nothing else, so a test fixture that redirects it into
+/// its own directory cannot halt a live run, whatever its `repo_root` is.
 pub type Config {
   Config(
     repo_root: String,
@@ -36,6 +44,7 @@ pub type Config {
     bugs_path: String,
     roster_path: String,
     agents_dir: String,
+    stop_path: String,
     guard_port: Int,
     max_turns: Int,
     max_budget_usd: Float,
@@ -74,6 +83,7 @@ pub fn load() -> Result(Config, String) {
       |> result.unwrap(repo_root <> "/blueprint/bugs.json"),
     roster_path: repo_root <> "/agents/roster.json",
     agents_dir: repo_root <> "/agents",
+    stop_path: repo_root <> "/STOP",
     guard_port: env_int("HARNESS_GUARD_PORT", 4130),
     max_turns: env_int("HARNESS_MAX_TURNS", 40),
     max_budget_usd: env_float("HARNESS_MAX_BUDGET_USD", 4.0),

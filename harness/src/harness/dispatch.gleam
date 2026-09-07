@@ -363,7 +363,7 @@ fn fill(run_: Run, state: RunState) -> Result(RunState, String) {
   case candidate {
     None -> Ok(state)
     Some(schedule.Assignment(node:, who:)) ->
-      case stop_requested(run_.cfg.repo_root) {
+      case stop_requested(run_.cfg.stop_path) {
         // Recorded as `halted`, reusing the mechanism a rate limit already
         // uses, rather than as a quiet `Ok(state)`. That is not tidiness: it
         // is what puts the reason in the run's closing summary AND in its
@@ -377,7 +377,7 @@ fn fill(run_: Run, state: RunState) -> Result(RunState, String) {
         True -> {
           let reason =
             "stopped by "
-            <> stop_path(run_.cfg.repo_root)
+            <> run_.cfg.stop_path
             <> "; declined to start "
             <> node.id
           log.event(run_.run_log, "stopped", [
@@ -394,16 +394,10 @@ fn fill(run_: Run, state: RunState) -> Result(RunState, String) {
   }
 }
 
-/// Where a captain writes to end a run: `STOP` at the repository root.
-///
-/// At the root and in capitals because the situation it exists for is a person
-/// who has just realised a live run is doing something wrong, and needs to act
-/// before reading anything. Gitignored — committing it would halt every run.
-pub fn stop_path(repo_root: String) -> String {
-  repo_root <> "/STOP"
-}
-
-/// Has a captain asked this run to stop?
+/// Has a captain asked this run to stop? `stop_path` is `config.stop_path`:
+/// `STOP` at the repository root for a real run, and the only path the
+/// dispatcher ever checks, so a fixture that points it elsewhere cannot be
+/// stopped by — or stop — a run at the root.
 ///
 /// Deliberately a file rather than a signal or an interruptible dispatcher.
 /// A file needs no process to be reachable, survives the session that wrote
@@ -411,8 +405,8 @@ pub fn stop_path(repo_root: String) -> String {
 /// happened — and is removable by the same person who wrote it. It is the
 /// "derive it from outside the process" half of CLAUDE.md's rule about state
 /// surviving a session that dies without warning.
-pub fn stop_requested(repo_root: String) -> Bool {
-  case simplifile.is_file(stop_path(repo_root)) {
+pub fn stop_requested(stop_path: String) -> Bool {
+  case simplifile.is_file(stop_path) {
     Ok(True) -> True
     _ -> False
   }
