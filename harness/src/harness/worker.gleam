@@ -8,6 +8,12 @@
 //// point of holding the session open instead of shelling out to `claude -p`
 //// once per attempt.
 ////
+//// The loop itself is role-generic: `drive` runs any `Role`, and the prover
+//// is one of two — `seeder.gleam` runs a seeding session in the same loop
+//// with its own report and no verifier. What the loop owns for every role
+//// is the endings no role may override: a timeout, an exit, a CLI error,
+//// and the rate-limit signal.
+////
 //// Nothing an agent writes is summarised here. The notebook and journal
 //// fields of a report are carried out of this module verbatim; only the
 //// verifier's own output is ever clipped, and the full text stays in the
@@ -569,34 +575,63 @@ fn color_choice_of(event: claude.Event) -> Result(roster.ColorChoice, String) {
 
 // --- the turn loop ------------------------------------------------------------
 
-/// How one attempt ended, before it is turned into a `dag.Attempt`. `gone`
+/// How a session ended, in the loop's own vocabulary — before a role turns
+/// it into what its record says. A prover records `Finished` as
+/// `dag.Closed`, because for a prover "finished" means the verifier accepted
+/// the claim (`recorded`); a seeder records nothing on the board and says
+/// "finished" in words, because a seeding session has no verdict to give at
+/// the moment it ends. The three pauses and failures below are the loop's
+/// own findings and mean the same thing for every role.
+pub type End {
+  /// The role accepted the session's final report.
+  Finished
+  /// The session said it was giving up.
+  Abandoned
+  /// No turn result within the turn timeout, or the child exited on its own.
+  TimedOut
+  /// The CLI ended the session, or the round budget ran out.
+  BudgetExhausted
+  /// The five-hour window is rate limiting: a pause, not a verdict.
+  RateLimited
+}
+
+/// How one session ended, with the last report the role decoded. `gone`
 /// says the child is already dead — killed, or exited on its own — so there
 /// is no stdin left to close and nothing left to drain.
-type Ending {
-  Ending(
-    outcome: dag.Outcome,
-    notes: String,
-    report: Option(Report),
-    gone: Bool,
-  )
+pub type Ending(r) {
+  Ending(end: End, notes: String, report: Option(r), gone: Bool)
 }
 
 /// What the last `result` event said about the session as a whole.
-type Tally {
+pub type Tally {
   Tally(session_id: String, cost_usd: Float, turns: Int)
 }
 
+/// What one role does with a turn, and all the loop knows about the role.
+/// `decode` reads a turn's structured output into the role's own report
+/// type; `act` decides what an ordinary turn means — keep going, stop, or
+/// adjudicate a claim; `park` decides what a rate-limited turn means, which
+/// for a prover includes adjudicating a `proved` claim before pausing. The
+/// loop itself owns the endings no role can override: a timeout, an exit,
+/// a CLI error, and the rate-limit signal that turns `act` into `park`.
+pub type Role(r) {
+  Role(
+    decode: fn(Dynamic) -> Result(r, String),
+    act: fn(Loop(r), Option(r)) -> #(Tally, Ending(r)),
+    park: fn(Loop(r), Option(r)) -> #(Tally, Ending(r)),
+  )
+}
+
 /// Everything the turn loop threads through itself. `rounds` counts the
-/// times the harness has sent the worker back round — a failed verdict, a
+/// times the harness has sent the session back round — a failed verdict, a
 /// missing report, a turn that ended early — and is capped by
 /// `cfg.max_verify_rounds`.
-type Turn {
-  Turn(
+pub type Loop(r) {
+  Loop(
     cfg: config.Config,
-    deps: Deps,
-    node: dag.Node,
     l: log.Log,
     session: claude.Session,
+    role: Role(r),
     tally: Tally,
     rounds: Int,
     rate_limited: Bool,
@@ -621,8 +656,7 @@ pub fn attempt(
   case
     write_brief(
       l,
-      node,
-      attempt_n,
+      node.id <> "-" <> int.to_string(attempt_n),
       brief.text(cfg, d, node, identity, notebook),
     )
   {
@@ -682,22 +716,14 @@ fn run_session(
   brief_path: String,
   started: String,
 ) -> #(dag.Attempt, Option(Report)) {
-  let session = claude.start(launch(cfg, model, guard_, brief_path))
-
-  say(session, l, deps.task_message)
   let #(tally, ending) =
-    turn_loop(Turn(
-      cfg:,
-      deps:,
-      node:,
-      l:,
-      session:,
-      tally: Tally("", 0.0, 0),
-      rounds: 0,
-      rate_limited: False,
-    ))
-  shutdown(session, l, ending.gone)
-
+    drive(
+      cfg,
+      l,
+      launch(cfg, model, guard_, brief_path, brief.report_schema()),
+      deps.task_message,
+      prover_role(deps, node),
+    )
   let attempt =
     dag.Attempt(
       identity: identity.name,
@@ -705,7 +731,7 @@ fn run_session(
       model:,
       started:,
       ended: log.now_iso(),
-      outcome: ending.outcome,
+      outcome: recorded(ending.end),
       // With no report there is no re-pricing: the node's own size stands
       // in, and `reported` says it is not the worker's estimate, so the
       // scorecard does not score it as calibration.
@@ -721,14 +747,71 @@ fn run_session(
   #(attempt, ending.report)
 }
 
-/// The worker session's command line. `--bare` is deliberately absent: it
-/// would switch the session to API-key billing, and this run is on a
-/// subscription.
-fn launch(
+/// What the board records for each way a prover's session can end. Only
+/// `Finished` needs the translation, and it is earned: a prover's session
+/// finishes only when `adjudicate` or `park` has seen the verifier accept
+/// the claim, so `dag.Closed` here means what it says.
+fn recorded(end: End) -> dag.Outcome {
+  case end {
+    Finished -> dag.Closed
+    Abandoned -> dag.GaveUp
+    TimedOut -> dag.TimedOut
+    BudgetExhausted -> dag.BudgetExhausted
+    RateLimited -> dag.RateLimited
+  }
+}
+
+/// A prover's role: its report is `Report`, a `proved` claim is adjudicated
+/// by `deps.verify`, and a rate-limited turn still adjudicates one before
+/// parking.
+fn prover_role(deps: Deps, node: dag.Node) -> Role(Report) {
+  Role(
+    decode: report_from_dynamic,
+    act: fn(t, report) { act_on(deps, node, t, report) },
+    park: fn(t, report) { park(deps, node, t, report) },
+  )
+}
+
+/// Start a session, say `first_message`, drive the turn loop under `role`
+/// until it ends, and close the session down. This is the one session loop
+/// in the harness: a prover and a seeder both run in it, and differ only in
+/// the `Role` they hand it and the command line they start with.
+pub fn drive(
+  cfg: config.Config,
+  l: log.Log,
+  launch: claude.Launch,
+  first_message: String,
+  role: Role(r),
+) -> #(Tally, Ending(r)) {
+  let session = claude.start(launch)
+  say(session, l, first_message)
+  let #(tally, ending) =
+    turn_loop(Loop(
+      cfg:,
+      l:,
+      session:,
+      role:,
+      tally: Tally("", 0.0, 0),
+      rounds: 0,
+      rate_limited: False,
+    ))
+  shutdown(session, l, ending.gone)
+  #(tally, ending)
+}
+
+/// A session's command line. `--bare` is deliberately absent: it would
+/// switch the session to API-key billing, and this run is on a
+/// subscription. `schema` is the `--json-schema` every turn is held to, and
+/// is the role's: a prover reports an outcome and a size estimate, a seeder
+/// an outcome and a journal entry. The tool list is the same for both —
+/// what each may do with those tools is the guard's decision, not the
+/// command line's.
+pub fn launch(
   cfg: config.Config,
   model: String,
   guard_: guard.Guard,
   brief_path: String,
+  schema: String,
 ) -> claude.Launch {
   claude.Launch(
     node: cfg.node_exe,
@@ -758,7 +841,7 @@ fn launch(
       "--append-system-prompt-file",
       brief_path,
       "--json-schema",
-      brief.report_schema(),
+      schema,
     ],
     env: [],
   )
@@ -766,7 +849,7 @@ fn launch(
 
 /// Read one turn and decide what it means. Every event is logged verbatim
 /// on the way past.
-fn turn_loop(t: Turn) -> #(Tally, Ending) {
+fn turn_loop(t: Loop(r)) -> #(Tally, Ending(r)) {
   case claude.read_turn(t.session, t.cfg.turn_timeout_ms) {
     Error(Nil) -> {
       stop(t.session, t.l)
@@ -774,7 +857,7 @@ fn turn_loop(t: Turn) -> #(Tally, Ending) {
       #(
         tally,
         Ending(
-          paused_or(t, dag.TimedOut),
+          paused_or(t, TimedOut),
           note(
             tally,
             "no turn result within "
@@ -790,7 +873,7 @@ fn turn_loop(t: Turn) -> #(Tally, Ending) {
       list.each(seen, fn(e) { log.raw(t.l, "stream", raw_of(e)) })
       log.raw(t.l, "stream", raw_of(event))
       let t =
-        Turn(
+        Loop(
           ..t,
           session:,
           rate_limited: t.rate_limited
@@ -802,7 +885,7 @@ fn turn_loop(t: Turn) -> #(Tally, Ending) {
           #(
             tally,
             Ending(
-              paused_or(t, dag.TimedOut),
+              paused_or(t, TimedOut),
               note(tally, "exited " <> int.to_string(status)),
               None,
               True,
@@ -817,26 +900,24 @@ fn turn_loop(t: Turn) -> #(Tally, Ending) {
           structured_output:,
           raw:,
         ) -> {
-          let t = Turn(..t, tally: Tally(session_id, total_cost_usd, num_turns))
+          let t = Loop(..t, tally: Tally(session_id, total_cost_usd, num_turns))
           let report =
             structured_output
-            |> option.then(fn(dyn) {
-              report_from_dynamic(dyn) |> option.from_result
-            })
+            |> option.then(fn(dyn) { t.role.decode(dyn) |> option.from_result })
           case t.rate_limited, is_error {
             // Park the attempt rather than losing it: a rate limit is a
             // pause, and the session id is how a later run resumes.
-            True, _ -> park(t, report)
+            True, _ -> t.role.park(t, report)
             False, True -> #(
               t.tally,
               Ending(
-                dag.BudgetExhausted,
+                BudgetExhausted,
                 "the CLI ended the session: " <> clip(raw, 1000),
                 report,
                 False,
               ),
             )
-            False, False -> act_on(t, report)
+            False, False -> t.role.act(t, report)
           }
         }
         _ -> turn_loop(t)
@@ -845,9 +926,14 @@ fn turn_loop(t: Turn) -> #(Tally, Ending) {
   }
 }
 
-/// What to do about one turn's report: adjudicate a claim, keep a working
-/// session going, or stop.
-fn act_on(t: Turn, report: Option(Report)) -> #(Tally, Ending) {
+/// What to do about one of a prover's turns: adjudicate a claim, keep a
+/// working session going, or stop.
+fn act_on(
+  deps: Deps,
+  node: dag.Node,
+  t: Loop(Report),
+  report: Option(Report),
+) -> #(Tally, Ending(Report)) {
   case report {
     None ->
       nudge(
@@ -858,8 +944,8 @@ fn act_on(t: Turn, report: Option(Report)) -> #(Tally, Ending) {
       )
     Some(r) ->
       case r.outcome {
-        "proved" -> adjudicate(t, r)
-        "abandoned" -> #(t.tally, Ending(dag.GaveUp, r.summary, Some(r), False))
+        "proved" -> adjudicate(deps, node, t, r)
+        "abandoned" -> #(t.tally, Ending(Abandoned, r.summary, Some(r), False))
         // in_progress: the model ended its turn early, so ask for more.
         _ ->
           nudge(
@@ -872,13 +958,18 @@ fn act_on(t: Turn, report: Option(Report)) -> #(Tally, Ending) {
   }
 }
 
-/// Park a rate-limited turn — but adjudicate a `proved` claim first. A rate
-/// limit is a pause, and a paused attempt costs the node nothing; throwing
-/// away a proof that builds because the window happened to throttle the same
-/// turn would cost it a whole attempt. Nothing goes back to the worker
-/// either way: the window is what it is, and another turn would spend it for
-/// nothing.
-fn park(t: Turn, report: Option(Report)) -> #(Tally, Ending) {
+/// Park a prover's rate-limited turn — but adjudicate a `proved` claim
+/// first. A rate limit is a pause, and a paused attempt costs the node
+/// nothing; throwing away a proof that builds because the window happened to
+/// throttle the same turn would cost it a whole attempt. Nothing goes back
+/// to the worker either way: the window is what it is, and another turn
+/// would spend it for nothing.
+fn park(
+  deps: Deps,
+  node: dag.Node,
+  t: Loop(Report),
+  report: Option(Report),
+) -> #(Tally, Ending(Report)) {
   let claim = case report {
     Some(r) ->
       case r.outcome {
@@ -890,9 +981,9 @@ fn park(t: Turn, report: Option(Report)) -> #(Tally, Ending) {
   case claim {
     None -> parked(t, report, "")
     Some(r) -> {
-      let #(verdict, text) = judge(t)
+      let #(verdict, text) = judge(deps, node, t)
       case verify.is_verified(verdict) {
-        True -> close(t, verdict, text, r)
+        True -> close(deps, node, t, verdict, text, r)
         False ->
           parked(t, report, "; the proof did not verify: " <> clip(text, 1000))
       }
@@ -900,11 +991,18 @@ fn park(t: Turn, report: Option(Report)) -> #(Tally, Ending) {
   }
 }
 
-fn parked(t: Turn, report: Option(Report), extra: String) -> #(Tally, Ending) {
+/// The ending a rate-limited turn gets once the role has nothing left to
+/// adjudicate: `RateLimited`, with the session id in the notes so a later
+/// run can resume it, and `extra` for whatever the role found first.
+pub fn parked(
+  t: Loop(r),
+  report: Option(r),
+  extra: String,
+) -> #(Tally, Ending(r)) {
   #(
     t.tally,
     Ending(
-      dag.RateLimited,
+      RateLimited,
       note(t.tally, "the five-hour window is rate limiting" <> extra),
       report,
       False,
@@ -914,20 +1012,25 @@ fn parked(t: Turn, report: Option(Report), extra: String) -> #(Tally, Ending) {
 
 /// The worker claims a proof. Run the verifier; a failing verdict goes
 /// straight back as the next user turn.
-fn adjudicate(t: Turn, report: Report) -> #(Tally, Ending) {
-  let #(verdict, text) = judge(t)
+fn adjudicate(
+  deps: Deps,
+  node: dag.Node,
+  t: Loop(Report),
+  report: Report,
+) -> #(Tally, Ending(Report)) {
+  let #(verdict, text) = judge(deps, node, t)
   case verify.is_verified(verdict) {
-    True -> close(t, verdict, text, report)
+    True -> close(deps, node, t, verdict, text, report)
     False ->
       case t.rounds < t.cfg.max_verify_rounds {
         True -> {
           say(t.session, t.l, text <> "\n\nFix the proof and report again.")
-          turn_loop(Turn(..t, rounds: t.rounds + 1))
+          turn_loop(Loop(..t, rounds: t.rounds + 1))
         }
         False -> #(
           t.tally,
           Ending(
-            dag.BudgetExhausted,
+            BudgetExhausted,
             "the proof never verified in "
               <> int.to_string(t.cfg.max_verify_rounds)
               <> " rounds. Last verdict:\n"
@@ -949,54 +1052,59 @@ fn adjudicate(t: Turn, report: Report) -> #(Tally, Ending) {
 /// beside the worker's sentence, and the `annotate` event says whether it
 /// managed to.
 fn close(
-  t: Turn,
+  deps: Deps,
+  node: dag.Node,
+  t: Loop(Report),
   verdict: verify.Verdict,
   text: String,
   report: Report,
-) -> #(Tally, Ending) {
+) -> #(Tally, Ending(Report)) {
   let statement = case verdict {
     verify.Verified(statement:, ..) -> statement
     _ -> ""
   }
-  let written = t.deps.annotate(t.node, statement)
+  let written = deps.annotate(node, statement)
   log.event(t.l, "annotate", [
-    #("node", json.string(t.node.id)),
+    #("node", json.string(node.id)),
     #("statement", json.string(statement)),
     #("written", json.bool(result.is_ok(written))),
     #("reason", json.string(result.unwrap_error(written, ""))),
   ])
-  #(t.tally, Ending(dag.Closed, clip(text, 2000), Some(report), False))
+  #(t.tally, Ending(Finished, clip(text, 2000), Some(report), False))
 }
 
 /// Run the verifier on this node and log what it found. The verdict's own
 /// text is what goes back to the worker and into the attempt's notes.
-fn judge(t: Turn) -> #(verify.Verdict, String) {
-  let verdict = t.deps.verify(t.node)
+fn judge(
+  deps: Deps,
+  node: dag.Node,
+  t: Loop(Report),
+) -> #(verify.Verdict, String) {
+  let verdict = deps.verify(node)
   let text = verify.verdict_text(verdict)
   log.event(t.l, "verify", [
-    #("node", json.string(t.node.id)),
+    #("node", json.string(node.id)),
     #("verified", json.bool(verify.is_verified(verdict))),
     #("verdict", json.string(text)),
   ])
   #(verdict, text)
 }
 
-/// Send one more message and go round again, if there are rounds left.
-fn nudge(
-  t: Turn,
-  report: Option(Report),
+/// Send one more message and go round again, if there are rounds left;
+/// otherwise end with `BudgetExhausted` and `exhausted_notes`. What a role
+/// does with a turn that is not yet an ending.
+pub fn nudge(
+  t: Loop(r),
+  report: Option(r),
   message: String,
   exhausted_notes: String,
-) -> #(Tally, Ending) {
+) -> #(Tally, Ending(r)) {
   case t.rounds < t.cfg.max_verify_rounds {
     True -> {
       say(t.session, t.l, message)
-      turn_loop(Turn(..t, rounds: t.rounds + 1))
+      turn_loop(Loop(..t, rounds: t.rounds + 1))
     }
-    False -> #(
-      t.tally,
-      Ending(dag.BudgetExhausted, exhausted_notes, report, False),
-    )
+    False -> #(t.tally, Ending(BudgetExhausted, exhausted_notes, report, False))
   }
 }
 
@@ -1005,9 +1113,9 @@ fn nudge(
 /// node back on the board without burning a rung of its model ladder;
 /// `TimedOut` on a rate-limited session would too, but it would lose the
 /// reason.
-fn paused_or(t: Turn, otherwise: dag.Outcome) -> dag.Outcome {
+fn paused_or(t: Loop(r), otherwise: End) -> End {
   case t.rate_limited {
-    True -> dag.RateLimited
+    True -> RateLimited
     False -> otherwise
   }
 }
@@ -1015,7 +1123,7 @@ fn paused_or(t: Turn, otherwise: dag.Outcome) -> dag.Outcome {
 /// The session id a later run resumes from. A turn's `result` carries one,
 /// but a session that died before its first result has only what `init`
 /// said — which `claude.read_turn` has already put on the session.
-fn with_session_id(t: Turn) -> Tally {
+fn with_session_id(t: Loop(r)) -> Tally {
   case t.tally.session_id {
     "" -> Tally(..t.tally, session_id: option.unwrap(t.session.session_id, ""))
     _ -> t.tally
@@ -1092,17 +1200,17 @@ fn drain(session: claude.Session, l: log.Log, deadline: Int) -> Nil {
   }
 }
 
-/// Write the brief this attempt's session is started with. A failure here
-/// fails the attempt: `--append-system-prompt-file` on a file that is not
-/// there would start a session with none of this, and silently.
-fn write_brief(
+/// Write the brief a session is started with, as `<log dir>/briefs/<name>.md`,
+/// and return its path. A failure here fails the attempt:
+/// `--append-system-prompt-file` on a file that is not there would start a
+/// session with none of this, and silently.
+pub fn write_brief(
   l: log.Log,
-  node: dag.Node,
-  attempt_n: Int,
+  name: String,
   text: String,
 ) -> Result(String, String) {
   let dir = l.dir <> "/briefs"
-  let path = dir <> "/" <> node.id <> "-" <> int.to_string(attempt_n) <> ".md"
+  let path = dir <> "/" <> name <> ".md"
   use _ <- result.try(
     simplifile.create_directory_all(dir)
     |> result.map_error(fn(e) {

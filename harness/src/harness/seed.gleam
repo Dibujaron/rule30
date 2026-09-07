@@ -1070,6 +1070,17 @@ pub fn proposal_path(repo_root: String) -> String {
 /// wrong on a day nobody notices, and this one had exactly that bug within
 /// hours of being written.
 pub fn brief_for(cfg: config.Config) -> Result(String, String) {
+  brief_at(cfg, proposal_path(cfg.repo_root))
+}
+
+/// `brief_for`, naming `proposal_path` as where the proposal goes. The
+/// seeder verb fences its session to one proposal file and briefs it from
+/// the same path through this, so the file the brief names and the file the
+/// guard permits cannot be two different files.
+pub fn brief_at(
+  cfg: config.Config,
+  proposal_path: String,
+) -> Result(String, String) {
   use d <- result.try(dag.load(cfg.dag_path))
   let closed = list.filter(d.nodes, fn(n) { n.status == dag.Proved })
   let notes = proof_notes(cfg.repo_root)
@@ -1080,7 +1091,7 @@ pub fn brief_for(cfg: config.Config) -> Result(String, String) {
     closed: closed,
     notes: notes,
     explorer_readme: readme,
-    proposal_path: proposal_path(cfg.repo_root),
+    proposal_path: proposal_path,
   ))
 }
 

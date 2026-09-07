@@ -21,6 +21,7 @@ import harness/dispatch
 import harness/log
 import harness/schedule
 import harness/seed
+import harness/seeder
 import harness/writes
 
 pub fn main() {
@@ -73,11 +74,32 @@ fn run(cfg: config.Config, arguments: List(String)) -> Nil {
     ["seed", "check"] ->
       print_outcome(seed.check_file(cfg, seed.proposal_path(cfg.repo_root)))
     ["seed", "check", path] -> print_outcome(seed.check_file(cfg, path))
+    // `seed` alone starts one seeder session — hand-started, never by the
+    // scheduler — and runs `seed check` over its proposal once it ends. The
+    // model defaults to the top of the ladder because the brief is where
+    // the quality lives and a seeding pass is the part worth spending on.
+    ["seed"] -> print_outcome(seed_session(cfg, "opus"))
+    ["seed", "--model", model] -> print_outcome(seed_session(cfg, model))
     _ ->
       io.println(
-        "usage: gleam run -- status | prove-one <node-id> | run [--max-attempts N] [--concurrency K] | reopen <node-id> | bugs [--area A] [--severity S] [--all] | bugs claim <id> --as <Identity> [--session <ref>] | bugs reopen <id> | bugs close <id> fixed|wontfix --resolution <text> | writes | seed brief | seed check [path] | spike",
+        "usage: gleam run -- status | prove-one <node-id> | run [--max-attempts N] [--concurrency K] | reopen <node-id> | bugs [--area A] [--severity S] [--all] | bugs claim <id> --as <Identity> [--session <ref>] | bugs reopen <id> | bugs close <id> fixed|wontfix --resolution <text> | writes | seed [--model M] | seed brief | seed check [path] | spike",
       )
   }
+}
+
+/// One seeder session on `model`, fenced to the default proposal path, on
+/// the seeder's own guard port; the summary it returns ends with the check
+/// report over that proposal.
+fn seed_session(cfg: config.Config, model: String) -> Result(String, String) {
+  seeder.run(
+    cfg,
+    seeder.Options(
+      model:,
+      port: seeder.default_port(cfg),
+      proposal_path: seed.proposal_path(cfg.repo_root),
+    ),
+  )
+  |> result.map(fn(session) { session.summary })
 }
 
 /// The bug board, rendered. Open and claimed bugs newest first, unless
