@@ -21,3 +21,21 @@ Dib's first ask was an English summary of `Rule30/Proofs/EvolveLeftEdge.lean`, t
 Dib told me he will not read `docs/glossary.md` directly — if he wants a term he asks me or googles it. That nearly talked me out of maintaining it, so I checked who else reads it. The answer: **the provers do.** `harness/src/harness/guard.gleam` gates only `Edit|Write|MultiEdit|NotebookEdit|Bash`, so `Read` is ungated in a worker session, and every brief carries CLAUDE.md verbatim including the line that points at the glossary. So it is not a doc written for a human who skips it — it is shared context for the agents, and Dib gets the same content conversationally instead.
 
 The lesson for me: the teaching contract's two habits (name the Lean thing, say where the analogy breaks) apply to **what I say in the terminal**, which is Dib's real channel. The glossary is the durable copy for whoever comes next. Do not confuse the two audiences, and do not pad the glossary to look diligent — a row earns its place by being something a prover would otherwise get wrong.
+
+## 2026-09-07T01:55:00Z — literature facts, one at a time
+
+Dib asked for basic literature facts about rule 30's structure, one per turn. Three so far, each checked against the automaton before I said it, because a fact I recite and a fact I measured are different kinds of claim and Dib cannot tell them apart from the outside:
+
+1. Left-permutivity: `new = a XOR (b OR c)` is a bijection in `a`. Verified by truth table. Consequences: surjective (every row has a predecessor), information moves right at exactly 1, left side regular.
+2. Hedlund: a surjective CA preserves the uniform Bernoulli measure. Checked on 2M random cells for 200 rows: density 0.5, all eight triples at 0.125. The seam, and it is the important one: says nothing about the single-seed start, so it explains why the balance prize is the natural guess and not why it is true.
+3. Damage cone: right edge speed exactly 1, left edge about 0.24 on average (five trials, 0.236-0.253). My memory says NKS quotes about 0.24; I am not fully sure and said so to Rowan.
+
+What I got wrong on delivery: fact 1 was too heavy on the first pass. Dib asked what `b` and `c` *were* and for cells instead of letters. The fix that worked was a two-row table with the left neighbour flipped and everything else fixed, then the same table for the right neighbour showing no flip. Lead with the table next time; the formula second.
+
+Dib said he pictures the automaton as a 2D image with time running down, not a row evolving. Saved as a memory. Fact 3 was phrased as a cone in that picture and landed at once.
+
+Dib asked whether bounds on the two cone edges would be good nodes and told me to pass it to Rowan "no lying". Sent: the right edge is exact and not yet on the board in general form (existing edge nodes are single-seed only, and `rule30 : Config → Config` plus `rule30_eq` are enough to state it); the left edge has an exact local law (front advances iff the cell beside it is white) worth a node; but any bound below 1 on the left *speed* is a statement about an average over random rows, worst case is exactly 1 (all-white vs single seed), and I know no proof of a nontrivial bound, so I recommended against seeding it. Partial agreement, stated as partial.
+
+## 2026-09-07T02:05:00Z — Rowan confirmed the figure; A1 and A2 queued
+
+Rowan's literature sweep found NKS p. 949: 0.2428 for the left edge of the difference pattern, and a separate 0.252 for the boundary of the regular region in the single-seed picture. So the two slopes I conflated in fact 3 ("about that same fraction") are close but distinct; say so if it comes up again. My two provable statements are in blueprint/crystals.md as A1 (left-permutivity, general rows) and A2 (left-front local law); the speed bound is recorded as not-to-seed with my reason. They land after the current run, about eight nodes down the queue.

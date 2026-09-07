@@ -1235,3 +1235,123 @@ right.
 
 Nothing held on my account: no lock, no claim, no branch off `main`,
 everything pushed, shared checkout clean on `main`.
+
+## 2026-09-07T01:40:00Z — the two bodies, and a tier chosen by the engine
+
+Dib brought a note from a contributor, flashcolor: the rule 30 triangle looks
+like two triangles with different rules, a regular one on the left and a
+chaotic one on the right, meeting at about 14 degrees from the vertical; and
+nobody has proved the angle holds as n grows. Both halves are right, and the
+engine said what the eye was seeing before I could guess.
+
+**What the scan said.** `explorer/diagonalscan.mjs` to `k = 700`, and my own
+check to `k = 1100` over 1200 rows: every left diagonal has period at most 8
+to `k = 400` and 16 after, and its onset grows about a third as fast as `k`,
+never past `k / 2` (worst 0.479 at `k = 48`). Diagonal `k` becomes regular
+at time `k + onset` at position `-onset`, so the boundary sits at slope
+`onset / (k + onset)`, measured 0.22 to 0.25. `tan 14° = 0.249`. That is
+Wolfram's quarter-cell-per-step boundary, and the entire content of it is one
+sentence: **the left transients grow linearly and the left periods barely
+grow.** The proved bound for both is `2 ^ k`.
+
+Then the surprise. The right diagonals — which flashcolor called the chaotic
+body — are periodic too, from their *first cell*, with periods 1, 2, 2, 4,
+8, 8, 16, 32, 32, 64, … that double away. The right body is not chaotic in
+its diagonals; it is slow. The recurrence is the mirror of the left one with
+one difference: the cell's own previous term sits in the XOR slot instead of
+inside the OR, so the driven lemma is an involution and needs no delay. I
+derived it from the rule, checked it against the engine at 15,573 cells with
+no mismatch, and a Lean witness confirmed it at depth 11. A research agent
+then found it is Rowland's Lemma 2 and Theorem 1 (*Local Nested Structure in
+Rule 30*, 2006). Found from the engine, confirmed by the paper. Good order.
+
+**What I seeded**, ten nodes, all `P1`, after adding `leftDiagonal`,
+`rightDiagonal` and `PeriodicFrom` to `Rule30/Basic.lean` with Dib's word:
+
+- Left, quantitative: `periodicFrom_mul`, `leftDiagonal_periodicFrom_step`,
+  `leftDiagonal_periodicFrom_pow` — period `2 ^ k` from onset at most `2 ^ k`.
+  The existence proof knew this and threw it away.
+- Right, from scratch: `rightDiagonal_recurrence`,
+  `bool_xor_driven_periodicFrom`, `rightDiagonal_periodicFrom_step`,
+  `rightDiagonal_periodicFrom_pow`, `rightDiagonal_isEventuallyPeriodic` —
+  period `2 ^ k` from onset `0`. Close to tight.
+- Two walls that are not prizes: `leftDiagonal_onset_le` (onset at most `k`;
+  the 14 degrees) and `leftDiagonal_period_le` (period at most `k + 1`;
+  measured 16 at `k = 700`). Between `2 ^ k` and `k` nobody has proved
+  anything. Rowland's Proposition 2 says exactly *when* a left period
+  doubles; how rarely is the wall.
+
+Seed check: three witnesses hold in Lean — the multiple-of-a-period lemma, the
+right recurrence at depth 11, and the XOR-driven lemma exhaustively over every
+driver of period at most 4 — and seven unchecked, stated as unchecked. I had
+put `true` as a placeholder witness on both walls and deleted it before the
+check ran; a `true` witness passes any checker, and I told Keel so for its row
+on the exit-status checker.
+
+**Why these walls matter more than the P1 ones.** Both open P1 walls are the
+prize in disguise; nothing partial is possible. These two are empirically
+robust, structured — a recurrence on two-state machines — and a worker can
+make progress on them without solving anything Wolfram is paying for. They
+are the right first target for Keel's sub-lemma channel, and I said so.
+
+**What the centre column is not.** The centre column never enters the regular
+body: at time `t` it sits on diagonal `t`, whose onset has not been reached.
+So the 14-degree line constrains the left body and nothing else, and I see no
+route from "take the angle as given" to P1. I will tell flashcolor that
+plainly rather than leave it as a lead.
+
+Also tonight: three research agents out for seed crystals across the
+literature; the first back (columns and the centre column) found Rowland
+2006, Kopra 2022 (adjacent-column pairs are never eventually periodic, for
+any configuration white far to the left), and Jen's Proposition 3 for
+arbitrary finite initial conditions. Next tier's material. Keel landed the
+proof-note annotation at `5ee56fc` and flagged that CLAUDE.md's "exactly
+these three headings and nothing else" is now false by one harness block;
+that clause is Dib's to change and I have raised it.
+
+**Addendum, 01:50Z.** All three research agents are back; the consolidated
+list is `blueprint/crystals.md`, thirty items, ranked. Keel reports the
+account's session limit hit at about 02:55Z and resets at 06:20Z, so the
+diagonal tier is seeded, pushed and *not dispatched*: a run now would record
+only rate-limited attempts. First thing after the reset: `run
+--max-attempts 10 --concurrency 3`, after telling Keel and Fathom to keep
+out of the shared checkout for its duration.
+
+## 2026-09-07T02:10:00Z — the first run on the tier, stopped on purpose
+
+Run `20260907T015318Z`, three haiku workers, started the minute the account
+limit lifted. Ten minutes in, no attempt closed, and the attempt logs said
+why: **a failed build never releases the build lock.** The guard releases in
+the `PostToolUse` hook, and Claude Code fires that hook only when the tool
+call succeeds; a `lake build` that exits nonzero fires `PostToolUseFailure`,
+which the guard never registered. So the lock sits with its holder until the
+holder's next *successful* build, and every sibling waits 240 seconds and is
+denied. Last night's six-for-six run hid it because every node closed on its
+first build. I read the timeline, then the source, then wrote `STOP` — the
+lever Keel built last night, used for the first time, for exactly the case
+it was built for: in-flight attempts finish, nothing new starts.
+
+What I was wrong about, in order. I first read a `Write` guard event as a
+denial of the worker's own proof file; it was an `Allow` with the denial
+field empty. I looked at the value and not at the column. Second: I had
+assumed a run that closed six nodes in fifteen minutes had exercised the
+lock under contention. It had exercised it under *success*, which is a
+different denominator. Third, and the one that cost real time: I thought a
+guard timeout was the guard being slow. It was the guard being correct
+about a lock nobody released.
+
+Keel has the mechanism and is building both parts of the fix — the missing
+hook, and a defensive release on the holder's next tool call, so a missed
+hook can never hold the lock past one action. Cairn passed on Dib's
+damage-cone idea with an honest assessment attached; the exact local law of
+the left front (the difference advances left exactly when the cell beside it
+is white) is in `crystals.md` as A2 and is the best new statement of the
+night. I reversed my own ruling on the lock-timeout wording at Keel's
+request: a worker can act on "another worker held the lock" by retrying,
+and my earlier text could only produce abandonment.
+
+Held right now, with expiry: Keel and Fathom are holding every landing and
+every touch of the shared checkout on my word until I announce the run has
+ended; both have agreed that if I go quiet for an hour they check `runs/`
+and proceed. Two board rows are drafted on disk in my scratchpad, not
+filed, because the dispatcher owns `bugs.json` until the run ends.

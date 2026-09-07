@@ -137,19 +137,29 @@ fn size_decoder() -> decode.Decoder(dag.Size) {
 }
 
 /// What `attempt` needs from outside itself: the adjudicator for a `proved`
-/// claim, and the first user turn. Both are passed in rather than reached
-/// for — the verifier because "was this claim actually adjudicated?" is then
-/// an observable fact a test can assert, and the task message because a node
-/// whose statement cannot be found must fail before a session is ever
-/// started.
+/// claim, the annotator that writes the verified statement into the proof
+/// note, and the first user turn. All are passed in rather than reached for
+/// — the verifier because "was this claim actually adjudicated?" is then an
+/// observable fact a test can assert, the annotator because it writes into
+/// `Rule30/Proofs/` and a test must be able to see the write without making
+/// it, and the task message because a node whose statement cannot be found
+/// must fail before a session is ever started.
 pub type Deps {
-  Deps(verify: fn(dag.Node) -> verify.Verdict, task_message: String)
+  Deps(
+    verify: fn(dag.Node) -> verify.Verdict,
+    annotate: fn(dag.Node, String) -> Result(Nil, String),
+    task_message: String,
+  )
 }
 
-/// The real dependencies: `verify.verify` against this run's repo and lake.
+/// The real dependencies: `verify.verify` and `verify.annotate` against
+/// this run's repo and lake.
 pub fn live_deps(cfg: config.Config, task_message: String) -> Deps {
   Deps(
     verify: fn(node) { verify.verify(cfg.repo_root, cfg.lake, node) },
+    annotate: fn(node, statement) {
+      verify.annotate(cfg.repo_root, node, statement)
+    },
     task_message:,
   )
 }
@@ -814,7 +824,7 @@ fn park(t: Turn, report: Option(Report)) -> #(Tally, Ending) {
     Some(r) -> {
       let #(verdict, text) = judge(t)
       case verify.is_verified(verdict) {
-        True -> #(t.tally, Ending(dag.Closed, clip(text, 2000), Some(r), False))
+        True -> close(t, verdict, text, r)
         False ->
           parked(t, report, "; the proof did not verify: " <> clip(text, 1000))
       }
@@ -839,10 +849,7 @@ fn parked(t: Turn, report: Option(Report), extra: String) -> #(Tally, Ending) {
 fn adjudicate(t: Turn, report: Report) -> #(Tally, Ending) {
   let #(verdict, text) = judge(t)
   case verify.is_verified(verdict) {
-    True -> #(
-      t.tally,
-      Ending(dag.Closed, clip(text, 2000), Some(report), False),
-    )
+    True -> close(t, verdict, text, report)
     False ->
       case t.rounds < t.cfg.max_verify_rounds {
         True -> {
@@ -863,6 +870,34 @@ fn adjudicate(t: Turn, report: Report) -> #(Tally, Ending) {
         )
       }
   }
+}
+
+/// The node closes on a verified claim. Before it does, the statement the
+/// check file printed goes into the proof note through `deps.annotate`, and
+/// the write is logged either way. A failed write never changes the outcome:
+/// the proof is verified and the note is prose, and the project's ordering
+/// is that `lake build` adjudicates and the note is for a human. What the
+/// harness owes that human is the attempt to put the checked signature
+/// beside the worker's sentence, and the `annotate` event says whether it
+/// managed to.
+fn close(
+  t: Turn,
+  verdict: verify.Verdict,
+  text: String,
+  report: Report,
+) -> #(Tally, Ending) {
+  let statement = case verdict {
+    verify.Verified(statement:, ..) -> statement
+    _ -> ""
+  }
+  let written = t.deps.annotate(t.node, statement)
+  log.event(t.l, "annotate", [
+    #("node", json.string(t.node.id)),
+    #("statement", json.string(statement)),
+    #("written", json.bool(result.is_ok(written))),
+    #("reason", json.string(result.unwrap_error(written, ""))),
+  ])
+  #(t.tally, Ending(dag.Closed, clip(text, 2000), Some(report), False))
 }
 
 /// Run the verifier on this node and log what it found. The verdict's own

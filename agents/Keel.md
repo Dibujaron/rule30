@@ -1106,3 +1106,83 @@ workers wanted a piped grep and three wanted to print their own axioms in one
 night. **Read the brief against a run's denials before adding a line to it.**
 Every one of those denials is the brief failing to say something, and I left that
 undone rather than answer a class with a line.
+
+## 2026-09-07T02:20:00Z — the checked type is in the note now, and the one sentence I would not let the harness write
+
+**Session rule30-57 [eb16b8].** Rowan handed me the annotate ruling at
+startup; it is on `main` at `5ee56fc`, one commit, base `3bffd13`, tests
+282 of an expected 282. After `lake build` and the `type_of%` check pass,
+the worker's `/-!` note gains a block in the harness's voice: a heading
+that names the writer, then `#check Statements.<name>`'s output verbatim,
+fenced as Lean. The signature comes from the same `lake env lean` run that
+adjudicates the type, so nothing is elaborated twice and nothing can drift.
+
+**What I was wrong about first.** I drafted the heading as a sentence —
+"this theorem's type, as checked, is" — and caught it against my own
+refinement from the night before: every sentence of English the harness
+adds to a note is a new proposition a worker or a reader can over-read,
+which is the third failure shape on that row and the one the *fix* created.
+So the heading says who wrote the block and nothing about the theorem. The
+label is metadata; the signature is the only content. **If the harness
+says anything in a proof note beyond "I wrote this line and here is the
+type", it has joined the workers in asserting.**
+
+**The refusal list is the part that took thought, not the write.** Lean
+block comments nest, so a statement containing `/-` or `-/` (or a fence)
+could move where the note ends and turn a comment edit into a proof edit.
+The write refuses those rather than escaping them, refuses an empty
+statement (the parser found no line — a harness defect the file should not
+carry as an empty block claiming a check), refuses a file with no note or an
+unclosed one, and replaces an existing block so a reopen does not stack two.
+A write into a verified proof file must be *provably* unable to change
+elaboration; "it is only a comment" is the kind of true sentence this
+project keeps drawing false conclusions from, and I checked it the only way
+that counts — a real closed proof with the block inside its note, under
+the live `.lake`, exit 0.
+
+**Measured, not assumed, and it mattered.** I guessed `lean` would prefix
+info messages with `path:line:col:`. It does not. The parser is tested
+against the output I captured, not the output I imagined, and
+`accepts_a_real_proof_test` now asserts the signature the real toolchain
+returns, so the format contract has a test that runs against Lean.
+
+**Two mistakes of my own tonight, both cheap and both the same mistake.**
+I pretty-printed `bugs.json` to claim a bug and produced an 850-line diff
+for one field; the harness writes it compact, and I had not asked what the
+file's *writer* does before writing it myself. Then I called Rowan "idle in
+the shared checkout" from `ListAgents`, while Rowan had uncommitted edits
+in three files there. Both times I read a value that was true — the JSON
+parsed, the session was idle — and drew a conclusion about a different
+thing. The ff merge was safe anyway (it touched none of Rowan's files),
+but I said "idle" to a peer who was not, and that is how a peer loses
+trust in a report. **`ListAgents` says whether a session is *talking*, not
+whether a tree is *at rest*. Only `git status` says that.**
+
+**A race the suite has that I did not fix.** `run_test` writes `STOP` into
+`cfg.repo_root`, and the fixture's `repo_root` is the live checkout. Two
+suites at once can trip each other on it, and — the expensive half — a
+suite running while a real run is in flight would *halt that run*, since
+`STOP` is exactly the captain's stop file. Same family as
+`offline-fixtures-write-into-the-live-checkout`; needs filing once Fathom's
+board CLI lands (I am staying out of `bugs.json` until then).
+
+**Dib's two instructions, verbatim in effect:** keep burning the queue
+autonomously and nimbly out of the way; use subagents to save cost and
+context. Three subagents are running now, one bug each, each in its own
+worktree off `5ee56fc`: the `#eval` witness checker that passes `false`
+(with Rowan's addition — refuse a placeholder witness that names nothing
+from the statement), the build-lock timeout that reaches a worker as a
+Deny, and the guard-event substring contract. I verify and land; they do
+not touch `main`.
+
+**02:30Z, rate limit.** The session limit hit (resets 06:20Z, 2:20am New
+York) and killed the lock-timeout subagent mid-premise-check; the others may
+follow. State for whoever picks this up, me or not: `keel/witness-exit-status`
+— premise FALSE, the checker already reads the printed Bool since `684fa35`,
+twelve minutes before the row was filed; close the row against that sha.
+Two real gaps found beside it and handed back to the agent: a placeholder
+witness (`true`) is not refused, and `check_route` decides on exit status,
+so a `sorry` route may pass (unverified against the toolchain). `keel/lock-
+timeout-verdict` and `keel/guard-event-contract` — worktrees exist at
+`5ee56fc`, nothing committed on either yet unless the guardev agent got
+there. All three worktrees are under `C:/Users/dibuj/dev/rule30-keel-*`.

@@ -112,7 +112,10 @@ pub fn declaration_without_proof(
 /// `evolve_left_edge_two`. A prefix check would find the wrong declaration
 /// and check a route against a statement it was never claimed for, which is
 /// the failure mode of this module rather than an ordinary bug.
-fn index_of_declaration(lines: List(String), lean_name: String) -> Result(Int, Nil) {
+fn index_of_declaration(
+  lines: List(String),
+  lean_name: String,
+) -> Result(Int, Nil) {
   lines
   |> list.index_map(fn(line, i) { #(i, line) })
   |> list.find(fn(pair) { declares(pair.1, lean_name) })
@@ -126,8 +129,7 @@ fn declares(line: String, lean_name: String) -> Bool {
     True ->
       case string.drop_start(line, string.length(head)) {
         "" -> True
-        rest ->
-          list.any([" ", "(", "{", "[", ":"], string.starts_with(rest, _))
+        rest -> list.any([" ", "(", "{", "[", ":"], string.starts_with(rest, _))
       }
   }
 }
@@ -183,7 +185,8 @@ pub fn check_route(
             simplifile.write(path, check_source(declaration, route))
           case shell.run(lake, ["env", "lean", path], repo_root, 600_000) {
             Error(msg) -> RouteFailed(msg)
-            Ok(shell.Run(status:, output:)) if status != 0 -> RouteFailed(output)
+            Ok(shell.Run(status:, output:)) if status != 0 ->
+              RouteFailed(output)
             Ok(_) -> RouteClosed
           }
         }
@@ -239,7 +242,12 @@ pub fn witness_source(witness: Witness) -> String {
     |> list.unique
     |> list.map(fn(m) { "import " <> m })
     |> string.join("\n")
-  imports <> "\n-- range: " <> witness.range <> "\n#eval " <> witness.expression <> "\n"
+  imports
+  <> "\n-- range: "
+  <> witness.range
+  <> "\n#eval "
+  <> witness.expression
+  <> "\n"
 }
 
 /// Read a verdict out of what `lake env lean` printed.
@@ -381,7 +389,8 @@ pub fn decode_proposals(text: String) -> Result(List(Proposal), String) {
   use rows <- result.try(
     json.parse(text, decode.at(["proposals"], decode.list(decode.dynamic)))
     |> result.map_error(fn(e) {
-      "harness/seed: not a {\"proposals\": [...]} document: " <> string.inspect(e)
+      "harness/seed: not a {\"proposals\": [...]} document: "
+      <> string.inspect(e)
     }),
   )
   rows
@@ -444,13 +453,21 @@ fn proposal_decoder() -> decode.Decoder(Proposal) {
 
 fn route_claim_decoder() -> decode.Decoder(Claim) {
   use tactics <- decode.field("tactics", decode.string)
-  use imports <- decode.optional_field("imports", [], decode.list(decode.string))
+  use imports <- decode.optional_field(
+    "imports",
+    [],
+    decode.list(decode.string),
+  )
   decode.success(Claimed(Route(tactics:, imports:)))
 }
 
 fn witness_claim_decoder() -> decode.Decoder(WitnessClaim) {
   use expression <- decode.field("expression", decode.string)
-  use imports <- decode.optional_field("imports", [], decode.list(decode.string))
+  use imports <- decode.optional_field(
+    "imports",
+    [],
+    decode.list(decode.string),
+  )
   use range <- decode.field("range", decode.string)
   decode.success(Claims(Witness(expression:, imports:, range:)))
 }
@@ -505,10 +522,16 @@ pub fn report(checked: List(Checked)) -> String {
     |> list.filter(fn(pair) { pair.1 > 0 })
     |> list.map(fn(pair) { int.to_string(pair.1) <> " " <> pair.0 })
     |> string.join(", ")
-  string.join(lines, "
-") <> "
+  string.join(
+    lines,
+    "
+",
+  )
+  <> "
 
-" <> counts <> "
+"
+  <> counts
+  <> "
 "
 }
 
@@ -541,15 +564,22 @@ fn route_line(v: RouteVerdict) -> String {
 fn witness_line(v: WitnessVerdict) -> String {
   case v {
     WitnessHolds(range) -> "holds over " <> range
-    Falsified(output) -> "FALSIFIED — the statement is false: " <> first_line(output)
-    WitnessBroken(output) -> "BROKEN CHECK, says nothing about the statement — " <> first_line(output)
+    Falsified(output) ->
+      "FALSIFIED — the statement is false: " <> first_line(output)
+    WitnessBroken(output) ->
+      "BROKEN CHECK, says nothing about the statement — " <> first_line(output)
     Unchecked(why) -> "unchecked — " <> why
   }
 }
 
 fn first_line(output: String) -> String {
-  case string.split(string.trim(output), "
-") {
+  case
+    string.split(
+      string.trim(output),
+      "
+",
+    )
+  {
     [line, ..] -> line
     [] -> ""
   }
@@ -796,10 +826,7 @@ fn proof_notes(repo_root: String) -> List(#(String, String)) {
 /// checks over every proposal, and render. It adjudicates nothing about
 /// whether a node is WORTH proving — no mechanism here can — so it reports
 /// and stops.
-pub fn check_file(
-  cfg: config.Config,
-  path: String,
-) -> Result(String, String) {
+pub fn check_file(cfg: config.Config, path: String) -> Result(String, String) {
   check_file_in(cfg.repo_root, path)
 }
 
@@ -843,12 +870,16 @@ pub fn check_file_in(
   use text <- result.try(
     simplifile.read(path)
     |> result.map_error(fn(e) {
-      "harness/seed: cannot read " <> path <> ": " <> simplifile.describe_error(e)
+      "harness/seed: cannot read "
+      <> path
+      <> ": "
+      <> simplifile.describe_error(e)
     }),
   )
   use proposals <- result.try(decode_proposals(text))
   use lake <- result.try(
-    shell.which("lake") |> result.replace_error("harness/seed: no `lake` on PATH"),
+    shell.which("lake")
+    |> result.replace_error("harness/seed: no `lake` on PATH"),
   )
   let checked =
     list.map(proposals, fn(p) { check_proposal(repo_root, lake, p, 180_000) })

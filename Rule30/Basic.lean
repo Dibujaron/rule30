@@ -74,6 +74,30 @@ This single sequence of bits is the subject of all three Rule 30 Prize
 questions (see `Rule30/Prize.lean`). It is OEIS A051023. -/
 def centerColumn (t : Nat) : Bool := evolve t 0
 
+/-- The `k`-th diagonal in from the **left** edge of the cone, read `j` steps
+along it: the cell at position `-j` after `j + k` steps. `leftDiagonal 0` is
+the left edge itself, `leftDiagonal 1` the cells just inside it, and so on.
+
+In TypeScript terms it is a re-indexing, `(k, j) => evolve(j + k)(-j)`, and
+nothing more — no new data, only a coordinate system in which the left side
+of the pattern reads as a family of one-dimensional sequences. -/
+def leftDiagonal (k j : Nat) : Bool := evolve (j + k) (-(j : ℤ))
+
+/-- The `k`-th diagonal in from the **right** edge, read `j` steps along it:
+the cell at position `j` after `j + k` steps. Not the mirror image of
+`leftDiagonal`: rule 30 is not left-right symmetric, and the two families
+behave differently. -/
+def rightDiagonal (k j : Nat) : Bool := evolve (j + k) (j : ℤ)
+
+/-- `f` repeats with period `p` from index `N` on: `f (n + p) = f n` for every
+`n ≥ N`. The prefix before `N` is unconstrained.
+
+`IsEventuallyPeriodic f` in `Rule30/Prize.lean` is `∃ p > 0, ∃ N, PeriodicFrom
+f p N`, written out; that file keeps the unfolded form so the prize statement
+reads on its own. Note `p = 0` makes this trivially true, so a statement that
+means "genuinely periodic" must carry `0 < p` alongside it. -/
+def PeriodicFrom (f : Nat → Bool) (p N : Nat) : Prop := ∀ n ≥ N, f (n + p) = f n
+
 /-- **The bridging lemma.** Rule 30 in closed form: the new cell is the left
 neighbour XOR (centre OR right neighbour).
 

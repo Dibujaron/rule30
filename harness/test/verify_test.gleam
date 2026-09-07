@@ -146,6 +146,11 @@ pub fn accepts_a_real_proof_test() {
       "import Rule30.Basic\ntheorem harness_probe : True := trivial\n",
     )
   assert verify.is_verified(v)
+  // The verdict carries the statement's signature as the real toolchain
+  // printed it, which is what the annotation writes — so this is the one
+  // assertion that ties `statement_of` to Lean's actual output format.
+  let assert verify.Verified(statement:, ..) = v
+  assert statement == "Statements.harness_probe : True"
 }
 
 pub fn rejects_sorry_test() {
@@ -220,7 +225,10 @@ fn a_node(lean_name: String) -> Node {
 /// escalated against it.
 pub fn the_check_theorem_makes_binders_explicit_on_both_sides_test() {
   let src = verify.check_source(a_node("isEventuallyPeriodic_of_periodic_step"))
-  assert string.contains(src, "type_of% @Statements.isEventuallyPeriodic_of_periodic_step")
+  assert string.contains(
+    src,
+    "type_of% @Statements.isEventuallyPeriodic_of_periodic_step",
+  )
   assert string.contains(src, ":= @isEventuallyPeriodic_of_periodic_step")
   // The bare forms must be gone, not merely accompanied. An `@` added on one
   // side only would still leave the other elaborating with metavariables.
@@ -236,4 +244,135 @@ pub fn the_check_theorem_keeps_its_shape_test() {
   assert string.contains(src, "import Rule30.Statements")
   assert string.contains(src, "#print axioms harness_check")
   assert string.contains(src, "theorem harness_check :")
+}
+
+/// The check file prints the statement's signature so the annotation has
+/// something to write. It prints the STATEMENT, not the worker's theorem:
+/// the two are defeq once the check theorem elaborates, but only the
+/// statement's form is the one the captain seeded and a reader can follow.
+pub fn the_check_file_prints_the_statement_test() {
+  let src = verify.check_source(a_node("evolve_left_edge"))
+  assert string.contains(src, "#check Statements.evolve_left_edge\n")
+  assert !string.contains(src, "#check evolve_left_edge")
+}
+
+// --- the statement out of the check output ------------------------------------
+
+/// Verbatim `lake env lean` output for a closed node, captured 2026-09-07,
+/// with a second `#check` line and the axioms line after it — so this is
+/// the format the parser has to survive, not the one it was written for.
+const real_output = "Statements.evolve_eq_false_of_outside_cone (t : ℕ) (i : ℤ) (h : ↑t < |i|) : evolve t i = false
+Statements.evolve_eq_false_of_outside_cone : ∀ (t : ℕ) (i : ℤ), ↑t < |i| → evolve t i = false
+'harness_check' depends on axioms: [propext, Quot.sound]
+"
+
+pub fn statement_of_takes_the_first_check_line_test() {
+  let s = verify.statement_of(real_output, "evolve_eq_false_of_outside_cone")
+  assert s
+    == "Statements.evolve_eq_false_of_outside_cone (t : ℕ) (i : ℤ) (h : ↑t < |i|) : evolve t i = false"
+}
+
+/// Lean wraps a long signature onto indented continuation lines; they are
+/// part of the statement, and the unindented axioms line is not.
+pub fn statement_of_keeps_wrapped_continuation_lines_test() {
+  let out =
+    "Statements.long_one (c : Config) (n : ℕ)\n    (h : n < 3) :\n    evolve n 0 = false\n'harness_check' depends on axioms: [propext]\n"
+  assert verify.statement_of(out, "long_one")
+    == "Statements.long_one (c : Config) (n : ℕ)\n    (h : n < 3) :\n    evolve n 0 = false"
+}
+
+/// A name that merely begins with the one sought is a different statement.
+pub fn statement_of_does_not_match_a_longer_name_test() {
+  let out = "Statements.evolve_left_edge_of_zero (n : ℕ) : True\n"
+  assert verify.statement_of(out, "evolve_left_edge") == ""
+}
+
+pub fn statement_of_is_empty_when_no_check_line_test() {
+  assert verify.statement_of("'harness_check' depends on axioms: []\n", "x")
+    == ""
+}
+
+// --- the annotation -----------------------------------------------------------
+
+const a_proof = "import Rule30.Basic
+
+/-!
+**What this says.** Nothing is black outside the cone.
+
+**Why it is true.** Induction on `t`.
+
+**Where the work is.** The arithmetic of `|i|`.
+-/
+
+theorem evolve_left_edge : True := trivial
+"
+
+const a_statement = "Statements.evolve_left_edge (t : ℕ) : evolve t (-t) = true"
+
+/// The block lands as the last thing inside the note, under the harness's
+/// own heading, and the rest of the file is untouched byte for byte.
+pub fn annotated_appends_the_block_inside_the_note_test() {
+  let assert Ok(out) = verify.annotated(a_proof, a_statement)
+  let expected = "import Rule30.Basic
+
+/-!
+**What this says.** Nothing is black outside the cone.
+
+**Why it is true.** Induction on `t`.
+
+**Where the work is.** The arithmetic of `|i|`.
+
+" <> verify.annotation_heading <> "
+```lean
+" <> a_statement <> "
+```
+-/
+
+theorem evolve_left_edge : True := trivial
+"
+  assert out == expected
+}
+
+/// Re-verifying a node — a reopen, a second attempt on a closed file —
+/// must replace the block, not stack a second one under the first.
+pub fn annotated_replaces_an_existing_block_test() {
+  let assert Ok(once) = verify.annotated(a_proof, "Statements.old : False")
+  let assert Ok(twice) = verify.annotated(once, a_statement)
+  let assert Ok(direct) = verify.annotated(a_proof, a_statement)
+  assert twice == direct
+  assert !string.contains(twice, "Statements.old")
+}
+
+pub fn annotated_refuses_a_file_without_a_note_test() {
+  let assert Error(reason) =
+    verify.annotated(
+      "theorem evolve_left_edge : True := trivial\n",
+      a_statement,
+    )
+  assert string.contains(reason, "no /-! note")
+}
+
+pub fn annotated_refuses_an_unclosed_note_test() {
+  let assert Error(reason) =
+    verify.annotated("/-!\n**What this says.** Open forever.\n", a_statement)
+  assert string.contains(reason, "never closed")
+}
+
+/// An empty statement means the parser found nothing — a harness defect —
+/// and the file must not carry an empty block claiming the harness checked
+/// something.
+pub fn annotated_refuses_an_empty_statement_test() {
+  let assert Error(_) = verify.annotated(a_proof, "")
+  let assert Error(_) = verify.annotated(a_proof, "   \n")
+  Nil
+}
+
+/// Lean's block comments nest, so a statement carrying a comment delimiter
+/// could move where the note ends and change what the file means. The write
+/// that must never alter the verified proof refuses rather than escapes.
+pub fn annotated_refuses_comment_delimiters_test() {
+  let assert Error(_) = verify.annotated(a_proof, "Statements.x : a -/ b")
+  let assert Error(_) = verify.annotated(a_proof, "Statements.x : a /- b")
+  let assert Error(_) = verify.annotated(a_proof, "Statements.x : ```")
+  Nil
 }

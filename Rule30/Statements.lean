@@ -497,6 +497,128 @@ theorem centerColumn_other_isEventuallyPeriodic_of_center
     ∃ j : ℤ, j ≠ 0 ∧ IsEventuallyPeriodic (fun t => evolve t j) := by
   sorry
 
+/-! ## The two bodies — quantitative periodicity of the diagonals
+
+Seeded 2026-09-07 after a contributor observed that the rule 30 triangle
+looks like two triangles with different rules, and an engine scan to
+`k = 1100` said what the eye was seeing. `leftDiagonal`, `rightDiagonal` and
+`PeriodicFrom` are in `Rule30/Basic.lean`.
+
+Measured, and only measured: every left diagonal repeats with a period of at
+most 8 to `k = 400` and 16 to `k = 700`, and its repetition begins by index
+`k / 2`; every right diagonal repeats from its very first cell, with periods
+`1, 2, 2, 4, 8, 8, 16, 32, 32, 64, …` that double away. The proofs below
+establish period `2 ^ k` on both sides, with onset `2 ^ k` on the left and
+`0` on the right. On the right that is close to the truth. On the left it is
+exponentially loose, and the two walls at the end state the gap. -/
+
+/-- **A multiple of a period is a period**, from the same starting index.
+Bookkeeping for the two inductions below, which need diagonals `m` and
+`m + 1` on the common period `2 ^ (m + 1)` without losing its size. -/
+theorem periodicFrom_mul (f : ℕ → Bool) (p N : ℕ) (h : PeriodicFrom f p N) (m : ℕ) :
+    PeriodicFrom f (m * p) N := by
+  sorry
+
+/-- **Periodicity carries one left diagonal further in, with the numbers
+kept.** The quantitative form of `evolve_left_diagonal_isEventuallyPeriodic_step`:
+period `q` on diagonals `m` and `m + 1` from `N` gives period `2 q` on
+diagonal `m + 2` from `N + q`. Both the doubling and the delay are inherited
+from `bool_driven_eventually_two_periodic`, where both are tight. -/
+theorem leftDiagonal_periodicFrom_step (m q N : ℕ) (hq : 0 < q)
+    (h0 : PeriodicFrom (leftDiagonal m) q N)
+    (h1 : PeriodicFrom (leftDiagonal (m + 1)) q N) :
+    PeriodicFrom (leftDiagonal (m + 2)) (2 * q) (N + q) := by
+  sorry
+
+/-- **Every left diagonal repeats with period `2 ^ k`, from index `2 ^ k` at
+the latest.** What `evolve_left_diagonals_isEventuallyPeriodic` knows and
+discards. The first quantitative statement about the regular region, and the
+bound the wall `leftDiagonal_onset_le` says is exponentially loose. -/
+theorem leftDiagonal_periodicFrom_pow (k : ℕ) :
+    ∃ N ≤ 2 ^ k, PeriodicFrom (leftDiagonal k) (2 ^ k) N := by
+  sorry
+
+/-- **The right diagonals satisfy a closed recurrence.** The mirror of
+`evolve_left_diagonal_recurrence`, and the mirror is not symmetric: on the
+left a diagonal's own previous term sits inside the `||`, here it sits in the
+`xor` slot. That one difference is why the right side needs a different
+driven lemma and turns out periodic from the start. -/
+theorem rightDiagonal_recurrence (m i : ℕ) :
+    rightDiagonal (m + 2) (i + 1)
+      = xor (rightDiagonal (m + 2) i)
+          (rightDiagonal (m + 1) (i + 1) || rightDiagonal m (i + 2)) := by
+  sorry
+
+/-- **A one-bit machine that XORs a repeating input into its state repeats
+with twice the period, and with no delay.** XOR-ing a fixed block sum is an
+involution, so two input periods return the state exactly. Contrast
+`bool_driven_eventually_two_periodic`, where the state can be overwritten and
+one full cycle of delay is needed. No `0 < p`: `p = 0` is trivially true. -/
+theorem bool_xor_driven_periodicFrom (c x : ℕ → Bool) (p N : ℕ)
+    (hrec : ∀ i, x (i + 1) = xor (x i) (c i)) (hc : PeriodicFrom c p N) :
+    PeriodicFrom x (2 * p) N := by
+  sorry
+
+/-- **Periodicity carries one right diagonal further in**, period doubled,
+onset unchanged. The recurrence puts diagonal `m + 2` in the XOR-driven form
+with input `rightDiagonal (m + 1) (i + 1) || rightDiagonal m (i + 2)`. -/
+theorem rightDiagonal_periodicFrom_step (m q N : ℕ)
+    (h0 : PeriodicFrom (rightDiagonal m) q N)
+    (h1 : PeriodicFrom (rightDiagonal (m + 1)) q N) :
+    PeriodicFrom (rightDiagonal (m + 2)) (2 * q) N := by
+  sorry
+
+/-- **Every right diagonal is periodic from its first cell, with period
+`2 ^ k`.** Periodic, not eventually periodic. Base cases are the right edge
+(constant) and the second right diagonal (alternating); the step is
+`rightDiagonal_periodicFrom_step`. The engine's measured periods all divide
+`2 ^ k` and all begin at `0`. This is Lemma 2 and Theorem 1 of Rowland,
+*Local Nested Structure in Rule 30*, Complex Systems 16 (2006), stated there
+for the mirror rule 86; it was found here from the engine before the paper
+was, and the two agree. -/
+theorem rightDiagonal_periodicFrom_pow (k : ℕ) :
+    PeriodicFrom (rightDiagonal k) (2 ^ k) 0 := by
+  sorry
+
+/-- **The mirror of `evolve_left_diagonals_isEventuallyPeriodic`**, so both
+sides of the cone are on the board in the same words. Immediate from
+`rightDiagonal_periodicFrom_pow`. -/
+theorem rightDiagonal_isEventuallyPeriodic (k : ℕ) :
+    IsEventuallyPeriodic (rightDiagonal k) := by
+  sorry
+
+/-- **Wall: the left transients grow at most linearly.** The `k`-th left
+diagonal has settled into its repetition by index `k`. This is Wolfram's
+"region of regularity grows at about a quarter cell per step" in its weakest
+linear form; the measured onset is below `k / 2` for every `k ≤ 722`, and the
+proved bound (`leftDiagonal_periodicFrom_pow`) is `2 ^ k`. Nothing between
+`2 ^ k` and `k` is proved by anyone. Not a prize conjecture and not bearing on
+one: the centre column never enters this region. Never dispatch as an ordinary
+leaf; never weaken. -/
+theorem leftDiagonal_onset_le (k : ℕ) :
+    ∃ p > 0, ∃ N ≤ k, PeriodicFrom (leftDiagonal k) p N := by
+  sorry
+
+/-- **Wall: the left periods grow at most linearly.** The measured periods
+are at most 16 to `k = 700`, so the truth is far below this line; it is the
+weakest statement that is already unproved. Wolfram's notes (NKS p. 871)
+give the depth at which each period first appears: 2 at `k = 3`, 4 at 8, 8
+at 29, 16 at 400, 32 at 87,867, and 64 not before 2,107,985,255 — so the
+period is about `2 * log₂ k`, and `k + 1` is generous by a factor that grows
+without bound. With `leftDiagonal_onset_le` it
+says why the left body looks regular while the right body does not. Not a
+prize conjecture. Never dispatch as an ordinary leaf; never weaken.
+
+The one proved thing near it is Rowland's Proposition 2 (*Local Nested
+Structure in Rule 30*, 2006): the period of diagonal `k` doubles past the
+larger of its two predecessors' exactly when diagonal `k - 1` is eventually
+white and one period of diagonal `k - 2` holds an odd number of black
+cells. That says *when* doubling happens, not how rarely, and how rarely is
+this wall. -/
+theorem leftDiagonal_period_le (k : ℕ) :
+    ∃ p > 0, p ≤ k + 1 ∧ ∃ N, PeriodicFrom (leftDiagonal k) p N := by
+  sorry
+
 /-! ## Harness self-test -/
 
 /-- A trivially true statement that exists only so the harness's verifier
