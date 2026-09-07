@@ -868,7 +868,7 @@ fn summary(
         Some(bytes) -> "exists, " <> int.to_string(bytes) <> " bytes"
         None -> "MISSING — nothing is at that path"
       },
-      "ended     " <> ended_words(ending.end, size),
+      "ended     " <> ended_words(cfg, ending.end, size),
       "ceilings  " <> ceilings(cfg),
       "cost      $" <> roster.usd(tally.cost_usd),
       "turns     " <> int.to_string(tally.turns),
@@ -884,14 +884,20 @@ fn summary(
   )
 }
 
-/// How the session ended, in one word, for the notebook heading.
+/// How the session ended, in a word, for the notebook heading. A ceiling
+/// gets a second word saying which, because a theorist reading its own
+/// heading next session should know whether it ran out of money or of
+/// things to say.
 fn end_word(end: worker.End, size: Option(Int)) -> String {
   case end, size {
     worker.Finished, Some(_) -> "attacked"
     worker.Finished, None -> "abandoned"
     worker.Abandoned, _ -> "abandoned"
     worker.TimedOut, _ -> "timed_out"
-    worker.BudgetExhausted, _ -> "budget_exhausted"
+    worker.BudgetExhausted(worker.Turns), _ -> "budget_exhausted: turns"
+    worker.BudgetExhausted(worker.Dollars), _ -> "budget_exhausted: dollars"
+    worker.BudgetExhausted(worker.Rounds), _ -> "budget_exhausted: rounds"
+    worker.BudgetExhausted(worker.Unknown(_)), _ -> "budget_exhausted: cli"
     worker.RateLimited, _ -> "rate_limited"
   }
 }
@@ -900,8 +906,14 @@ fn end_word(end: worker.End, size: Option(Int)) -> String {
 /// claim that its document is written, and it is believed exactly as far as
 /// the file on disk supports it: with no document there the line says
 /// abandoned, because a report about a file that does not exist is not a
-/// report about the topic.
-fn ended_words(end: worker.End, size: Option(Int)) -> String {
+/// report about the topic. A ceiling is named with its value from the
+/// config the session ran under, so `$80.0` here is the ceiling the CLI was
+/// launched with and not a number remembered from elsewhere.
+fn ended_words(
+  cfg: config.Config,
+  end: worker.End,
+  size: Option(Int),
+) -> String {
   case end, size {
     worker.Finished, Some(_) ->
       "finished — the theorist reported its attack written; that is its claim about the document, and a captain's reading is the only adjudication"
@@ -909,11 +921,8 @@ fn ended_words(end: worker.End, size: Option(Int)) -> String {
       "abandoned — the theorist reported its attack written, but no document exists at the attack path, so the claim is recorded as abandoned"
     worker.Abandoned, _ -> "abandoned by the theorist"
     worker.TimedOut, _ -> "timed out"
-    // The loop's `BudgetExhausted` does not say which ceiling: the CLI's
-    // turn ceiling, its dollar ceiling, or the harness's round budget. The
-    // notes carry the CLI's own result line when it was the CLI.
-    worker.BudgetExhausted, _ ->
-      "stopped at a ceiling — turns, dollars or the harness's rounds; the notes below say which"
+    worker.BudgetExhausted(ceiling), _ ->
+      "stopped at " <> worker.ceiling_words(cfg, ceiling)
     worker.RateLimited, _ -> "rate limited"
   }
 }

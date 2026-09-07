@@ -339,7 +339,7 @@ fn summary(
       "seeder    " <> identity,
       "model     " <> options.model,
       "region    " <> option.unwrap(options.region, "(whole board)"),
-      "ended     " <> ended_words(ending.end),
+      "ended     " <> ended_words(cfg, ending.end),
       "ceilings  "
         <> int.to_string(cfg.max_turns)
         <> " turns, $"
@@ -363,17 +363,16 @@ fn summary(
 /// is — the seeder's claim that its file is written — because the only
 /// verdict a seeding session can get is the check under it, and a line
 /// reading `proved` here would be inventing a signal that does not exist.
-fn ended_words(end: worker.End) -> String {
+/// A ceiling is named with its value from the config the session ran
+/// under: the seeder's own ceilings, not the prover's.
+fn ended_words(cfg: config.Config, end: worker.End) -> String {
   case end {
     worker.Finished ->
       "finished — the seeder reported its proposal written; that is its claim about the file, and the check below is the only adjudication"
     worker.Abandoned -> "abandoned by the seeder"
     worker.TimedOut -> "timed out"
-    // The loop's `BudgetExhausted` does not say which ceiling: the CLI's
-    // turn ceiling, its dollar ceiling, or the harness's round budget. The
-    // notes carry the CLI's own result line when it was the CLI.
-    worker.BudgetExhausted ->
-      "stopped at a ceiling — turns, dollars or the harness's rounds; the notes below say which"
+    worker.BudgetExhausted(ceiling) ->
+      "stopped at " <> worker.ceiling_words(cfg, ceiling)
     worker.RateLimited -> "rate limited"
   }
 }

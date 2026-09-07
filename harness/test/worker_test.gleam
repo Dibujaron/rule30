@@ -584,6 +584,54 @@ pub fn a_rate_limit_event_with_no_status_still_decodes_test() {
   assert five_hour_utilization == 0.97
 }
 
+// --- the result's subtype -------------------------------------------------------
+
+/// The last line of run 20260907T175146Z's `theorist-1/events.jsonl`, less
+/// the usage: the CLI ending Sextant's first session at its dollar ceiling
+/// after thirteen turns. `subtype` is the only field that says which
+/// ceiling, and it must reach the loop as itself, not folded into
+/// `is_error`.
+pub fn a_result_decodes_its_subtype_test() {
+  let dollars =
+    "{\"type\":\"result\",\"subtype\":\"error_max_budget_usd\",\"is_error\":true,\"duration_ms\":1,\"num_turns\":13,\"errors\":[\"Reached maximum budget ($4)\"],\"total_cost_usd\":4.27,\"session_id\":\"c3d9b446\"}"
+  let assert claude.TurnResult(subtype:, is_error:, num_turns:, ..) =
+    claude.parse_event(dollars)
+  assert subtype == Some("error_max_budget_usd")
+  assert is_error
+  assert num_turns == 13
+  let turns =
+    "{\"type\":\"result\",\"subtype\":\"error_max_turns\",\"is_error\":true,\"num_turns\":40,\"total_cost_usd\":1.0,\"session_id\":\"s\"}"
+  let assert claude.TurnResult(subtype:, ..) = claude.parse_event(turns)
+  assert subtype == Some("error_max_turns")
+  let success =
+    "{\"type\":\"result\",\"subtype\":\"success\",\"is_error\":false,\"num_turns\":3,\"total_cost_usd\":0.25,\"session_id\":\"s\"}"
+  let assert claude.TurnResult(subtype:, ..) = claude.parse_event(success)
+  assert subtype == Some("success")
+}
+
+/// A result with no subtype at all is still a result: the field is read
+/// with a default, never required, so a shape change in the CLI cannot
+/// turn the line that ends a session into `Other` and leave the loop
+/// waiting for a result that already came.
+pub fn a_result_without_a_subtype_still_decodes_test() {
+  let line =
+    "{\"type\":\"result\",\"is_error\":true,\"num_turns\":2,\"total_cost_usd\":0.1,\"session_id\":\"s\"}"
+  let assert claude.TurnResult(subtype:, is_error:, ..) =
+    claude.parse_event(line)
+  assert subtype == None
+  assert is_error
+}
+
+/// The subtype names the ceiling; anything else is carried verbatim rather
+/// than guessed at, and a missing one is `Unknown("")`.
+pub fn the_ceiling_is_read_off_the_subtype_test() {
+  assert worker.ceiling_of(Some("error_max_turns")) == worker.Turns
+  assert worker.ceiling_of(Some("error_max_budget_usd")) == worker.Dollars
+  assert worker.ceiling_of(Some("error_during_execution"))
+    == worker.Unknown("error_during_execution")
+  assert worker.ceiling_of(None) == worker.Unknown("")
+}
+
 // --- the StructuredOutput call ------------------------------------------------
 
 pub fn an_assistant_event_yields_its_structured_output_call_test() {

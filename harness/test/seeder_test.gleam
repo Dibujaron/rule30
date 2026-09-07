@@ -138,6 +138,21 @@ fn result_line(session_id: String, outcome: String) -> String {
   |> json.to_string
 }
 
+/// The `result` the CLI ends a session with at one of its ceilings, with
+/// `subtype` as given and no `structured_output`.
+fn error_result_line(session_id: String, subtype: String) -> String {
+  json.object([
+    #("type", json.string("result")),
+    #("subtype", json.string(subtype)),
+    #("session_id", json.string(session_id)),
+    #("is_error", json.bool(True)),
+    #("errors", json.array(["Reached maximum number of turns"], json.string)),
+    #("total_cost_usd", json.float(3.5)),
+    #("num_turns", json.int(80)),
+  ])
+  |> json.to_string
+}
+
 fn read(path: String) -> String {
   simplifile.read(path) |> result.unwrap("")
 }
@@ -303,6 +318,37 @@ pub fn a_seeder_that_abandons_is_still_checked_test() {
   assert string.contains(session.summary, "ended     abandoned by the seeder")
   assert string.contains(session.summary, "check of " <> f.proposal_path)
   assert string.contains(session.summary, "cannot read")
+}
+
+/// A session the CLI ended at its turn ceiling is summarised as exactly
+/// that, with the seeder's own ceiling — 80 turns, not the prover's 40 —
+/// and never as a dollar ceiling; the check still runs over the file.
+pub fn a_session_the_cli_ended_at_its_turn_ceiling_is_summarised_as_turns_test() {
+  let f =
+    fixture("turn-ceiling", [
+      [init_line("seed-t"), error_result_line("seed-t", "error_max_turns")],
+    ])
+  let assert Ok(session) =
+    seeder.run(
+      f.cfg,
+      seeder.Options(
+        model: "haiku",
+        port: ports.span(1),
+        proposal_path: f.proposal_path,
+        region: None,
+      ),
+    )
+  assert string.contains(
+    session.summary,
+    "ended     stopped at the CLI's turn ceiling (80 turns)",
+  )
+  assert !string.contains(session.summary, "dollar")
+  assert !string.contains(session.summary, "the notes below say which")
+  assert string.contains(
+    session.summary,
+    "the CLI ended the session at the CLI's turn ceiling (80 turns): ",
+  )
+  assert string.contains(session.summary, "check of " <> f.proposal_path)
 }
 
 // --- aiming at one region ---------------------------------------------------------

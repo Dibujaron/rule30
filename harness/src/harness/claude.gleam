@@ -53,9 +53,15 @@ pub type Event {
   /// `{"type":"system","subtype":"api_retry",...}`
   ApiRetry(error: String, attempt: Int, raw: String)
   /// The end of one turn. `structured_output` is present only when the
-  /// session was started with `--json-schema`.
+  /// session was started with `--json-schema`. `subtype` is the CLI's own
+  /// word for how the turn ended — `success`, or when `is_error` is set,
+  /// which ceiling ended the session: `error_max_turns` for `--max-turns`,
+  /// `error_max_budget_usd` for `--max-budget-usd`. Kept as the raw string
+  /// rather than parsed here, because the CLI has more subtypes than the
+  /// harness has names for, and a result must decode whatever it says.
   TurnResult(
     session_id: String,
+    subtype: Option(String),
     is_error: Bool,
     total_cost_usd: Float,
     num_turns: Int,
@@ -231,6 +237,15 @@ fn event_decoder(raw: String) -> decode.Decoder(Event) {
     }
     "result" -> {
       use session_id <- decode.field("session_id", decode.string)
+      // Optional, like `structured_output`: a result without a subtype
+      // must still be a result, or the turn that ended the session would
+      // fall back to `Other` and the loop would wait for one that never
+      // comes.
+      use subtype <- decode.optional_field(
+        "subtype",
+        None,
+        decode.optional(decode.string),
+      )
       use is_error <- decode.field("is_error", decode.bool)
       use total_cost_usd <- decode.field("total_cost_usd", decode.float)
       use num_turns <- decode.field("num_turns", decode.int)
@@ -241,6 +256,7 @@ fn event_decoder(raw: String) -> decode.Decoder(Event) {
       )
       decode.success(TurnResult(
         session_id:,
+        subtype:,
         is_error:,
         total_cost_usd:,
         num_turns:,

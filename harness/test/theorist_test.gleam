@@ -203,6 +203,22 @@ fn result_line(session_id: String, outcome: String) -> String {
   result_with(session_id, report_fields(outcome))
 }
 
+/// The `result` the CLI ends a session with at one of its ceilings: the
+/// last line of run 20260907T175146Z's `theorist-1/events.jsonl`, less the
+/// usage, with `subtype` as given.
+fn error_result_line(session_id: String, subtype: String) -> String {
+  json.object([
+    #("type", json.string("result")),
+    #("subtype", json.string(subtype)),
+    #("session_id", json.string(session_id)),
+    #("is_error", json.bool(True)),
+    #("errors", json.array(["Reached maximum budget ($80)"], json.string)),
+    #("total_cost_usd", json.float(80.3)),
+    #("num_turns", json.int(13)),
+  ])
+  |> json.to_string
+}
+
 /// A result whose `structured_output` answers both a naming ceremony and a
 /// theorist's report: the shim plays the same script to every process, and
 /// each decoder reads only the fields it knows.
@@ -419,6 +435,40 @@ pub fn as_starts_the_named_theorist_and_a_missing_document_is_abandoned_test() {
     "— " <> theorist.frontier_wall <> " (haiku, abandoned)",
   )
   assert !string.contains(read(f.cfg.agents_dir <> "/Vesper.md"), "scripted")
+}
+
+/// A session the CLI ended at its dollar ceiling is summarised as exactly
+/// that, with the ceiling the session was launched under — the theorist's
+/// $80, not the prover's $4 — so a reader of `summary.txt` can tell
+/// Sextant's thirteen-turn ending from a session that talked itself out,
+/// and the notebook heading says the same in a word.
+pub fn a_session_the_cli_ended_at_its_dollar_ceiling_is_summarised_as_dollars_test() {
+  let f =
+    fixture(
+      "dollar-ceiling",
+      [[init_line("th-d"), error_result_line("th-d", "error_max_budget_usd")]],
+      peopled(),
+    )
+  let assert Ok(session) =
+    theorist.run(f.cfg, options(ports.span(1), "the transients"))
+  assert string.contains(
+    session.summary,
+    "ended     stopped at the CLI's dollar ceiling ($80.0)",
+  )
+  assert !string.contains(session.summary, "turn ceiling")
+  assert !string.contains(session.summary, "the notes below say which")
+  // The notes under the summary name the ceiling too, then carry the CLI's
+  // own line.
+  assert string.contains(
+    session.summary,
+    "the CLI ended the session at the CLI's dollar ceiling ($80.0): ",
+  )
+  assert string.contains(
+    session.summary,
+    "\"subtype\":\"error_max_budget_usd\"",
+  )
+  assert string.contains(session.summary, "document  MISSING")
+  assert string.contains(session.summary, "(no report, so no next topic)")
 }
 
 /// `--as` with a name the roster lacks, or a name from another region, is

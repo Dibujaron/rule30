@@ -90,10 +90,15 @@ fn go(s: Scenario) -> Run {
   }
 
   let base = base_cfg()
+  // The CLI's two ceilings are pinned rather than loaded, so a test can
+  // assert the number an ending's notes print whatever the environment
+  // holds.
   let cfg =
     config.Config(
       ..base,
       shim: base.repo_root <> "/harness/test/fake_shim.mjs",
+      max_turns: 40,
+      max_budget_usd: 4.0,
       max_verify_rounds: s.max_verify_rounds,
       turn_timeout_ms: s.turn_timeout_ms,
     )
@@ -317,11 +322,13 @@ fn tool_result_line() -> String {
 /// The `result` a CLI ends a session with in error: `is_error`, a subtype,
 /// an `errors` list, and no `structured_output` at all — the fields of the
 /// last line of run 20260907T175146Z's `theorist-1/events.jsonl`, less the
-/// usage.
-fn error_result_line(session_id: String) -> String {
+/// usage. `subtype` is the CLI's word for which ceiling: that run's was
+/// `error_max_budget_usd`; a session that talks itself out gets
+/// `error_max_turns`.
+fn error_result_line(session_id: String, subtype: String) -> String {
   json.object([
     #("type", json.string("result")),
-    #("subtype", json.string("error_max_budget_usd")),
+    #("subtype", json.string(subtype)),
     #("session_id", json.string(session_id)),
     #("is_error", json.bool(True)),
     #("errors", json.array(["Reached maximum budget ($4)"], json.string)),
@@ -558,7 +565,7 @@ pub fn a_report_the_cli_dropped_is_recovered_from_the_last_call_test() {
           tool_result_line(),
           structured_output_call_line("the last call"),
           tool_result_line(),
-          error_result_line("sess-f"),
+          error_result_line("sess-f", "error_max_budget_usd"),
         ],
       ]),
     )
@@ -597,13 +604,79 @@ pub fn an_error_result_with_no_call_to_recover_leaves_no_report_test() {
   let r =
     go(
       scenario("report-absent", [
-        [init_line("sess-h"), error_result_line("sess-h")],
+        [
+          init_line("sess-h"),
+          error_result_line("sess-h", "error_max_budget_usd"),
+        ],
       ]),
     )
   assert r.attempt.outcome == dag.BudgetExhausted
   assert r.report == None
   assert !r.attempt.reported
   assert !string.contains(r.events, "report_recover")
+  assert r.eof
+}
+
+// --- (b3) which ceiling the CLI ended it at ---------------------------------------
+
+/// The board records one `budget_exhausted` either way; the attempt's notes
+/// are where the record keeps which ceiling, with the value the session was
+/// launched under, and the fix for each is different — a brief that ends
+/// the loop for turns, a bigger dollar ceiling for dollars.
+pub fn a_session_the_cli_ended_at_its_turn_ceiling_says_turns_test() {
+  let r =
+    go(
+      scenario("ceiling-turns", [
+        [init_line("sess-t"), error_result_line("sess-t", "error_max_turns")],
+      ]),
+    )
+  assert r.attempt.outcome == dag.BudgetExhausted
+  assert string.contains(
+    r.attempt.notes,
+    "the CLI ended the session at the CLI's turn ceiling (40 turns)",
+  )
+  assert !string.contains(r.attempt.notes, "dollar")
+  // The CLI's own line follows the answer, for anyone who wants the evidence.
+  assert string.contains(r.attempt.notes, "\"subtype\":\"error_max_turns\"")
+  assert r.eof
+}
+
+pub fn a_session_the_cli_ended_at_its_dollar_ceiling_says_dollars_test() {
+  let r =
+    go(
+      scenario("ceiling-dollars", [
+        [
+          init_line("sess-u"),
+          error_result_line("sess-u", "error_max_budget_usd"),
+        ],
+      ]),
+    )
+  assert r.attempt.outcome == dag.BudgetExhausted
+  assert string.contains(
+    r.attempt.notes,
+    "the CLI ended the session at the CLI's dollar ceiling ($4.0)",
+  )
+  assert !string.contains(r.attempt.notes, "turn ceiling")
+  assert r.eof
+}
+
+/// A subtype the loop has no name for is carried verbatim into the notes
+/// rather than guessed at — and a reader can still see it was the CLI.
+pub fn a_session_the_cli_ended_for_an_unknown_reason_names_the_subtype_test() {
+  let r =
+    go(
+      scenario("ceiling-unknown", [
+        [
+          init_line("sess-x"),
+          error_result_line("sess-x", "error_during_execution"),
+        ],
+      ]),
+    )
+  assert r.attempt.outcome == dag.BudgetExhausted
+  assert string.contains(
+    r.attempt.notes,
+    "a CLI ending this harness has no name for (result subtype `error_during_execution`)",
+  )
   assert r.eof
 }
 
@@ -763,7 +836,11 @@ pub fn in_progress_past_the_round_budget_is_budget_exhausted_test() {
       ),
     )
   assert r.attempt.outcome == dag.BudgetExhausted
+  // The harness's own ceiling, and the notes say so; neither of the CLI's
+  // was reached.
   assert string.contains(r.attempt.notes, "still in progress")
+  assert string.contains(r.attempt.notes, "round budget")
+  assert !string.contains(r.attempt.notes, "the CLI ended")
   assert r.attempt.turns == 3
   assert r.eof
 }

@@ -583,10 +583,68 @@ pub type End {
   Abandoned
   /// No turn result within the turn timeout, or the child exited on its own.
   TimedOut
-  /// The CLI ended the session, or the round budget ran out.
-  BudgetExhausted
+  /// The CLI ended the session, or the round budget ran out — and `ceiling`
+  /// says which, because the fix for one is not the fix for another.
+  BudgetExhausted(ceiling: Ceiling)
   /// The five-hour window is rate limiting: a pause, not a verdict.
   RateLimited
+}
+
+/// Which ceiling a `BudgetExhausted` session stopped at. Three are known by
+/// name; the board records all of them as one `budget_exhausted`, and this
+/// is where the record keeps the difference — in the ending's notes and in a
+/// summary's `ended` line.
+pub type Ceiling {
+  /// The CLI's `--max-turns`: the session talked itself out. The fix is a
+  /// brief that ends the loop, not a bigger budget.
+  Turns
+  /// The CLI's `--max-budget-usd`: an expensive brief hit its dollar
+  /// ceiling, however few turns it had taken. Sextant's first session ended
+  /// here after thirteen turns.
+  Dollars
+  /// The harness's own `cfg.max_verify_rounds`: the session kept reporting
+  /// and the harness stopped sending it back round.
+  Rounds
+  /// The CLI ended the session with a result subtype this loop has no name
+  /// for, carried verbatim — or with none at all, carried as `""`.
+  Unknown(subtype: String)
+}
+
+/// The ceiling a CLI error result names. The CLI's `subtype` is the only
+/// signal: `errors` is prose, and the tally's turn count against
+/// `max_turns` would be inference where the CLI has already said.
+pub fn ceiling_of(subtype: Option(String)) -> Ceiling {
+  case subtype {
+    Some("error_max_turns") -> Turns
+    Some("error_max_budget_usd") -> Dollars
+    Some(other) -> Unknown(other)
+    None -> Unknown("")
+  }
+}
+
+/// The ceiling in words, with its value from the config the session ran
+/// under, for a summary's `ended` line: `the CLI's dollar ceiling ($80.0)`,
+/// `the CLI's turn ceiling (600 turns)`, `the harness's round budget (4
+/// rounds)`. Read after "stopped at".
+pub fn ceiling_words(cfg: config.Config, ceiling: Ceiling) -> String {
+  case ceiling {
+    Turns ->
+      "the CLI's turn ceiling (" <> int.to_string(cfg.max_turns) <> " turns)"
+    Dollars ->
+      "the CLI's dollar ceiling ($"
+      <> float.to_string(cfg.max_budget_usd)
+      <> ")"
+    Rounds ->
+      "the harness's round budget ("
+      <> int.to_string(cfg.max_verify_rounds)
+      <> " rounds)"
+    Unknown("") ->
+      "a CLI ending this harness has no name for (the result carried no subtype)"
+    Unknown(subtype) ->
+      "a CLI ending this harness has no name for (result subtype `"
+      <> subtype
+      <> "`)"
+  }
 }
 
 /// How one session ended, with the last report the role decoded. `gone`
@@ -744,13 +802,15 @@ fn run_session(
 /// What the board records for each way a prover's session can end. Only
 /// `Finished` needs the translation, and it is earned: a prover's session
 /// finishes only when `adjudicate` or `park` has seen the verifier accept
-/// the claim, so `dag.Closed` here means what it says.
+/// the claim, so `dag.Closed` here means what it says. The ceiling behind a
+/// `BudgetExhausted` is not a board outcome: it lives in the attempt's
+/// notes, which the ending wrote with the ceiling named.
 fn recorded(end: End) -> dag.Outcome {
   case end {
     Finished -> dag.Closed
     Abandoned -> dag.GaveUp
     TimedOut -> dag.TimedOut
-    BudgetExhausted -> dag.BudgetExhausted
+    BudgetExhausted(_) -> dag.BudgetExhausted
     RateLimited -> dag.RateLimited
   }
 }
@@ -888,6 +948,7 @@ fn turn_loop(t: Loop(r)) -> #(Tally, Ending(r)) {
         }
         claude.TurnResult(
           session_id:,
+          subtype:,
           is_error:,
           total_cost_usd:,
           num_turns:,
@@ -903,15 +964,25 @@ fn turn_loop(t: Loop(r)) -> #(Tally, Ending(r)) {
             // Park the attempt rather than losing it: a rate limit is a
             // pause, and the session id is how a later run resumes.
             True, _ -> t.role.park(t, report)
-            False, True -> #(
-              t.tally,
-              Ending(
-                BudgetExhausted,
-                "the CLI ended the session: " <> clip(raw, 1000),
-                report,
-                False,
-              ),
-            )
+            // The CLI ended it, and its `subtype` says at which ceiling.
+            // The notes name the ceiling first and carry the CLI's own
+            // line after it, so a reader of the attempt gets the answer
+            // before the evidence.
+            False, True -> {
+              let ceiling = ceiling_of(subtype)
+              #(
+                t.tally,
+                Ending(
+                  BudgetExhausted(ceiling),
+                  "the CLI ended the session at "
+                    <> ceiling_words(t.cfg, ceiling)
+                    <> ": "
+                    <> clip(raw, 1000),
+                  report,
+                  False,
+                ),
+              )
+            }
             False, False -> t.role.act(t, report)
           }
         }
@@ -991,7 +1062,7 @@ fn act_on(
         t,
         report,
         "Your turn carried no structured report. End every turn with the report the harness asked for.",
-        "the worker stopped reporting",
+        "the worker stopped reporting, and the harness's round budget ran out asking it to",
       )
     Some(r) ->
       case r.outcome {
@@ -1081,7 +1152,7 @@ fn adjudicate(
         False -> #(
           t.tally,
           Ending(
-            BudgetExhausted,
+            BudgetExhausted(Rounds),
             "the proof never verified in "
               <> int.to_string(t.cfg.max_verify_rounds)
               <> " rounds. Last verdict:\n"
@@ -1142,8 +1213,10 @@ fn judge(
 }
 
 /// Send one more message and go round again, if there are rounds left;
-/// otherwise end with `BudgetExhausted` and `exhausted_notes`. What a role
-/// does with a turn that is not yet an ending.
+/// otherwise end with `BudgetExhausted(Rounds)` and `exhausted_notes`. What
+/// a role does with a turn that is not yet an ending. The ceiling here is
+/// always the harness's own: the CLI's are seen only on an error result,
+/// which never reaches a role.
 pub fn nudge(
   t: Loop(r),
   report: Option(r),
@@ -1155,7 +1228,10 @@ pub fn nudge(
       say(t.session, t.l, message)
       turn_loop(Loop(..t, rounds: t.rounds + 1))
     }
-    False -> #(t.tally, Ending(BudgetExhausted, exhausted_notes, report, False))
+    False -> #(
+      t.tally,
+      Ending(BudgetExhausted(Rounds), exhausted_notes, report, False),
+    )
   }
 }
 
