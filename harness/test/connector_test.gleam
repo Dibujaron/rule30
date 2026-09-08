@@ -161,8 +161,13 @@ fn fixture(
       max_budget_usd: 4.0,
       theorist_max_turns: 600,
       theorist_max_budget_usd: 80.0,
-      connector_max_turns: 600,
-      connector_max_budget_usd: 80.0,
+      // Deliberately NOT the theorist's 600/80.0. Both reviewers found the
+      // same hole independently: with the pairs equal, `config.for_connector`
+      // at connector.gleam's launch site could be `for_theorist` and the whole
+      // suite stayed green, so HARNESS_CONNECTOR_MAX_* would silently do
+      // nothing.
+      connector_max_turns: 500,
+      connector_max_budget_usd: 70.0,
       turn_timeout_ms: 20_000,
     )
   Fixture(cfg:, dir:, repo:)
@@ -303,10 +308,32 @@ pub fn a_connector_report_carries_a_next_vantage_and_no_estimate_test() {
   assert report.outcome == "sighted"
   assert report.next_vantage == "automatic sequences"
   let assert Error(_) = worker.report_from_dynamic(dyn)
-  assert !string.contains(connector.report_schema(), "estimate")
-  assert string.contains(connector.report_schema(), "\"sighted\"")
-  assert string.contains(connector.report_schema(), "next_vantage")
-  assert !string.contains(connector.report_schema(), "next_topic")
+  // The five production literals of the connector's schema, asserted
+  // directly. Three of them are arguments to theorist.report_schema, so
+  // nothing else in the suite would fail if a call site passed the wrong
+  // one — and the connector writes its journal and notebook from whatever
+  // these sentences told the session they were for. The next_vantage
+  // assertion pins the KEY position (`"next_vantage":{`) and not the bare
+  // word: the bare word also occurs inside a description value, so
+  // swapping next_field_name with next_field_description left it green
+  // while removing the field the session must actually emit.
+  let schema = connector.report_schema()
+  assert !string.contains(schema, "estimate")
+  assert string.contains(schema, "\"sighted\"")
+  assert string.contains(schema, "\"next_vantage\":{")
+  assert !string.contains(schema, "next_topic")
+  assert string.contains(
+    schema,
+    "an entry for your own notebook, for your future self: what you were wrong about, which field you should have looked at sooner, which resemblances died and at which seam.",
+  )
+  assert string.contains(
+    schema,
+    "a short written update for Dib, in your own words: which fields you sighted, which dictionaries survived to section 5 and which died in section 4.",
+  )
+  assert string.contains(
+    schema,
+    "the Next vantage paragraph of your document, verbatim: which field the next connector should attack from and why.",
+  )
 }
 
 pub fn the_first_message_names_the_problem_the_vantage_and_the_file_test() {
@@ -328,7 +355,18 @@ pub fn the_first_message_names_the_problem_the_vantage_and_the_file_test() {
   )
   assert string.contains(with, "six sections")
   assert string.contains(with, "WebFetch")
-  assert string.contains(with, "every URL you fetch is recorded")
+  assert string.contains(
+    with,
+    "every URL you reach with those two tools is recorded",
+  )
+  // The brief must not promise more than the guard delivers. A connector may
+  // write a script under explorer/ and run it with `node`, and a fetch from
+  // inside that script reaches the network without passing the hook — so the
+  // record cannot corroborate it. The old wording ("every URL you fetch is
+  // recorded") was false for that path, and section 5's cite-or-mark rule
+  // rests on it, so the sentence below is load-bearing rather than advisory.
+  assert string.contains(with, "Do not fetch from a script")
+  assert string.contains(with, "If you fetched it with a script, it is UNVERIFIED")
   assert string.contains(with, "may not add to docs/obstructions.md")
   assert string.contains(with, "`sighted`")
   assert string.contains(with, "next_vantage")
@@ -622,19 +660,19 @@ pub fn connect_starts_one_fenced_session_and_reports_its_document_test() {
 
   // The session ran under the connector's ceilings and with the two web
   // tools on the CLI allowlist — the shim saw both on its command line.
-  assert string.contains(events, "\"max_turns\":600")
-  assert string.contains(events, "\"max_budget_usd\":80.0")
+  assert string.contains(events, "\"max_turns\":500")
+  assert string.contains(events, "\"max_budget_usd\":70.0")
   let args = read(args_path)
   assert string.contains(
     args,
-    "\"--max-turns\",\"600\",\"--max-budget-usd\",\"80.0\"",
+    "\"--max-turns\",\"500\",\"--max-budget-usd\",\"70.0\"",
   )
   assert string.contains(
     args,
     "\"--allowedTools\",\"Read,Edit,Write,Grep,Glob,Bash,WebFetch,WebSearch\"",
   )
   assert !string.contains(args, "--bare")
-  assert string.contains(session.summary, "ceilings   600 turns, $80.0")
+  assert string.contains(session.summary, "ceilings   500 turns, $70.0")
 
   // The guard is a Connector guard on the port it was asked for: it allows
   // the sighting document and a script, refuses the obstructions file, the

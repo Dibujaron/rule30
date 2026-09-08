@@ -307,7 +307,11 @@ pub const web_deny_reason = "harness guard: a connector may fetch http:// and ht
 pub const web_other_role_deny_reason = "harness guard: the web is available to a connector session only; this session has no WebFetch or WebSearch"
 
 fn is_http_url(url: String) -> Bool {
-  let trimmed = string.trim(url)
+  // Lowercased first: a URL scheme is case-insensitive (RFC 3986 3.1), so
+  // `HTTPS://` is a real https URL. Without this the guard denies it while
+  // the denial text tells the session `https://` is exactly what it may
+  // fetch, which costs a session a turn to discover.
+  let trimmed = string.lowercase(string.trim(url))
   string.starts_with(trimmed, "http://")
   || string.starts_with(trimmed, "https://")
 }

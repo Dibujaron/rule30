@@ -925,7 +925,7 @@ pub fn a_theorist_report_carries_a_notebook_and_a_next_topic_and_no_estimate_tes
   let schema = theorist.theorist_report_schema()
   assert !string.contains(schema, "estimate")
   assert string.contains(schema, "\"attacked\"")
-  assert string.contains(schema, "\"next_topic\"")
+  assert string.contains(schema, "\"next_topic\":{")
   assert string.contains(
     schema,
     "an entry for your own notebook, for your future self: what you tried on this topic, what died and at what depth, which sources you searched, what you would try next.",
@@ -938,4 +938,20 @@ pub fn a_theorist_report_carries_a_notebook_and_a_next_topic_and_no_estimate_tes
     schema,
     "the Next topic paragraph of your document, verbatim: at least one sentence naming what should be attacked next and why.",
   )
+}
+
+/// A slug is capped, because it becomes a filename under a path the captain
+/// chose and Windows refuses the result past MAX_PATH. The failure this
+/// prevents is expensive and late: the session's one writable file becomes
+/// unwritable only when it tries to write, after the brief has rendered.
+pub fn a_long_topic_is_truncated_to_a_writable_slug_test() {
+  let long = string.repeat("expansiveness and damage spreading ", 20)
+  let s = theorist.slug(long)
+  assert string.length(s) == theorist.slug_max_graphemes
+  assert !string.ends_with(s, "-")
+  // A cut that lands on a separator must not leave a trailing dash.
+  let ends_on_dash = theorist.slug(string.repeat("ab ", 60))
+  assert !string.ends_with(ends_on_dash, "-")
+  // An ordinary topic is untouched.
+  assert theorist.slug("ergodic theory") == "ergodic-theory"
 }

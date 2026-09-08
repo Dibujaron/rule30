@@ -307,8 +307,20 @@ pub fn slug(topic: String) -> String {
   })
   |> string.join("")
   |> collapse_dashes
+  |> string.slice(0, slug_max_graphemes)
   |> trim_dashes
 }
+
+/// A slug becomes a filename, and the filename sits under a repository path
+/// a captain chose, so the budget for it is whatever MAX_PATH leaves over.
+/// 120 is well inside that for any plausible checkout and long enough that
+/// no ordinary topic or vantage is shortened. Without a cap, a long vantage
+/// — which the design invites, since a captain aims a connector by naming a
+/// specific result in the vantage text — produces a path Windows refuses,
+/// and the session discovers it only when it writes, having already spent
+/// its brief and its first turns. The truncation is `trim_dashes`-ed after,
+/// so a cut landing on a separator does not leave a trailing dash.
+pub const slug_max_graphemes = 120
 
 const alnum = "abcdefghijklmnopqrstuvwxyz0123456789"
 

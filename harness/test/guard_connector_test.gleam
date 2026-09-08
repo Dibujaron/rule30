@@ -195,6 +195,38 @@ pub fn the_other_roles_cannot_reach_the_web_test() {
   assert guard.decide(theorist, fetch("https://arxiv.org/abs/2001.00001"))
     == refused
   assert guard.decide(theorist, search("rule 30 expansivity")) == refused
+  // All three, not just the theorist: the roles share one `case` arm today,
+  // so a test that names only one of them stays green if the arm is split
+  // and a role lands on `Allow`. The question this test exists to answer is
+  // whether the denial is total.
+  assert guard.decide(prover, fetch("https://arxiv.org/abs/2001.00001"))
+    == refused
+  assert guard.decide(prover, search("rule 30 expansivity")) == refused
+  assert guard.decide(seeder, fetch("https://arxiv.org/abs/2001.00001"))
+    == refused
+  assert guard.decide(seeder, search("rule 30 expansivity")) == refused
+}
+
+const prover = Rules(
+  repo_root: "C:\\r",
+  role: guard.Prover(allowed_write: "C:\\r\\Rule30\\Proofs\\X.lean"),
+  holder: "prover-1",
+)
+
+const seeder = Rules(
+  repo_root: "C:\\r",
+  role: guard.Seeder(proposal_path: "C:\\r\\blueprint\\proposals\\next.json"),
+  holder: "seeder-1",
+)
+
+/// A URL scheme is case-insensitive, so `HTTPS://` is a real https URL and
+/// denying it would contradict the denial text, which names `https://` as
+/// exactly what a connector may fetch.
+pub fn the_scheme_check_is_case_insensitive_test() {
+  assert guard.decide(connector, fetch("HTTPS://arxiv.org/abs/2001.00001"))
+    == guard.Allow
+  assert guard.decide(connector, fetch("Http://example.org/paper.pdf"))
+    == guard.Allow
 }
 
 /// Every `http://` or `https://` token in a hook body, once each, trailing
@@ -328,5 +360,32 @@ pub fn a_fetch_that_never_completes_still_leaves_a_web_row_test() {
   let assert [only] = web
   assert string.contains(only, "\"event\":\"PostToolUseFailure\"")
   assert string.contains(only, "\"url\":\"https://example.org/x\"")
+  let assert Ok(_) = simplifile.delete(dir)
+}
+
+/// R2's other half, and the one that was untested: a fetch that DID return
+/// content writes its own row, headed `PostToolUse`. Without this the
+/// `PostToolUse` arm of `web_row` could be deleted and nothing would fail —
+/// and that arm is the positive half of telling a real citation from a
+/// failed fetch followed by a confident quote.
+pub fn a_fetch_that_completes_leaves_a_post_row_test() {
+  let dir = "build/test-runs/connector-web-completed"
+  let _ = simplifile.delete(dir)
+  let assert Ok(lock_actor) = lock.start(60_000)
+  let assert Ok(run_log) = log.open(dir, "run")
+  let started = start_as(connector, lock_actor, run_log, 9)
+
+  let body =
+    "{\"hook_event_name\":\"PostToolUse\",\"tool_name\":\"WebFetch\",\"tool_input\":{\"url\":\"https://example.org/ok\"}}"
+  let _ = post_hook(started, body)
+
+  let assert Ok(events) = simplifile.read(run_log.dir <> "/events.jsonl")
+  let web =
+    string.split(events, "
+")
+    |> list.filter(fn(line) { row_kind(line) == Ok(guard.web_kind) })
+  let assert [only] = web
+  assert string.contains(only, "\"event\":\"PostToolUse\"")
+  assert string.contains(only, "\"url\":\"https://example.org/ok\"")
   let assert Ok(_) = simplifile.delete(dir)
 }

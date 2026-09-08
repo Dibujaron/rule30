@@ -338,7 +338,7 @@ pub fn task_message(
   <> ". Your brief is in your system prompt: read the task text near its top before anything else, then the residual, the obstructions, the sources and the definitions.\n\n"
   <> "Write your sighting document to `"
   <> sighting_path
-  <> "`, with the six sections the brief lists, in that order. You may write scripts under explorer/ and run them with `node <script>`, and `lake env lean <file>` where a claim needs checking. You may read the web with WebFetch and WebSearch — GET only, no login, no form — and every URL you fetch is recorded, so cite by fetching or mark the claim UNVERIFIED. You may not add to docs/obstructions.md: dead ends go in your section 4.\n\n"
+  <> "`, with the six sections the brief lists, in that order. You may write scripts under explorer/ and run them with `node <script>`, and `lake env lean <file>` where a claim needs checking. You may read the web with WebFetch and WebSearch — GET only, no login, no form — and every URL you reach with those two tools is recorded, so cite by fetching or mark the claim UNVERIFIED. Do not fetch from a script: `node` can reach the network and the harness cannot see it, so a URL reached that way is absent from the record and a citation resting on it is indistinguishable from one you invented. If you fetched it with a script, it is UNVERIFIED. You may not add to docs/obstructions.md: dead ends go in your section 4.\n\n"
   <> "End every turn with the structured report. Set `outcome` to `sighted` only once the document is written and you are done, `in_progress` while you are still working, and `abandoned` if you give up; fill in `notebook`, `journal` and `next_vantage` at the end. The harness writes your notebook from the report — you cannot write agents/ yourself."
 }
 
