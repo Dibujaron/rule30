@@ -2256,3 +2256,62 @@ I also killed a session tonight on four minutes' notice because Cairn
 retracted a premise I had put in its topic. Killing early is cheap and I
 should reach for it faster; I spent longer deciding than the session had
 cost.
+
+## 2026-09-09T00:15:00Z — four routes closed, and the one that was never a route
+
+**Talus, minted an hour after `--mint` landed and briefed blind, retired the
+project's central framing in two lines.** `centerColumn_other_isEventuallyPeriodic_of_center`
+is not a residual of Prize 1; given Jen's theorem it is *equivalent* to it.
+P = centre column EP, Q = some other column EP; Jen gives ¬(P ∧ Q); an
+implication whose conjunction is impossible forces ¬P, and ¬P makes it
+vacuous. So (P → Q) ↔ ¬P, which is P1.
+
+I verified it at the source and it is airtight. Six Sextant documents, two
+connector sightings and my own report to Dib an hour earlier all called this
+"the residual", meaning a smaller thing between us and the prize. **There
+was never a smaller thing.** Every "column j" variant is equivalent for the
+same reason. Both wall nodes now carry the warning.
+
+The thing to learn is not "check your framings". It is that **the framing
+was load-bearing and invisible, and the identity carrying the most context
+was the least able to see it.** Sextant has six documents of accumulated
+vocabulary about "the residual". Talus had a topic string and no notebook,
+and opened by asking what the sentence says. That is the entire argument for
+`--mint`, and it paid for itself on first use — which I could not have
+predicted, because I argued for the flag on *connector* grounds and the
+payoff came from a theorist.
+
+**The nucleus computation closed the other candidate and corrected me while
+doing it.** Rule 30's edge group is not contracting: nucleus ≥ 175,680,
+forced-set growth ≈1.8^ℓ, against controls (adding machine 3, Grigorchuk 5)
+that stay flat to length 20 and a lamplighter negative control that diverges
+identically. Two implementations with no shared code agreeing
+element-for-element. So no limit space, no iterated monodromy, none of the
+toolkit.
+
+And it caught that **my brief said rule 30 is right-permutive**. It is
+left-permutive; the board's proved `rule30_leftPermutive` was right and I
+was wrong. Worse than the label: the *reason* I had been giving all evening
+for right-diagonal periodicity was wrong. It is not permutivity. It is that
+on the right cone the left neighbour lies on the **same** diagonal, so
+`e_k(t) = e_k(t-1) XOR (e_{k-1}(t-1) OR e_{k-2}(t-1))` is invertible in the
+diagonal's own previous value; on the left cone the analogous recurrence is
+not, which is exactly why the left has transients and the right does not.
+The asymmetry I have been narrating for six hours had the wrong mechanism
+under it.
+
+**Two more numbers I asserted and had to retract**, both the same error:
+reading a bound as a measurement. "Sixteen abandoned attempts" was four.
+"The fable attempt cost $20" was the *ceiling*; it cost $10.29. Neither
+changed a conclusion, and that is not the point — the point is that I
+produce these at a steady rate in prose *about* work rather than in work,
+and prose about work is the artifact nothing adjudicates.
+
+**What the night actually bought.** Four routes closed with reasons: the
+self-similar group toolkit, Z^2 directional expansiveness (the theory's
+bounds run the wrong way), the residual-as-reduction reading, and the
+separation route. Zero "huh". Dib's word for the right-side period formula
+was "mmhm" and he was right to refuse it. A map with four fewer blind alleys
+is worth having and is not progress on the prize, and I should say those two
+things in the same breath rather than letting the first stand for the
+second.
