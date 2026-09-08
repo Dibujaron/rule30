@@ -87,6 +87,7 @@ import Rule30.Proofs.RightDiagonalAntiperiodicOfOddDriver
 import Rule30.Proofs.RightDiagonalDriverFlipIffWhite
 import Rule30.Proofs.RightDiagonalIsEventuallyPeriodic
 import Rule30.Proofs.RightDiagonalNotConstant
+import Rule30.Proofs.RightDiagonalPeriodUnbounded
 import Rule30.Proofs.RightDiagonalPeriodicFromPow
 import Rule30.Proofs.RightDiagonalPeriodicFromStep
 import Rule30.Proofs.RightDiagonalPeriodicFromStepOfEvenDriver

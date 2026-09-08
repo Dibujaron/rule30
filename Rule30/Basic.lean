@@ -14,6 +14,7 @@ import Mathlib.Logic.Function.Iterate
 import Mathlib.Data.Fintype.Card
 import Mathlib.Data.Fintype.Pi
 import Mathlib.Data.Finset.Card
+import Mathlib.Order.Lattice.Nat
 
 /-- A configuration of the automaton: a bi-infinite row of cells, each black
 (`true`) or white (`false`), indexed by the integers.
@@ -330,6 +331,23 @@ def settledConfig : Config :=
 /- The first eleven values of the settled centre column, from the row model,
 kept as a guard: `11011100110`, equal to the centre column itself for these
 `k` (the onsets are zero there) and a coin flip from it afterwards. -/
+/-- **The least genuine period of a sequence that is periodic from `0`.**
+The infimum of the positive periods. Total: `sInf` of an empty set of naturals
+is `0`, so `minimalPeriod f = 0` says exactly "no positive period from `0`",
+and every statement that means "the least period is `p`" carries `0 < p`
+alongside, the same way `PeriodicFrom` does.
+
+Three documents have now had to work around the absence of this, and every
+statement about how the right diagonals' periods grow wants it. It is stated
+for periodicity from `0` rather than eventual periodicity on purpose: the right
+diagonals have no transients, which is the case it is for, and a least
+*eventual* period would need a least onset too and is a different definition.
+
+This is a plain definition and introduces no assumption — every theorem
+mentioning it could be restated with the `sInf` written out. -/
+noncomputable def minimalPeriod (f : Nat → Bool) : Nat :=
+  sInf {p | 0 < p ∧ PeriodicFrom f p 0}
+
 set_option maxRecDepth 100000 in
 example : (List.range 11).map (fun k => rowCell (2 ^ k + k) (-(2 ^ k : ℤ)))
     = [true, true, false, true, true, true, false, false, true, true, false] := by
