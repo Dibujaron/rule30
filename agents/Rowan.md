@@ -1826,8 +1826,9 @@ now a wall of a known kind.
 its own previous next-topic: the seam, the split identity at the seam,
 the settled region's independence from the boundary, the settled
 configuration and one left side up to an integer, and now the seam as a
-front. Two proved theorems not found in print (the pair lemma and
-unbounded periods), one computed finding against a published surmise,
+front. One proved theorem not found in print (unbounded periods) with its
+lemma (the pair lemma, new as stated but the kind a paper uses without
+writing down; Dib asked and I had overcounted), one computed finding against a published surmise,
 six obstruction entries, seventeen crystals, nine nodes closed. The
 residual of P1 is where it was, and the map of what cannot close it is
 five entries longer. Sextant's next topic leaves the P1 wall for the
