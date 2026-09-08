@@ -1577,3 +1577,65 @@ exists to catch. An attempt alone cannot tell those apart.
 `guard_event` and Gleam does not re-export it. The implementer substituted
 the right spelling and said so. A ruling is code review's input, not its
 output, and mine needed reviewing too.
+
+## 2026-09-08T02:40:00Z — the connector, built but not landed
+
+Ten tasks, each reviewed, `keel/connector` pushed at `af10e2c`, merged up
+to date with `main`, 566 of 566 on the merged head. **Not landed.** The
+whole-branch review was still running when Dib needed to shut the machine
+down, and I killed it mid-sentence — it had found something and had not
+yet said what. So the branch is green per-task and unreviewed as a whole,
+and that is exactly how the next session should treat it. Do not land it
+on the strength of this entry.
+
+**Dib caught the thing I should have caught.** He read the plan and asked
+why a role that is "basically the theorist with a different prompt"
+needed ten tasks. Measured: 1864 of 3161 plan lines were a near-copy of
+`theorist.gleam`, against 825 for the only new thing in the role, its web
+access. I wrote that plan and never once asked what fraction of it was
+new. A plan is a measurement and I read its task list without reading its
+size.
+
+**Two defects on this branch, one class, and only review found either.**
+Both are the shape where a change moves a hardcoded string somewhere new
+and nothing is left pinning the value, so the suite stays green over the
+wrong text. First: parameterising `report_schema` dropped the leading
+clause of two descriptions, so a live theorist's JSON schema would have
+described its notebook and journal fields without saying what they are —
+and the covering test had been rewritten to assert over placeholder
+strings the test itself supplied, which is a pass count with an unstated
+denominator wearing a different hat. Second, one task later and after I
+had explicitly warned about the first: nothing would have failed if
+`role_word` or `doc_word` were altered at either call site, because every
+assertion stopped at the first word and the rest of the sentence was
+shared between the two roles.
+
+**The lesson is narrower than "write tests".** When a refactor turns a
+constant into an argument, the constant loses its only guard at the exact
+moment it becomes possible to get wrong. The check is mechanical: after
+parameterising, ask what would now fail if this argument were wrong, and
+if the answer is nothing, that is the work. The falsification the second
+implementer did — swap the literal, watch the assertion fail, revert — is
+the cheapest form of that and should be the habit.
+
+**My own ruling did not compile.** I wrote `guard.NotPermitted` into a
+ruling block; the constructor lives in `guard_event` and Gleam does not
+re-export it. The implementer fixed it and said so. A ruling is an input
+to review, not an output of it.
+
+**Filed two rows**, both on the branch so they reach `main` when it lands:
+`each-new-session-kind-copies-the-last-ones-spine` (three copies of the
+ceremony, the report schema, the run loop and the summary; the connector
+branch does the hard half by making nine functions role-agnostic, so what
+is left is close to a file move) and
+`gleam-test-can-fail-to-boot-and-it-does-not-look-like-a-test-failure`
+(a boot failure prints no announced total and no pass count, and a worker
+establishing RED will read it as its expected failure).
+
+**Where to resume.** Run the whole-branch review against
+`7cfb858..HEAD` on `keel/connector` — the code-only diff is regenerable —
+triage the deferred minors in the run's ledger, then fast-forward `main`.
+One deferred minor I would fix rather than ship: `is_http_url` in the
+guard is case-sensitive, so `HTTPS://` is denied while the denial message
+tells the connector `https://` is allowed. Fail-closed, but it costs a
+session a turn to discover.
