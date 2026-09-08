@@ -181,6 +181,14 @@
       "role": "framework",
       "started": "2026-09-08T12:03:00Z",
       "claude_session": "e94b1254-3988-418c-923e-fdb6ff908700"
+    },
+    {
+      "identity": "Fathom",
+      "session_name": "rule30-fa",
+      "ref": "a2b6f4",
+      "role": "framework",
+      "started": "2026-09-08T12:04:00Z",
+      "claude_session": "2c18967f-4f2a-4496-bd1d-fd899f6d0afd"
     }
   ]
 }
