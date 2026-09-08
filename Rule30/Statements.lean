@@ -1321,4 +1321,59 @@ theorem minimalPeriod_dvd (f : Nat → Bool) (p : Nat) (hp : 0 < p)
     (h : PeriodicFrom f p 0) : minimalPeriod f ∣ p := by
   sorry
 
+/-- **One cohomologous column would prove Prize 1.** If some column other than
+the centre is cohomologous to it — their XOR is eventually periodic — then the
+centre column is not eventually periodic. Immediate from
+`centerColumn_other_of_cohomologous_column` and Jen's uniqueness: the
+hypothesis would make two distinct columns eventually periodic.
+
+This is a genuine sufficient condition, unlike the wall, and it is worth having
+precisely because the route is measured dead: 0 survivors over 38,700 pairs.
+Recording it says what would have worked. Kernel-checked by Sextant in
+`explorer/sextant_scratch_coboundary.lean`. -/
+theorem centerColumn_not_isEventuallyPeriodic_of_cohomologous (x : ℤ) (j : ℕ)
+    (hx : x ≠ 0)
+    (hd : ∃ p > 0, ∃ N, PeriodicFrom (fun t => xor (centerColumn t) (evolve (t + j) x)) p N) :
+    ¬ (∃ p > 0, ∃ N, PeriodicFrom centerColumn p N) := by
+  sorry
+
+/-- **Damage is not a dynamical object.** The XOR of two configurations does not
+determine the XOR of their successors: there are `X, Y, X', Y'` agreeing
+everywhere on their difference whose successors' differences disagree
+somewhere.
+
+So the difference pattern between two rule 30 pictures is not itself a cellular
+automaton, and no argument may treat "the damage" as a system evolving on its
+own. Rule 30 is not additive, and this is the sharp form of that. Kernel-checked
+by Sextant in `explorer/sextant_scratch_coboundary.lean`. -/
+theorem damage_not_autonomous :
+    ∃ X Y X' Y' : Config, (∀ i, xor (X i) (Y i) = xor (X' i) (Y' i)) ∧
+      ∃ i, xor (rule30 X i) (rule30 Y i) ≠ xor (rule30 X' i) (rule30 Y' i) := by
+  sorry
+
+/-- **No two adjacent columns differ for ever.** For every `i` it is false that
+`evolve t i ≠ evolve t (i + 1)` from some row on. Unconditional, and a genuine
+structural fact about the picture rather than a conditional or a measurement.
+Kernel-checked by Sextant in `explorer/sextant_scratch_coboundary.lean`. -/
+theorem adjacent_difference_not_eventually_one (i : ℤ) :
+    ¬ ∃ N, ∀ t ≥ N, evolve t i ≠ evolve t (i + 1) := by
+  sorry
+
+/-- **The centre column does not determine the seed.** For every `k` there is a
+configuration whose rightmost black cell sits at `2 * k` and which has rule 30's
+own centre column from row 1 on. Distinct `k` give distinct configurations, so
+infinitely many finite configurations share the seed's centre column.
+
+Sextant's "right-edge shield": black cells added at `2, 4, …, 2k` cancel their
+own influence on column `0`. It bears on Prize 3 rather than Prize 1 — recovering
+the initial condition from the centre column is not merely hard, it is
+impossible. Kernel-checked as `chainCfg_center_column`, `chainCfg_shape` and
+`chainCfg_injective` in `explorer/sextant_scratch_shield_general.lean`; stated
+here existentially so it needs no auxiliary definition in `Basic`. -/
+theorem exists_config_same_centerColumn (k : ℕ) :
+    ∃ c : Config, c (2 * k : ℤ) = true ∧
+      (∀ i : ℤ, (2 * k : ℤ) < i → c i = false) ∧
+      (∀ t : ℕ, 1 ≤ t → column c 0 t = centerColumn t) := by
+  sorry
+
 end Statements
