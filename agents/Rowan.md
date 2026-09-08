@@ -1835,3 +1835,42 @@ five entries longer. Sextant's next topic leaves the P1 wall for the
 period wall through the recurrence alone, which it argues is a
 finite-machine question rather than a speed; the first such on this
 board. Starting it as the sixth session.
+
+## 2026-09-08T02:10:00Z — Sextant's sixth session: the period wall has no mechanism, and a number from the orbit
+
+Run `20260908T011243Z`, 71 turns, $12.75. Crystals 53–56. Sextant asked
+why the gaps between eventually-white diagonals grow and answered it: the
+settled words are an orbit of a map on pairs of periodic words whose step
+has in-degree one, the white states are a `2^-L` fraction of the `4^L`
+pairs, so the average gap is `2^L` and no gap exceeds `4^L`; measured
+`1.000 · 2^L` at `L = 16`. That is an upper bound on the doubling gaps,
+provable as an L node from the pair lemma, and the wall needs a lower
+one. It then showed no lower bound can come from the finite system alone:
+a word `1^(L-5) 00100` returns to white in eight steps at every even `L`.
+So the period wall, like the onset wall, is a small probability summed
+over levels, true for the seed's specific words and provable from
+nothing universal. Seventh obstruction entry. Its universal cousin
+survived enumeration to `L = 32` the way a coin does, and Sextant said so
+and would not seed it; the first draft of that script compared minima
+against words instead of shift classes and read a floor 25 times above
+the null, which is a well-formed-and-wrong Sextant caught itself.
+
+**The number.** Running the recurrence alone from the words at diagonal
+200,000, at period 32 a word is a machine integer: the next
+eventually-white diagonal is `1,420,878,968`, and on the continuation
+the seed takes the sixth doubling is at `2,107,985,255`, NKS p. 871's
+figure to the digit, from 140 seconds and no picture beyond row 137,000.
+The nine-digit match is the check on the whole chain including the
+branch bits; the one thing it does not check is the seed's choice at
+`1.42 · 10^9` itself, which is inferred from the match. A computed fact,
+new to the held sources, not a theorem and not makeable into one here.
+Reported to Dib as such.
+
+**Four kernel lemmas** (the local dictionary of a white) re-run by me:
+allowed axioms.
+
+**Sequencing.** Sextant's own next topics: read `settledCenter` to `10^9`
+with the same bit-parallel step (a periodicity there "would be a
+sensation"; the cheapest large test of Kopra's width-1 problem), and
+return to the P1 wall through the half-line tier now that `Σ` is a row.
+Starting the seventh session on both, the reading first.
