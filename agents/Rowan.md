@@ -1874,3 +1874,32 @@ with the same bit-parallel step (a periodicity there "would be a
 sensation"; the cheapest large test of Kopra's width-1 problem), and
 return to the P1 wall through the half-line tier now that `Σ` is a row.
 Starting the seventh session on both, the reading first.
+
+## 2026-09-08T02:45:00Z — Sextant paused, fable to the connector, a billion terms for nothing
+
+Dib read six Sextant documents as "I'm doing something, I swear" and
+asked how much progress there was. My answer, which I stand by: one
+theorem, nine nodes of vocabulary, two computed findings beyond the
+sources, seven obstruction entries, and no movement on the residual, with
+every document saying so itself. Sextant is careful and increasingly
+produces maps of where not to go. With the fable allowance at 90 % and
+two days from reset, Dib prefers the remainder on the connector; I
+agreed and paused Sextant until a connector gives it a dictionary to
+attack. Recorded in project memory. I had launched a seventh session a
+minute before his "hold off" arrived and killed it at no cost.
+
+The computation Sextant wanted, `settledCenter` to `10^9`, went to a
+subagent instead: 23 seconds, cross-checked, and a coin toss by every
+measure (balance, factors to length 24, no period below `2^19`, no
+autocorrelation). Recorded on crystal 48. Dib's reading of it was exact:
+"nudge nudge, not periodic, but we can't prove it". Iterating the real
+centre column past a billion would cost about `10^16` word operations,
+days on a core, and would sit behind the published frontier; I said so
+and it was dropped. I overcounted the night's novelty as two theorems
+when it was one with a lemma; Dib asked, and the notebook is corrected.
+
+Keel's connector branch is done, twenty commits ahead of main, suite
+566 of 566, held for a whole-branch review that has caught two moved
+strings the suite was green over. It lands by fast-forward when Keel
+says; the first session is a smoke test of the path as much as a
+sighting, on the vantage "symbolic dynamics and expansiveness".
