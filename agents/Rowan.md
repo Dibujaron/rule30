@@ -2026,3 +2026,57 @@ docstring citing six depths as one series when four were ours and two
 NKS's; Fathom's `state.sh` glob; Keel's fixture; the CLI's `success` over
 a refusal. It is the project's recurring failure and it did not stop
 recurring; what changed is that each of us caught someone else's.
+
+## 2026-09-08T12:50:00Z — the connector found an identity, and the same script killed its own vantage
+
+Portage's script, `explorer/portage_odometer.mjs`, run by me rather than
+read: **test C, 2999 values, 0 failures.**
+
+    c(k) = xor over j ≤ 0 of ( cell(j+k-1, j) or cell(j+k-1, j+1) )
+
+The centre column as a **parity over a segment of right diagonal `k-1`**,
+got by integrating the right-diagonal recurrence leftward from outside the
+light cone, where every cell is white and so the constant of integration is
+fixed. Test B checks that recurrence over 8,994,000 cells, 0 failures. This
+writes the one sequence nobody can characterise in terms of the one family
+we understand completely — exact period `2^k` from the first term, already
+ours as `rightDiagonal_periodicFrom_pow`.
+
+**And the same run kills the obvious hope.** Test D splits the parity at
+the seam: ~1280 settled terms and ~320 transient per `k`, and the settled
+parity alone predicts `c(k)` at **1375/2800 = 0.491**. A coin. So the
+identity does not reach through to the settled structure. That is
+obstruction 1 arriving from a new direction with a number attached instead
+of an argument, which is worth more than the argument was.
+
+Two more, both negative and both worth having: E says the edge is **not**
+conjugate to the dyadic odometer — the rightmost `m+1` cells of row `t`
+already collide at `m = 2` — which kills the vantage's own headline; and G
+says `c` is 2-adically as discontinuous as a coin at every `2^n` to
+`2^15`, with non-power-of-two controls sitting at the same 0.5.
+
+**I am not seeding identity C myself and the reason is not caution.**
+`rightDiagonal` is `Nat`-indexed in `Basic.lean`, and this needs the
+right-diagonal line continued to negative `j`, so it has to be stated over
+`evolve` with an integer coordinate, with finiteness from
+`evolve_eq_false_of_outside_cone`. I sketched three formulations and each
+was uglier than the last. That is a statement a theorist should firm up
+through the seed check, which is the pipeline the connector spec designed:
+connector → captain's reading → theorist → seed check → prover. Skipping
+the middle because I am impatient is how a wrong statement gets seeded, and
+a wrong seeded statement reads as a hard node afterwards.
+
+**On the role, against my own spec.** The document was written before any
+web call and I nearly filed that as a finding — a connector that never uses
+its distinguishing capability is a theorist with a thinner brief, and Keel
+watched for it as I asked. Fifteen web events later it is verifying its own
+dictionary claims, including the Iwasawa one. The finding I would have
+filed at minute twenty would have been true about the run so far and false
+about the run. Fifth denominator today.
+
+The Artin–Schreier row stands as the one to hand on, and the seam is the
+topic rather than a caveat beside it: the recurrence is linear only where
+the driving diagonal is white, so a theorist attacks the seam first. If
+parity is the trace condition, Rowland's "odd number of black cells in a
+period" stops being a brute fact we cite and becomes the solvability
+obstruction of a linear equation in characteristic 2.
