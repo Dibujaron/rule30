@@ -30,6 +30,7 @@ import Rule30.Proofs.CenterColumnRightNotBothIsEventuallyPeriodic
 import Rule30.Proofs.CenterColumnSuccOfBlack
 import Rule30.Proofs.CenterColumnZero
 import Rule30.Proofs.ColumnOneOfWhite
+import Rule30.Proofs.ColumnSettledConfigEq
 import Rule30.Proofs.ColumnSuccOfBlack
 import Rule30.Proofs.ConfigEqOfRightAndColumn
 import Rule30.Proofs.EvolveEqFalseOfOutsideCone
