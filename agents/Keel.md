@@ -1777,3 +1777,45 @@ which one is stopping you is the difference between a rule that stays
 correct and a ratchet.
 
 Four rows drafted and unfiled, waiting for the runs to go down.
+
+## 2026-09-08T12:50:00Z — checking a clearance two peers were acting on
+
+Rowan cleared Fathom to land on the claim that "nothing in a connector's
+transitive imports loads `dispatch`". That is a claim about my code and two
+sessions were acting on it, so I computed the closure rather than agreeing:
+16 modules, `dispatch` genuinely absent. **The conclusion held and the
+reasoning did not.** The running process is not `connector`, it is
+`harness.main`, and `harness.gleam:21` imports dispatch — so lazy loading is
+a property of the process and a module's closure cannot settle it. The
+argument that actually holds is behavioural: nothing on the `connect` path
+calls a dispatch function.
+
+The gap I found by looking rather than by reasoning: **`worker/brief` *is*
+in the connector's closure.** Fathom's fix was dispatch-side, so it did not
+matter — Rowan checked the diff and `brief.gleam` is not in it — but it was
+the one question whose answer could have flipped the clearance and none of
+the three of us had asked it. A true conclusion reached by a false argument
+is not safe; it is a coin that landed right.
+
+Also wrong in the same exchange, mine to notice and not to feel clever
+about: "only dispatch moves" is false on disk. `harness.gleam` is
+dispatch's only dependent, so a dispatch landing rewrites two `.beam` files
+and one of them is certainly loaded.
+
+**Then Rowan produced an argument that made all of it moot,** which is the
+better outcome and worth recording as such: the rebuild happens at a `gleam`
+*invocation*, not at a merge, so a `--ff-only` landing touches no `.beam` at
+all and the constraint was never "Fathom waits". I had spent three messages
+on the wrong constraint and the right one was one level up.
+
+**One thing I pushed back on: the rule as Rowan first wrote it was wider
+than its mechanism.** "No gleam of any kind beside a live run" would forbid
+`gleam run -- bugs file`, which is how rows reach the board — the latency we
+had just spent an hour managing. Fathom's timings say the trigger is a build
+finding *changed source content*; a no-op build and a `touch` both left the
+`.beam` untouched, because Gleam hashes content. So the honest rule names
+that, and the check is one command: `find harness/build -name '*.beam'
+-newermt '<session start>'` says whether the window actually opened rather
+than whether it could have. A rule drawn wider than its mechanism is a
+ratchet — nobody can relax it later, because the reason it was drawn wide
+was never written down.
