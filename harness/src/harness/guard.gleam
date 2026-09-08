@@ -101,6 +101,16 @@ pub type Role {
   /// `git diff` of the file after the session — the same shape of check as a
   /// prover's proof file getting a diff, and not a property the fence holds.
   Theorist(attack_path: String, obstructions_path: String)
+  /// The theorist's guard with three changes, as the connector design's
+  /// fence paragraph says. `sighting_path` — the one sighting document the
+  /// session exists to write, `docs/connections/<date>-<vantage>.md` — in
+  /// place of the attack document; no obstructions file at all, because a
+  /// connector's dead ends belong in its own section 4 and a captain moves
+  /// any that is a real obstruction; and the two web tools, `WebFetch` and
+  /// `WebSearch`, allowed read-only and logged (`decide_web`). Everything
+  /// else is the theorist's: anything under `explorer/` writable, `node
+  /// <script>` under `explorer/`, and the `lake` grammar.
+  Connector(sighting_path: String)
 }
 
 /// A running guard: the port it listens on, the token hooks must present,
@@ -240,7 +250,7 @@ fn decide_pre(rules: Rules, hi: HookInput) -> Decision {
 /// message would go unrecorded, because the session cannot act on that.
 fn decide_message(rules: Rules) -> Decision {
   case rules.role {
-    Prover(..) | Seeder(..) | Theorist(..) ->
+    Prover(..) | Seeder(..) | Theorist(..) | Connector(..) ->
       Deny(NotPermitted, message_deny_reason)
   }
 }
@@ -290,6 +300,22 @@ fn decide_write(rules: Rules, file_path: String) -> Decision {
               <> obstructions_path
               <> ", or write scripts under "
               <> explorer_dir(rules.repo_root),
+          )
+      }
+    Connector(sighting_path:) ->
+      case
+        normalise_path(file_path) == normalise_path(sighting_path)
+        || under_explorer(rules.repo_root, file_path)
+      {
+        True -> Allow
+        False ->
+          Deny(
+            NotWritable,
+            "harness guard: a connector may only write its sighting document "
+              <> sighting_path
+              <> " or scripts under "
+              <> explorer_dir(rules.repo_root)
+              <> "; dead ends go in the document's section 4, not in the obstructions file",
           )
       }
   }
@@ -355,14 +381,15 @@ fn decide_bash_for(rules: Rules, command: String) -> Decision {
     True -> bash_deny()
     False -> {
       let trimmed = string.trim(command)
-      // The `node` arm is reachable ONLY under `Seeder` and `Theorist`, each
-      // named here rather than matched by `_`, so a fourth role has to say
-      // which side of this line it is on before it compiles. A prover falls
-      // through to the same `lake` grammar it has always had, and
-      // `a_prover_still_cannot_run_node_test` exists to fail loudly if that
-      // ever stops being true.
+      // The `node` arm is reachable ONLY under `Seeder`, `Theorist` and
+      // `Connector`, each named here rather than matched by `_`, so a fifth
+      // role has to say which side of this line it is on before it
+      // compiles.
       case rules.role, node_script(trimmed) {
-        Seeder(..), Ok(script) | Theorist(..), Ok(script) ->
+        Seeder(..), Ok(script)
+        | Theorist(..), Ok(script)
+        | Connector(..), Ok(script)
+        ->
           case under_explorer(rules.repo_root, script) {
             True -> Allow
             False ->
@@ -373,8 +400,11 @@ fn decide_bash_for(rules: Rules, command: String) -> Decision {
                   <> " may only run scripts under explorer/",
               )
           }
-        Prover(..), _ | Seeder(..), Error(Nil) | Theorist(..), Error(Nil) ->
-          match_bash_grammar(trimmed)
+        Prover(..), _
+        | Seeder(..), Error(Nil)
+        | Theorist(..), Error(Nil)
+        | Connector(..), Error(Nil)
+        -> match_bash_grammar(trimmed)
       }
     }
   }
@@ -386,6 +416,7 @@ fn role_word(role: Role) -> String {
     Prover(..) -> "a prover"
     Seeder(..) -> "a seeder"
     Theorist(..) -> "a theorist"
+    Connector(..) -> "a connector"
   }
 }
 
