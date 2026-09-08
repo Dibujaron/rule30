@@ -904,16 +904,25 @@ pub fn a_theorist_report_carries_a_notebook_and_a_next_topic_and_no_estimate_tes
   assert report.notebook == "n"
   assert report.next_topic == "the onset"
   let assert Error(_) = worker.report_from_dynamic(dyn)
-  let schema =
-    theorist.report_schema(
-      "attacked",
-      "notebook description",
-      "journal description",
-      "next_topic",
-      "next topic description",
-    )
+  // theorist_report_schema() is the no-argument shape `run` actually
+  // launches with, restored after report_schema was parameterised for the
+  // connector to reuse; asserting against its five production literals
+  // directly (not placeholder text passed to report_schema) is what makes
+  // editing any one of them fail this test.
+  let schema = theorist.theorist_report_schema()
   assert !string.contains(schema, "estimate")
   assert string.contains(schema, "\"attacked\"")
-  assert string.contains(schema, "next_topic")
-  assert string.contains(schema, "notebook")
+  assert string.contains(schema, "\"next_topic\"")
+  assert string.contains(
+    schema,
+    "an entry for your own notebook, for your future self: what you tried on this topic, what died and at what depth, which sources you searched, what you would try next.",
+  )
+  assert string.contains(
+    schema,
+    "a short written update for Dib, in your own words: what you attacked, what died, what survived and to what depth.",
+  )
+  assert string.contains(
+    schema,
+    "the Next topic paragraph of your document, verbatim: at least one sentence naming what should be attacked next and why.",
+  )
 }

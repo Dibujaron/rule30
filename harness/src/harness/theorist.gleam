@@ -489,6 +489,20 @@ pub fn report_schema(
   |> json.to_string
 }
 
+/// The theorist's own `--json-schema`, restoring the no-argument shape
+/// `run` and the theorist's own tests use: `report_schema` with the five
+/// literals a theorist's report is held to, so this is the one place they
+/// are written and the only thing that can drift is this function's body.
+pub fn theorist_report_schema() -> String {
+  report_schema(
+    "attacked",
+    "an entry for your own notebook, for your future self: what you tried on this topic, what died and at what depth, which sources you searched, what you would try next. Empty until the end.",
+    "a short written update for Dib, in your own words: what you attacked, what died, what survived and to what depth. Empty until the end.",
+    "next_topic",
+    "the Next topic paragraph of your document, verbatim: at least one sentence naming what should be attacked next and why. Empty until the end.",
+  )
+}
+
 /// Decode a `Report` out of a turn's `structured_output`.
 pub fn report_from_dynamic(dyn: Dynamic) -> Result(Report, String) {
   decode.run(dyn, report_decoder())
@@ -838,13 +852,7 @@ pub fn run(cfg: config.Config, options: Options) -> Result(Session, String) {
         options.model,
         g,
         brief_path,
-        report_schema(
-          "attacked",
-          "what you tried on this topic, what died and at what depth, which sources you searched, what you would try next. Empty until the end.",
-          "what you attacked, what died, what survived and to what depth. Empty until the end.",
-          "next_topic",
-          "the Next topic paragraph of your document, verbatim: at least one sentence naming what should be attacked next and why. Empty until the end.",
-        ),
+        theorist_report_schema(),
       ),
       task_message(topic, attack, obstructions),
       role(),
