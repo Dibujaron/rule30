@@ -477,9 +477,66 @@ pub fn prove_one_writes_its_record_in_an_attempt_directory_test() {
   let assert Ok(_) = dispatch.prove_one(f.cfg, id)
   let assert Ok(runs) = simplifile.read_directory(f.cfg.runs_root)
   let assert [run] = runs
-  let attempt_dir = f.cfg.runs_root <> "/" <> run <> "/" <> id <> "-1"
-  assert simplifile.is_file(attempt_dir <> "/events.jsonl") == Ok(True)
+  let run_dir = f.cfg.runs_root <> "/" <> run
+  let attempt_dir = run_dir <> "/" <> id <> "-1"
+  // A real event, not merely the file: `log.open` touches `events.jsonl`,
+  // so asserting it exists would prove the directory was opened and
+  // nothing about where the attempt's events land.
+  assert string.contains(read(attempt_dir <> "/events.jsonl"), "\"kind\":\"sent\"")
   assert simplifile.is_file(attempt_dir <> "/summary.txt") == Ok(True)
+  // The split, both halves. The `dispatch` event belongs to the RUN log
+  // because state.sh's held-claims section greps `runs/*/events.jsonl` one
+  // level deep for it; move it to the attempt log and every test still
+  // passes while that section silently stops naming who holds a claim.
+  assert string.contains(
+    read(run_dir <> "/events.jsonl"),
+    "\"kind\":\"dispatch\"",
+  )
+  // And the run-root summary, which `claim_text` tests to decide whether a
+  // claim is stale. Delete the write and the suite stays green while every
+  // finished `prove-one` claim reads as live forever.
+  assert simplifile.is_file(run_dir <> "/summary.txt") == Ok(True)
+}
+
+/// Defect 5 of the review: with every fixture node carrying `attempts: []`,
+/// `list.length(node.attempts) + 1` could be replaced by a literal `1` and
+/// nothing would notice. A node with two recorded attempts must open
+/// `<node>-3`, and a file parked by an earlier run must still be found on
+/// the way in — the ordering that matters is that `brief.task_message` runs
+/// before `log.open`, so the empty directory this attempt creates cannot
+/// shadow the older parked file it is supposed to name.
+pub fn prove_one_numbers_its_attempt_directory_after_the_recorded_attempts_test() {
+  let id = "harness_probe_fixture_" <> token()
+  let node =
+    Node(
+      ..probe(id, []),
+      attempts: [gave_up("Scripted", "haiku"), gave_up("Scripted", "haiku")],
+    )
+  let f =
+    fixture_with_board(
+      "prove-one-attempt-number",
+      [[init_line("s"), result_line("s", "abandoned")]],
+      ports.span(1),
+      roster.Roster([scripted_identity(), understudy()]),
+      Dag([node]),
+    )
+  // An earlier run's parked file, which the brief must name even though
+  // this attempt is about to create `<node>-3` beside it.
+  let rel = dag.proof_path(node)
+  let base = string.split(rel, "/") |> list.last |> result.unwrap(rel)
+  let older = f.cfg.runs_root <> "/20260101T000000Z/" <> id <> "-2"
+  let assert Ok(_) = simplifile.create_directory_all(older)
+  let assert Ok(_) = simplifile.write(older <> "/" <> base, "-- older work
+")
+  assert brief.previous_attempt_file(f.cfg, node) == Some(older <> "/" <> base)
+
+  let assert Ok(_) = dispatch.prove_one(f.cfg, id)
+
+  let assert Ok(runs) = simplifile.read_directory(f.cfg.runs_root)
+  let assert [new_run] =
+    list.filter(runs, fn(r) { r != "20260101T000000Z" })
+  let dir = f.cfg.runs_root <> "/" <> new_run <> "/" <> id <> "-3"
+  assert simplifile.is_file(dir <> "/summary.txt") == Ok(True)
 }
 
 /// The row this closes: a proof file parked by a `prove-one` attempt was

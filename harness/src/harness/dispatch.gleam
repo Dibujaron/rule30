@@ -153,6 +153,10 @@ pub fn prove_one(
   let attempt = attribute(l, node_id, attempt)
   let d = dag.update(d, record(claimed, attempt))
   use _ <- result.try(dag.save(d, cfg.dag_path))
+  // On the attempt log, not the run log where `run` puts its `index` event
+  // (see `returned`). Nothing reads either, and one attempt per run makes
+  // this the more specific of the two homes; noted so the asymmetry reads
+  // as chosen rather than as whichever log was in scope.
   use _ <- result.try(case attempt.outcome {
     dag.Closed -> index_proof(cfg, l, claimed)
     _ -> Ok(Nil)
@@ -167,9 +171,11 @@ pub fn prove_one(
   }
   let text = summary(d, l, identity, attempt, node_id, parked)
   log.summary(l, text)
-  // The run holds exactly one attempt, so its summary is the run's too;
-  // written to both because `runs/<run>/summary.txt` is what a reader
-  // opening the run directory looks for.
+  // Load-bearing, not tidiness: `claim_text` decides whether a claim is
+  // stale by testing `runs/<claimed_run>/summary.txt`, and the claim above
+  // records `run_log.run_id`. Without this line every finished `prove-one`
+  // claim reads as "not ended (live, or died without writing)" forever.
+  // The run holds exactly one attempt, so its summary is the run's too.
   log.summary(run_log, text)
   io.println(text)
   // Only now, with the attempt's whole record already written — board
@@ -1254,7 +1260,8 @@ fn record(node: dag.Node, attempt: dag.Attempt) -> dag.Node {
 /// `l` is the run log, where the notebook heading, the journal, the
 /// `report_discarded` event and filed bugs go; `attempt_log` is the
 /// attempt's own log, where a worker's proposed sub-lemmas are written.
-/// `prove_one` has one log that serves as both; a run's `returned` has two.
+/// Both callers pass two distinct logs: a run's `returned` one per attempt
+/// in flight, and `prove_one` the single attempt its run holds.
 ///
 /// One more row when the decoder had to leave something out: a single
 /// `report_discarded` event naming the entries of `bugs` that did not
