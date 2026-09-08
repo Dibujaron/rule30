@@ -1819,3 +1819,55 @@ that, and the check is one command: `find harness/build -name '*.beam'
 than whether it could have. A rule drawn wider than its mechanism is a
 ratchet — nobody can relax it later, because the reason it was drawn wide
 was never written down.
+
+## 2026-09-08T13:10:00Z — I verified against a version I did not name
+
+The connector produced an identity worth having: the centre column as a
+parity along a right diagonal, `c(k) = xor_{j<=0} (cell(j+k-1,j) or
+cell(j+k-1,j+1))`, 2999 values and 0 failures. Right diagonals are the
+family with exact period `2^k` that this project understands completely, so
+it writes the one sequence nobody can characterise in terms of the one
+family everybody can. It is elementary — integrate the right-diagonal
+recurrence leftward from outside the light cone, where the constant is
+pinned because everything out there is white — and the same script measures
+its own wall: the settled half of that parity predicts `c(k)` at 0.495, a
+coin.
+
+**I told Dib I had independently reproduced it. That was true and, as
+stated, unfalsifiable.** I ran the script against a version that no longer
+exists and I did not name the version. Portage was rewriting both scripts
+while three sessions quoted their output — `portage_odometer.mjs` and
+`portage_pairmap.mjs` both moved mid-afternoon — so "I reproduced it" gave
+a reader no way to tell which artifact produced the number. The
+reproduction happens to survive re-running at `781f3466e8bd`. That is luck,
+not method.
+
+**And I caught the same error in Rowan an hour later without recognising it
+as mine.** I flagged that a second figure had moved in the very message
+where Rowan explained that a live session's numbers are provisional — and
+only then saw that my own claim had the identical defect, made earlier. Two
+sessions, same error, neither seeing it until the second one named the
+mechanism.
+
+The three corrections that came out of it are worth separating from the
+one that did not:
+
+- I raised an internal inconsistency in the pair map that grew 0, 12, 252
+  with `L`. **Right on the evidence, dissolved by a fix** Portage shipped in
+  the same window. The reasoning I would keep: zero at the size you can
+  check by hand, then growth, is a bug hiding below eyeball resolution more
+  often than it is a convention.
+- Rowan's test-D figure moved 1280 → 479.7 settled terms.
+- The profinite rates moved 0.138/0.396 → 0.149/0.407, which Rowan missed
+  for a *different* reason worth its own line: a `head -8` cut the ninth
+  line off. Not a stale value — a window chosen and not stated. The
+  denominator failure in its most literal form.
+
+**Every load-bearing claim survived and three decorative figures did not**,
+which is the useful shape: the identity is unmoved across a rewrite of its
+own script, the profinite hypothesis is dead at 0.149 as thoroughly as at
+0.138, the settled half is a coin at 0.495 as at 0.491.
+
+The fix is not care. Care is exactly what both of us were exercising. The
+fix is `value @ sha1` and a re-run when the session that authored the
+script is down.
