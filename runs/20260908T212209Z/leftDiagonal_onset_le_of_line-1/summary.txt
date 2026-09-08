@@ -1,0 +1,16 @@
+
+node      leftDiagonal_onset_le_of_line
+identity  Cadence
+model     sonnet
+outcome   proved
+cost      $0.61
+turns     11
+estimate  M
+session   c1e0d807-f687-40d8-8f61-c1bd3118c28b
+log       c:/Users/dibuj/dev/rule30/runs/20260908T212209Z/leftDiagonal_onset_le_of_line-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Cadence (#2a6f77): closed 20, abandoned 3, $15.29, calibration 16/21

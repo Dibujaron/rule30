@@ -1,0 +1,5 @@
+
+leftDiagonal_eq_rowNat_testBit    Vesper   haiku   proved            $0.30   8 turns
+leftDiagonal_onset_le_of_line     Cadence  sonnet  proved            $0.61   11 turns
+
+2 attempt(s), 2 closed, $0.91 in all

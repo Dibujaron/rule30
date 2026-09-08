@@ -1,0 +1,16 @@
+
+node      leftDiagonal_period_le_of_black_between
+identity  Vesper
+model     sonnet
+outcome   proved
+cost      $0.83
+turns     12
+estimate  M
+session   307d6fb6-77b6-425b-b10e-19bd382df36b
+log       c:/Users/dibuj/dev/rule30/runs/20260908T210755Z/leftDiagonal_period_le_of_black_between-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Vesper (#2b3a67): closed 50, abandoned 4, $39.58, calibration 41/50

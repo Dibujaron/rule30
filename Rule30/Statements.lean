@@ -1214,4 +1214,41 @@ theorem leftDiagonal_onset_le_of_line
     (k : ℕ) : ∃ p > 0, ∃ N ≤ k, PeriodicFrom (leftDiagonal k) p N := by
   sorry
 
+/-- **The even-driver mirror: the period stays at `L` rather than doubling.**
+`rightDiagonal_periodicFrom_step` gives `2 * q` unconditionally; when the driver
+has even weight over one period the doubling does not happen and `L` itself is a
+period. By `rightDiagonal_recurrence` the diagonal two out advances by the XOR of
+the driver over the window, and the driver has period `L` because both diagonals
+feeding it do — so that sum is the same for every `j` and equals the weight
+parity.
+
+This is the even branch of the doubling criterion stated about *a* period rather
+than the *minimal* one, which is what makes it provable: minimality is the hard
+part and is not claimed here. Handed over by Portage (connector, 2026-09-08),
+which type-checked the signature in `explorer/portage_scratch_evendriver.lean`. -/
+theorem rightDiagonal_periodicFrom_step_of_even_driver (k L : ℕ)
+    (hL0 : PeriodicFrom (rightDiagonal k) L 0)
+    (hL1 : PeriodicFrom (rightDiagonal (k + 1)) L 0)
+    (heven : Even ((Finset.range L).sum
+      (fun j => if rightDiagonal (k + 1) (j + 1) || rightDiagonal k (j + 2) then 1 else 0))) :
+    PeriodicFrom (rightDiagonal (k + 2)) L 0 := by
+  sorry
+
+/-- **A column cohomologous to the centre column inherits its periodicity.**
+If the XOR of some column with the centre column is eventually periodic, and the
+centre column is eventually periodic, then that column is too. The enabling half
+of the coboundary reading: a *difference* of two fibres is the natural object
+there, where "a column repeats" is not.
+
+Handed over by Portage (connector, 2026-09-08), which type-checked the signature
+in `explorer/portage_scratch_evendriver.lean`. The unconditional companion — is
+any such difference eventually periodic at all? — is deliberately not seeded: it
+is measured false to `p ≤ 4096` over 1,616 pairs and belongs to a theorist as an
+obstruction, not to a prover as a node. -/
+theorem centerColumn_other_of_cohomologous_column (x : ℤ) (j : ℕ) (hx : x ≠ 0)
+    (hd : ∃ p > 0, ∃ N, PeriodicFrom (fun t => xor (centerColumn t) (evolve (t + j) x)) p N)
+    (hc : ∃ p > 0, ∃ N, PeriodicFrom centerColumn p N) :
+    ∃ p > 0, ∃ N, PeriodicFrom (fun t => evolve t x) p N := by
+  sorry
+
 end Statements

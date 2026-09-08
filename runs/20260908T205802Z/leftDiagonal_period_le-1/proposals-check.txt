@@ -1,0 +1,6 @@
+leftDiagonal_period_le_of_black_between
+  DOES NOT PROVE: Does not prove leftDiagonal_period_le and gives no bound on the period of any actual left diagonal: its hypothesis (every intermediate diagonal has black cells arbitrarily far out) is exactly the thing nobody can establish, since no left diagonal has been proved either eventually white or infinitely often black. It says nothing about the centre column and bears on no prize conjecture.
+  route:   closes the statement
+  witness: unchecked — no witness supplied
+
+1 unchecked
