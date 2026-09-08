@@ -617,3 +617,11 @@ leftDiagonal_period_le_of_black_between (sonnet, proved) — zero-friction trans
 Reconfirms the now well-established rule across this whole family ([[leftDiagonal-period-unbounded]], [[column-settledConfig-eq]], [[rightDiagonal-driver-flip-iff-white]]): **always Glob `runs/**/<Pascal>.lean` for a node's name before writing anything new** — a budget-exhausted or wall-abandoned attempt's file lands under its run directory, not in Proofs/, and this project has now had at least four nodes close by simple retrieval rather than fresh proof.
 
 Proof shape, for the record (see full text in the file): induction on `n`, carrying the *pair* (diagonal m+n, diagonal m+n+1) rather than a single diagonal, since `leftDiagonal_step_period_dichotomy` needs both to advance one step. The dichotomy's white branch is ruled out by the `hb` hypothesis (a black cell arbitrarily far out contradicts eventual whiteness), and the black-preserving branch just merges the two onsets via `max`. Note this proof does NOT close `leftDiagonal_period_le` itself — it reduces that wall to the separate, still-open claim that at most log2(k+1) of the first k left diagonals are eventually white, which is a statement about where diagonals are black rather than about periods. That residual is unaffected by this node closing.
+
+## 2026-09-08T21:23:27Z — leftDiagonal_eq_rowNat_testBit (haiku, proved)
+
+**leftDiagonal_eq_rowNat_testBit.** The bridge theorem connecting diagonal coordinates to the row-packing model. Proves that `leftDiagonal k j = (rowNat (j + k)).testBit k` by unfolding definitions and normalizing indices. No induction needed — pure definitional reasoning with `omega` for Nat arithmetic.
+
+**Route used:** Unfold `leftDiagonal` to `evolve`, rewrite with `rowCell_eq_evolve`, unfold `rowCell` to expose the `testBit` call, dispatch the guard condition `if_pos` with `constructor <;> omega` (the bounds are automatic from the definition), then `congr` to align index expressions and `omega` to close the remaining Nat equality.
+
+**Parked source:** Selvage, runs/20260908T124200Z/leftDiagonal_onset_le-2, described as "compiles clean with no sorry against f2b2daf" — verified to build on current tree.
