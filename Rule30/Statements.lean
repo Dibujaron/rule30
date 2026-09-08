@@ -954,6 +954,72 @@ theorem leftDiagonal_period_unbounded_le (a : ℕ) :
     ∃ k ≤ 4 ^ 2 ^ a + 1, ∀ N, ¬ PeriodicFrom (leftDiagonal k) (2 ^ a) N := by
   sorry
 
+/-- **The white branch of the left induction costs one index, not one period.**
+`leftDiagonal_periodicFrom_step` pays a whole period `q` to move the onset
+out by one diagonal. This says the true cost is one *cell*: either the middle
+diagonal is white from `N + 1` on, and then the new diagonal is a running
+total of the one two further out, so its onset is `N + 1` and its period at
+most doubles; or the middle diagonal is black somewhere at `j + 1`, and then
+the onset jumps to exactly there with the period unchanged.
+
+Found by Cadence in an abandoned research attempt on `leftDiagonal_onset_le`
+(run 20260907T201514Z) and kept as `explorer/scratch_onset_dichotomy.lean`,
+which compiles alone. It does not close the onset wall and the seed check
+was right about why: iterating it bounds the onset by the sum of the
+first-black gaps, and bounding that sum by `k` is the open part. -/
+theorem leftDiagonal_step_onset_dichotomy (m q N : ℕ)
+    (h0 : PeriodicFrom (leftDiagonal m) q N)
+    (h1 : PeriodicFrom (leftDiagonal (m + 1)) q N) :
+    PeriodicFrom (leftDiagonal (m + 2)) (2 * q) (N + 1) ∨
+      ∃ j, N ≤ j ∧ leftDiagonal (m + 1) (j + 1) = true ∧
+        PeriodicFrom (leftDiagonal (m + 2)) q (j + 1) := by
+  sorry
+
+/-! ### The local dictionary of a white diagonal
+
+Four one-step readings of `leftDiagonal_recurrence`, seeded 2026-09-08 from
+blueprint/crystals.md item 53 (Sextant's C1), kernel-checked together in
+`explorer/scratch_whitestep.lean`. They say what a white or black diagonal
+forces two and three diagonals further out. Vocabulary: they are cited by
+onset and period arguments and do not move a wall by themselves. The third
+is Rowland 2006's lines 905–908 in words; the rest are new phrasing of the
+recurrence. -/
+
+/-- **A black cell under a shifted pair turns the next diagonal white.** If
+diagonal `m + 1` is the shift of diagonal `m` from `N` on and is black at
+`j + 1`, then diagonal `m + 2` is white from `j + 1` on. -/
+theorem leftDiagonal_white_of_shift (m N j : ℕ) (hNj : N ≤ j)
+    (hshift : ∀ i ≥ N, leftDiagonal (m + 1) (i + 1) = leftDiagonal m (i + 2))
+    (hblack : leftDiagonal (m + 1) (j + 1) = true) :
+    ∀ i ≥ j + 1, leftDiagonal (m + 2) i = false := by
+  sorry
+
+/-- **The converse: a white diagonal makes the pair before it a shift.** If
+diagonal `m + 2` is white from `N` on, then diagonal `m` read two cells later
+equals diagonal `m + 1` read one cell later, from `N` on. -/
+theorem leftDiagonal_shift_of_white (m N : ℕ)
+    (hw : ∀ i ≥ N, leftDiagonal (m + 2) i = false) :
+    ∀ i ≥ N, leftDiagonal m (i + 2) = leftDiagonal (m + 1) (i + 1) := by
+  sorry
+
+/-- **Black stays black once the diagonal before it has gone white.** With
+diagonal `m + 1` white from `N` on and diagonal `m + 2` black at `j + 1`,
+diagonal `m + 3` is black from `j + 1` on. Rowland 2006, lines 905–908. -/
+theorem leftDiagonal_black_after_white (m N j : ℕ) (hNj : N ≤ j)
+    (hw : ∀ i ≥ N, leftDiagonal (m + 1) i = false)
+    (hb : leftDiagonal (m + 2) (j + 1) = true) :
+    ∀ i ≥ j + 1, leftDiagonal (m + 3) i = true := by
+  sorry
+
+/-- **Past an all-black diagonal the next one is a complement.** If diagonal
+`m + 3` is black from `N` on then diagonal `m + 4` is the negation of
+diagonal `m + 2`, shifted by one. This is where the period doubling comes
+from: a complement has twice the period of what it complements. -/
+theorem leftDiagonal_compl_after_black (m N : ℕ)
+    (hb : ∀ i ≥ N, leftDiagonal (m + 3) i = true) :
+    ∀ i ≥ N, leftDiagonal (m + 4) (i + 1) = !leftDiagonal (m + 2) (i + 2) := by
+  sorry
+
 /-! ## P1 — the settled configuration: the left side of the picture as a row of its own
 
 Seeded 2026-09-07 from blueprint/crystals.md items 46–47, out of Sextant's
