@@ -138,21 +138,27 @@ pub fn default_port(cfg: config.Config) -> Int {
 // --- who runs -------------------------------------------------------------------
 
 /// Who the session runs as. With a name: that persona, if it is on the
-/// roster in the `theory` region — a name in another region is refused, not
-/// borrowed, because a prover's notebook in a theorist's brief would be a
+/// roster in `region` — a name in another region is refused, not borrowed,
+/// because a prover's notebook in this role's brief would be a
 /// differently-briefed agent wearing the name. Without one: the eldest
-/// theorist on the roster, or the decision to mint one.
+/// identity of `region` on the roster, or the decision to mint one.
 ///
 /// `busy` is empty on purpose. A dispatched prover is held busy by the
 /// scheduler's in-flight list; a hand-started session has no scheduler, and
-/// nothing outside this process records which theorists are live, so this
-/// cannot tell an idle persona from one whose session is running in another
-/// window. The captain who starts two theorists at once names the second
-/// with `--as`.
+/// nothing outside this process records which of `region`'s identities are
+/// live, so this cannot tell an idle persona from one whose session is
+/// running in another window. The captain who starts two at once names the
+/// second with `--as`. `role_word` names the role in the two error messages
+/// below (`"theorist"`, `"connector"`) — it says nothing to the caller,
+/// only to whoever reads a refusal, and it is also used, naively pluralised
+/// with a trailing `s`, to list who is on the roster.
 pub fn who(
   roster_: roster.Roster,
+  region: String,
+  role_word: String,
   persona: Option(String),
 ) -> Result(schedule.Who, String) {
+  let prefix = "harness/" <> role_word <> ": "
   case persona {
     None -> Ok(schedule.who_for(roster_, region, busy: []))
     Some(name) ->
@@ -161,24 +167,34 @@ pub fn who(
           Ok(schedule.Existing(identity))
         Ok(identity) ->
           Error(
-            "harness/theorist: "
+            prefix
             <> name
             <> " is on the roster for region "
             <> identity.region
             <> ", not "
             <> region
-            <> "; a theorist runs only as a theorist",
+            <> "; a "
+            <> role_word
+            <> " runs only as a "
+            <> role_word,
           )
         Error(Nil) ->
           Error(
-            "harness/theorist: no theorist named "
+            prefix
+            <> "no "
+            <> role_word
+            <> " named "
             <> name
             <> " on the roster"
             <> case roster.for_region(roster_, region) {
               [] ->
-                "; the theory region is empty, so leave --as off to mint one"
+                "; the "
+                <> region
+                <> " region is empty, so leave --as off to mint one"
               some ->
-                "; the theorists are "
+                "; the "
+                <> role_word
+                <> "s are "
                 <> string.join(list.map(some, fn(i) { i.name }), ", ")
             },
           )
@@ -314,22 +330,31 @@ fn trim_dashes(s: String) -> String {
   }
 }
 
-/// Where the attack document goes when nothing is there yet:
-/// `docs/attacks/<date>-<slug>.md` under the repository root, `date` as
-/// `YYYY-MM-DD`. Pure; `free_attack_path` is what a session is actually
+/// Where a session's document goes when nothing is there yet:
+/// `docs/<dir>/<date>-<slug>.md` under the repository root, `date` as
+/// `YYYY-MM-DD`. Pure; `free_document_path` is what a session is actually
 /// fenced to, because this path is taken by the first session of the day
 /// on a topic and a second must not be fenced to a file that exists.
-pub fn attack_path(repo_root: String, date: String, topic: String) -> String {
-  numbered_attack_path(repo_root, date, topic, 1)
-}
-
-/// `attack_path` with an ordinal: `1` is the bare path, `2` and up carry
-/// `-2`, `-3`, ... before `.md`. So the second session on `the transients`
-/// on 2026-09-07 writes `2026-09-07-the-transients-2.md`.
-pub fn numbered_attack_path(
+/// `dir` is the role's directory under `docs/` — `"attacks"` for a
+/// theorist, `"connections"` for a connector — so the two never collide
+/// even sharing a date and a slug.
+pub fn document_path(
   repo_root: String,
   date: String,
   topic: String,
+  dir: String,
+) -> String {
+  numbered_document_path(repo_root, date, topic, dir, 1)
+}
+
+/// `document_path` with an ordinal: `1` is the bare path, `2` and up carry
+/// `-2`, `-3`, ... before `.md`. So the second session on `the transients`
+/// on 2026-09-07 writes `2026-09-07-the-transients-2.md`.
+pub fn numbered_document_path(
+  repo_root: String,
+  date: String,
+  topic: String,
+  dir: String,
   n: Int,
 ) -> String {
   let ordinal = case n {
@@ -337,7 +362,9 @@ pub fn numbered_attack_path(
     _ -> "-" <> int.to_string(n)
   }
   repo_root
-  <> "/docs/attacks/"
+  <> "/docs/"
+  <> dir
+  <> "/"
   <> date
   <> "-"
   <> slug(topic)
@@ -345,29 +372,36 @@ pub fn numbered_attack_path(
   <> ".md"
 }
 
-/// The first attack path for `topic` today that nothing is at: the bare
-/// path, else `-2`, else `-3`, and so on. Read off the disk at session
-/// start, once, and then fixed for the session's life — the guard, the
-/// brief, the first message, the dispatch row and the summary all name
-/// the one path this returns.
+/// The first path for `topic` today that nothing is at: the bare path,
+/// else `-2`, else `-3`, and so on. Read off the disk at session start,
+/// once, and then fixed for the session's life — the guard, the brief, the
+/// first message, the dispatch row and the summary all name the one path
+/// this returns.
 ///
 /// Two sessions on one topic in one day are the design's intended use
 /// (several independent attacks, then a comparison), and before this they
 /// resolved to the same path: the second was fenced to the file the first
 /// had written, and its Write overwrote it. Anything at the path counts as
 /// taken, a directory included, since a Write there would fail anyway.
-pub fn free_attack_path(
+pub fn free_document_path(
   repo_root: String,
   date: String,
   topic: String,
+  dir: String,
 ) -> String {
-  free_from(repo_root, date, topic, 1)
+  free_from(repo_root, date, topic, dir, 1)
 }
 
-fn free_from(repo_root: String, date: String, topic: String, n: Int) -> String {
-  let path = numbered_attack_path(repo_root, date, topic, n)
+fn free_from(
+  repo_root: String,
+  date: String,
+  topic: String,
+  dir: String,
+  n: Int,
+) -> String {
+  let path = numbered_document_path(repo_root, date, topic, dir, n)
   case simplifile.file_info(path) {
-    Ok(_) -> free_from(repo_root, date, topic, n + 1)
+    Ok(_) -> free_from(repo_root, date, topic, dir, n + 1)
     Error(_) -> path
   }
 }
@@ -402,8 +436,18 @@ pub type Report {
   )
 }
 
-/// The `--json-schema` every theorist turn is held to.
-pub fn report_schema() -> String {
+/// The `--json-schema` every theorist turn is held to. `finished_word` is
+/// the outcome that means "the document is written" (`"attacked"` for a
+/// theorist, `"sighted"` for a connector); `next_field_name` is the last
+/// field's key (`"next_topic"`, `"next_vantage"`), so the two callers never
+/// share a schema that could be satisfied by the wrong word.
+pub fn report_schema(
+  finished_word: String,
+  notebook_description: String,
+  journal_description: String,
+  next_field_name: String,
+  next_field_description: String,
+) -> String {
   let string_field = fn(description: String) {
     json.object([
       #("type", json.string("string")),
@@ -421,35 +465,23 @@ pub fn report_schema() -> String {
             #("type", json.string("string")),
             #(
               "enum",
-              json.array(["in_progress", "attacked", "abandoned"], json.string),
+              json.array(
+                ["in_progress", finished_word, "abandoned"],
+                json.string,
+              ),
             ),
           ]),
         ),
         #("summary", string_field("one sentence on the state of the document")),
-        #(
-          "notebook",
-          string_field(
-            "an entry for your own notebook, for your future self: what you tried on this topic, what died and at what depth, which sources you searched, what you would try next. Empty until the end.",
-          ),
-        ),
-        #(
-          "journal",
-          string_field(
-            "a short written update for Dib, in your own words: what you attacked, what died, what survived and to what depth. Empty until the end.",
-          ),
-        ),
-        #(
-          "next_topic",
-          string_field(
-            "the Next topic paragraph of your document, verbatim: at least one sentence naming what should be attacked next and why. Empty until the end.",
-          ),
-        ),
+        #("notebook", string_field(notebook_description)),
+        #("journal", string_field(journal_description)),
+        #(next_field_name, string_field(next_field_description)),
       ]),
     ),
     #(
       "required",
       json.array(
-        ["outcome", "summary", "notebook", "journal", "next_topic"],
+        ["outcome", "summary", "notebook", "journal", next_field_name],
         json.string,
       ),
     ),
@@ -595,7 +627,7 @@ pub fn render(
 ) -> String {
   string.join(
     [
-      who_you_are(identity, notebook),
+      who_you_are(identity, notebook, region, "theorist"),
       "",
       "## The task (docs/theorist-brief.md)",
       case task {
@@ -666,18 +698,25 @@ pub fn render(
   )
 }
 
-/// The section a prover's brief opens with, in the theorist's terms: the
-/// name, the region, and the notebook verbatim. The same shape on purpose —
-/// an identity is a notebook, and the notebook is what spans sessions,
-/// whatever the role.
-fn who_you_are(identity: roster.Identity, notebook: String) -> String {
+/// The section a prover's brief opens with, in the role's terms: the name,
+/// the region, and the notebook verbatim. The same shape whatever the role
+/// — an identity is a notebook, and the notebook is what spans sessions —
+/// so `region` and `role_word` are the only two things that vary.
+pub fn who_you_are(
+  identity: roster.Identity,
+  notebook: String,
+  region: String,
+  role_word: String,
+) -> String {
   let book = case string.trim(notebook) {
     "" -> "Your notebook is empty: this is its first entry-worthy session."
     _ -> notebook
   }
   "## Who you are\n\nYou are "
   <> identity.name
-  <> ", a theorist for region "
+  <> ", a "
+  <> role_word
+  <> " for region "
   <> region
   <> ": "
   <> roster.region_description(region)
@@ -686,7 +725,7 @@ fn who_you_are(identity: roster.Identity, notebook: String) -> String {
 }
 
 /// A file inlined whole, or one line saying it is not in the checkout.
-fn inlined(file: Result(String, Nil), relative: String) -> String {
+pub fn inlined(file: Result(String, Nil), relative: String) -> String {
   case file {
     Ok(text) -> text
     Error(Nil) -> "(no " <> relative <> " in this checkout)"
@@ -743,8 +782,8 @@ pub fn run(cfg: config.Config, options: Options) -> Result(Session, String) {
     None -> dag.load(cfg.dag_path) |> result.try(default_topic)
   })
   use roster_ <- result.try(roster.load(cfg.roster_path))
-  use who_ <- result.try(who(roster_, options.persona))
-  let attack = free_attack_path(cfg.repo_root, today(), topic)
+  use who_ <- result.try(who(roster_, region, "theorist", options.persona))
+  let attack = free_document_path(cfg.repo_root, today(), topic, "attacks")
   let obstructions = obstructions_path(cfg.repo_root)
   use run_log <- result.try(log.open(cfg.runs_root, log.new_run_id()))
   use l <- result.try(log.open(run_log.dir, session_name))
@@ -794,7 +833,19 @@ pub fn run(cfg: config.Config, options: Options) -> Result(Session, String) {
     worker.drive(
       session_cfg,
       l,
-      worker.launch(session_cfg, options.model, g, brief_path, report_schema()),
+      worker.launch(
+        session_cfg,
+        options.model,
+        g,
+        brief_path,
+        report_schema(
+          "attacked",
+          "what you tried on this topic, what died and at what depth, which sources you searched, what you would try next. Empty until the end.",
+          "what you attacked, what died, what survived and to what depth. Empty until the end.",
+          "next_topic",
+          "the Next topic paragraph of your document, verbatim: at least one sentence naming what should be attacked next and why. Empty until the end.",
+        ),
+      ),
       task_message(topic, attack, obstructions),
       role(),
     )

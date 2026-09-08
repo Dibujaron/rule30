@@ -287,7 +287,8 @@ pub fn theorise_starts_one_fenced_session_and_reports_its_document_test() {
   let assert Ok(cwd) = simplifile.current_directory()
   let repo =
     string.replace(cwd, "\\", "/") <> "/build/test-runs/theorist/attacked/repo"
-  let attack = theorist.attack_path(repo, theorist.today(), "the transients")
+  let attack =
+    theorist.document_path(repo, theorist.today(), "the transients", "attacks")
   let f =
     fixture(
       "attacked",
@@ -551,13 +552,19 @@ pub fn a_theorist_is_minted_when_the_roster_has_none_test() {
 // --- who ----------------------------------------------------------------------------------
 
 pub fn who_picks_the_eldest_theorist_or_decides_to_mint_test() {
-  assert theorist.who(peopled(), None)
+  assert theorist.who(peopled(), theorist.region, "theorist", None)
     == Ok(schedule.Existing(identity("Vesper", theorist.region)))
-  assert theorist.who(peopled(), Some("Quill"))
+  assert theorist.who(peopled(), theorist.region, "theorist", Some("Quill"))
     == Ok(schedule.Existing(identity("Quill", theorist.region)))
-  assert theorist.who(roster.Roster([identity("Scripted", "P1")]), None)
+  assert theorist.who(
+      roster.Roster([identity("Scripted", "P1")]),
+      theorist.region,
+      "theorist",
+      None,
+    )
     == Ok(schedule.Mint(region: theorist.region, busy: []))
-  let assert Error(empty) = theorist.who(roster.Roster([]), Some("Nobody"))
+  let assert Error(empty) =
+    theorist.who(roster.Roster([]), theorist.region, "theorist", Some("Nobody"))
   assert string.contains(empty, "leave --as off")
 }
 
@@ -584,24 +591,31 @@ pub fn the_default_topic_falls_back_to_the_first_open_p1_wall_test() {
   assert string.contains(reason, "no open wall in P1")
 }
 
-pub fn the_attack_path_is_dated_and_slugged_test() {
+pub fn the_document_path_is_dated_and_slugged_test() {
   assert theorist.slug(theorist.frontier_wall)
     == "centercolumn-other-iseventuallyperiodic-of-center"
   assert theorist.slug("  The transients of the left diagonals! ")
     == "the-transients-of-the-left-diagonals"
-  assert theorist.attack_path("C:/r", "2026-09-07", "Onset & period")
-    == "C:/r/docs/attacks/2026-09-07-onset-period.md"
-  assert theorist.numbered_attack_path(
+  assert theorist.document_path(
       "C:/r",
       "2026-09-07",
       "Onset & period",
+      "attacks",
+    )
+    == "C:/r/docs/attacks/2026-09-07-onset-period.md"
+  assert theorist.numbered_document_path(
+      "C:/r",
+      "2026-09-07",
+      "Onset & period",
+      "attacks",
       1,
     )
     == "C:/r/docs/attacks/2026-09-07-onset-period.md"
-  assert theorist.numbered_attack_path(
+  assert theorist.numbered_document_path(
       "C:/r",
       "2026-09-07",
       "Onset & period",
+      "attacks",
       2,
     )
     == "C:/r/docs/attacks/2026-09-07-onset-period-2.md"
@@ -613,23 +627,64 @@ pub fn the_attack_path_is_dated_and_slugged_test() {
 /// The path a session is fenced to is the first free one: bare when
 /// nothing is there, `-2` when the bare file exists, `-3` when both do — a
 /// directory at the path counts as taken too.
-pub fn the_free_attack_path_is_the_first_not_taken_test() {
+pub fn the_free_document_path_is_the_first_not_taken_test() {
   let f = fixture("free-path", [], roster.Roster([]))
-  let bare = theorist.attack_path(f.repo, "2026-09-07", "the seam")
+  let bare = theorist.document_path(f.repo, "2026-09-07", "the seam", "attacks")
   let second =
-    theorist.numbered_attack_path(f.repo, "2026-09-07", "the seam", 2)
-  let third = theorist.numbered_attack_path(f.repo, "2026-09-07", "the seam", 3)
-  assert theorist.free_attack_path(f.repo, "2026-09-07", "the seam") == bare
+    theorist.numbered_document_path(
+      f.repo,
+      "2026-09-07",
+      "the seam",
+      "attacks",
+      2,
+    )
+  let third =
+    theorist.numbered_document_path(
+      f.repo,
+      "2026-09-07",
+      "the seam",
+      "attacks",
+      3,
+    )
+  assert theorist.free_document_path(
+      f.repo,
+      "2026-09-07",
+      "the seam",
+      "attacks",
+    )
+    == bare
   let assert Ok(_) = simplifile.create_directory_all(f.repo <> "/docs/attacks")
   let assert Ok(_) = simplifile.write(bare, "first")
-  assert theorist.free_attack_path(f.repo, "2026-09-07", "the seam") == second
+  assert theorist.free_document_path(
+      f.repo,
+      "2026-09-07",
+      "the seam",
+      "attacks",
+    )
+    == second
   let assert Ok(_) = simplifile.create_directory(second)
-  assert theorist.free_attack_path(f.repo, "2026-09-07", "the seam") == third
+  assert theorist.free_document_path(
+      f.repo,
+      "2026-09-07",
+      "the seam",
+      "attacks",
+    )
+    == third
   // Another topic, or another day, is untouched by the seam's files.
-  assert theorist.free_attack_path(f.repo, "2026-09-07", "the onset")
-    == theorist.attack_path(f.repo, "2026-09-07", "the onset")
-  assert theorist.free_attack_path(f.repo, "2026-09-08", "the seam")
-    == theorist.attack_path(f.repo, "2026-09-08", "the seam")
+  assert theorist.free_document_path(
+      f.repo,
+      "2026-09-07",
+      "the onset",
+      "attacks",
+    )
+    == theorist.document_path(f.repo, "2026-09-07", "the onset", "attacks")
+  assert theorist.free_document_path(
+      f.repo,
+      "2026-09-08",
+      "the seam",
+      "attacks",
+    )
+    == theorist.document_path(f.repo, "2026-09-08", "the seam", "attacks")
 }
 
 /// The case the design intends — several independent sessions on one
@@ -640,9 +695,16 @@ pub fn a_second_attack_on_one_topic_in_a_day_gets_its_own_file_test() {
   let assert Ok(cwd) = simplifile.current_directory()
   let repo =
     string.replace(cwd, "\\", "/") <> "/build/test-runs/theorist/second/repo"
-  let first = theorist.attack_path(repo, theorist.today(), "the transients")
+  let first =
+    theorist.document_path(repo, theorist.today(), "the transients", "attacks")
   let second =
-    theorist.numbered_attack_path(repo, theorist.today(), "the transients", 2)
+    theorist.numbered_document_path(
+      repo,
+      theorist.today(),
+      "the transients",
+      "attacks",
+      2,
+    )
   let f =
     fixture(
       "second",
@@ -842,8 +904,16 @@ pub fn a_theorist_report_carries_a_notebook_and_a_next_topic_and_no_estimate_tes
   assert report.notebook == "n"
   assert report.next_topic == "the onset"
   let assert Error(_) = worker.report_from_dynamic(dyn)
-  assert !string.contains(theorist.report_schema(), "estimate")
-  assert string.contains(theorist.report_schema(), "\"attacked\"")
-  assert string.contains(theorist.report_schema(), "next_topic")
-  assert string.contains(theorist.report_schema(), "notebook")
+  let schema =
+    theorist.report_schema(
+      "attacked",
+      "notebook description",
+      "journal description",
+      "next_topic",
+      "next topic description",
+    )
+  assert !string.contains(schema, "estimate")
+  assert string.contains(schema, "\"attacked\"")
+  assert string.contains(schema, "next_topic")
+  assert string.contains(schema, "notebook")
 }
