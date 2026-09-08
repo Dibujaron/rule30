@@ -1276,4 +1276,49 @@ theorem rightDiagonal_period_unbounded (p : ℕ) (hp : 0 < p) :
     ∃ k, ¬ PeriodicFrom (rightDiagonal k) p 0 := by
   sorry
 
+/-- **Rule 30 commutes with a spatial translation.** One step applied to a
+shifted configuration is the step applied first and then read shifted. The
+automaton has no preferred origin; the seed does. Recovered from Sextant's
+`explorer/scratch_rightunbounded_proof.lean`, where it is proved and unused by
+anything on the board. -/
+theorem rule30_translate (c : Config) (s i : ℤ) :
+    rule30 (fun x => c (x + s)) i = rule30 c (i + s) := by
+  sorry
+
+/-- **So does the whole evolution.** `rule30_translate` carried up the
+iteration by induction on `t`. -/
+theorem evolveFrom_translate (c : Config) (s : ℤ) (t : ℕ) (i : ℤ) :
+    evolveFrom (fun x => c (x + s)) t i = evolveFrom c t (i + s) := by
+  sorry
+
+/-- **Growing from row `p` is reading the picture `p` rows later.** -/
+theorem evolveFrom_evolve (p t : ℕ) : evolveFrom (evolve p) t = evolve (t + p) := by
+  sorry
+
+/-- **Exactly where the slid row first disagrees with the seed's.** Let `m` be
+the distance from the right edge of row `p` to the next black cell. Then row `p`
+slid left by `p` agrees with the seed's row for every earlier time and differs
+at time exactly `m` — not merely eventually, but at `m` and not before.
+
+This is the sharp form of what `rightDiagonal_period_unbounded` uses: that
+theorem needs only *some* failure, while this says which one. Recovered from
+`explorer/scratch_rightunbounded_proof.lean`. -/
+theorem rightDiagonal_first_failure (p m : ℕ) (hm : 0 < m)
+    (hwhite : ∀ d : ℕ, 0 < d → d < m → evolve p ((p : ℤ) - (d : ℤ)) = false)
+    (hblack : evolve p ((p : ℤ) - (m : ℤ)) = true) :
+    (∀ t, t < m → evolve (t + p) (p : ℤ) = evolve t 0)
+      ∧ evolve (m + p) (p : ℤ) ≠ evolve m 0 := by
+  sorry
+
+/-- **The least period divides every period.** The periods of a sequence
+periodic from `0` are closed under subtraction, so the least positive one
+divides all of them. This is the bridge that makes `minimalPeriod` usable:
+with `rightDiagonal_periodicFrom_pow` it gives that each right diagonal's least
+period divides `2 ^ k` and so is itself a power of two, which is what turns the
+doubling dichotomy into a statement about the minimal period rather than about
+some period. -/
+theorem minimalPeriod_dvd (f : Nat → Bool) (p : Nat) (hp : 0 < p)
+    (h : PeriodicFrom f p 0) : minimalPeriod f ∣ p := by
+  sorry
+
 end Statements
