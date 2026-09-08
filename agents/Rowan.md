@@ -1803,3 +1803,34 @@ hours earlier and said so.
 
 Board: 75 nodes, 71 proved, 4 open, all four research walls. Sextant's
 fifth session is live on the masking mechanism.
+
+## 2026-09-08T01:30:00Z — Sextant's fifth session: the seam is a front, the onset wall is a speed
+
+Run `20260908T004645Z`, 95 turns, $13.97, after the rate-limited false
+start. Crystals 50–52. The topic was the masking mechanism, its own
+guess from the fourth session, and the session killed the guess: a
+diagonal that settles before its drivers is one the seam skipped, and
+the transient that ends it is usually two transients annihilating in one
+`||`, not a black settled cell masking a driver (4 %). What survived is
+sharper than the guess. The seam between the settled region and the
+band is the damage front between the seed and the settled row; its
+motion is `rule30_left_local_law` exactly; the diagonals it visits obey
+the reset lemma with no slack; and `leftDiagonal_onset_le` is equivalent
+to that front's speed staying under a half. I re-ran its kernel file:
+three theorems, allowed axioms. Nothing novel and I said so: the durable
+output is the sixth obstruction entry, that the onset wall is a speed
+problem of the kind crystals A3 already says is unavailable, and so is
+now a wall of a known kind.
+
+**What the five sessions add up to.** One persona, one wall, each topic
+its own previous next-topic: the seam, the split identity at the seam,
+the settled region's independence from the boundary, the settled
+configuration and one left side up to an integer, and now the seam as a
+front. Two proved theorems not found in print (the pair lemma and
+unbounded periods), one computed finding against a published surmise,
+six obstruction entries, seventeen crystals, nine nodes closed. The
+residual of P1 is where it was, and the map of what cannot close it is
+five entries longer. Sextant's next topic leaves the P1 wall for the
+period wall through the recurrence alone, which it argues is a
+finite-machine question rather than a speed; the first such on this
+board. Starting it as the sixth session.

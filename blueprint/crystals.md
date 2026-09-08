@@ -500,6 +500,56 @@ in another coat, and would sit beside it, not under it.
     `bool_driven_periodicFrom_of_reset` with two orbits in place of a
     periodic driver, size S. Sextant C4; the fifth obstruction entry.
 
+50. **The two masking laws, in diagonal coordinates.** Call a cell of
+    diagonal `k` at index `j` *transient* when `leftDiagonal k j ≠ leftDiagonal k (j + 2^k)`.
+    (a) If diagonal `k+2` is transient at `j` and its two drivers are settled
+    at `j+1` and `j+2`, then it is transient at `j+1` exactly when the driver
+    cell `leftDiagonal (k+1) (j+1)` is white: a transient passes straight down
+    a diagonal through a white driver and is stopped by a black one. (b) If
+    diagonal `k+2` is settled at `j` and its driver `k+1` is transient at
+    `j+1` (the outer driver settled), then `k+2` stays settled at `j+1`
+    exactly when its own cell at `j` is black. *Proved* in the kernel:
+    `explorer/scratch_masking.lean` (`leftDiagonal_transient_front_law`,
+    `leftDiagonal_transient_mask_law`, general shift `M`, axioms `propext,
+    Quot.sound`; and the `2^k` form with `Classical.choice`), re-run by
+    Rowan on 2026-09-08, exit 0. Each is `leftDiagonal_recurrence` at two
+    indices and a sixteen-case `decide`. New phrasing of
+    `rule30_left_local_law` (crystals A2) read on the pair (seed, settled
+    picture); Wolfram 1986 §5 states (a) in words for the difference
+    pattern of two random rows. Two S nodes under `leftDiagonal_onset_le`
+    when an onset argument wants them. Sextant, fifth attack, C1.
+51. **The seam is a damage front, and the onset wall is a speed bound on
+    it.** Define `F t = min { x ∈ [-t, 0] : the cell (t, x) is transient }`
+    (exists for `t ≥ 18`; the first transient cell is `(18, 0)`), the
+    leftmost difference between the seed's picture and the settled picture
+    (crystal 47). Then `leftDiagonal_onset_le` (every diagonal settled by
+    index `k`) is equivalent to `∀ t ≥ 18, 2 · F t + t ≥ 1`: the front never
+    runs faster than half a cell per row. Both directions are index
+    arithmetic once `F` is defined (a `Nat.find` over a decidable bounded
+    predicate). *Computed*: `min (2F + t) = 17` at `t = 19`; net speed
+    `0.2497` over 160,000 rows; worst window `0.2568` at `t = 38,460`, the
+    same event as the worst onset ratio `0.3455` at `k = 28,584`
+    (`explorer/maskfront.mjs`). No route: it is a speed bound of the kind
+    crystals A3 says is not available, and the sixth obstruction entry says
+    why the reset-lemma induction cannot reach it. Size M as a
+    reformulation node; worth seeding only to make the wall's honest form
+    visible. Sextant C3.
+52. **The front's visited diagonals obey the reset lemma with no slack; the
+    skipped ones settle before their drivers.** The diagonal the front sits
+    on never decreases; the front rides a diagonal at speed 1 along a white
+    run of the neighbouring settled word and leaves at its next black cell,
+    so the onset of every visited diagonal is the first black of `S_{k-1}`
+    past the arrival index. *Computed*: 60,065 visited diagonals below
+    110,000, 0 exceptions; 49,917 skipped, of which 47,343 settle strictly
+    before their neighbour; the transient that ends a skipped diagonal is two
+    transients meeting in one `||` in 68 % of cases and a black settled
+    neighbour in 4 %. Provable half: a diagonal that settles before its
+    neighbour is never on the front (contrapositive), size M after `F`.
+    The answer to the fifth session's topic, and the reason crystal 45's
+    reset front bounds the onset by `2k` while the truth is `0.34k`:
+    the reset front cannot retreat and the real one does, on 26 % of rows,
+    by up to 11 cells. Sextant C2 and C4; the sixth obstruction entry.
+
 ## Not credible or not verified
 
 - arXiv:2207.13237 (Das, "Rule 30: Solving the Chaos") claims an analytical
