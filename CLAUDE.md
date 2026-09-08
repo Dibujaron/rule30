@@ -377,9 +377,9 @@ cd harness && gleam run -- prove-one <node-id>  # dispatch one worker at one nod
 cd harness && gleam run -- run --max-attempts 3 --concurrency 3
                                                 # keep up to K workers in flight until N attempts have started
 cd harness && gleam run -- reopen <node-id>     # a crashed run left a node `claimed`; put it back on the board
-cd harness && gleam run -- theorise [<topic>] [--as <Name>] [--model M]
-                                                # one theorist session on a topic, as a named or minted theory persona; never started by the scheduler
-cd harness && gleam run -- connect [<vantage>] [--as <Name>] [--model M]
+cd harness && gleam run -- theorise [<topic>] [--as <Name> | --mint] [--model M]
+                                                # one theorist session on a topic, as a named or minted theory persona; never started by the scheduler. `--as` names one already on the roster, `--mint` makes a new one through the naming ceremony, and neither flag adopts the region's eldest. A theory-region mint forks a notebook lineage — the new persona starts blind to everything the region has learned — so it wants a reason; a connect-region mint does not, that role exists for independent readings
+cd harness && gleam run -- connect [<vantage>] [--as <Name> | --mint] [--model M]
                                                 # one connector session on the P1 frontier from a vantage, as a named or minted connect persona; never started by the scheduler; its guard port is the run base + 300, its record runs/<run-id>/connector-1/, its one file docs/connections/<date>-<slug>.md, and it may read the web (every URL logged)
 cd harness && gleam run -- seed [--model M] [--region R]
                                                 # hand-start one seeder session; it proposes into blueprint/proposals/next.json under the seeder guard, and the check report prints when it ends
