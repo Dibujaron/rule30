@@ -1,0 +1,7 @@
+
+leftDiagonal_transient_mask_law   Selvage  haiku   proved            $0.15   7 turns
+leftDiagonal_shift_of_white       Cadence  sonnet  proved            $0.42   8 turns
+leftDiagonal_transient_front_law  Vesper   haiku   proved            $0.30   13 turns
+leftDiagonal_onset_le             Selvage  fable   abandoned         $10.29  5 turns
+
+4 attempt(s), 3 closed, $11.16 in all

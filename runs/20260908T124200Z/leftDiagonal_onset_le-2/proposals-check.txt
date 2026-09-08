@@ -1,0 +1,9 @@
+leftDiagonal_eq_rowNat_testBit
+  route:   closes the statement
+  witness: BROKEN CHECK, says nothing about the statement — c:/Users/dibuj/dev/rule30/harness/build/checks/seed/witness_leftDiagonal_eq_rowNat_testBit_c46c3dd9600969178d90db8a97e568d8.lean:3:47: error(lean.unknownIdentifier): Unknown identifier `k`
+leftDiagonal_onset_le_of_line
+  DOES NOT PROVE: Does not prove the wall and does not weaken it: the hypothesis is exactly as open as the conclusion (true for the seed by measurement only, since the transient band stays at ratio 0.48 while the line is at 1), and it is not an equivalence.
+  route:   closes the statement
+  witness: unchecked — no witness supplied
+
+1 broken check, 1 unchecked

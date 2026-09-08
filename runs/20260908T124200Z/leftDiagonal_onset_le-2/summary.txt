@@ -1,0 +1,16 @@
+
+node      leftDiagonal_onset_le
+identity  Selvage
+model     fable
+outcome   abandoned
+cost      $10.29
+turns     5
+estimate  wall
+session   087f37d5-9019-471e-a8d4-50a53e303a56
+log       c:/Users/dibuj/dev/rule30/runs/20260908T124200Z/leftDiagonal_onset_le-2
+proof     c:/Users/dibuj/dev/rule30/runs/20260908T124200Z/leftDiagonal_onset_le-2/LeftDiagonalOnsetLe.lean (moved out of Rule30/Proofs/: not a closed node)
+
+verifier:
+Not proved and the wall stands; the file builds with a verified bridge from left diagonals to the packed row's bits and a verified conditional form of the wall whose residual is one Bool condition per diagonal, plus a half-line search showing the onset bound holds for every boundary column tried, seed or not, with ratio at most 0.65.
+
+Selvage (#3a6ea5): closed 6, abandoned 3, $15.51, calibration 5/7
