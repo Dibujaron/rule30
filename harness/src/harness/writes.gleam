@@ -94,8 +94,8 @@ pub fn declared() -> List(Written) {
       what: "runs/<run-id>/**",
       risk: "events, journal, briefs, the generated settings.json and archived transcripts; every attempt and every guard writes here continuously",
       writers: [
-        "log.event", "log.raw", "write_brief", "guard.write_settings",
-        "archive_transcript",
+        "log.event", "log.raw", "log.summary", "log.journal", "write_brief",
+        "guard.write_settings", "archive_transcript",
       ],
     ),
     Written(
