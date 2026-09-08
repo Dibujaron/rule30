@@ -1,0 +1,6 @@
+
+rightDiagonal_driver_flip_iff_whiteVesper   sonnet  proved            $0.64   9 turns
+rightDiagonal_not_constant        Selvage  opus    proved            $1.35   10 turns
+rightDiagonal_antiperiodic_of_odd_driverCadence  opus    proved            $1.42   9 turns
+
+3 attempt(s), 3 closed, $3.41 in all

@@ -79,7 +79,10 @@ import Rule30.Proofs.NotEvolvePeriodAdjacent
 import Rule30.Proofs.NotIsEventuallyPeriodicAdjacent
 import Rule30.Proofs.NotIsEventuallyPeriodicPair
 import Rule30.Proofs.PeriodicFromMul
+import Rule30.Proofs.RightDiagonalAntiperiodicOfOddDriver
+import Rule30.Proofs.RightDiagonalDriverFlipIffWhite
 import Rule30.Proofs.RightDiagonalIsEventuallyPeriodic
+import Rule30.Proofs.RightDiagonalNotConstant
 import Rule30.Proofs.RightDiagonalPeriodicFromPow
 import Rule30.Proofs.RightDiagonalPeriodicFromStep
 import Rule30.Proofs.RightDiagonalRecurrence

@@ -1,0 +1,16 @@
+
+node      rightDiagonal_antiperiodic_of_odd_driver
+identity  Cadence
+model     opus
+outcome   proved
+cost      $1.42
+turns     9
+estimate  S
+session   5a63887c-45d7-49ad-9889-2aa3e4716401
+log       c:/Users/dibuj/dev/rule30/runs/20260908T140506Z/rightDiagonal_antiperiodic_of_odd_driver-2
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Cadence (#2a6f77): closed 19, abandoned 3, $14.69, calibration 15/20

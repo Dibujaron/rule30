@@ -1,0 +1,16 @@
+
+node      rightDiagonal_driver_flip_iff_white
+identity  Vesper
+model     sonnet
+outcome   proved
+cost      $0.64
+turns     9
+estimate  S
+session   706a8c13-8d27-4804-87f7-9851ef058928
+log       c:/Users/dibuj/dev/rule30/runs/20260908T140506Z/rightDiagonal_driver_flip_iff_white-2
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Vesper (#2b3a67): closed 49, abandoned 3, $36.45, calibration 40/49

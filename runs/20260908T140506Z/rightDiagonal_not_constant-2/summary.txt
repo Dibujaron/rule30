@@ -1,0 +1,16 @@
+
+node      rightDiagonal_not_constant
+identity  Selvage
+model     opus
+outcome   proved
+cost      $1.35
+turns     10
+estimate  S
+session   57a69aa1-608d-4d76-99d0-af127b9fa10d
+log       c:/Users/dibuj/dev/rule30/runs/20260908T140506Z/rightDiagonal_not_constant-2
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Selvage (#3a6ea5): closed 7, abandoned 4, $18.95, calibration 5/8
