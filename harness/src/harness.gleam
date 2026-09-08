@@ -16,6 +16,7 @@ import gleam/string
 import harness/bugs
 import harness/claude
 import harness/config
+import harness/connector
 import harness/dag
 import harness/dispatch
 import harness/index
@@ -109,11 +110,24 @@ fn run(cfg: config.Config, arguments: List(String)) -> Nil {
         theorist.parse_flags(flags)
         |> result.try(fn(parsed) { theorist_session(cfg, parsed) }),
       )
-    _ ->
-      io.println(
-        "usage: gleam run -- status | prove-one <node-id> | run [--max-attempts N] [--concurrency K] | reopen <node-id> | bugs [--area A] [--severity S] [--all] | bugs file <path-to-row.json> | bugs claim <id> --as <Identity> [--session <ref>] | bugs reopen <id> | bugs close <id> fixed|wontfix --resolution <text> | writes | index | seed [--model M] [--region R] | seed brief [--region R] | seed check [path] | theorise [<topic>] [--as <Name>] [--model M] | spike",
+    // `connect` starts one connector session — hand-started, never by the
+    // scheduler — on the P1 frontier from a vantage, or from one the
+    // connector chooses when none is given, as the named connector or the
+    // eldest one (minting one when the roster has none), and reports where
+    // its sighting document is once it ends.
+    ["connect", ..flags] ->
+      print_outcome(
+        connector.parse_flags(flags)
+        |> result.try(fn(parsed) { connector_session(cfg, parsed) }),
       )
+    _ -> io.println(usage())
   }
+}
+
+/// What `gleam run --` prints for an argument list it does not recognise:
+/// every verb, in the shape a captain types it.
+pub fn usage() -> String {
+  "usage: gleam run -- status | prove-one <node-id> | run [--max-attempts N] [--concurrency K] | reopen <node-id> | bugs [--area A] [--severity S] [--all] | bugs file <path-to-row.json> | bugs claim <id> --as <Identity> [--session <ref>] | bugs reopen <id> | bugs close <id> fixed|wontfix --resolution <text> | writes | index | seed [--model M] [--region R] | seed brief [--region R] | seed check [path] | theorise [<topic>] [--as <Name>] [--model M] | connect [<vantage>] [--as <Name>] [--model M] | spike"
 }
 
 /// One theorist session on the parsed flags' model, topic and persona, on
@@ -129,6 +143,25 @@ fn theorist_session(
       model: flags.model,
       port: theorist.default_port(cfg),
       topic: flags.topic,
+      persona: flags.persona,
+    ),
+  )
+  |> result.map(fn(session) { session.summary })
+}
+
+/// One connector session on the parsed flags' model, vantage and persona,
+/// on the connector's own guard port; the summary it returns names who
+/// ran, the sighting document and whether it exists.
+fn connector_session(
+  cfg: config.Config,
+  flags: connector.Flags,
+) -> Result(String, String) {
+  connector.run(
+    cfg,
+    connector.Options(
+      model: flags.model,
+      port: connector.default_port(cfg),
+      vantage: flags.vantage,
       persona: flags.persona,
     ),
   )

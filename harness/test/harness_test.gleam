@@ -1,3 +1,4 @@
+import gleam/string
 import gleeunit
 import harness
 import harness/bugs
@@ -37,4 +38,17 @@ pub fn flag_value_errors_on_a_bare_trailing_severity_flag_test() {
       "severity",
     )
     == Error("--severity needs a value")
+}
+
+/// The usage line names every verb a captain can type, `connect` among
+/// them, in the shape the spec gives it.
+pub fn usage_names_the_connect_verb_test() {
+  assert string.contains(
+    harness.usage(),
+    "connect [<vantage>] [--as <Name>] [--model M]",
+  )
+  assert string.contains(
+    harness.usage(),
+    "theorise [<topic>] [--as <Name>] [--model M]",
+  )
 }
