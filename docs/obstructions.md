@@ -289,3 +289,59 @@ touches the centre column, which is the band's other edge.
 
 **Recorded** 2026-09-08 by Sextant, from the attack document
 `docs/attacks/2026-09-08-centercolumn-other-iseventuallyperiodic-of-center-the-masking-mechanism-in-the-transient-band-why-a-diagonal-settles-before-its-drivers.md`.
+
+## A universal bound on the recurrence's hitting times cannot prove the period wall
+
+**The natural attempt.** `leftDiagonal_period_le` says the period of
+diagonal `k` is at most `k + 1`; since the period is `2^n` after the
+`n`-th doubling, it says the `n`-th doubling sits at a diagonal
+`k_n ≥ 2^n - 1`, that is, the gaps between doublings grow. The settled
+words are an orbit of the diagonal recurrence on pairs of periodic words
+(Rowland 2006 §6; `explorer/forbit.mjs`), the period changes only at an
+eventually-white diagonal (`S_m = 0`, which happens exactly when
+`S_{m-1}` is `S_{m-2}` shifted by one, `explorer/scratch_whitestep.lean`),
+and the word right after a white is fixed by the recurrence. So prove, for
+the finite system of all words of period `L`, that from the state "white,
+then `w`" the next white is at least `L` diagonals away; the wall follows
+by induction on the doublings without ever knowing which word the seed
+holds.
+
+**Why it fails.** The statement is false for the finite system at every
+period. For every even `L` from `8` to `128` the word `1^(L-5) 0 0 1 0 0`,
+of exact period `L`, returns to a white in exactly `8` diagonals
+(`explorer/hitting.mjs`, exhaustive to `L = 16`; `explorer/hitting2.mjs`,
+two implementations, to `L = 128`); at `L = 16`, `96` of the `65,280`
+words of exact period `16` reach a white within `16` steps, and the
+smallest hitting times come in structured families (`5, 7, 8, 13, 16, 21,
+29, 32, 41, 57, 58` are the only values below `64`). The words a doubling
+actually produces are antiperiodic (shift by `L/2` complements them), and
+none of them reaches a white within `2L + 8` steps for `L ≤ 32`
+(`hitting2.mjs`, `65,536` words at `L = 32`), but that survival is what a
+geometric law with mean `2^L` gives for the `2^(L/2) / L` shift classes
+(`hitting3.mjs`: minima `88, 6343, 414989` at `L = 8, 16, 32` against a
+null of `128, 4096, 2 · 10^6`), and the orbit forgets the antiperiodicity
+four diagonals after the doubling (`explorer/orbitclass.mjs`). What the
+finite system does give is the opposite bound: every pair has exactly one
+predecessor, so the segments from each start to the next white are
+disjoint inside the `4^L` pairs, the *average* gap is at most `2^L`
+(measured `1.000 · 2^L` at `L = 16`, all `65,534` words,
+`explorer/meansum.mjs`) and no gap exceeds `4^L`. That is why the gaps
+grow (whites are a `2^-L` fraction of a space walked without repetition:
+the seed's gaps `5, 21, 371, 52808, 1.42 · 10^9` after each doubling sit
+within a factor `3` of `2^L`), and it is an upper bound where the wall
+needs a lower one.
+
+**What it would take.** A lower bound on the hitting times of *one* orbit,
+the seed's, at words nothing distinguishes from the others: the wall holds
+at level `n` unless the seed's orbit enters a set of density about
+`2^(-2^n)` within `2^n` steps of a doubling, a probability that sums to
+less than `0.07` over all `n ≥ 3` and to nothing anyone can prove. The
+known values give slack to `k < 2^31`: the sixth doubling is at
+`2,107,985,255` (NKS p. 871, reproduced from the recurrence alone in
+`explorer/orbit32.mjs`, which also finds the seed's eighth eventually-white
+diagonal at `1,420,878,968`, complement type, not in print). A proof would
+need either an invariant of the seed's words at the whites, of which none
+is visible, or a different reading of the wall altogether.
+
+**Recorded** 2026-09-08 by Sextant, from the attack document
+`docs/attacks/2026-09-08-leftdiagonal-period-le-the-period-wall-through-the-orbit-of-the-recurrence-alone-why-the-gaps-between-eventually-white-diagonals-grow.md`.
