@@ -1903,3 +1903,64 @@ Keel's connector branch is done, twenty commits ahead of main, suite
 strings the suite was green over. It lands by fast-forward when Keel
 says; the first session is a smoke test of the path as much as a
 sighting, on the vantage "symbolic dynamics and expansiveness".
+
+## 2026-09-08T12:30:00Z — the connector round: three sessions in one checkout, and parallel is blocked at the persona
+
+Dib away for hours, with a redirect that changes the day: outside-the-box
+progress, not incremental, and he would like to come home to genuinely new
+ideas that are *proven*. He named the connector as the likely route and
+said "but who knows really". So today is step 3 of the connector spec —
+the first round of sightings on the P1 frontier, compared by me — and not
+a prover run.
+
+**The order, agreed rather than discovered.** Keel [d93a1a] holds
+`keel/connector` in a worktree, whole-branch review then a landing; Fathom
+[a2b6f4] holds `brief-says-to-read-the-existing-proof-file`. Fathom
+proposed Keel → Fathom → me and argued for it against its own interest; I
+took it. Then Dib's redirect made the argument moot in my favour — I am
+not dispatching provers at all, so Fathom's fix is off my critical path
+and I told it to take the time. The only thing I need is Keel's landing,
+because `connect` does not exist on `main` until then.
+
+**What I would have got wrong.** I told Keel to move `main` in the shared
+checkout with `git branch -f`, quoting our own rule. Keel corrected it:
+git refuses to force-update a branch that is checked out in a worktree,
+and the shared checkout is on `main`, which is where it should be. The
+rule's `branch -f` clause is about the *other* case. Our own CLAUDE.md
+line reads as general advice and is not.
+
+**The finding, and it is not confirmed yet.** A parallel round is what the
+spec calls the intended use, and I think it is blocked in three places,
+of which one bites. The guard port is `cfg.guard_port + 300`, a constant
+with no CLI override, dodgeable with per-invocation `HARNESS_GUARD_PORT`.
+`run_id` is second-granularity and `log.open` is idempotent, so two starts
+in one second share a run directory — dodgeable by staggering. The one
+that bites is the persona: `connector.who` → `theorist.who` →
+`schedule.who_for(roster_, region, busy: [])`, and with `busy` empty every
+identity reads as idle, so `who_avoiding` returns `Existing(first)` rather
+than minting. `agents/roster.json` has no `connect` region at all, so
+session one mints a persona and session two adopts it — two live sessions
+as one persona, and `--as` cannot break the cycle because `theorist.who`
+refuses a name not already on the roster.
+
+I put it to Keel as a question, not a bug. `busy: []` carries a docstring
+saying it is deliberate, and filing against another agent's stated
+intention on my own reading is the peer-review failure this project
+already has a row for. If Keel confirms it, I file it; if Keel corrects
+me, I have learned the reason.
+
+**The mitigation I expect to take if it is real.** Not a hot fix under
+time pressure. A sequential round of two or three still gives Dib
+sightings, and the cost of one persona across a first round is smaller
+than it looks: the "different histories" rationale for separate personas
+is empty on day one, because every connect notebook is empty. What the
+collision actually costs on a first round is a notebook write race at the
+end, not a contaminated reading.
+
+**Held for the round.** Frontier wall is
+`centerColumn_other_isEventuallyPeriodic_of_center` — if the centre column
+repeats, some other column repeats. Connector ceilings default to the
+theorist's, 600 turns and $80; Sextant's sessions ran 71 turns and $12.75,
+so I will set the dollar ceiling down explicitly rather than let the first
+session of a new role discover it. All twelve `sources/` texts are present
+in this checkout.
