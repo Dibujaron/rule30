@@ -933,8 +933,13 @@ theorem leftDiagonal_period_unbounded (a : ℕ) :
 that is not eventually `2 ^ a`-periodic is found by depth `4 ^ 2 ^ a + 1`.
 This is `leftDiagonal_period_unbounded` with a rate: that says the doublings
 never stop, this says how long you may have to wait for the next one. The
-measured depths are 3, 8, 29, 400, 87867 and 2107985255, so the bound is
-enormously loose — but it is a bound, and none is in print.
+first four such depths are 3, 8, 29 and 400, measured here by
+`explorer/leftdoubling.mjs`, whose search reaches diagonal 430 and sees no
+period above 16 — so 400 rests on thirty diagonals of clearance and the
+next depth is not observed at all. NKS p. 871 continues 87867 and
+2107985255, the second recomputed from the recurrence alone in
+blueprint/crystals.md item 55. So the bound is enormously loose against
+what is measured, and it is the only bound of any size in print.
 
 Why: if every diagonal up to depth `K` were eventually `2 ^ a`-periodic,
 read each tail as a word `Fin (2 ^ a) → Bool` at an onset that is a multiple

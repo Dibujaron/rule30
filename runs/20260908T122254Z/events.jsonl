@@ -1,0 +1,4 @@
+{"ts":"2026-09-08T12:22:54Z","kind":"run","max_attempts":1,"concurrency":1}
+{"ts":"2026-09-08T12:22:54Z","kind":"dispatch","node":"leftDiagonal_period_unbounded_le","identity":"Vesper","model":"opus","reason":"open leaf; unblocks 0; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4130,"log":"c:/Users/dibuj/dev/rule30/runs/20260908T122254Z/leftDiagonal_period_unbounded_le-1","in_flight":1}
+{"ts":"2026-09-08T12:26:35Z","kind":"index","node":"leftDiagonal_period_unbounded_le","module":"Rule30.Proofs.LeftDiagonalPeriodUnboundedLe","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-08T12:26:35Z","kind":"theorem_index","node":"leftDiagonal_period_unbounded_le","file":"blueprint/index.md","outcome":"written"}

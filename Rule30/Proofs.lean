@@ -60,6 +60,7 @@ import Rule30.Proofs.IsEventuallyPeriodicShift
 import Rule30.Proofs.LeftDiagonalMulPowEqSettledCenter
 import Rule30.Proofs.LeftDiagonalPairNeverEventuallyShifted
 import Rule30.Proofs.LeftDiagonalPeriodUnbounded
+import Rule30.Proofs.LeftDiagonalPeriodUnboundedLe
 import Rule30.Proofs.LeftDiagonalPeriodicFromPow
 import Rule30.Proofs.LeftDiagonalPeriodicFromStep
 import Rule30.Proofs.LeftDiagonalPeriodicFromStepOfBlack

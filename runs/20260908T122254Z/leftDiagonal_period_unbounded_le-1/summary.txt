@@ -1,0 +1,16 @@
+
+node      leftDiagonal_period_unbounded_le
+identity  Vesper
+model     opus
+outcome   proved
+cost      $2.10
+turns     12
+estimate  M
+session   2798673a-c07e-45f9-bf65-2a1590c9d777
+log       c:/Users/dibuj/dev/rule30/runs/20260908T122254Z/leftDiagonal_period_unbounded_le-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Vesper (#2b3a67): closed 44, abandoned 2, $32.31, calibration 35/44
