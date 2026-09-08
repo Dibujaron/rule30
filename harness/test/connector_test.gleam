@@ -429,3 +429,423 @@ pub fn the_brief_says_which_files_are_absent_and_that_no_vantage_was_given_test(
   assert string.contains(brief, "(no Rule30/Basic.lean in this checkout)")
   assert string.contains(brief, "Vantage: none given")
 }
+
+// --- session helpers ----------------------------------------------------------------
+
+fn options(port: Int, vantage: String) -> connector.Options {
+  connector.Options(
+    model: "haiku",
+    port:,
+    vantage: Some(vantage),
+    persona: None,
+  )
+}
+
+fn init_line(session_id: String) -> String {
+  json.object([
+    #("type", json.string("system")),
+    #("subtype", json.string("init")),
+    #("session_id", json.string(session_id)),
+  ])
+  |> json.to_string
+}
+
+fn report_fields(outcome: String) -> List(#(String, json.Json)) {
+  [
+    #("outcome", json.string(outcome)),
+    #("summary", json.string("scripted " <> outcome)),
+    #("notebook", json.string("scripted connector notebook entry")),
+    #("journal", json.string("scripted connector journal entry")),
+    #(
+      "next_vantage",
+      json.string("Attack from automatic sequences next, because 2-adic."),
+    ),
+  ]
+}
+
+fn result_with(session_id: String, fields: List(#(String, json.Json))) {
+  json.object([
+    #("type", json.string("result")),
+    #("session_id", json.string(session_id)),
+    #("is_error", json.bool(False)),
+    #("total_cost_usd", json.float(1.25)),
+    #("num_turns", json.int(9)),
+    #("structured_output", json.object(fields)),
+  ])
+  |> json.to_string
+}
+
+fn result_line(session_id: String, outcome: String) -> String {
+  result_with(session_id, report_fields(outcome))
+}
+
+/// A result whose `structured_output` answers both a naming ceremony and a
+/// connector's report: the shim plays the same script to every process.
+fn naming_and_report_line(session_id: String) -> String {
+  result_with(
+    session_id,
+    list.append(
+      [
+        #("name", json.string("Minted")),
+        #("reason", json.string("a scripted reason")),
+        #("opening", json.string("I am Minted, a scripted opening.")),
+        #("color", json.string("#abcdef")),
+        #("color_reason", json.string("scripted")),
+      ],
+      report_fields("sighted"),
+    ),
+  )
+}
+
+fn exists(path: String) -> Bool {
+  simplifile.is_file(path) |> result.unwrap(False)
+}
+
+fn run_dir(f: Fixture) -> String {
+  let assert Ok([run]) = simplifile.read_directory(f.cfg.runs_root)
+  f.cfg.runs_root <> "/" <> run
+}
+
+/// POST one raw hook body to the session's guard, the way Claude Code's
+/// hook does, and return what the hook would print back.
+fn ask(g: guard.Guard, body: String) -> String {
+  let assert Ok(curl) = shell.which("curl")
+  let assert Ok(r) =
+    shell.run(
+      curl,
+      [
+        "-s",
+        "-X",
+        "POST",
+        "-H",
+        "x-harness-token: " <> g.token,
+        "--data",
+        body,
+        "http://127.0.0.1:" <> int.to_string(g.port) <> "/hook",
+      ],
+      ".",
+      5000,
+    )
+  r.output
+}
+
+fn ask_to_write(g: guard.Guard, path: String) -> String {
+  ask(
+    g,
+    "{\"hook_event_name\":\"PreToolUse\",\"tool_name\":\"Write\",\"tool_input\":{\"file_path\":\""
+      <> string.replace(path, "\\", "/")
+      <> "\"}}",
+  )
+}
+
+fn ask_to_fetch(g: guard.Guard, url: String) -> String {
+  ask(
+    g,
+    "{\"hook_event_name\":\"PreToolUse\",\"tool_name\":\"WebFetch\",\"tool_input\":{\"url\":\""
+      <> url
+      <> "\",\"prompt\":\"quote it\"}}",
+  )
+}
+
+// --- the verb -----------------------------------------------------------------------
+
+pub fn connect_starts_one_fenced_session_and_reports_its_document_test() {
+  // The document is written by the scripted session, mid-turn, the way a
+  // connector writes it — a file already at the path at session start is a
+  // first session's, and the fence moves to `-2`.
+  let assert Ok(cwd) = simplifile.current_directory()
+  let repo =
+    string.replace(cwd, "\\", "/") <> "/build/test-runs/connector/sighted/repo"
+  let sighting =
+    connector.sighting_path(repo, theorist.today(), "ergodic theory")
+  let f =
+    fixture(
+      "sighted",
+      [
+        [
+          init_line("cn-s"),
+          "__WRITE__ " <> sighting <> "\t# Sighting\n\ntwenty-two",
+          result_line("cn-s", "sighted"),
+        ],
+      ],
+      peopled(),
+    )
+  assert f.repo == repo
+  put(
+    f,
+    "docs/connector-brief.md",
+    "# The connector's task\n\nfixture task text",
+  )
+  let port = ports.span(1)
+  let args_path = f.dir <> "/args.json"
+  envoy.set("HARNESS_FAKE_ARGS", args_path)
+  let started = connector.run(f.cfg, options(port, "ergodic theory"))
+  envoy.unset("HARNESS_FAKE_ARGS")
+  let assert Ok(session) = started
+  assert session.problem == theorist.frontier_wall
+  assert session.vantage == Some("ergodic theory")
+  assert session.sighting_path == sighting
+  // No `--as`: the eldest connector, never the theorist or the P1 prover.
+  assert session.identity.name == "Meridian"
+
+  // The record is `runs/<id>/connector-1/`.
+  let cn_dir = run_dir(f) <> "/" <> connector.session_name
+  assert session.dir == cn_dir
+  assert exists(cn_dir <> "/events.jsonl")
+  assert exists(cn_dir <> "/settings.json")
+  let brief = read(cn_dir <> "/briefs/connector-1.md")
+  assert string.contains(brief, "fixture task text")
+  assert string.contains(brief, "Vantage: ergodic theory")
+  assert string.contains(brief, sighting)
+  assert string.contains(brief, "NOTEBOOK OF Meridian")
+  assert !string.contains(brief, "NOTEBOOK OF Lodestar")
+  assert !string.contains(brief, "NOTEBOOK OF Vesper")
+  assert !string.contains(brief, "INDEX TEXT")
+
+  // The dispatch row names the role, the persona, the port, the problem,
+  // the vantage and the file; nothing was minted; the first message names
+  // the problem and the vantage.
+  let events = read(cn_dir <> "/events.jsonl")
+  assert string.contains(events, "\"kind\":\"dispatch\"")
+  assert string.contains(events, "\"role\":\"connector\"")
+  assert string.contains(events, "\"identity\":\"Meridian\"")
+  assert string.contains(events, "\"port\":" <> int.to_string(port))
+  assert string.contains(
+    events,
+    "\"problem\":\"" <> theorist.frontier_wall <> "\"",
+  )
+  assert string.contains(events, "\"vantage\":\"ergodic theory\"")
+  assert string.contains(events, "\"sighting\":\"" <> sighting <> "\"")
+  assert !string.contains(events, "\"kind\":\"naming\"")
+  assert string.contains(events, "\"kind\":\"sent\"")
+  assert string.contains(events, "from the vantage `ergodic theory`")
+
+  // The session ran under the connector's ceilings and with the two web
+  // tools on the CLI allowlist — the shim saw both on its command line.
+  assert string.contains(events, "\"max_turns\":600")
+  assert string.contains(events, "\"max_budget_usd\":80.0")
+  let args = read(args_path)
+  assert string.contains(
+    args,
+    "\"--max-turns\",\"600\",\"--max-budget-usd\",\"80.0\"",
+  )
+  assert string.contains(
+    args,
+    "\"--allowedTools\",\"Read,Edit,Write,Grep,Glob,Bash,WebFetch,WebSearch\"",
+  )
+  assert !string.contains(args, "--bare")
+  assert string.contains(session.summary, "ceilings   600 turns, $80.0")
+
+  // The guard is a Connector guard on the port it was asked for: it allows
+  // the sighting document and a script, refuses the obstructions file, the
+  // proposal file and the notebook, allows an https fetch and logs it.
+  assert session.guard.port == port
+  assert ask_to_write(session.guard, sighting) == "{}"
+  assert ask_to_write(session.guard, f.repo <> "/explorer/probe.mjs") == "{}"
+  let refused = ask_to_write(session.guard, f.repo <> "/docs/obstructions.md")
+  assert string.contains(refused, "deny")
+  assert string.contains(refused, "sighting document")
+  assert string.contains(
+    ask_to_write(session.guard, f.repo <> "/blueprint/proposals/next.json"),
+    "deny",
+  )
+  assert string.contains(
+    ask_to_write(session.guard, f.repo <> "/agents/Meridian.md"),
+    "deny",
+  )
+  assert ask_to_fetch(session.guard, "https://arxiv.org/abs/2001.00001") == "{}"
+  let after = read(cn_dir <> "/events.jsonl")
+  assert string.contains(after, "\"node\":\"connector-1\"")
+  assert string.contains(after, "\"denial\":\"not_writable\"")
+  assert string.contains(after, "\"kind\":\"web\"")
+  assert string.contains(after, "\"url\":\"https://arxiv.org/abs/2001.00001\"")
+
+  // The summary names who ran, the problem, the vantage and the document,
+  // says it exists and how big it is, carries the next vantage, and never
+  // calls anything proved.
+  assert string.contains(session.summary, "connector  Meridian")
+  assert string.contains(
+    session.summary,
+    "problem    " <> theorist.frontier_wall,
+  )
+  assert string.contains(session.summary, "vantage    ergodic theory")
+  assert string.contains(session.summary, "sighting   " <> sighting)
+  assert string.contains(session.summary, "document   exists, 22 bytes")
+  assert string.contains(session.summary, "ended      finished")
+  assert !string.contains(session.summary, "proved")
+  assert string.contains(
+    session.summary,
+    "Attack from automatic sequences next",
+  )
+  assert string.contains(session.summary, "cost       $1.25")
+  assert string.contains(session.summary, "session    cn-s")
+  assert read(run_dir(f) <> "/summary.txt") == session.summary <> "\n"
+
+  // The notebook and the journal were written from the report, verbatim,
+  // by the harness: Meridian's notebook grew by one dated section headed
+  // with the problem, the vantage and the ending; Lodestar's did not change.
+  let notebook = read(f.cfg.agents_dir <> "/Meridian.md")
+  assert string.contains(notebook, "NOTEBOOK OF Meridian")
+  assert string.contains(
+    notebook,
+    "— " <> theorist.frontier_wall <> " from ergodic theory (haiku, sighted)",
+  )
+  assert string.contains(notebook, "scripted connector notebook entry")
+  assert !string.contains(read(f.cfg.agents_dir <> "/Lodestar.md"), "scripted")
+  let journal = read(run_dir(f) <> "/journal.md")
+  assert string.contains(journal, "## Meridian on connector-1")
+  assert string.contains(journal, "scripted connector journal entry")
+
+  // The roster and the board are as they were.
+  let assert Ok(r) = roster.load(f.cfg.roster_path)
+  assert r == peopled()
+  let assert Ok(d) = dag.load(f.cfg.dag_path)
+  assert d == board()
+}
+
+/// `--as` with an idle connector starts that one; no vantage means the file
+/// is named for the problem; a connector that reports `sighted` with no
+/// document on disk is recorded as abandoned.
+pub fn as_starts_the_named_connector_and_a_missing_document_is_abandoned_test() {
+  let f =
+    fixture(
+      "no-document",
+      [[init_line("cn-n"), result_line("cn-n", "sighted")]],
+      peopled(),
+    )
+  let assert Ok(session) =
+    connector.run(
+      f.cfg,
+      connector.Options(
+        model: "haiku",
+        port: ports.span(1),
+        vantage: None,
+        persona: Some("Lodestar"),
+      ),
+    )
+  assert session.identity.name == "Lodestar"
+  assert session.vantage == None
+  assert session.sighting_path
+    == connector.sighting_path(f.repo, theorist.today(), theorist.frontier_wall)
+  assert string.contains(session.summary, "connector  Lodestar")
+  assert string.contains(session.summary, "vantage    (none given")
+  assert string.contains(session.summary, "document   MISSING")
+  assert string.contains(session.summary, "ended      abandoned")
+  assert string.contains(session.summary, "no document exists")
+  let notebook = read(f.cfg.agents_dir <> "/Lodestar.md")
+  assert string.contains(
+    notebook,
+    "— " <> theorist.frontier_wall <> " (haiku, abandoned)",
+  )
+  assert !string.contains(read(f.cfg.agents_dir <> "/Meridian.md"), "scripted")
+}
+
+/// `--as` with a name the roster lacks, or a name from another region, is
+/// refused before anything is written: no run directory, no ceremony.
+pub fn as_with_an_unknown_or_foreign_name_refuses_before_writing_test() {
+  let f = fixture("as-unknown", [], peopled())
+  let assert Error(unknown) =
+    connector.run(
+      f.cfg,
+      connector.Options(
+        model: "haiku",
+        port: ports.span(1),
+        vantage: Some("x"),
+        persona: Some("Nobody"),
+      ),
+    )
+  assert string.contains(unknown, "no connector named Nobody")
+  let assert Error(foreign) =
+    connector.run(
+      f.cfg,
+      connector.Options(
+        model: "haiku",
+        port: ports.span(1),
+        vantage: Some("x"),
+        persona: Some("Vesper"),
+      ),
+    )
+  assert string.contains(foreign, "Vesper is on the roster for region theory")
+  assert simplifile.is_directory(f.cfg.runs_root) == Ok(False)
+}
+
+/// No `--as` and no connector on the roster: the naming ceremony runs, the
+/// newcomer joins the roster in the `connect` region, its notebook opens in
+/// its own voice, and the session runs as it.
+pub fn a_connector_is_minted_when_the_roster_has_none_test() {
+  let f =
+    fixture(
+      "mint",
+      [[init_line("cn-m"), naming_and_report_line("cn-m")]],
+      roster.Roster([identity("Scripted", "P1"), identity("Vesper", "theory")]),
+    )
+  let assert Ok(session) = connector.run(f.cfg, options(ports.span(1), "x"))
+  assert session.identity.name == "Minted"
+  assert session.identity.region == connector.region
+  let assert Ok(after) = roster.load(f.cfg.roster_path)
+  assert list.map(roster.for_region(after, connector.region), fn(i) { i.name })
+    == ["Minted"]
+  let events = read(session.dir <> "/events.jsonl")
+  assert string.contains(events, "\"kind\":\"naming\"")
+  assert string.contains(events, "\"region\":\"connect\"")
+  assert string.contains(events, "\"because\":\"region empty\"")
+  let notebook = read(f.cfg.agents_dir <> "/Minted.md")
+  assert string.starts_with(
+    notebook,
+    "# Minted\n\nI am Minted, a scripted opening.",
+  )
+  assert string.contains(notebook, "named for connect")
+  assert string.contains(notebook, "scripted connector notebook entry")
+  assert string.contains(session.summary, "connector  Minted")
+}
+
+/// The design's intended use — several sightings of one problem in a day —
+/// and the collision it must not have: with a first document on disk, the
+/// second session is fenced to `-2`, every record names that path, and the
+/// guard denies the first session's file.
+pub fn a_second_sighting_on_one_vantage_in_a_day_gets_its_own_file_test() {
+  let assert Ok(cwd) = simplifile.current_directory()
+  let repo =
+    string.replace(cwd, "\\", "/") <> "/build/test-runs/connector/second/repo"
+  let first = connector.sighting_path(repo, theorist.today(), "ergodic theory")
+  let second =
+    connector.numbered_sighting_path(
+      repo,
+      theorist.today(),
+      "ergodic theory",
+      2,
+    )
+  let f =
+    fixture(
+      "second",
+      [
+        [
+          init_line("cn-2"),
+          "__WRITE__ " <> second <> "\t# Second sighting",
+          result_line("cn-2", "sighted"),
+        ],
+      ],
+      peopled(),
+    )
+  assert f.repo == repo
+  let assert Ok(_) =
+    simplifile.create_directory_all(repo <> "/docs/connections")
+  let assert Ok(_) = simplifile.write(first, "# First sighting, Meridian's")
+  let assert Ok(session) =
+    connector.run(f.cfg, options(ports.span(1), "ergodic theory"))
+  assert session.sighting_path == second
+  assert string.ends_with(second, "-ergodic-theory-2.md")
+  let brief = read(session.dir <> "/briefs/connector-1.md")
+  assert string.contains(brief, "Sighting document: " <> second)
+  assert !string.contains(brief, first)
+  let events = read(session.dir <> "/events.jsonl")
+  assert string.contains(events, "\"sighting\":\"" <> second <> "\"")
+  assert !string.contains(events, "\"sighting\":\"" <> first <> "\"")
+  assert string.contains(session.summary, "sighting   " <> second)
+  assert string.contains(session.summary, "document   exists, 17 bytes")
+  assert ask_to_write(session.guard, second) == "{}"
+  let refused = ask_to_write(session.guard, first)
+  assert string.contains(refused, "deny")
+  assert string.contains(refused, second)
+  assert read(first) == "# First sighting, Meridian's"
+}

@@ -50,12 +50,18 @@
 
 import gleam/dynamic.{type Dynamic}
 import gleam/dynamic/decode
+import gleam/int
+import gleam/io
+import gleam/json
 import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
 import harness/config
 import harness/dag
+import harness/guard
+import harness/lock
+import harness/log
 import harness/roster
 import harness/schedule
 import harness/seed
@@ -458,6 +464,275 @@ pub fn render(
       "Nine in ten connections are expected to die. A dictionary a theorist",
       "can attack is the deliverable. The document is read by a captain,",
       "beside sightings of the same problem from other vantages.",
+    ],
+    "\n",
+  )
+}
+
+// --- the session ----------------------------------------------------------------
+
+/// The two tools a connector has that no other role does, added to
+/// `worker.default_tools` on its command line. Granted here and fenced in
+/// the guard (`guard.decide_web`): the CLI refuses a tool that is not on
+/// its allowlist before any hook fires, so this list is where the grant
+/// lives and the guard is where its limits do.
+pub const web_tools = ["WebFetch", "WebSearch"]
+
+/// What one connector session left behind: the summary a captain reads,
+/// the guard it ran under, its record directory, who ran it, the problem,
+/// the vantage and the sighting path it was fenced to. Not `theorist.Session`:
+/// `problem`/`vantage`/`sighting_path` would lie under `topic`/`attack_path`'s
+/// names.
+pub type Session {
+  Session(
+    summary: String,
+    guard: guard.Guard,
+    dir: String,
+    identity: roster.Identity,
+    problem: String,
+    vantage: Option(String),
+    sighting_path: String,
+  )
+}
+
+/// Start one connector session, wait for it to end, then look at what it
+/// left. The order mirrors `theorist.run`'s, because the contract is the
+/// same contract: the problem and who runs are settled before anything is
+/// written, so a bad `--as` costs nothing; then the sighting path, chosen
+/// once as the first free `<date>-<slug>[-n].md`; then the record
+/// directory, the guard and its settings — fenced to that path; then the
+/// ceremony if a persona is being minted (`theorist.ensure_identity`); then
+/// the brief (no brief, no session) and the session, launched with the two
+/// web tools on its allowlist — and only once the session is closed, the
+/// notebook and journal from its report and the look at the file it was
+/// fenced to write. A session that reported `sighted` with no document on
+/// disk is recorded as abandoned, whatever it claimed.
+pub fn run(cfg: config.Config, options: Options) -> Result(Session, String) {
+  use d <- result.try(dag.load(cfg.dag_path))
+  use wall <- result.try(problem(d))
+  use roster_ <- result.try(roster.load(cfg.roster_path))
+  use who_ <- result.try(who(roster_, options.persona))
+  let sighting =
+    free_sighting_path(
+      cfg.repo_root,
+      theorist.today(),
+      named_for(wall.id, options.vantage),
+    )
+  use run_log <- result.try(log.open(cfg.runs_root, log.new_run_id()))
+  use l <- result.try(log.open(run_log.dir, session_name))
+  use lock_actor <- result.try(
+    lock.start(240_000)
+    |> result.map_error(fn(e) {
+      "could not start the build lock: " <> string.inspect(e)
+    }),
+  )
+  use g <- result.try(guard.start(
+    guard.Rules(
+      repo_root: cfg.repo_root,
+      role: guard.Connector(sighting_path: sighting),
+      holder: session_name,
+    ),
+    lock_actor,
+    l,
+    options.port,
+  ))
+  use _ <- result.try(guard.write_settings(g, g.settings_path))
+  use identity <- result.try(theorist.ensure_identity(
+    cfg,
+    roster_,
+    who_,
+    options.model,
+    g,
+    l,
+  ))
+  use brief_text <- result.try(brief(
+    cfg,
+    identity,
+    wall,
+    options.vantage,
+    sighting,
+  ))
+  use brief_path <- result.try(worker.write_brief(l, session_name, brief_text))
+  // The connector's ceilings, not the prover's: `worker.launch_with_tools`
+  // reads `max_turns` and `max_budget_usd` from whatever config it is handed.
+  let session_cfg = config.for_connector(cfg)
+  log.event(l, "dispatch", [
+    #("role", json.string("connector")),
+    #("identity", json.string(identity.name)),
+    #("model", json.string(options.model)),
+    #("port", json.int(options.port)),
+    #("problem", json.string(wall.id)),
+    #("vantage", json.string(option.unwrap(options.vantage, ""))),
+    #("sighting", json.string(sighting)),
+    #("max_turns", json.int(session_cfg.max_turns)),
+    #("max_budget_usd", json.float(session_cfg.max_budget_usd)),
+    #("log", json.string(l.dir)),
+  ])
+
+  let #(tally, ending) =
+    worker.drive(
+      session_cfg,
+      l,
+      worker.launch_with_tools(
+        session_cfg,
+        options.model,
+        g,
+        brief_path,
+        report_schema(),
+        list.append(worker.default_tools, web_tools),
+      ),
+      task_message(wall.id, options.vantage, sighting),
+      role(),
+    )
+
+  let size = theorist.document_size(sighting)
+  write_channels(
+    cfg,
+    run_log,
+    identity,
+    wall.id,
+    options.vantage,
+    options.model,
+    ending,
+    size,
+  )
+  let summary_text =
+    summary(
+      options,
+      session_cfg,
+      identity,
+      wall.id,
+      sighting,
+      l,
+      tally,
+      ending,
+      size,
+    )
+  log.summary(run_log, summary_text)
+  Ok(Session(
+    summary: summary_text,
+    guard: g,
+    dir: l.dir,
+    identity:,
+    problem: wall.id,
+    vantage: options.vantage,
+    sighting_path: sighting,
+  ))
+}
+
+/// The connector's two channels, each written from the report exactly as
+/// the connector wrote it: the notebook under `agents/<Name>.md`, headed
+/// with the time, the problem, the vantage, the model and how the session
+/// ended; and the journal under the run. A failed notebook write is
+/// printed, not fatal — the session happened and its summary must still be
+/// written. Not reused from `theorist.write_channels`: the heading text
+/// carries the vantage, which a theorist's has no field for, and the two
+/// functions close over their own `Report` type.
+fn write_channels(
+  cfg: config.Config,
+  run_log: log.Log,
+  identity: roster.Identity,
+  problem_id: String,
+  vantage: Option(String),
+  model: String,
+  ending: worker.Ending(Report),
+  size: Option(Int),
+) -> Nil {
+  case ending.report {
+    None -> Nil
+    Some(r) -> {
+      case string.trim(r.notebook) {
+        "" -> Nil
+        _ -> {
+          let heading =
+            log.now_iso()
+            <> " — "
+            <> problem_id
+            <> case vantage {
+              Some(v) -> " from " <> v
+              None -> ""
+            }
+            <> " ("
+            <> model
+            <> ", "
+            <> theorist.end_word(ending.end, size, "sighted")
+            <> ")"
+          case
+            roster.append_notebook(
+              cfg.agents_dir,
+              identity,
+              heading,
+              r.notebook,
+            )
+          {
+            Ok(Nil) -> Nil
+            Error(reason) -> io.println_error("harness/connector: " <> reason)
+          }
+        }
+      }
+      case string.trim(r.journal) {
+        "" -> Nil
+        text -> log.journal(run_log, identity.name, session_name, text)
+      }
+    }
+  }
+}
+
+/// The summary a captain reads: who ran, the problem, the vantage, where
+/// the document is, whether it exists, how the session ended in words that
+/// never call a connection proved, the ceilings it ran under, what it cost,
+/// and the next vantage the connector named. Not reused from
+/// `theorist.summary`: the table has an extra `vantage` line and closes
+/// over the connector's own `Report`, but `theorist.ceilings` and
+/// `theorist.ended_words` do the two lines that are genuinely shared.
+fn summary(
+  options: Options,
+  cfg: config.Config,
+  identity: roster.Identity,
+  problem_id: String,
+  sighting: String,
+  l: log.Log,
+  tally: worker.Tally,
+  ending: worker.Ending(Report),
+  size: Option(Int),
+) -> String {
+  let next_vantage = case ending.report {
+    Some(r) ->
+      case string.trim(r.next_vantage) {
+        "" -> "(no next vantage reported)"
+        text -> text
+      }
+    None -> "(no report, so no next vantage)"
+  }
+  string.join(
+    [
+      "",
+      "connector  " <> identity.name,
+      "model      " <> options.model,
+      "problem    " <> problem_id,
+      "vantage    "
+        <> case options.vantage {
+        Some(v) -> v
+        None -> "(none given; the connector chose its own, see section 1)"
+      },
+      "sighting   " <> sighting,
+      "document   "
+        <> case size {
+        Some(bytes) -> "exists, " <> int.to_string(bytes) <> " bytes"
+        None -> "MISSING — nothing is at that path"
+      },
+      "ended      "
+        <> theorist.ended_words(cfg, ending.end, size, "connector", "sighting"),
+      "ceilings   " <> theorist.ceilings(cfg),
+      "cost       $" <> roster.usd(tally.cost_usd),
+      "turns      " <> int.to_string(tally.turns),
+      "session    " <> tally.session_id,
+      "log        " <> l.dir,
+      "",
+      ending.notes,
+      "",
+      "next vantage, in the connector's words:",
+      next_vantage,
     ],
     "\n",
   )
