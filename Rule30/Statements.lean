@@ -1105,7 +1105,6 @@ is deliberately absent from `blueprint/dag.json`. -/
 theorem harness_probe : True := by
   sorry
 
-end Statements
 
 /-! ## P1 — the right diagonals: exact periods on the side with no transients
 
@@ -1168,3 +1167,5 @@ theorem rightDiagonal_driver_flip_iff_white (k q : ℕ)
         ≠ (rightDiagonal (k + 1) (j + q + 1) || rightDiagonal k (j + q + 2)))
       ↔ rightDiagonal k (j + 2) = false := by
   sorry
+
+end Statements

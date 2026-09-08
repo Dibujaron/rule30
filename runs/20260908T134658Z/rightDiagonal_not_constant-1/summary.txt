@@ -1,0 +1,16 @@
+
+node      rightDiagonal_not_constant
+identity  Vesper
+model     sonnet
+outcome   abandoned
+cost      $2.02
+turns     2
+estimate  M
+session   b7082c07-e46c-4adc-870d-3a6e51c28c6b
+log       c:/Users/dibuj/dev/rule30/runs/20260908T134658Z/rightDiagonal_not_constant-1
+proof     c:/Users/dibuj/dev/rule30/runs/20260908T134658Z/rightDiagonal_not_constant-1/RightDiagonalNotConstant.lean (moved out of Rule30/Proofs/: not a closed node)
+
+verifier:
+Proof is correct and builds clean, but three identical CHECK FAILED cycles confirm the block is a Statements.lean namespace bug outside a worker's reach; ending the attempt rather than resubmitting unchanged content.
+
+Vesper (#2b3a67): closed 48, abandoned 3, $35.82, calibration 39/48

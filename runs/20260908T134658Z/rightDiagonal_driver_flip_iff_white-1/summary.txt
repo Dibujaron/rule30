@@ -1,0 +1,21 @@
+
+node      rightDiagonal_driver_flip_iff_white
+identity  Cadence
+model     haiku
+outcome   budget_exhausted
+cost      $0.90
+turns     7
+estimate  S
+session   9b64479d-bac1-4841-9724-1f07f504119b
+log       c:/Users/dibuj/dev/rule30/runs/20260908T134658Z/rightDiagonal_driver_flip_iff_white-1
+proof     c:/Users/dibuj/dev/rule30/runs/20260908T134658Z/rightDiagonal_driver_flip_iff_white-1/RightDiagonalDriverFlipIffWhite.lean (moved out of Rule30/Proofs/: not a closed node)
+
+verifier:
+the proof never verified in 4 rounds. Last verdict:
+CHECK FAILED. lake env lean output follows:
+c:/Users/dibuj/dev/rule30/harness/build/checks/rightDiagonal_driver_flip_iff_white.lean:3:34: error(lean.unknownIdentifier): Unknown identifier `Statements.rightDiagonal_driver_flip_iff_white`
+c:/Users/dibuj/dev/rule30/harness/build/checks/rightDiagonal_driver_flip_iff_white.lean:4:7: error(lean.unknownIdentifier): Unknown identifier `Statements.rightDiagonal_driver_flip_iff_white`
+'harness_check' depends on axioms: [propext, sorryAx]
+
+
+Cadence (#2a6f77): closed 18, abandoned 3, $13.26, calibration 15/19

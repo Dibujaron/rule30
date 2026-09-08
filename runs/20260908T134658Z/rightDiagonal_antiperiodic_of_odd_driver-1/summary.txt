@@ -1,0 +1,16 @@
+
+node      rightDiagonal_antiperiodic_of_odd_driver
+identity  Selvage
+model     sonnet
+outcome   budget_exhausted
+cost      $2.10
+turns     3
+estimate  M
+session   c5be6880-af84-4afd-8ce6-5d0055887d3d
+log       c:/Users/dibuj/dev/rule30/runs/20260908T134658Z/rightDiagonal_antiperiodic_of_odd_driver-1
+proof     c:/Users/dibuj/dev/rule30/runs/20260908T134658Z/rightDiagonal_antiperiodic_of_odd_driver-1/RightDiagonalAntiperiodicOfOddDriver.lean (moved out of Rule30/Proofs/: not a closed node)
+
+verifier:
+still in progress when the round budget ran out: Proof complete and previously confirmed to build clean; blocked on the same unfixed Statements.lean namespace bug across four checks — holding rather than re-polling further.
+
+Selvage (#3a6ea5): closed 6, abandoned 4, $17.61, calibration 5/7

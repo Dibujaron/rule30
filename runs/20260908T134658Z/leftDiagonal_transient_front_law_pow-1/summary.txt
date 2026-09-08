@@ -1,0 +1,16 @@
+
+node      leftDiagonal_transient_front_law_pow
+identity  Vesper
+model     haiku
+outcome   proved
+cost      $0.55
+turns     21
+estimate  S
+session   0810a95b-424e-4409-964e-04a8dcfe02bc
+log       c:/Users/dibuj/dev/rule30/runs/20260908T134658Z/leftDiagonal_transient_front_law_pow-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Vesper (#2b3a67): closed 48, abandoned 2, $33.79, calibration 39/48

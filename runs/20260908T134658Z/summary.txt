@@ -1,0 +1,7 @@
+
+leftDiagonal_transient_front_law_powVesper   haiku   proved            $0.55   21 turns
+rightDiagonal_driver_flip_iff_whiteCadence  haiku   budget_exhausted  $0.90   7 turns
+rightDiagonal_antiperiodic_of_odd_driverSelvage  sonnet  budget_exhausted  $2.10   3 turns
+rightDiagonal_not_constant        Vesper   sonnet  abandoned         $2.02   2 turns
+
+4 attempt(s), 1 closed, $5.57 in all

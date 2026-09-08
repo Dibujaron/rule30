@@ -71,6 +71,7 @@ import Rule30.Proofs.LeftDiagonalShiftOfWhite
 import Rule30.Proofs.LeftDiagonalStepOnsetDichotomy
 import Rule30.Proofs.LeftDiagonalStepPeriodDichotomy
 import Rule30.Proofs.LeftDiagonalTransientFrontLaw
+import Rule30.Proofs.LeftDiagonalTransientFrontLawPow
 import Rule30.Proofs.LeftDiagonalTransientMaskLaw
 import Rule30.Proofs.LeftDiagonalWhiteOfShift
 import Rule30.Proofs.LeftSolveEqColumn
