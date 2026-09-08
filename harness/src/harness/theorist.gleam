@@ -933,8 +933,9 @@ fn write_channels(
   }
 }
 
-/// The attack document as it sits on disk after the session: its size in
-/// bytes, or nothing.
+/// The document at `path` as it sits on disk after the session: its size
+/// in bytes, or nothing. Not attack-specific: the connector calls this on
+/// its sighting path.
 pub fn document_size(path: String) -> Option(Int) {
   case simplifile.file_info(path) {
     Ok(info) ->
@@ -1025,9 +1026,10 @@ pub fn end_word(
 /// file on disk supports it: with no document there the line says
 /// abandoned, because a report about a file that does not exist is not a
 /// report about the topic. A ceiling is named with its value from the
-/// config the session ran under. `role_word` (`"theorist"`, `"connector"`)
-/// and `doc_word` (`"attack"`, `"sighting"`) are the only two things that
-/// vary by role.
+/// config the session ran under, so `$80.0` here is the ceiling the CLI
+/// was launched with and not a number remembered from elsewhere.
+/// `role_word` (`"theorist"`, `"connector"`) and `doc_word` (`"attack"`,
+/// `"sighting"`) are the only two things that vary by role.
 pub fn ended_words(
   cfg: config.Config,
   end: worker.End,

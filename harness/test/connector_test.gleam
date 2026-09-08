@@ -672,6 +672,13 @@ pub fn connect_starts_one_fenced_session_and_reports_its_document_test() {
   assert string.contains(session.summary, "sighting   " <> sighting)
   assert string.contains(session.summary, "document   exists, 22 bytes")
   assert string.contains(session.summary, "ended      finished")
+  // Pins the role words at this call site: an altered role_word or
+  // doc_word in ended_words's finished/Some branch fails this exact
+  // sentence, not just the "finished" fragment shared by both roles.
+  assert string.contains(
+    session.summary,
+    "the connector reported its sighting written",
+  )
   assert !string.contains(session.summary, "proved")
   assert string.contains(
     session.summary,
@@ -732,6 +739,12 @@ pub fn as_starts_the_named_connector_and_a_missing_document_is_abandoned_test() 
   assert string.contains(session.summary, "document   MISSING")
   assert string.contains(session.summary, "ended      abandoned")
   assert string.contains(session.summary, "no document exists")
+  // Pins the role words at this call site's finished/None branch, which
+  // carries doc_word twice: an altered role_word or doc_word fails this.
+  assert string.contains(
+    session.summary,
+    "the connector reported its sighting written, but no document exists at the sighting path",
+  )
   let notebook = read(f.cfg.agents_dir <> "/Lodestar.md")
   assert string.contains(
     notebook,

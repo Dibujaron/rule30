@@ -387,6 +387,13 @@ pub fn theorise_starts_one_fenced_session_and_reports_its_document_test() {
   assert string.contains(session.summary, "attack    " <> attack)
   assert string.contains(session.summary, "document  exists, 22 bytes")
   assert string.contains(session.summary, "ended     finished")
+  // Pins the role words at this call site: an altered role_word or
+  // doc_word in ended_words's finished/Some branch fails this exact
+  // sentence, not just the "finished" fragment shared by both roles.
+  assert string.contains(
+    session.summary,
+    "the theorist reported its attack written",
+  )
   assert !string.contains(session.summary, "proved")
   assert string.contains(session.summary, "Attack the onset bound next")
   assert string.contains(session.summary, "cost      $1.25")
@@ -440,6 +447,12 @@ pub fn as_starts_the_named_theorist_and_a_missing_document_is_abandoned_test() {
   assert string.contains(session.summary, "document  MISSING")
   assert string.contains(session.summary, "ended     abandoned")
   assert string.contains(session.summary, "no document exists")
+  // Pins the role words at this call site's finished/None branch, which
+  // carries doc_word twice: an altered role_word or doc_word fails this.
+  assert string.contains(
+    session.summary,
+    "the theorist reported its attack written, but no document exists at the attack path",
+  )
   let notebook = read(f.cfg.agents_dir <> "/Quill.md")
   assert string.contains(
     notebook,
