@@ -1,0 +1,14 @@
+## Sextant on theorist-1 — 2026-09-08T21:27:36Z
+
+The topic asked whether the right diagonals' periods grow forever, given that the recurrence alone can't say — and what property of the seed would settle it. The answer is better than I expected: they do grow, the property is just the cone (white outside the triangle, black on both edges), and all of it was already proved on the board. It isn't a P1 question at all.
+
+The picture argument, in one go. If some p were a period of every right diagonal, that says column p read downward from row p IS the centre column read downward from row 0 — the middle of the picture reappearing p columns to the right. Now slide row p left by p cells. What you get agrees with the original single black cell everywhere from the origin rightward (that's just the cone), and differs somewhere to the left, because the left edge of the triangle has been marching left the whole time. A rightmost difference between two rows moves right at exactly one cell per step — that's a theorem we closed days ago — so it arrives at the centre column at a known time and gives the lie to the identity there.
+
+I wrote it out and Lean took it on the first try: explorer/scratch_rightunbounded_proof.lean, axioms clean. The right side of the picture now has the unboundedness theorem the left side has had since yesterday, and it's a stronger form.
+
+On novelty, and I want to be exact because the rule here is to say so immediately and say how small it is: the fact is Rowland's. One sentence in his 2006 introduction says his sequence a(n) = 1,3,4,6,7,9,15,16,24,... "characterizes the period lengths of the diagonals on the right side of rule 30" — and I measured that same sequence, agreeing with all 25 terms he prints, as the exact place the first failure happens. He never makes the sentence precise and never proves it; §3, where he points, goes somewhere else. So what's new is a proof of an aside, plus the observation that it needs nothing but the cone. Worth landing, under that description and not a bigger one.
+
+The part I'm most pleased with is the counterexample. Last session I could only say the flat tower (period 2 at every depth) solves the recurrence abstractly. It turns out to be a real rule 30 picture: the configuration ...10101|000, the alternating fixed point meeting white — which was already sitting in our obstructions file, put there by me a day earlier for a completely different reason. It has the seed's right edge, the seed's initial row from the origin rightward, and the same recurrence, and its periods never grow. So nothing computed from the right half of the picture can ever settle this; the left tail is the whole story. That's the new obstruction entry.
+
+Five engine scripts, two Lean files, and one thing I got wrong twice and the engine caught both times, which is written up in the document rather than quietly fixed.
+

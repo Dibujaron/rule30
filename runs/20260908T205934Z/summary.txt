@@ -1,0 +1,17 @@
+
+theorist  Sextant
+model     opus
+topic     rightDiagonal minimal periods: are they unbounded, given that the recurrence alone cannot decide it? Your own C5 is the starting point, not an obstacle to route around: the tower is determined only up to one free bit per depth, that bit is the centre column (R_k 0 = centerColumn k), and the all-black choice gives a flat tower of period 2 at every depth. Note this flat tower is NOT excluded by rightDiagonal_not_constant, which only asks that each diagonal take both values for k >= 1 — (10)^inf satisfies it. So assume from the outset that any proof must use a property of the ACTUAL seed beyond the recurrence. The question: what is the weakest such property that forces the minimal periods unbounded, and is any of it already proved on the board? Say plainly if the honest answer is that the weakest sufficient property is itself equivalent to a P1 conjecture.
+attack    c:/Users/dibuj/dev/rule30/docs/attacks/2026-09-08-rightdiagonal-minimal-periods-are-they-unbounded-given-that-the-recurrence-alone-cannot-decide-it-your-own-c5-is-the-sta.md
+document  exists, 36334 bytes
+ended     finished — the theorist reported its attack written; that is its claim about the document, and a captain's reading is the only adjudication
+ceilings  600 turns, $80.0
+cost      $14.22
+turns     80
+session   8537471b-baef-4081-ae46-8ebecb71662c
+log       c:/Users/dibuj/dev/rule30/runs/20260908T205934Z/theorist-1
+
+The document is written and its central claim is not a route but a checked proof: the right-diagonal periods are unbounded, forced by the seed's cone alone, which is already on the board — not by anything of P1's strength.
+
+next topic, in the theorist's words:
+Attack **the converse half of Rowland's sentence: is `a(n)` the *complete* list of doubling depths?** C1 proves the lower bound — the period of right diagonal `a(n)` exceeds `2^n` — and the measurements say the period is exactly `2^(n+1)` there and constant between consecutive `a(n)`, which is the statement "`P_k = 2^(#{n : a(n) ≤ k})`", i.e. Rowland's "characterizes" read as an equality. The missing half is an upper bound: *why does the period not double at any depth other than `a(n)`?* That is exactly the plateau question my last document left open (its C4 closed every depth following a doubling, leaving the 19 plateau interiors below `k = 65`), and C1 now supplies what that document lacked — a reason, rooted in the picture rather than in the recurrence, for the doublings to sit where they do. The two attacks should be run together: with `τ(p) = m(p)` in hand, "the period does not double at `k`" becomes a statement about rows `p` with `m(p) < k`, which is a statement about Rowland's `Δ`, an object with a proved theory (his Theorem 1 and the strictly-increasing argument at lines 364–366) rather than an object nothing is known about. If a captain wants one node instead of a topic: define `minimalPeriod` for `ℕ → Bool`, which three documents have now had to work around, and which every statement in this region wants.

@@ -1251,4 +1251,29 @@ theorem centerColumn_other_of_cohomologous_column (x : ℤ) (j : ℕ) (hx : x �
     ∃ p > 0, ∃ N, PeriodicFrom (fun t => evolve t x) p N := by
   sorry
 
+/-- **The right diagonals' periods are unbounded.** For every `p > 0` some right
+diagonal fails to be `p`-periodic. This is the exact right-side counterpart of
+the proved `leftDiagonal_period_unbounded`, which the right side has been
+missing.
+
+Two differences from the left version, both making this the simpler statement:
+no `∀ N`, because the right diagonals have no transients and are periodic from
+their first cell; and it is stated for every `p` rather than for powers of two,
+which is free rather than strong — for odd `p` it already holds of
+`rightDiagonal 1`, and all the content sits at `p = 2 ^ a`.
+
+The proof rests on the cone and nothing stronger. Let `m` be the distance from
+the right edge of row `p` to the next black cell; then the row at time `p`, slid
+left by `p`, agrees with the seed's row everywhere right of `-m` and differs at
+`-m`, so by `rightmost_difference_moves_right` that difference reaches the
+origin at time exactly `m`. Hence diagonal `m` is not `p`-periodic.
+
+Route written out and kernel-checked by Sextant (theorist, 2026-09-08) in
+`explorer/scratch_rightunbounded_proof.lean`: no `sorry`, and `#print axioms`
+gives exactly `[propext, Classical.choice, Quot.sound]`. Re-verified by the
+captain at seed time. -/
+theorem rightDiagonal_period_unbounded (p : ℕ) (hp : 0 < p) :
+    ∃ k, ¬ PeriodicFrom (rightDiagonal k) p 0 := by
+  sorry
+
 end Statements

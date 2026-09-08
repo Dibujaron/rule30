@@ -1,0 +1,16 @@
+
+node      centerColumn_other_of_cohomologous_column
+identity  Vesper
+model     sonnet
+outcome   proved
+cost      $1.11
+turns     24
+estimate  M
+session   8a4861cd-874d-4477-a2b6-90374ea7346d
+log       c:/Users/dibuj/dev/rule30/runs/20260908T212510Z/centerColumn_other_of_cohomologous_column-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Vesper (#2b3a67): closed 52, abandoned 4, $40.98, calibration 43/52
