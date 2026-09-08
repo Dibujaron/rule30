@@ -1,0 +1,7 @@
+{"ts":"2026-09-08T21:22:09Z","kind":"run","max_attempts":2,"concurrency":2}
+{"ts":"2026-09-08T21:22:09Z","kind":"dispatch","node":"leftDiagonal_eq_rowNat_testBit","identity":"Vesper","model":"haiku","reason":"open leaf; unblocks 0; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4130,"log":"c:/Users/dibuj/dev/rule30/runs/20260908T212209Z/leftDiagonal_eq_rowNat_testBit-1","in_flight":1}
+{"ts":"2026-09-08T21:22:09Z","kind":"dispatch","node":"leftDiagonal_onset_le_of_line","identity":"Cadence","model":"sonnet","reason":"open leaf; unblocks 0; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4131,"log":"c:/Users/dibuj/dev/rule30/runs/20260908T212209Z/leftDiagonal_onset_le_of_line-1","in_flight":2}
+{"ts":"2026-09-08T21:23:27Z","kind":"index","node":"leftDiagonal_eq_rowNat_testBit","module":"Rule30.Proofs.LeftDiagonalEqRowNatTestBit","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-08T21:23:27Z","kind":"theorem_index","node":"leftDiagonal_eq_rowNat_testBit","file":"blueprint/index.md","outcome":"written"}
+{"ts":"2026-09-08T21:23:59Z","kind":"index","node":"leftDiagonal_onset_le_of_line","module":"Rule30.Proofs.LeftDiagonalOnsetLeOfLine","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-08T21:23:59Z","kind":"theorem_index","node":"leftDiagonal_onset_le_of_line","file":"blueprint/index.md","outcome":"written"}

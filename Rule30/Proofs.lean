@@ -61,6 +61,7 @@ import Rule30.Proofs.LeftDiagonalBlackAfterWhite
 import Rule30.Proofs.LeftDiagonalComplAfterBlack
 import Rule30.Proofs.LeftDiagonalMulPowEqSettledCenter
 import Rule30.Proofs.LeftDiagonalPairNeverEventuallyShifted
+import Rule30.Proofs.LeftDiagonalPeriodLeOfBlackBetween
 import Rule30.Proofs.LeftDiagonalPeriodUnbounded
 import Rule30.Proofs.LeftDiagonalPeriodUnboundedLe
 import Rule30.Proofs.LeftDiagonalPeriodicFromPow

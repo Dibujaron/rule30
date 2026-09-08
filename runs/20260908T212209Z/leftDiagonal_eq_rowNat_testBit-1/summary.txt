@@ -1,0 +1,16 @@
+
+node      leftDiagonal_eq_rowNat_testBit
+identity  Vesper
+model     haiku
+outcome   proved
+cost      $0.30
+turns     8
+estimate  S
+session   b4e866f3-260e-4d2a-bd66-6fbcf481ddd2
+log       c:/Users/dibuj/dev/rule30/runs/20260908T212209Z/leftDiagonal_eq_rowNat_testBit-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Vesper (#2b3a67): closed 51, abandoned 4, $39.87, calibration 42/51

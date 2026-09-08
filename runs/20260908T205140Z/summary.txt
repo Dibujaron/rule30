@@ -1,0 +1,20 @@
+
+connector  Portage
+model      opus
+problem    centerColumn_other_isEventuallyPeriodic_of_center
+vantage    cocycles and coboundaries over an odometer: Anzai skew products, the coboundary equation, and whether the transient part of the telescoped centre-column sum in explorer/portage_odometer.mjs section C is a cocycle over the settled part
+sighting   c:/Users/dibuj/dev/rule30/docs/connections/2026-09-08-cocycles-and-coboundaries-over-an-odometer-anzai-skew-products-the-coboundary-equation-and-whether-the-transient-part-of.md
+document   exists, 44367 bytes
+ended      finished — the connector reported its sighting written; that is its claim about the document, and a captain's reading is the only adjudication
+ceilings   600 turns, $80.0
+cost       $10.86
+turns      68
+session    fb421363-9d56-410f-8618-44523112a887
+log        c:/Users/dibuj/dev/rule30/runs/20260908T205140Z/connector-1
+
+The sighting document is written with all six sections: the vantage's question is answered no (measured decisively), five connections carry dictionaries, and two type-checked statements go to section 5.
+
+next vantage, in the connector's words:
+**Algebraic and expansive subdynamics of `Z^2` actions** — Boyle–Lind directional expansiveness, Kitchens–Schmidt, Ledrappier-type `Z^2` subshifts. I named it last time as the vantage I could not reach, and this session has made the case for it sharper rather than weaker: the reason every object in this document fails is that the centre column is read at a depth that grows with time, which is precisely the statement that the vertical direction is not one of the directions in which this `Z^2` array is expansive or periodic, while the two diagonal directions are. Directional expansiveness is the theory built to say which directions in a space-time diagram carry the information, and the picture hands it three measured slopes nobody has related — the seam at `0.25 t`, the damage front at `0.24 t`, and the period exponent `2^(0.41 k)` — in a setting where one diagonal direction is exactly periodic with no transient and the other is eventually periodic. A connector coming from there should be handed the identity `centerColumn t = e(t)_t` from 3.1 and asked whether "the diagonal of a Toeplitz array" has a name in that field.
+
+The vantage I could not reach from where I stood is **contracting self-similar groups and Nekrashevych limit spaces**. I have the three-state automaton explicitly and I could not determine whether the group it generates is contracting, which is the gate to everything in that theory: a nucleus, a limit space, an iterated monodromy interpretation. That is a bounded, concrete computation — build the nucleus of `⟨q0, q1, q2⟩` and see whether it is finite — and it needs somebody who knows the machinery rather than somebody who has just met it. If the group is contracting, rule 30's right edge acquires a compact limit space that no one has looked at, and the question of what the diagonal `t ↦ (E^t δ)_t` means on it is the first thing to ask there.

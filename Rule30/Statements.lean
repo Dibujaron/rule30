@@ -1168,4 +1168,87 @@ theorem rightDiagonal_driver_flip_iff_white (k q : ℕ)
       ↔ rightDiagonal k (j + 2) = false := by
   sorry
 
+/-- **A shared period carries inwards past every diagonal that stays black.**
+If diagonals `m` and `m + 1` share the period `q` from `N` on, and each of the
+next `n` diagonals inwards has black cells arbitrarily far out, then some pair
+`m + n`, `m + n + 1` still shares `q`. This is the reduction the period wall
+needs: it turns a bound on the period of diagonal `k` into a statement about
+how many of the first `k` diagonals are eventually white.
+
+Parked by Vesper at `leftDiagonal_period_le` attempt 1
+(`runs/20260908T205802Z/leftDiagonal_period_le-1/`), which abandoned that node
+and proved this instead. -/
+theorem leftDiagonal_period_le_of_black_between (m q N n : ℕ)
+    (h0 : PeriodicFrom (leftDiagonal m) q N)
+    (h1 : PeriodicFrom (leftDiagonal (m + 1)) q N)
+    (hb : ∀ i < n, ∀ J : ℕ, ∃ j ≥ J, leftDiagonal (m + 1 + i) j = true) :
+    ∃ M, PeriodicFrom (leftDiagonal (m + n)) q M ∧
+      PeriodicFrom (leftDiagonal (m + n + 1)) q M := by
+  sorry
+
+/-- **Bridge to the row model.** Diagonal `k` at index `j` is bit `k` of the
+packed row `j + k`. So the first `k + 1` left diagonals are the low `k + 1` bits
+of `rowNat`, an autonomous finite system — which is what lets the onset wall be
+stated as a claim about the orbit of `1` under a truncated bit map.
+
+Proved by Selvage at `leftDiagonal_onset_le` attempt 2
+(`runs/20260908T124200Z/leftDiagonal_onset_le-2/`), which did not close that
+node; seeded here so the bridge is importable. -/
+theorem leftDiagonal_eq_rowNat_testBit (k j : ℕ) :
+    leftDiagonal k j = (rowNat (j + k)).testBit k := by
+  sorry
+
+/-- **The onset wall, conditional on its own boundary line.** If at every step
+the settled neighbour on the half-speed line is black, or the new diagonal
+already agrees with itself one period later just inside the line, then every
+diagonal has settled by index `k`. This is the onset induction with nothing
+hidden: what remains is the one Boolean condition per diagonal, true for the
+seed by measurement and unproved.
+
+Proved by Selvage at `leftDiagonal_onset_le` attempt 2
+(`runs/20260908T124200Z/leftDiagonal_onset_le-2/`), which did not close that
+node; seeded here so the reduction is importable. -/
+theorem leftDiagonal_onset_le_of_line
+    (h : ∀ m, leftDiagonal (m + 1) (m + 2) = true ∨
+      leftDiagonal (m + 2) (m + 1 + 2 ^ (m + 2)) = leftDiagonal (m + 2) (m + 1))
+    (k : ℕ) : ∃ p > 0, ∃ N ≤ k, PeriodicFrom (leftDiagonal k) p N := by
+  sorry
+
+/-- **The even-driver mirror: the period stays at `L` rather than doubling.**
+`rightDiagonal_periodicFrom_step` gives `2 * q` unconditionally; when the driver
+has even weight over one period the doubling does not happen and `L` itself is a
+period. By `rightDiagonal_recurrence` the diagonal two out advances by the XOR of
+the driver over the window, and the driver has period `L` because both diagonals
+feeding it do — so that sum is the same for every `j` and equals the weight
+parity.
+
+This is the even branch of the doubling criterion stated about *a* period rather
+than the *minimal* one, which is what makes it provable: minimality is the hard
+part and is not claimed here. Handed over by Portage (connector, 2026-09-08),
+which type-checked the signature in `explorer/portage_scratch_evendriver.lean`. -/
+theorem rightDiagonal_periodicFrom_step_of_even_driver (k L : ℕ)
+    (hL0 : PeriodicFrom (rightDiagonal k) L 0)
+    (hL1 : PeriodicFrom (rightDiagonal (k + 1)) L 0)
+    (heven : Even ((Finset.range L).sum
+      (fun j => if rightDiagonal (k + 1) (j + 1) || rightDiagonal k (j + 2) then 1 else 0))) :
+    PeriodicFrom (rightDiagonal (k + 2)) L 0 := by
+  sorry
+
+/-- **A column cohomologous to the centre column inherits its periodicity.**
+If the XOR of some column with the centre column is eventually periodic, and the
+centre column is eventually periodic, then that column is too. The enabling half
+of the coboundary reading: a *difference* of two fibres is the natural object
+there, where "a column repeats" is not.
+
+Handed over by Portage (connector, 2026-09-08), which type-checked the signature
+in `explorer/portage_scratch_evendriver.lean`. The unconditional companion — is
+any such difference eventually periodic at all? — is deliberately not seeded: it
+is measured false to `p ≤ 4096` over 1,616 pairs and belongs to a theorist as an
+obstruction, not to a prover as a node. -/
+theorem centerColumn_other_of_cohomologous_column (x : ℤ) (j : ℕ) (hx : x ≠ 0)
+    (hd : ∃ p > 0, ∃ N, PeriodicFrom (fun t => xor (centerColumn t) (evolve (t + j) x)) p N)
+    (hc : ∃ p > 0, ∃ N, PeriodicFrom centerColumn p N) :
+    ∃ p > 0, ∃ N, PeriodicFrom (fun t => evolve t x) p N := by
+  sorry
+
 end Statements
