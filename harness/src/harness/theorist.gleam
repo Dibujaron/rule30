@@ -76,6 +76,7 @@ pub type Options {
     port: Int,
     topic: Option(String),
     persona: Option(String),
+    mint: Bool,
   )
 }
 
@@ -84,12 +85,29 @@ pub type Options {
 /// strongest the CLI offers, because a theorist's brief is the whole board
 /// and hours of its time, and that is the pass worth spending on.
 pub type Flags {
-  Flags(model: String, topic: Option(String), persona: Option(String))
+  Flags(
+    model: String,
+    topic: Option(String),
+    persona: Option(String),
+    mint: Bool,
+  )
 }
 
 pub const default_model = "fable"
 
-const usage = "theorise [<topic>] [--as <Name>] [--model M]"
+const usage = "theorise [<topic>] [--as <Name> | --mint] [--model M]"
+
+/// `--as` names an existing persona and `--mint` refuses to use one, so
+/// they contradict each other and are refused together rather than resolved
+/// silently.
+///
+/// What a mint MEANS differs by region, and this one wants a reason. A
+/// connect-region mint is the design's intent — that role exists for
+/// independent readings. A theory-region mint FORKS A NOTEBOOK LINEAGE: the
+/// region's persona carries every session's accumulated understanding of
+/// the residual, and a minted theorist starts blind to all of it. That is
+/// sometimes what you want and it is never the default.
+const as_and_mint = "theorise takes --as <Name> or --mint, not both: --as runs as an existing theorist, --mint makes a new one (which starts blind to the region's notebook)"
 
 /// Parse the arguments after `theorise`. A bare argument is the topic — one
 /// word, or a quoted phrase the shell passes as one argument — and a second
@@ -100,7 +118,7 @@ const usage = "theorise [<topic>] [--as <Name>] [--model M]"
 pub fn parse_flags(flags: List(String)) -> Result(Flags, String) {
   parse_flags_into(
     flags,
-    Flags(model: default_model, topic: None, persona: None),
+    Flags(model: default_model, topic: None, persona: None, mint: False),
   )
 }
 
@@ -108,8 +126,11 @@ fn parse_flags_into(flags: List(String), acc: Flags) -> Result(Flags, String) {
   case flags {
     [] -> Ok(acc)
     ["--model", model, ..rest] -> parse_flags_into(rest, Flags(..acc, model:))
+    ["--as", _, ..] if acc.mint -> Error(as_and_mint)
     ["--as", name, ..rest] ->
       parse_flags_into(rest, Flags(..acc, persona: Some(name)))
+    ["--mint", ..] if acc.persona != None -> Error(as_and_mint)
+    ["--mint", ..rest] -> parse_flags_into(rest, Flags(..acc, mint: True))
     [flag] if flag == "--model" || flag == "--as" ->
       Error(flag <> " needs a value")
     [arg, ..rest] ->
@@ -157,8 +178,18 @@ pub fn who(
   region: String,
   role_word: String,
   persona: Option(String),
+  mint: Bool,
 ) -> Result(schedule.Who, String) {
   let prefix = "harness/" <> role_word <> ": "
+  case mint {
+    // `--mint`: a new persona through the full naming ceremony, rather than
+    // the region's existing one. Without this the region is a one-way door
+    // — `who_for` is asked with `busy: []`, so the sole existing identity
+    // counts as idle forever and is adopted every time, and the region can
+    // never reach two however the sessions are spaced. `busy: []` stays
+    // empty here too: a mint is a mint regardless of who else is running.
+    True -> Ok(schedule.Mint(region: region, busy: []))
+    False ->
   case persona {
     None -> Ok(schedule.who_for(roster_, region, busy: []))
     Some(name) ->
@@ -199,6 +230,7 @@ pub fn who(
             },
           )
       }
+    }
   }
 }
 
@@ -808,7 +840,13 @@ pub fn run(cfg: config.Config, options: Options) -> Result(Session, String) {
     None -> dag.load(cfg.dag_path) |> result.try(default_topic)
   })
   use roster_ <- result.try(roster.load(cfg.roster_path))
-  use who_ <- result.try(who(roster_, region, "theorist", options.persona))
+  use who_ <- result.try(who(
+    roster_,
+    region,
+    "theorist",
+    options.persona,
+    options.mint,
+  ))
   let attack = free_document_path(cfg.repo_root, today(), topic, "attacks")
   let obstructions = obstructions_path(cfg.repo_root)
   use run_log <- result.try(log.open(cfg.runs_root, log.new_run_id()))

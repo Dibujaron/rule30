@@ -45,10 +45,10 @@ pub fn flag_value_errors_on_a_bare_trailing_severity_flag_test() {
 pub fn usage_names_the_connect_verb_test() {
   assert string.contains(
     harness.usage(),
-    "connect [<vantage>] [--as <Name>] [--model M]",
+    "connect [<vantage>] [--as <Name> | --mint] [--model M]",
   )
   assert string.contains(
     harness.usage(),
-    "theorise [<topic>] [--as <Name>] [--model M]",
+    "theorise [<topic>] [--as <Name> | --mint] [--model M]",
   )
 }

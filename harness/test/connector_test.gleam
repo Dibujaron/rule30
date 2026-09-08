@@ -202,10 +202,10 @@ pub fn connect_flags_parse_in_any_order_test() {
     == connector.Flags(
       model: "opus",
       vantage: Some("ergodic theory"),
-      persona: Some("Lodestar"),
+      persona: Some("Lodestar"), mint: False
     )
   assert connector.parse_flags([])
-    == Ok(connector.Flags(model: "fable", vantage: None, persona: None))
+    == Ok(connector.Flags(model: "fable", vantage: None, persona: None, mint: False))
   assert connector.default_model == "fable"
   let assert Error(needs_value) = connector.parse_flags(["--model"])
   assert string.contains(needs_value, "--model")
@@ -227,22 +227,23 @@ pub fn the_connector_port_is_three_hundred_above_the_run_base_test() {
 // --- who ----------------------------------------------------------------------------------
 
 pub fn who_picks_the_eldest_connector_or_decides_to_mint_test() {
-  assert connector.who(peopled(), None)
+  assert connector.who(peopled(), None, False)
     == Ok(schedule.Existing(identity("Meridian", connector.region)))
-  assert connector.who(peopled(), Some("Lodestar"))
+  assert connector.who(peopled(), Some("Lodestar"), False)
     == Ok(schedule.Existing(identity("Lodestar", connector.region)))
   assert connector.who(
       roster.Roster([identity("Scripted", "P1"), identity("Vesper", "theory")]),
       None,
+      False,
     )
     == Ok(schedule.Mint(region: connector.region, busy: []))
-  let assert Error(empty) = connector.who(roster.Roster([]), Some("Nobody"))
+  let assert Error(empty) = connector.who(roster.Roster([]), Some("Nobody"), False)
   assert string.contains(empty, "leave --as off")
   // A theorist's name is refused, not borrowed: its notebook in a
   // connector's brief would be a theorist wearing the name.
-  let assert Error(foreign) = connector.who(peopled(), Some("Vesper"))
+  let assert Error(foreign) = connector.who(peopled(), Some("Vesper"), False)
   assert string.contains(foreign, "Vesper is on the roster for region theory")
-  let assert Error(unknown) = connector.who(peopled(), Some("Nobody"))
+  let assert Error(unknown) = connector.who(peopled(), Some("Nobody"), False)
   assert string.contains(unknown, "Meridian, Lodestar")
 }
 
@@ -475,7 +476,7 @@ fn options(port: Int, vantage: String) -> connector.Options {
     model: "haiku",
     port:,
     vantage: Some(vantage),
-    persona: None,
+    persona: None, mint: False
   )
 }
 
@@ -765,7 +766,7 @@ pub fn as_starts_the_named_connector_and_a_missing_document_is_abandoned_test() 
         model: "haiku",
         port: ports.span(1),
         vantage: None,
-        persona: Some("Lodestar"),
+        persona: Some("Lodestar"), mint: False
       ),
     )
   assert session.identity.name == "Lodestar"
@@ -802,7 +803,7 @@ pub fn as_with_an_unknown_or_foreign_name_refuses_before_writing_test() {
         model: "haiku",
         port: ports.span(1),
         vantage: Some("x"),
-        persona: Some("Nobody"),
+        persona: Some("Nobody"), mint: False
       ),
     )
   assert string.contains(unknown, "no connector named Nobody")
@@ -813,7 +814,7 @@ pub fn as_with_an_unknown_or_foreign_name_refuses_before_writing_test() {
         model: "haiku",
         port: ports.span(1),
         vantage: Some("x"),
-        persona: Some("Vesper"),
+        persona: Some("Vesper"), mint: False
       ),
     )
   assert string.contains(foreign, "Vesper is on the roster for region theory")
@@ -899,4 +900,44 @@ pub fn a_second_sighting_on_one_vantage_in_a_day_gets_its_own_file_test() {
   assert string.contains(refused, "deny")
   assert string.contains(refused, second)
   assert read(first) == "# First sighting, Meridian's"
+}
+
+/// `--mint` forces a new persona instead of adopting the region's existing
+/// one. Without it the connect region is a one-way door: `who` asks
+/// `schedule.who_for` with `busy: []`, so the sole existing identity counts
+/// as idle forever and is adopted every time — the region can never reach
+/// two, whether the sessions are concurrent or a day apart. That is right
+/// for a hand-started session resuming its own work and wrong for a round
+/// of independent vantages, which is what the role exists for.
+pub fn mint_forces_a_new_connector_rather_than_adopting_the_existing_one_test() {
+  let assert Ok(flags) = connector.parse_flags(["--mint"])
+  assert flags.mint
+  assert flags.persona == None
+  let r =
+    roster.Roster(identities: [
+      roster.Identity(
+        name: "Portage",
+        region: "connect",
+        created: "t0",
+        naming_reason: "fixture",
+        opening: "",
+        color: None,
+      ),
+    ])
+  // Without --mint the region's one identity is adopted, forever.
+  let assert Ok(schedule.Existing(who)) = connector.who(r, None, False)
+  assert who.name == "Portage"
+  // With it, a mint, in this region and with nobody treated as busy.
+  let assert Ok(schedule.Mint(region:, ..)) = connector.who(r, None, True)
+  assert region == "connect"
+}
+
+/// `--as` and `--mint` contradict each other: one names an existing persona
+/// and the other refuses to use one. Picking a winner silently is how a
+/// captain ends up with a session running as someone they did not choose.
+pub fn as_and_mint_together_are_refused_test() {
+  let assert Error(reason) = connector.parse_flags(["--as", "Portage", "--mint"])
+  assert string.contains(reason, "--as")
+  assert string.contains(reason, "--mint")
+  let assert Error(_) = connector.parse_flags(["--mint", "--as", "Portage"])
 }

@@ -90,6 +90,7 @@ pub type Options {
     port: Int,
     vantage: Option(String),
     persona: Option(String),
+    mint: Bool,
   )
 }
 
@@ -99,12 +100,17 @@ pub type Options {
 /// time on one problem is the pass worth spending on. Not
 /// `theorist.Flags`, for the same reason as `Options`.
 pub type Flags {
-  Flags(model: String, vantage: Option(String), persona: Option(String))
+  Flags(
+    model: String,
+    vantage: Option(String),
+    persona: Option(String),
+    mint: Bool,
+  )
 }
 
 pub const default_model = "fable"
 
-const usage = "connect [<vantage>] [--as <Name>] [--model M]"
+const usage = "connect [<vantage>] [--as <Name> | --mint] [--model M]"
 
 /// Parse the arguments after `connect`. A bare argument is the vantage —
 /// one word, or a quoted phrase the shell passes as one argument — and a
@@ -117,7 +123,7 @@ const usage = "connect [<vantage>] [--as <Name>] [--model M]"
 pub fn parse_flags(flags: List(String)) -> Result(Flags, String) {
   parse_flags_into(
     flags,
-    Flags(model: default_model, vantage: None, persona: None),
+    Flags(model: default_model, vantage: None, persona: None, mint: False),
   )
 }
 
@@ -125,8 +131,11 @@ fn parse_flags_into(flags: List(String), acc: Flags) -> Result(Flags, String) {
   case flags {
     [] -> Ok(acc)
     ["--model", model, ..rest] -> parse_flags_into(rest, Flags(..acc, model:))
+    ["--as", _, ..] if acc.mint -> Error(as_and_mint)
     ["--as", name, ..rest] ->
       parse_flags_into(rest, Flags(..acc, persona: Some(name)))
+    ["--mint", ..] if acc.persona != None -> Error(as_and_mint)
+    ["--mint", ..rest] -> parse_flags_into(rest, Flags(..acc, mint: True))
     [flag] if flag == "--model" || flag == "--as" ->
       Error(flag <> " needs a value")
     [arg, ..rest] ->
@@ -145,6 +154,13 @@ fn parse_flags_into(flags: List(String), acc: Flags) -> Result(Flags, String) {
   }
 }
 
+/// `--as` names an existing persona and `--mint` refuses to use one, so
+/// they contradict each other. Refused rather than resolved: picking a
+/// winner silently is how a captain ends up with a session running as
+/// somebody they did not choose, and the whole point of both flags is that
+/// the captain chooses.
+const as_and_mint = "connect takes --as <Name> or --mint, not both: --as runs as an existing connector, --mint makes a new one"
+
 /// The port a hand-started connector's guard listens on: three hundred
 /// above the run base, clear of any run (which counts up from the base), of
 /// a seeder started beside it (a hundred above) and of a theorist (two
@@ -161,8 +177,9 @@ pub fn default_port(cfg: config.Config) -> Int {
 pub fn who(
   roster_: roster.Roster,
   persona: Option(String),
+  mint: Bool,
 ) -> Result(schedule.Who, String) {
-  theorist.who(roster_, region, "connector", persona)
+  theorist.who(roster_, region, "connector", persona, mint)
 }
 
 // --- the problem and the file -----------------------------------------------------
@@ -511,7 +528,7 @@ pub fn run(cfg: config.Config, options: Options) -> Result(Session, String) {
   use d <- result.try(dag.load(cfg.dag_path))
   use wall <- result.try(problem(d))
   use roster_ <- result.try(roster.load(cfg.roster_path))
-  use who_ <- result.try(who(roster_, options.persona))
+  use who_ <- result.try(who(roster_, options.persona, options.mint))
   let sighting =
     free_sighting_path(
       cfg.repo_root,

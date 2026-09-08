@@ -160,7 +160,7 @@ fn put(f: Fixture, relative: String, text: String) -> Nil {
 }
 
 fn options(port: Int, topic: String) -> theorist.Options {
-  theorist.Options(model: "haiku", port:, topic: Some(topic), persona: None)
+  theorist.Options(model: "haiku", port:, topic: Some(topic), persona: None, mint: False)
 }
 
 fn init_line(session_id: String) -> String {
@@ -437,7 +437,7 @@ pub fn as_starts_the_named_theorist_and_a_missing_document_is_abandoned_test() {
         model: "haiku",
         port: ports.span(1),
         topic: None,
-        persona: Some("Quill"),
+        persona: Some("Quill"), mint: False
       ),
     )
   assert session.identity.name == "Quill"
@@ -506,7 +506,7 @@ pub fn as_with_an_unknown_or_foreign_name_refuses_test() {
         model: "haiku",
         port: ports.span(1),
         topic: Some("x"),
-        persona: Some("Nobody"),
+        persona: Some("Nobody"), mint: False
       ),
     )
   assert string.contains(unknown, "no theorist named Nobody")
@@ -518,7 +518,7 @@ pub fn as_with_an_unknown_or_foreign_name_refuses_test() {
         model: "haiku",
         port: ports.span(1),
         topic: Some("x"),
-        persona: Some("Scripted"),
+        persona: Some("Scripted"), mint: False
       ),
     )
   assert string.contains(foreign, "Scripted is on the roster for region P1")
@@ -565,19 +565,20 @@ pub fn a_theorist_is_minted_when_the_roster_has_none_test() {
 // --- who ----------------------------------------------------------------------------------
 
 pub fn who_picks_the_eldest_theorist_or_decides_to_mint_test() {
-  assert theorist.who(peopled(), theorist.region, "theorist", None)
+  assert theorist.who(peopled(), theorist.region, "theorist", None, False)
     == Ok(schedule.Existing(identity("Vesper", theorist.region)))
-  assert theorist.who(peopled(), theorist.region, "theorist", Some("Quill"))
+  assert theorist.who(peopled(), theorist.region, "theorist", Some("Quill"), False)
     == Ok(schedule.Existing(identity("Quill", theorist.region)))
   assert theorist.who(
       roster.Roster([identity("Scripted", "P1")]),
       theorist.region,
       "theorist",
       None,
+      False,
     )
     == Ok(schedule.Mint(region: theorist.region, busy: []))
   let assert Error(empty) =
-    theorist.who(roster.Roster([]), theorist.region, "theorist", Some("Nobody"))
+    theorist.who(roster.Roster([]), theorist.region, "theorist", Some("Nobody"), False)
   assert string.contains(empty, "leave --as off")
 }
 
@@ -774,17 +775,17 @@ pub fn theorise_flags_parse_in_any_order_test() {
     == theorist.Flags(
       model: "opus",
       topic: Some("the seam"),
-      persona: Some("Quill"),
+      persona: Some("Quill"), mint: False
     )
   assert theorist.parse_flags([])
     == Ok(theorist.Flags(
       model: theorist.default_model,
       topic: None,
-      persona: None,
+      persona: None, mint: False
     ))
   assert theorist.default_model == "fable"
   assert theorist.parse_flags(["onset"])
-    == Ok(theorist.Flags(model: "fable", topic: Some("onset"), persona: None))
+    == Ok(theorist.Flags(model: "fable", topic: Some("onset"), persona: None, mint: False))
   let assert Error(needs_value) = theorist.parse_flags(["--model"])
   assert string.contains(needs_value, "--model")
   let assert Error(needs_name) = theorist.parse_flags(["x", "--as"])
@@ -954,4 +955,37 @@ pub fn a_long_topic_is_truncated_to_a_writable_slug_test() {
   assert !string.ends_with(ends_on_dash, "-")
   // An ordinary topic is untouched.
   assert theorist.slug("ergodic theory") == "ergodic-theory"
+}
+
+/// The theory region has the same one-way door as the connect region —
+/// `theory` has held exactly one identity through six Sextant sessions, and
+/// that is the mechanism rather than a coincidence — so `theorise` gets the
+/// same flag. What a mint MEANS differs: a theory-region mint forks a
+/// notebook lineage and starts blind to everything the region has learned,
+/// so it wants a reason where a connect-region mint does not.
+pub fn theorise_mint_forces_a_new_theorist_test() {
+  let assert Ok(flags) = theorist.parse_flags(["--mint"])
+  assert flags.mint
+  let r =
+    roster.Roster(identities: [
+      roster.Identity(
+        name: "Sextant",
+        region: "theory",
+        created: "t0",
+        naming_reason: "fixture",
+        opening: "",
+        color: None,
+      ),
+    ])
+  let assert Ok(schedule.Existing(who)) =
+    theorist.who(r, "theory", "theorist", None, False)
+  assert who.name == "Sextant"
+  let assert Ok(schedule.Mint(region:, ..)) =
+    theorist.who(r, "theory", "theorist", None, True)
+  assert region == "theory"
+}
+
+pub fn theorise_as_and_mint_together_are_refused_test() {
+  let assert Error(reason) = theorist.parse_flags(["--as", "Sextant", "--mint"])
+  assert string.contains(reason, "--mint")
 }

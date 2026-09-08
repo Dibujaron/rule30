@@ -127,7 +127,7 @@ fn run(cfg: config.Config, arguments: List(String)) -> Nil {
 /// What `gleam run --` prints for an argument list it does not recognise:
 /// every verb, in the shape a captain types it.
 pub fn usage() -> String {
-  "usage: gleam run -- status | prove-one <node-id> | run [--max-attempts N] [--concurrency K] | reopen <node-id> | bugs [--area A] [--severity S] [--all] | bugs file <path-to-row.json> | bugs claim <id> --as <Identity> [--session <ref>] | bugs reopen <id> | bugs close <id> fixed|wontfix --resolution <text> | writes | index | seed [--model M] [--region R] | seed brief [--region R] | seed check [path] | theorise [<topic>] [--as <Name>] [--model M] | connect [<vantage>] [--as <Name>] [--model M] | spike"
+  "usage: gleam run -- status | prove-one <node-id> | run [--max-attempts N] [--concurrency K] | reopen <node-id> | bugs [--area A] [--severity S] [--all] | bugs file <path-to-row.json> | bugs claim <id> --as <Identity> [--session <ref>] | bugs reopen <id> | bugs close <id> fixed|wontfix --resolution <text> | writes | index | seed [--model M] [--region R] | seed brief [--region R] | seed check [path] | theorise [<topic>] [--as <Name> | --mint] [--model M] | connect [<vantage>] [--as <Name> | --mint] [--model M] | spike"
 }
 
 /// One theorist session on the parsed flags' model, topic and persona, on
@@ -144,6 +144,7 @@ fn theorist_session(
       port: theorist.default_port(cfg),
       topic: flags.topic,
       persona: flags.persona,
+      mint: flags.mint,
     ),
   )
   |> result.map(fn(session) { session.summary })
@@ -163,6 +164,7 @@ fn connector_session(
       port: connector.default_port(cfg),
       vantage: flags.vantage,
       persona: flags.persona,
+      mint: flags.mint,
     ),
   )
   |> result.map(fn(session) { session.summary })
