@@ -929,6 +929,26 @@ theorem leftDiagonal_period_unbounded (a : ℕ) :
     ∃ k, ∀ N, ¬ PeriodicFrom (leftDiagonal k) (2 ^ a) N := by
   sorry
 
+/-- **The period doubling happens at a bounded depth**: the first diagonal
+that is not eventually `2 ^ a`-periodic is found by depth `4 ^ 2 ^ a + 1`.
+This is `leftDiagonal_period_unbounded` with a rate: that says the doublings
+never stop, this says how long you may have to wait for the next one. The
+measured depths are 3, 8, 29, 400, 87867 and 2107985255, so the bound is
+enormously loose — but it is a bound, and none is in print.
+
+Why: if every diagonal up to depth `K` were eventually `2 ^ a`-periodic,
+read each tail as a word `Fin (2 ^ a) → Bool` at an onset that is a multiple
+of `2 ^ a`, exactly as in `leftDiagonal_period_unbounded`. A *pair* of such
+words for adjacent diagonals ranges over a type of cardinality
+`(2 ^ 2 ^ a) ^ 2 = 4 ^ 2 ^ a`, so once `K` exceeds that, two diagonals carry
+the same pair and `leftDiagonal_pair_never_eventually_shifted` is
+contradicted. The proof is that argument with
+`Finite.exists_ne_map_eq_of_infinite` replaced by a counting bound on a
+`Fintype`; the phase alignment is unchanged. -/
+theorem leftDiagonal_period_unbounded_le (a : ℕ) :
+    ∃ k ≤ 4 ^ 2 ^ a + 1, ∀ N, ¬ PeriodicFrom (leftDiagonal k) (2 ^ a) N := by
+  sorry
+
 /-! ## P1 — the settled configuration: the left side of the picture as a row of its own
 
 Seeded 2026-09-07 from blueprint/crystals.md items 46–47, out of Sextant's
