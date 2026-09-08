@@ -936,19 +936,38 @@ pub fn drive(
   #(tally, ending)
 }
 
-/// A session's command line. `--bare` is deliberately absent: it would
-/// switch the session to API-key billing, and this run is on a
-/// subscription. `schema` is the `--json-schema` every turn is held to, and
-/// is the role's: a prover reports an outcome and a size estimate, a seeder
-/// an outcome and a journal entry. The tool list is the same for both —
-/// what each may do with those tools is the guard's decision, not the
-/// command line's.
+/// The tools every dispatched session may call, as `--allowedTools` names
+/// them. What each role may do with them is the guard's decision, not the
+/// command line's; a role that needs a tool this list omits — the connector's
+/// two web tools — says so through `launch_with_tools`.
+pub const default_tools = ["Read", "Edit", "Write", "Grep", "Glob", "Bash"]
+
+/// A session's command line on `default_tools`. `--bare` is deliberately
+/// absent: it would switch the session to API-key billing, and this run is
+/// on a subscription. `schema` is the `--json-schema` every turn is held
+/// to, and is the role's: a prover reports an outcome and a size estimate,
+/// a seeder an outcome and a journal entry.
 pub fn launch(
   cfg: config.Config,
   model: String,
   guard_: guard.Guard,
   brief_path: String,
   schema: String,
+) -> claude.Launch {
+  launch_with_tools(cfg, model, guard_, brief_path, schema, default_tools)
+}
+
+/// `launch` with the tool list given. The CLI refuses a tool that is not
+/// on this list before any hook fires (`--permission-mode dontAsk`), so a
+/// tool is granted to a role by naming it here and nowhere else; the guard
+/// then decides what the role may do with it.
+pub fn launch_with_tools(
+  cfg: config.Config,
+  model: String,
+  guard_: guard.Guard,
+  brief_path: String,
+  schema: String,
+  tools: List(String),
 ) -> claude.Launch {
   claude.Launch(
     node: cfg.node_exe,
@@ -968,7 +987,7 @@ pub fn launch(
       "--max-budget-usd",
       float.to_string(cfg.max_budget_usd),
       "--allowedTools",
-      "Read,Edit,Write,Grep,Glob,Bash",
+      string.join(tools, ","),
       "--permission-mode",
       "dontAsk",
       "--permission-prompts",

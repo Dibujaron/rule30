@@ -44,14 +44,17 @@ import simplifile
 /// but a search at a node nobody knows the proof of needs room to leave
 /// partial structure behind, and forty turns is not room.
 ///
-/// `theorist_max_turns`, `theorist_max_budget_usd`, `seeder_max_turns` and
-/// `seeder_max_budget_usd` are the ceilings for the two hand-started
-/// session kinds (`for_theorist`, `for_seeder`). They replace the ordinary
-/// pair the same way the research pair does, because `worker.launch` reads
-/// `max_turns` and `max_budget_usd` and nothing else: a theorist or seeder
-/// started under the run's config unchanged runs under a prover's ceilings,
-/// which is how the first theorist ended at $4 with its document half
-/// written. The spec's line for a theorist is hours, not turns.
+/// `theorist_max_turns`, `theorist_max_budget_usd`, `seeder_max_turns`,
+/// `seeder_max_budget_usd`, `connector_max_turns` and
+/// `connector_max_budget_usd` are the ceilings for the three hand-started
+/// session kinds (`for_theorist`, `for_seeder`, `for_connector`). They
+/// replace the ordinary pair the same way the research pair does, because
+/// `worker.launch` reads `max_turns` and `max_budget_usd` and nothing else:
+/// a hand-started session started under the run's config unchanged runs
+/// under a prover's ceilings, which is how the first theorist ended at $4
+/// with its document half written. The spec's line for a theorist and for
+/// a connector is hours, not turns; a connector's pair defaults to the
+/// theorist's resolved pair and only `HARNESS_CONNECTOR_*` moves it.
 pub type Config {
   Config(
     repo_root: String,
@@ -72,6 +75,8 @@ pub type Config {
     research_max_budget_usd: Float,
     theorist_max_turns: Int,
     theorist_max_budget_usd: Float,
+    connector_max_turns: Int,
+    connector_max_budget_usd: Float,
     seeder_max_turns: Int,
     seeder_max_budget_usd: Float,
     turn_timeout_ms: Int,
@@ -97,6 +102,9 @@ pub fn load() -> Result(Config, String) {
     |> result.try_recover(fn(_) { shell.which("lake") })
     |> result.replace_error("harness config: `lake` is not on PATH"),
   )
+  let theorist_max_turns = env_int("HARNESS_THEORIST_MAX_TURNS", 600)
+  let theorist_max_budget_usd =
+    env_float("HARNESS_THEORIST_MAX_BUDGET_USD", 80.0)
   Ok(Config(
     repo_root:,
     node_exe: env("HARNESS_NODE") |> result.unwrap(default_node_exe),
@@ -124,8 +132,16 @@ pub fn load() -> Result(Config, String) {
     // is a proposer on a budget — twice an ordinary attempt, since one pass
     // over the whole board was 26 turns on 2026-09-07 and a pass that also
     // scans diagonals needs more.
-    theorist_max_turns: env_int("HARNESS_THEORIST_MAX_TURNS", 600),
-    theorist_max_budget_usd: env_float("HARNESS_THEORIST_MAX_BUDGET_USD", 80.0),
+    theorist_max_turns:,
+    theorist_max_budget_usd:,
+    connector_max_turns: env_int(
+      "HARNESS_CONNECTOR_MAX_TURNS",
+      theorist_max_turns,
+    ),
+    connector_max_budget_usd: env_float(
+      "HARNESS_CONNECTOR_MAX_BUDGET_USD",
+      theorist_max_budget_usd,
+    ),
     seeder_max_turns: env_int("HARNESS_SEEDER_MAX_TURNS", 80),
     seeder_max_budget_usd: env_float("HARNESS_SEEDER_MAX_BUDGET_USD", 12.0),
     turn_timeout_ms: env_int("HARNESS_TURN_TIMEOUT_MS", 900_000),
@@ -203,6 +219,17 @@ pub fn for_theorist(cfg: Config) -> Config {
     ..cfg,
     max_turns: cfg.theorist_max_turns,
     max_budget_usd: cfg.theorist_max_budget_usd,
+  )
+}
+
+/// The configuration a connector session runs under: `cfg` with the
+/// connector ceilings in place of the ordinary ones, and nothing else
+/// changed. Applied in `connector.run` before `worker.launch_with_tools`.
+pub fn for_connector(cfg: Config) -> Config {
+  Config(
+    ..cfg,
+    max_turns: cfg.connector_max_turns,
+    max_budget_usd: cfg.connector_max_budget_usd,
   )
 }
 

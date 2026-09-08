@@ -6,6 +6,7 @@ import gleam/string
 import harness/claude
 import harness/config
 import harness/dag.{Attempt, Dag, Node}
+import harness/guard
 import harness/roster.{type Identity, Identity}
 import harness/worker
 import harness/worker/brief
@@ -959,4 +960,40 @@ pub fn a_proposals_field_that_is_not_an_array_costs_nothing_but_is_named_test() 
   assert r.outcome == "proved"
   assert r.proposals == []
   assert r.discarded == ["proposals: not an array"]
+}
+
+/// `launch` is `launch_with_tools` on the default list; a role that needs a
+/// tool the default omits names it, and the rest of the command line — no
+/// `--bare`, the ceilings, the settings, the brief, the schema — is the same.
+pub fn launch_with_tools_adds_to_the_allowlist_and_changes_nothing_else_test() {
+  let assert Ok(cfg) = config.load()
+  let g = guard.Guard(port: 4430, token: "t", settings_path: "s.json")
+  let plain = worker.launch(cfg, "fable", g, "brief.md", "{}")
+  let wide =
+    worker.launch_with_tools(
+      cfg,
+      "fable",
+      g,
+      "brief.md",
+      "{}",
+      list.append(worker.default_tools, ["WebFetch", "WebSearch"]),
+    )
+  assert plain
+    == worker.launch_with_tools(
+      cfg,
+      "fable",
+      g,
+      "brief.md",
+      "{}",
+      worker.default_tools,
+    )
+  assert list.contains(plain.args, "Read,Edit,Write,Grep,Glob,Bash")
+  assert list.contains(
+    wide.args,
+    "Read,Edit,Write,Grep,Glob,Bash,WebFetch,WebSearch",
+  )
+  assert !list.contains(plain.args, "--bare")
+  assert !list.contains(wide.args, "--bare")
+  assert list.filter(wide.args, fn(a) { !string.contains(a, "WebFetch") })
+    == list.filter(plain.args, fn(a) { !string.contains(a, "Glob,Bash") })
 }

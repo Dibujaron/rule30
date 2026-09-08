@@ -175,6 +175,30 @@ pub fn region_descriptions_are_the_spec_wording_test() {
     == "the density bookkeeping behind the balance conjecture: counting black cells and bounding ratios in ℝ"
 }
 
+pub fn naming_prompt_asks_a_connect_mint_to_name_itself_as_a_connector_test() {
+  let alone =
+    roster.naming_prompt("connect", roster.region_description("connect"), [])
+  assert string.contains(alone, "a small team of connectors")
+  assert !string.contains(alone, "prover")
+  assert !string.contains(alone, "theorist")
+  let joined =
+    roster.naming_prompt("connect", roster.region_description("connect"), [
+      "Lodestar",
+    ])
+  assert string.contains(
+    joined,
+    "This region already has a connector named Lodestar.",
+  )
+}
+
+pub fn the_connect_region_description_says_dictionary_and_never_proof_test() {
+  let text = roster.region_description("connect")
+  assert text != "connect"
+  assert string.contains(text, "dictionary")
+  assert string.contains(text, "another field")
+  assert string.contains(text, "never a proof")
+}
+
 pub fn naming_schema_requires_all_five_fields_test() {
   let s = roster.naming_schema()
   assert string.contains(

@@ -230,10 +230,15 @@ pub fn a_failed_bash_call_is_hooked_the_same_as_a_successful_one_test() {
   let path = "build/test-runs/settings-failure-hook.json"
   let assert Ok(_) = guard.write_settings(g, path)
   let assert Ok(content) = simplifile.read(path)
-  let assert [#("Bash", success_command, 30)] =
+  let assert [#(success_matcher, success_command, 30)] =
     registered_hooks(content, "PostToolUse")
-  let assert [#("Bash", failure_command, 30)] =
+  let assert [#(failure_matcher, failure_command, 30)] =
     registered_hooks(content, "PostToolUseFailure")
+  // `WebFetch` fires this same hook now, so a completed or failed fetch is
+  // on the record too — see the `event` field a `web` row carries.
+  assert list.contains(string.split(success_matcher, "|"), "Bash")
+  assert list.contains(string.split(success_matcher, "|"), "WebFetch")
+  assert success_matcher == failure_matcher
   assert failure_command
     == guard.hook_command("abc123", 5555, 20, "PostToolUseFailure")
   assert failure_command
@@ -275,11 +280,16 @@ pub fn the_generated_settings_match_the_template_test() {
 /// A hook that is not registered never fires, so the guard's `SendMessage`
 /// refusal is only as real as this matcher. Checked on the template, which
 /// the test above holds equal to the generated file.
-pub fn the_pretooluse_matcher_names_send_message_test() {
+pub fn the_pretooluse_matcher_names_send_message_and_the_web_tools_test() {
   let assert Ok(template) = simplifile.read("hooks/settings.template.json")
   let assert [#(matcher, _, _)] = registered_hooks(template, "PreToolUse")
-  assert list.contains(string.split(matcher, "|"), "SendMessage")
-  assert list.contains(string.split(matcher, "|"), "Bash")
+  let tools = string.split(matcher, "|")
+  assert list.contains(tools, "SendMessage")
+  assert list.contains(tools, "Bash")
+  // A URL is only logged if the hook fires, and it only fires if the
+  // matcher names the tool.
+  assert list.contains(tools, "WebFetch")
+  assert list.contains(tools, "WebSearch")
 }
 
 // --- PreCompact ---------------------------------------------------------------

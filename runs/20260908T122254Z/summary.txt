@@ -1,0 +1,4 @@
+
+leftDiagonal_period_unbounded_le  Vesper   opus    proved            $2.10   12 turns
+
+1 attempt(s), 1 closed, $2.10 in all

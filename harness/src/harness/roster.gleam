@@ -286,16 +286,19 @@ pub fn region_description(region: String) -> String {
       "the harness itself: the dispatcher, the guard, the verifier and the board every prover runs inside"
     "theory" ->
       "the whole board at once: what would have to be true for a wall to fall, which routes are already dead, and which claims survive the engine — an argument, never a proof"
+    "connect" ->
+      "one open problem seen from every field of mathematics where an object like it has been studied: a dictionary between this project's objects and another field's, row by row, with the seams where it breaks — a sighting, never a proof"
     other -> other
   }
 }
 
 /// The single message the naming ceremony sends. Names are self-chosen: the
 /// first instance of an identity is told its region and asked to name
-/// itself — as a prover, or as a theorist when the region is `theory` — and
-/// both the name and its stated reason go in the log. When the region
-/// already has members, the newcomer is told their names, so it can place
-/// itself beside them and cannot pick one of them.
+/// itself — as a prover, as a theorist when the region is `theory`, or as a
+/// connector when it is `connect` — and both the name and its stated reason
+/// go in the log. When the region already has members, the newcomer is told
+/// their names, so it can place itself beside them and cannot pick one of
+/// them.
 pub fn naming_prompt(
   region: String,
   region_description: String,
@@ -323,11 +326,13 @@ pub fn naming_prompt(
 }
 
 /// The word a newcomer is asked to name itself as. A mint in the `theory`
-/// region is a theorist (`theorist.gleam` runs the same ceremony the
-/// dispatcher does for a prover); every other region's mint is a prover.
+/// region is a theorist and one in `connect` is a connector (`theorist.gleam`
+/// and `connector.gleam` run the same ceremony the dispatcher does for a
+/// prover); every other region's mint is a prover.
 fn role(region: String) -> String {
   case region {
     "theory" -> "theorist"
+    "connect" -> "connector"
     _ -> "prover"
   }
 }

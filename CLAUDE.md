@@ -378,6 +378,8 @@ cd harness && gleam run -- run --max-attempts 3 --concurrency 3
 cd harness && gleam run -- reopen <node-id>     # a crashed run left a node `claimed`; put it back on the board
 cd harness && gleam run -- theorise [<topic>] [--as <Name>] [--model M]
                                                 # one theorist session on a topic, as a named or minted theory persona; never started by the scheduler
+cd harness && gleam run -- connect [<vantage>] [--as <Name>] [--model M]
+                                                # one connector session on the P1 frontier from a vantage, as a named or minted connect persona; never started by the scheduler; its guard port is the run base + 300, its record runs/<run-id>/connector-1/, its one file docs/connections/<date>-<slug>.md, and it may read the web (every URL logged)
 cd harness && gleam run -- seed [--model M] [--region R]
                                                 # hand-start one seeder session; it proposes into blueprint/proposals/next.json under the seeder guard, and the check report prints when it ends
 cd harness && gleam run -- bugs file <row.json>   # put one hand-written row on the board; refused, naming every fault, before it can break the board
