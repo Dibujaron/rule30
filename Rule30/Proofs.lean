@@ -30,6 +30,7 @@ import Rule30.Proofs.CenterColumnRightNotBothIsEventuallyPeriodic
 import Rule30.Proofs.CenterColumnSuccOfBlack
 import Rule30.Proofs.CenterColumnZero
 import Rule30.Proofs.ColumnOneOfWhite
+import Rule30.Proofs.ColumnSettledConfigEq
 import Rule30.Proofs.ColumnSuccOfBlack
 import Rule30.Proofs.ConfigEqOfRightAndColumn
 import Rule30.Proofs.EvolveEqFalseOfOutsideCone
@@ -56,6 +57,7 @@ import Rule30.Proofs.IsEventuallyPeriodicColumnUnique
 import Rule30.Proofs.IsEventuallyPeriodicCommonPeriod
 import Rule30.Proofs.IsEventuallyPeriodicOfPeriodicStep
 import Rule30.Proofs.IsEventuallyPeriodicShift
+import Rule30.Proofs.LeftDiagonalMulPowEqSettledCenter
 import Rule30.Proofs.LeftDiagonalPairNeverEventuallyShifted
 import Rule30.Proofs.LeftDiagonalPeriodUnbounded
 import Rule30.Proofs.LeftDiagonalPeriodicFromPow

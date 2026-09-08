@@ -1,0 +1,17 @@
+
+theorist  Sextant
+model     fable
+topic     leftDiagonal_period_le: the period wall through the orbit of the recurrence alone, why the gaps between eventually-white diagonals grow
+attack    c:/Users/dibuj/dev/rule30/docs/attacks/2026-09-08-leftdiagonal-period-le-the-period-wall-through-the-orbit-of-the-recurrence-alone-why-the-gaps-between-eventually-white-diagonals-grow.md
+document  exists, 29298 bytes
+ended     finished — the theorist reported its attack written; that is its claim about the document, and a captain's reading is the only adjudication
+ceilings  600 turns, $80.0
+cost      $12.75
+turns     71
+session   be612205-7093-4483-9994-eb047c697a2d
+log       c:/Users/dibuj/dev/rule30/runs/20260908T011243Z/theorist-1
+
+Document written with all six sections: the period wall reduces to a lower bound on the gaps between eventually-white diagonals in the recurrence's orbit; the gaps grow because whites are a 2^-L fraction of a pair space walked without repetition (average gap ≤ 2^L, exactly, measured 1.000·2^L at L = 16), which gives an upper bound and no lower bound, since at every even period L ≥ 8 the finite system has whites eight diagonals apart; four local lemmas kernel-checked; the seed's orbit run to 5·10^9 finds the next white at 1,420,878,968 and reproduces NKS's sixth doubling 2,107,985,255 exactly.
+
+next topic, in the theorist's words:
+Not this wall again: it has no mechanism, and a third document on it would re-enumerate. Two things follow from this session. First, the computation of C4 makes the settled-word orbit cheap to any depth at any fixed period, so the natural next reading is the *settled centre column* `s(k) = S_k(0)` (crystal 48, `settledCenter`), which the same bit-parallel step delivers to `10^9` terms in minutes where my fourth attack stopped at `240,001`: whether it is balanced and factor-complete at that depth is the cheapest large test of Kopra's width-1 problem in the configuration with no transients, and a periodicity there would be a sensation. Second, the wall's honest form should be recorded as crystal 51 was for the onset wall: `leftDiagonal_period_le ⟺ ∀ n, k_n ≥ 2^n - 1`, with `k_n` the `n`-th doubling, together with C2's upper bound `k_{n+1} - k_n ≤ 4^(2^n)`, so that the next theorist sees a lower bound on hitting times of one specific orbit and does not look for an invariant. If a captain wants a wall attacked next, it should be `centerColumn_other_isEventuallyPeriodic_of_center` through crystals 38–41 and the black-time identity, where at least the object (the pair of columns `0` and `1` under the cone) is the seed's own and not a universal system in which the wanted statement is false.

@@ -1777,3 +1777,100 @@ say no.
 the board; Sextant's next topic is the masking mechanism in the transient
 band, the first local law of the band that is provable and not on the
 board, and it should run as the fifth session after Keel's landings.
+
+## 2026-09-08T01:00:00Z — the settled configuration is on the board; a sentence Keel caught
+
+The five-hour window closed at 21:10Z and took Sextant's fifth session
+(three turns, no document, parked with a session id no verb accepts) and
+the opus attempt on `column_settledConfig_eq` (a CLI "success" with no
+report after three turns, filed as budget exhausted). Both are rows now.
+After the reset, fable finished the theorem's proof in eleven turns and
+the $4 ceiling cut the session before its build; Fathom's parked-file
+fix put the file in the run directory, I built it *for myself* in my
+scratchpad with `lake env lean` and `#print axioms` (exit 0, the allowed
+three), removed the rate-limit "attempt" from the ladder, reopened, and
+redispatched. The verifier closed it at 00:59Z, $2.69, from the parked
+file, which is the path Fathom and Keel built this evening working as
+designed on its first real use.
+
+**The sentence Keel caught.** I wrote "the parked file compiles with the
+allowed axioms" beside "the ceiling cut the attempt before its lake
+build". Both true, but they read as one observation of one attempt, and
+they were two: the attempt did not build it, I did. "Compiles for me,
+here, with this command" is the form that a later reader can check.
+Same shape as CLAUDE.md's section; Keel had made the identical move
+hours earlier and said so.
+
+Board: 75 nodes, 71 proved, 4 open, all four research walls. Sextant's
+fifth session is live on the masking mechanism.
+
+## 2026-09-08T01:30:00Z — Sextant's fifth session: the seam is a front, the onset wall is a speed
+
+Run `20260908T004645Z`, 95 turns, $13.97, after the rate-limited false
+start. Crystals 50–52. The topic was the masking mechanism, its own
+guess from the fourth session, and the session killed the guess: a
+diagonal that settles before its drivers is one the seam skipped, and
+the transient that ends it is usually two transients annihilating in one
+`||`, not a black settled cell masking a driver (4 %). What survived is
+sharper than the guess. The seam between the settled region and the
+band is the damage front between the seed and the settled row; its
+motion is `rule30_left_local_law` exactly; the diagonals it visits obey
+the reset lemma with no slack; and `leftDiagonal_onset_le` is equivalent
+to that front's speed staying under a half. I re-ran its kernel file:
+three theorems, allowed axioms. Nothing novel and I said so: the durable
+output is the sixth obstruction entry, that the onset wall is a speed
+problem of the kind crystals A3 already says is unavailable, and so is
+now a wall of a known kind.
+
+**What the five sessions add up to.** One persona, one wall, each topic
+its own previous next-topic: the seam, the split identity at the seam,
+the settled region's independence from the boundary, the settled
+configuration and one left side up to an integer, and now the seam as a
+front. One proved theorem not found in print (unbounded periods) with its
+lemma (the pair lemma, new as stated but the kind a paper uses without
+writing down; Dib asked and I had overcounted), one computed finding against a published surmise,
+six obstruction entries, seventeen crystals, nine nodes closed. The
+residual of P1 is where it was, and the map of what cannot close it is
+five entries longer. Sextant's next topic leaves the P1 wall for the
+period wall through the recurrence alone, which it argues is a
+finite-machine question rather than a speed; the first such on this
+board. Starting it as the sixth session.
+
+## 2026-09-08T02:10:00Z — Sextant's sixth session: the period wall has no mechanism, and a number from the orbit
+
+Run `20260908T011243Z`, 71 turns, $12.75. Crystals 53–56. Sextant asked
+why the gaps between eventually-white diagonals grow and answered it: the
+settled words are an orbit of a map on pairs of periodic words whose step
+has in-degree one, the white states are a `2^-L` fraction of the `4^L`
+pairs, so the average gap is `2^L` and no gap exceeds `4^L`; measured
+`1.000 · 2^L` at `L = 16`. That is an upper bound on the doubling gaps,
+provable as an L node from the pair lemma, and the wall needs a lower
+one. It then showed no lower bound can come from the finite system alone:
+a word `1^(L-5) 00100` returns to white in eight steps at every even `L`.
+So the period wall, like the onset wall, is a small probability summed
+over levels, true for the seed's specific words and provable from
+nothing universal. Seventh obstruction entry. Its universal cousin
+survived enumeration to `L = 32` the way a coin does, and Sextant said so
+and would not seed it; the first draft of that script compared minima
+against words instead of shift classes and read a floor 25 times above
+the null, which is a well-formed-and-wrong Sextant caught itself.
+
+**The number.** Running the recurrence alone from the words at diagonal
+200,000, at period 32 a word is a machine integer: the next
+eventually-white diagonal is `1,420,878,968`, and on the continuation
+the seed takes the sixth doubling is at `2,107,985,255`, NKS p. 871's
+figure to the digit, from 140 seconds and no picture beyond row 137,000.
+The nine-digit match is the check on the whole chain including the
+branch bits; the one thing it does not check is the seed's choice at
+`1.42 · 10^9` itself, which is inferred from the match. A computed fact,
+new to the held sources, not a theorem and not makeable into one here.
+Reported to Dib as such.
+
+**Four kernel lemmas** (the local dictionary of a white) re-run by me:
+allowed axioms.
+
+**Sequencing.** Sextant's own next topics: read `settledCenter` to `10^9`
+with the same bit-parallel step (a periodicity there "would be a
+sensation"; the cheapest large test of Kopra's width-1 problem), and
+return to the P1 wall through the half-line tier now that `Σ` is a row.
+Starting the seventh session on both, the reading first.

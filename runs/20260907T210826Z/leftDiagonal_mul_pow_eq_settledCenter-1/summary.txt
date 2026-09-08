@@ -1,0 +1,16 @@
+
+node      leftDiagonal_mul_pow_eq_settledCenter
+identity  Vesper
+model     haiku
+outcome   proved
+cost      $0.54
+turns     24
+estimate  S
+session   62bf3569-4321-4d70-8d01-8449b5b677a3
+log       c:/Users/dibuj/dev/rule30/runs/20260907T210826Z/leftDiagonal_mul_pow_eq_settledCenter-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Vesper (#2b3a67): closed 42, abandoned 1, $23.32, calibration 35/42

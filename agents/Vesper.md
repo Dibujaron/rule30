@@ -513,3 +513,19 @@ Second consecutive node lifted straight out of a review session's kernel-checked
 Axioms via the append-`#print axioms`-then-`lake env lean`-then-remove trick: `propext, Classical.choice, Quot.sound`. `Classical.choice` enters through `choose N hN using hcon` (extracting the onset function from `∀ k, ∃ N, ...`) — expected, and this is a node where the classical axiom is genuinely load-bearing rather than inherited incidentally.
 
 One warning in the build output is `push_neg` deprecation in `LeftDiagonalPairNeverEventuallyShifted.lean`, my own earlier file, not this one. Harmless; noting it here because a future me will see it in this node's build log and wonder whose it is.
+
+## 2026-09-07T21:12:31Z — leftDiagonal_mul_pow_eq_settledCenter (haiku, proved)
+
+**Nat.exists_eq_succ_of_ne_zero pattern:** Convert `m ≥ 1` to `m = m' + 1` using `obtain ⟨m', rfl⟩ := Nat.exists_eq_succ_of_ne_zero (by omega : m ≠ 0)` — cleaner than manual case splitting.
+
+**Periodicity threading:** The `hper` proof from `leftDiagonal_periodicFrom_pow` has type `PeriodicFrom (leftDiagonal k) (2^k) N`, unfolds to `∀ n ≥ N, leftDiagonal k (n + 2^k) = leftDiagonal k n`. In the step case, ensuring `(m' + 1) * 2^k ≥ N` is routine: N ≤ 2^k by hypothesis, and (m' + 1) ≥ 1, so the product dominates.
+
+**Arithmetic closure:** `ring` handles all index expansions (`(a+b)*c = a*c + b*c`); `norm_num` closes concrete base cases; `omega` handles Nat inequality chains once phrased as simple bounds.
+
+## 2026-09-08T00:55:10Z — column_settledConfig_eq (fable, proved)
+
+Third P1 node in a row whose proof was already complete before dispatch, and the first where the complete file was NOT under `Rule30/Proofs/`. The brief said "if the file already exists, read it first"; it did not exist. The parked copy was at `runs/20260908T004625Z/ColumnSettledConfigEq.lean` (the previous fable attempt hit the $4 ceiling mid-report, and Rowan's board repair commit c3d6fbe named it as complete). One Glob for `**/*ettled*` found it. **Reusable rule, extending [[leftDiagonal-period-unbounded]]'s "Glob explorer/scratch_* first": also Glob `runs/**/<Pascal>.lean` — a budget-exhausted attempt's file gets parked under its run directory, not left in Proofs/.** Copied verbatim, built first try, axioms the standard three via the append-`#print axioms`-then-`lake env lean`-then-remove trick.
+
+The proof's idea, since it is the one route that avoids the brief's suggested left/right case split entirely: choose T = 2^(k+1) with k = (t+x).toNat, slide the seed's row at time T so its left edge is at the origin (`fun y => evolve T (y - T)`), show `settledConfig` agrees with it on the window [x-t, x+t] (for y ≥ 0, `leftDiagonal_periodicFrom_pow` + `periodicFrom_mul` with multiplier `2^(k-m+1) - 2` moves the diagonal's reading from index `2^(m+1) - m` to `T - m`; for y < 0 both are white by `evolve_eq_false_of_outside_cone`), then a private `agree_window` lemma (cells depend only on their cone) and a private `evolveFrom_shifted` lemma (growing a slid row slides the picture) finish it. The target cell at x itself needs no periodicity because T was chosen so the diagonal is read at exactly the statement's own index. Every cast obligation closed by bare `omega` given `hk`, `hT`, `hmy` as equations in context — the `obtain ⟨k, hk⟩ : ∃ k, k = ...` idiom (see [[not-evolve-period-adjacent]]) again, no `set` needed.
+
+Cost note: this session started at $1.85 spent before the first tool call — the system prompt (notebook + CLAUDE.md + cookbook + served lemmas) is now large enough that a P1 attempt has under $2.20 of the $4.00 for actual work. Budget accordingly: one Read, one Write, two builds, one axiom check, and the report is about all that fits.

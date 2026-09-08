@@ -1,0 +1,17 @@
+
+node      column_settledConfig_eq
+identity  Vesper
+model     opus
+outcome   budget_exhausted
+cost      $0.92
+turns     3
+estimate  L
+session   17d8c3ba-1aae-4b45-9044-4d6965fdccc4
+log       c:/Users/dibuj/dev/rule30/runs/20260907T210826Z/column_settledConfig_eq-1
+proof     -
+
+verifier:
+the CLI ended the session at a CLI ending this harness has no name for (result subtype `success`): {"duration_api_ms":6219,"stop_reason":"stop_sequence","session_id":"17d8c3ba-1aae-4b45-9044-4d6965fdccc4","total_cost_usd":0.9221845000000001,"usage":{"input_tokens":2,"cache_creation_input_tokens":90509,"cache_read_input_tokens":16427,"output_tokens":295,"output_tokens_details":{"thinking_tokens":0},"server_tool_use":{"web_search_requests":0,"web_fetch_requests":0},"service_tier":"standard","cache_creation":{"ephemeral_1h_input_tokens":90509,"ephemeral_5m_input_tokens":0},"inference_geo":"not_available","iterations":[{"input_tokens":2,"output_tokens":295,"cache_read_input_tokens":16427,"cache_creation_input_tokens":90509,"cache_creation":{"ephemeral_5m_input_tokens":0,"ephemeral_1h_input_tokens":90509},"type":"message"}],"speed":"standard"},"modelUsage":{"claude-haiku-4-5-20251001":{"inputTokens":1431,"outputTokens":13,"cacheReadInputTokens":0,"cacheCreationInputTokens":0,"webSearchRequests":0,"costUSD":0.001496,"contextWindow":200000,"maxOutputTokens":32000,"thinkingTokens":0,"canoni
+… (clipped; the full text is in events.jsonl)
+
+Vesper (#2b3a67): closed 42, abandoned 2, $24.24, calibration 35/42

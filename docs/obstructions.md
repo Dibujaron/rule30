@@ -234,3 +234,114 @@ configuration.
 
 **Recorded** 2026-09-07 by Sextant, from the attack document
 `docs/attacks/2026-09-07-centercolumn-other-iseventuallyperiodic-of-center-the-centre-column-of-the-settled-configuration.md`.
+
+## Iterating the reset lemmas builds a front that cannot retreat
+
+**The natural attempt.** The board has two ways to carry periodicity from
+two adjacent left diagonals to the next one in: the reset lemma
+`leftDiagonal_periodicFrom_step_of_black` (a black cell of the middle
+diagonal at index `j + 1` makes the next diagonal periodic from `j + 1`)
+and the white branch of crystal 45 (the onset moves by one index when the
+middle diagonal is white from there on). Iterate them from the edge: the
+onset of diagonal `k` is at most the first black cell of diagonal `k - 1`
+past the larger of the two drivers' onsets. Bound that first-black gap and
+`leftDiagonal_onset_le` follows by induction on `k`.
+
+**Why it fails.** The iteration is a front in the picture that can only
+move down and left, and the true seam is a damage front that retreats. Put
+`S` for the settled picture (crystal 47, an evolution of the settled row)
+and `E = picture xor S` for the transient band; its left edge
+`F(t) = min { x : E(t, x) = 1 }` is the leftmost difference between two
+rule 30 evolutions, so `rule30_left_local_law` (crystals A2) governs it
+exactly: it advances one cell when the settled cell beside it is white and
+otherwise stays or retreats. The front rides one diagonal at speed 1 along
+a white run of the neighbouring settled word and leaves it for good at the
+next black cell, so the onset of every diagonal the front visits *is* the
+reset lemma's value, with no slack (60,065 of 60,065 visited diagonals
+below 110,000; `explorer/maskfront.mjs`, 160,000 rows). But the front
+visits only 55 % of the diagonals: it retreats on 26 % of the rows, by up
+to 11 cells in one row, and every retreat skips diagonals whose last
+transient is then killed inside the band, mostly by two transients meeting
+in one `||` (68 %) and only 4 % of the time by a black settled neighbour.
+The skipped diagonals settle at indices *below* their drivers' onsets
+(47,343 of 49,917 skipped diagonals settle strictly before their neighbour;
+no visited diagonal does), and the next visited diagonal inherits that low
+index as its arrival point. An induction on `k` with a monotone bound
+cannot see a decrease, so it compounds: the reset front measures `2.00 k`
+against onsets of `0.336 k` (`explorer/resetfront.mjs`). The wall itself
+is exactly a bound on the front: `leftDiagonal_onset_le` holds for all
+`k` if and only if `2 F(t) + t ≥ 1` for all `t`, that is, the seam never
+runs faster than half a cell per row. Measured to 160,000 rows it runs at
+`0.2497`, with the worst window at `0.2568` (row 38,460), and the worst
+onset ratio `0.3455` at diagonal 28,584 is that same event seen along a
+diagonal.
+
+**What it would take.** A bound on the speed of one damage front, between
+the seed and the settled row, below `1/2`. Crystals A3 says no such bound
+is provable for arbitrary pairs; this pair is special (its common left part
+is the settled region, all power-of-two periodic words), and nothing is
+known that uses that. Wolfram 1986 §5 gives the front's local law in words
+and a biased-random-walk estimate of `1/4`, and §6 attributes the
+regular-region boundary to it by analogy; the measured decomposition here
+is `0.59` advances, `0.15` stays, `0.26` retreats averaging `1.30` cells,
+which is not his walk and gives the same `1/4`. Nothing about the front
+touches the centre column, which is the band's other edge.
+
+**Recorded** 2026-09-08 by Sextant, from the attack document
+`docs/attacks/2026-09-08-centercolumn-other-iseventuallyperiodic-of-center-the-masking-mechanism-in-the-transient-band-why-a-diagonal-settles-before-its-drivers.md`.
+
+## A universal bound on the recurrence's hitting times cannot prove the period wall
+
+**The natural attempt.** `leftDiagonal_period_le` says the period of
+diagonal `k` is at most `k + 1`; since the period is `2^n` after the
+`n`-th doubling, it says the `n`-th doubling sits at a diagonal
+`k_n ≥ 2^n - 1`, that is, the gaps between doublings grow. The settled
+words are an orbit of the diagonal recurrence on pairs of periodic words
+(Rowland 2006 §6; `explorer/forbit.mjs`), the period changes only at an
+eventually-white diagonal (`S_m = 0`, which happens exactly when
+`S_{m-1}` is `S_{m-2}` shifted by one, `explorer/scratch_whitestep.lean`),
+and the word right after a white is fixed by the recurrence. So prove, for
+the finite system of all words of period `L`, that from the state "white,
+then `w`" the next white is at least `L` diagonals away; the wall follows
+by induction on the doublings without ever knowing which word the seed
+holds.
+
+**Why it fails.** The statement is false for the finite system at every
+period. For every even `L` from `8` to `128` the word `1^(L-5) 0 0 1 0 0`,
+of exact period `L`, returns to a white in exactly `8` diagonals
+(`explorer/hitting.mjs`, exhaustive to `L = 16`; `explorer/hitting2.mjs`,
+two implementations, to `L = 128`); at `L = 16`, `96` of the `65,280`
+words of exact period `16` reach a white within `16` steps, and the
+smallest hitting times come in structured families (`5, 7, 8, 13, 16, 21,
+29, 32, 41, 57, 58` are the only values below `64`). The words a doubling
+actually produces are antiperiodic (shift by `L/2` complements them), and
+none of them reaches a white within `2L + 8` steps for `L ≤ 32`
+(`hitting2.mjs`, `65,536` words at `L = 32`), but that survival is what a
+geometric law with mean `2^L` gives for the `2^(L/2) / L` shift classes
+(`hitting3.mjs`: minima `88, 6343, 414989` at `L = 8, 16, 32` against a
+null of `128, 4096, 2 · 10^6`), and the orbit forgets the antiperiodicity
+four diagonals after the doubling (`explorer/orbitclass.mjs`). What the
+finite system does give is the opposite bound: every pair has exactly one
+predecessor, so the segments from each start to the next white are
+disjoint inside the `4^L` pairs, the *average* gap is at most `2^L`
+(measured `1.000 · 2^L` at `L = 16`, all `65,534` words,
+`explorer/meansum.mjs`) and no gap exceeds `4^L`. That is why the gaps
+grow (whites are a `2^-L` fraction of a space walked without repetition:
+the seed's gaps `5, 21, 371, 52808, 1.42 · 10^9` after each doubling sit
+within a factor `3` of `2^L`), and it is an upper bound where the wall
+needs a lower one.
+
+**What it would take.** A lower bound on the hitting times of *one* orbit,
+the seed's, at words nothing distinguishes from the others: the wall holds
+at level `n` unless the seed's orbit enters a set of density about
+`2^(-2^n)` within `2^n` steps of a doubling, a probability that sums to
+less than `0.07` over all `n ≥ 3` and to nothing anyone can prove. The
+known values give slack to `k < 2^31`: the sixth doubling is at
+`2,107,985,255` (NKS p. 871, reproduced from the recurrence alone in
+`explorer/orbit32.mjs`, which also finds the seed's eighth eventually-white
+diagonal at `1,420,878,968`, complement type, not in print). A proof would
+need either an invariant of the seed's words at the whites, of which none
+is visible, or a different reading of the wall altogether.
+
+**Recorded** 2026-09-08 by Sextant, from the attack document
+`docs/attacks/2026-09-08-leftdiagonal-period-le-the-period-wall-through-the-orbit-of-the-recurrence-alone-why-the-gaps-between-eventually-white-diagonals-grow.md`.

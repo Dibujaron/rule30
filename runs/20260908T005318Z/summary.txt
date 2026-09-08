@@ -1,0 +1,16 @@
+
+node      column_settledConfig_eq
+identity  Vesper
+model     fable
+outcome   proved
+cost      $2.69
+turns     11
+estimate  S
+session   18dc8056-ffea-4ec2-af80-be390e31737b
+log       c:/Users/dibuj/dev/rule30/runs/20260908T005318Z
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Vesper (#2b3a67): closed 43, abandoned 2, $30.21, calibration 35/43

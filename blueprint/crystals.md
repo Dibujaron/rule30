@@ -466,7 +466,15 @@ in another coat, and would sit beside it, not under it.
     `log₂ log₂ K` branch bits to depth `K`). *Computed*: 240,001 terms, every
     lag to 120,000, longest agreeing tail 16 cells; balanced, factor counts
     those of a random sequence. *Open*; no route; the wall in another
-    configuration. Sextant C3.
+    configuration. Sextant C3. **Read to `10^9` terms on 2026-09-08**
+    (`explorer/settledcenter_billion.mjs`, 23 s, by a subagent with an
+    independent cross-check): balanced (excess `+57,804` at `10^9`, `1.8σ`,
+    sign flipping across `10^6..10^9`), every word of every length up to
+    24 occurs, no lag below `2^19` agrees on more than 22 of the final
+    `2^20` terms (a fair coin's maximum; a planted period 1237 was found),
+    autocorrelation at lags `1..32` within `±2.3σ` of one half. No
+    structure by any of the four measures at this depth; no eventually-white
+    diagonal below `10^9`, consistent with crystal 55.
 49. **There is only one left side of rule 30, up to a translation along the
     edge** — a computed finding against a published surmise. For every
     configuration white far to the left with its leftmost black cell at the
@@ -499,6 +507,131 @@ in another coat, and would sit beside it, not under it.
     full claim; the finite propagation piece is
     `bool_driven_periodicFrom_of_reset` with two orbits in place of a
     periodic driver, size S. Sextant C4; the fifth obstruction entry.
+
+50. **The two masking laws, in diagonal coordinates.** Call a cell of
+    diagonal `k` at index `j` *transient* when `leftDiagonal k j ≠ leftDiagonal k (j + 2^k)`.
+    (a) If diagonal `k+2` is transient at `j` and its two drivers are settled
+    at `j+1` and `j+2`, then it is transient at `j+1` exactly when the driver
+    cell `leftDiagonal (k+1) (j+1)` is white: a transient passes straight down
+    a diagonal through a white driver and is stopped by a black one. (b) If
+    diagonal `k+2` is settled at `j` and its driver `k+1` is transient at
+    `j+1` (the outer driver settled), then `k+2` stays settled at `j+1`
+    exactly when its own cell at `j` is black. *Proved* in the kernel:
+    `explorer/scratch_masking.lean` (`leftDiagonal_transient_front_law`,
+    `leftDiagonal_transient_mask_law`, general shift `M`, axioms `propext,
+    Quot.sound`; and the `2^k` form with `Classical.choice`), re-run by
+    Rowan on 2026-09-08, exit 0. Each is `leftDiagonal_recurrence` at two
+    indices and a sixteen-case `decide`. New phrasing of
+    `rule30_left_local_law` (crystals A2) read on the pair (seed, settled
+    picture); Wolfram 1986 §5 states (a) in words for the difference
+    pattern of two random rows. Two S nodes under `leftDiagonal_onset_le`
+    when an onset argument wants them. Sextant, fifth attack, C1.
+51. **The seam is a damage front, and the onset wall is a speed bound on
+    it.** Define `F t = min { x ∈ [-t, 0] : the cell (t, x) is transient }`
+    (exists for `t ≥ 18`; the first transient cell is `(18, 0)`), the
+    leftmost difference between the seed's picture and the settled picture
+    (crystal 47). Then `leftDiagonal_onset_le` (every diagonal settled by
+    index `k`) is equivalent to `∀ t ≥ 18, 2 · F t + t ≥ 1`: the front never
+    runs faster than half a cell per row. Both directions are index
+    arithmetic once `F` is defined (a `Nat.find` over a decidable bounded
+    predicate). *Computed*: `min (2F + t) = 17` at `t = 19`; net speed
+    `0.2497` over 160,000 rows; worst window `0.2568` at `t = 38,460`, the
+    same event as the worst onset ratio `0.3455` at `k = 28,584`
+    (`explorer/maskfront.mjs`). No route: it is a speed bound of the kind
+    crystals A3 says is not available, and the sixth obstruction entry says
+    why the reset-lemma induction cannot reach it. Size M as a
+    reformulation node; worth seeding only to make the wall's honest form
+    visible. Sextant C3.
+52. **The front's visited diagonals obey the reset lemma with no slack; the
+    skipped ones settle before their drivers.** The diagonal the front sits
+    on never decreases; the front rides a diagonal at speed 1 along a white
+    run of the neighbouring settled word and leaves at its next black cell,
+    so the onset of every visited diagonal is the first black of `S_{k-1}`
+    past the arrival index. *Computed*: 60,065 visited diagonals below
+    110,000, 0 exceptions; 49,917 skipped, of which 47,343 settle strictly
+    before their neighbour; the transient that ends a skipped diagonal is two
+    transients meeting in one `||` in 68 % of cases and a black settled
+    neighbour in 4 %. Provable half: a diagonal that settles before its
+    neighbour is never on the front (contrapositive), size M after `F`.
+    The answer to the fifth session's topic, and the reason crystal 45's
+    reset front bounds the onset by `2k` while the truth is `0.34k`:
+    the reset front cannot retreat and the real one does, on 26 % of rows,
+    by up to 11 cells. Sextant C2 and C4; the sixth obstruction entry.
+
+53. **The local dictionary of a white diagonal.** Four lemmas, each
+    `leftDiagonal_recurrence` at one index: (A) if diagonal `m+1` reads as
+    diagonal `m` shifted by one from index `N` on, then from the first black
+    cell of `m+1` past `N` the diagonal `m+2` is white for good; (B) past the
+    onset of an eventually-white diagonal `m+2`, its two drivers are shifts
+    of each other; (C) after a white `m+1`, diagonal `m+3` is black for good
+    from the first black cell of `m+2`; (D) after an eventually-black `m+3`,
+    `D_{m+4}(i+1) = !D_{m+2}(i+2)`. In orbit terms a white at `m` means the
+    pair `(S_{m-2}, S_{m-1})` is `(u, σu)`, and then `S_{m+2} = 1` and
+    `S_{m+3} = ¬σ S_{m+1}` are forced. *Proved* in the kernel:
+    `explorer/scratch_whitestep.lean`, axioms `propext, Quot.sound`, re-run
+    by Rowan 2026-09-08, exit 0. (C) is Rowland 2006 lines 905–908 in words;
+    the rest is new phrasing of the recurrence. Four S nodes under
+    `leftDiagonal_period_le` as vocabulary; they do not move the wall.
+    Sextant, sixth attack, C1.
+54. **The gaps between doublings are at most `4^(2^n)`.** On the board:
+    for every `a`, some diagonal `k ≤ 4^(2^a) + 1` is not eventually
+    `2^a`-periodic, so the `(a+1)`-th doubling happens by diagonal
+    `4^(2^a) + 1`. Sharpens crystal 43 (`leftDiagonal_period_unbounded`,
+    infinitely many doublings, no rate) to a rate. Why: in the finite system
+    of pairs of words of period dividing `L` (`4^L` pairs) the recurrence
+    step has in-degree exactly one, so the segments from each white state
+    `(0, w)` to the next white are disjoint and their lengths sum to at most
+    `4^L`: the average gap is below `2^L` and no gap exceeds `4^L`.
+    *Computed*, and essentially tight: the sum is `60,022` of `65,536` at
+    `L = 8` and `4,293,693,734` of `4,294,967,296` at `L = 16`, mean
+    `1.000 · 2^L` (`explorer/meansum.mjs`); the seed's own gaps
+    `5, 21, 371, 52808, 1.42·10^9` sit within a factor 3 of `2^L`. Route for
+    the board form: pigeonhole over `4^(2^a) + 2` consecutive diagonals read
+    at onsets that are multiples of `2^a`, then
+    `leftDiagonal_pair_never_eventually_shifted`; the same phase alignment
+    as crystal 43's proof plus a `Fintype.card` bound. Size L, no hard step.
+    Not in print (Wolfram 1986 §6 has the strip automaton and "periods
+    increase very slowly"; Rowland the criterion). An upper bound; the wall
+    needs a lower one. Sextant C2.
+55. **The seed's orbit at period 32, computed from the recurrence alone**:
+    the next eventually-white diagonal after `87866` is `1,420,878,968`, of
+    complement type (period stays `32`); on one of its two continuations
+    the next white is `2,107,985,254` with odd parity, so the period doubles
+    to `64` at `2,107,985,255`, which is NKS p. 871's figure to the digit,
+    reproduced here in 140 s with no picture beyond row 137,000; on the
+    other continuation the next whites are `3,340,408,059` and
+    `4,989,445,007`, both complement type. The match to nine digits
+    identifies the continuation the seed takes and says NKS's "or more"
+    was exact. *Computed* (`explorer/orbit32.mjs`; chain of trust in the
+    document's C4: slow orbit against the picture at every branch point,
+    bit-parallel step against the slow orbit on 112,133 words and against a
+    bit-serial solve on 200,000 random pairs). What is not checked: the
+    seed's own choice at `1,420,878,968`, inferred from the NKS match, not
+    read from the picture, whose settling row is past `1.9 · 10^9`. Not a
+    theorem and cannot be one on this board (`native_decide` is forbidden).
+    New to the held sources: the eighth eventually-white diagonal and the
+    exactness of NKS's sixth doubling. Consequence: `leftDiagonal_period_le`
+    holds for every `k < 2^31 - 1` on the strength of the computation.
+    Sextant C4. *For later, not now* (Dib, 2026-09-08): the same orbit run
+    on past the sixth doubling, at period 64 a word in two machine words,
+    would give the seventh doubling, which no source holds, at a cost of
+    minutes; a low-value footnote until something needs the number.
+56. **The period wall's honest form, and why no universal bound proves it.**
+    `leftDiagonal_period_le ⟺ ∀ n, k_n ≥ 2^n - 1` where `k_n` is the
+    `n`-th doubling (`3, 8, 29, 400, 87867, 2107985255`); with crystal 54,
+    `k_{n+1} - k_n ≤ 4^(2^n)`. The residual is a *lower* bound on the gaps
+    between whites in one specific orbit, and it cannot come from a bound
+    over all words the orbit could hold: the word `1^(L-5) 00100`, of exact
+    period `L`, returns to a white in exactly eight steps for every even
+    `L` from `8` to `128` (`explorer/hitting.mjs`, `hitting2.mjs`; fails at
+    every odd `L`, as a run-length mechanism does), and the minimum over all
+    nonconstant words is `5` at every `L`. The universal cousin of the wall
+    (from every antiperiodic word the next odd-parity white is `≥ L` away,
+    C3) survives enumeration to `L = 32` exactly as a fair coin would
+    (`hitting3.mjs`: the minima over `2, 16, 2048` shift classes are
+    `88, 6343, 414989` against a geometric null of `128, 4096, 2·10^6`),
+    and the orbit forgets the symmetry of a post-doubling word within seven
+    steps (`orbitclass.mjs`). The seventh obstruction entry. Sextant C3, C5.
 
 ## Not credible or not verified
 
