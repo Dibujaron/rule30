@@ -234,3 +234,58 @@ configuration.
 
 **Recorded** 2026-09-07 by Sextant, from the attack document
 `docs/attacks/2026-09-07-centercolumn-other-iseventuallyperiodic-of-center-the-centre-column-of-the-settled-configuration.md`.
+
+## Iterating the reset lemmas builds a front that cannot retreat
+
+**The natural attempt.** The board has two ways to carry periodicity from
+two adjacent left diagonals to the next one in: the reset lemma
+`leftDiagonal_periodicFrom_step_of_black` (a black cell of the middle
+diagonal at index `j + 1` makes the next diagonal periodic from `j + 1`)
+and the white branch of crystal 45 (the onset moves by one index when the
+middle diagonal is white from there on). Iterate them from the edge: the
+onset of diagonal `k` is at most the first black cell of diagonal `k - 1`
+past the larger of the two drivers' onsets. Bound that first-black gap and
+`leftDiagonal_onset_le` follows by induction on `k`.
+
+**Why it fails.** The iteration is a front in the picture that can only
+move down and left, and the true seam is a damage front that retreats. Put
+`S` for the settled picture (crystal 47, an evolution of the settled row)
+and `E = picture xor S` for the transient band; its left edge
+`F(t) = min { x : E(t, x) = 1 }` is the leftmost difference between two
+rule 30 evolutions, so `rule30_left_local_law` (crystals A2) governs it
+exactly: it advances one cell when the settled cell beside it is white and
+otherwise stays or retreats. The front rides one diagonal at speed 1 along
+a white run of the neighbouring settled word and leaves it for good at the
+next black cell, so the onset of every diagonal the front visits *is* the
+reset lemma's value, with no slack (60,065 of 60,065 visited diagonals
+below 110,000; `explorer/maskfront.mjs`, 160,000 rows). But the front
+visits only 55 % of the diagonals: it retreats on 26 % of the rows, by up
+to 11 cells in one row, and every retreat skips diagonals whose last
+transient is then killed inside the band, mostly by two transients meeting
+in one `||` (68 %) and only 4 % of the time by a black settled neighbour.
+The skipped diagonals settle at indices *below* their drivers' onsets
+(47,343 of 49,917 skipped diagonals settle strictly before their neighbour;
+no visited diagonal does), and the next visited diagonal inherits that low
+index as its arrival point. An induction on `k` with a monotone bound
+cannot see a decrease, so it compounds: the reset front measures `2.00 k`
+against onsets of `0.336 k` (`explorer/resetfront.mjs`). The wall itself
+is exactly a bound on the front: `leftDiagonal_onset_le` holds for all
+`k` if and only if `2 F(t) + t ≥ 1` for all `t`, that is, the seam never
+runs faster than half a cell per row. Measured to 160,000 rows it runs at
+`0.2497`, with the worst window at `0.2568` (row 38,460), and the worst
+onset ratio `0.3455` at diagonal 28,584 is that same event seen along a
+diagonal.
+
+**What it would take.** A bound on the speed of one damage front, between
+the seed and the settled row, below `1/2`. Crystals A3 says no such bound
+is provable for arbitrary pairs; this pair is special (its common left part
+is the settled region, all power-of-two periodic words), and nothing is
+known that uses that. Wolfram 1986 §5 gives the front's local law in words
+and a biased-random-walk estimate of `1/4`, and §6 attributes the
+regular-region boundary to it by analogy; the measured decomposition here
+is `0.59` advances, `0.15` stays, `0.26` retreats averaging `1.30` cells,
+which is not his walk and gives the same `1/4`. Nothing about the front
+touches the centre column, which is the band's other edge.
+
+**Recorded** 2026-09-08 by Sextant, from the attack document
+`docs/attacks/2026-09-08-centercolumn-other-iseventuallyperiodic-of-center-the-masking-mechanism-in-the-transient-band-why-a-diagonal-settles-before-its-drivers.md`.

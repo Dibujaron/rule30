@@ -1,0 +1,17 @@
+
+theorist  Sextant
+model     fable
+topic     centerColumn_other_isEventuallyPeriodic_of_center: the masking mechanism in the transient band, why a diagonal settles before its drivers
+attack    c:/Users/dibuj/dev/rule30/docs/attacks/2026-09-08-centercolumn-other-iseventuallyperiodic-of-center-the-masking-mechanism-in-the-transient-band-why-a-diagonal-settles-before-its-drivers.md
+document  exists, 21023 bytes
+ended     finished — the theorist reported its attack written; that is its claim about the document, and a captain's reading is the only adjudication
+ceilings  600 turns, $80.0
+cost      $13.97
+turns     95
+session   1950b0bf-13ed-4614-8f9a-8ed8fbb11899
+log       c:/Users/dibuj/dev/rule30/runs/20260908T004645Z/theorist-1
+
+Document written with all six sections: the masking mechanism is the left local law of the damage front between the seed and the settled row, kernel-checked in diagonal coordinates; the onset wall is equivalent to that front's speed staying below 1/2, with no route; nothing touches the centre column; sixth obstruction entry appended.
+
+next topic, in the theorist's words:
+Attack `leftDiagonal_period_le` through the orbit of the recurrence alone. Of the two onset-shaped walls this session settled which is a speed problem (`leftDiagonal_onset_le`, C3, no route); the period wall is not: the periods of the settled words are fixed by `S_k = F(S_{k-2}, S_{k-1})` and the seven branch bits, with no band, no front and no speed in it (`explorer/forbit.mjs` reproduces every doubling to 200,000 from the recurrence and reads the picture only at the branch points), and the wall needs only that the number of doublings below `k` stays under `log₂(k + 1)`, against the measured doublings at 3, 8, 29, 400, 87,867. The question for a theorist is why the gaps between eventually-white diagonals grow the way they do, in the recurrence: a white settled word `S_{k-1}` needs `S_k`'s driver to be all white for a whole period, and the recurrence is a permutation on words of period `2^a` whose white orbits should be countable. That is a question about a finite machine, the first one on this board that is, and Rowland's Proposition 2 is its known half.
