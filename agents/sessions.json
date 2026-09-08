@@ -189,6 +189,14 @@
       "role": "framework",
       "started": "2026-09-08T12:04:00Z",
       "claude_session": "2c18967f-4f2a-4496-bd1d-fd899f6d0afd"
+    },
+    {
+      "identity": "Rowan",
+      "session_name": "rule30-46",
+      "ref": "a8d7ea",
+      "role": "overseer",
+      "started": "2026-09-08T12:05:00Z",
+      "claude_session": "438b5e4e-b956-4cf0-8450-13bec95dfc3a"
     }
   ]
 }
