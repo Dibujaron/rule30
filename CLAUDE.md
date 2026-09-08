@@ -45,7 +45,8 @@ harness/                   Gleam project (Erlang target) — the dispatcher, wor
 blueprint/dag.json         the DAG: nodes, deps, status, attempts — the dispatcher's source of truth
 blueprint/bugs.json        the bug board: friction filed by anyone, closed with a commit sha — the framework agents' source of truth
 agents/<name>.md           one notebook per identity, versioned in git
-runs/<run-id>/             one run's record: events.jsonl, journal.md, briefs/, the generated settings.json, and transcripts/ if a session was compacted
+runs/<run-id>/             one run's record: events.jsonl, journal.md, summary.txt, and one <name>-<n>/ directory per session inside it
+runs/<run-id>/<name>-<n>/  one session's own record: events.jsonl, journal.md, briefs/, the generated settings.json, transcripts/ if it was compacted, and summary.txt for a prover attempt (a theorist, seeder or connector writes its summary only at the run root)
 explorer/                  BigInt Rule 30 engine and center-column statistics (empirical, not Lean)
 docs/                      glossary, prize statements, specs and plans under docs/superpowers/
 ```
@@ -396,7 +397,18 @@ because a sibling closed its dependency. Concurrency is capped at 3. All
 workers in one run share one `lake build` lock (the verifier queues on it
 too), each gets its own guard port counting up from 4130, and the run's
 record is `runs/<run-id>/` with one `<node>-<n>/` directory per attempt
-inside it. A rate-limited attempt stops the run from starting more.
+inside it. `prove-one` writes the same shape, with the single directory
+`<node>-<n>` its one attempt needs — as do a theorist (`theorist-1`), a
+seeder (`seed-1`) and a connector (`connector-1`), so every session that
+the harness starts has a directory of its own and nothing writes its
+record at the run root. Three readers depend on that and would fail
+silently if one producer stopped: the next brief, which names a proof
+file an unclosed attempt parked; and both halves of
+`.claude/skills/startup/state.sh` — the live-session glob, which is the
+only guard against a hand-started session messaging a live worker, and
+the claim check, which greps the run root for the `dispatch` event and is
+why that one event belongs to the run log rather than the attempt's.
+A rate-limited attempt stops the run from starting more.
 
 A persona runs one session at a time. When a leaf's region has no idle
 persona, the run mints a new one through the naming ceremony before
