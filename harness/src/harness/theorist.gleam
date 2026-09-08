@@ -207,7 +207,7 @@ pub fn who(
 /// saved to the roster, its notebook is opened with the paragraph it wrote
 /// about itself, and the `naming` event says why — the same three writes,
 /// in the same order, that the dispatcher makes for a minted prover.
-fn ensure_identity(
+pub fn ensure_identity(
   cfg: config.Config,
   roster_: roster.Roster,
   who_: schedule.Who,
@@ -910,7 +910,7 @@ fn write_channels(
             <> " ("
             <> model
             <> ", "
-            <> end_word(ending.end, size)
+            <> end_word(ending.end, size, "attacked")
             <> ")"
           case
             roster.append_notebook(
@@ -935,7 +935,7 @@ fn write_channels(
 
 /// The attack document as it sits on disk after the session: its size in
 /// bytes, or nothing.
-fn document_size(path: String) -> Option(Int) {
+pub fn document_size(path: String) -> Option(Int) {
   case simplifile.file_info(path) {
     Ok(info) ->
       case simplifile.file_info_type(info) {
@@ -981,7 +981,7 @@ fn summary(
         Some(bytes) -> "exists, " <> int.to_string(bytes) <> " bytes"
         None -> "MISSING — nothing is at that path"
       },
-      "ended     " <> ended_words(cfg, ending.end, size),
+      "ended     " <> ended_words(cfg, ending.end, size, "theorist", "attack"),
       "ceilings  " <> ceilings(cfg),
       "cost      $" <> roster.usd(tally.cost_usd),
       "turns     " <> int.to_string(tally.turns),
@@ -998,12 +998,17 @@ fn summary(
 }
 
 /// How the session ended, in a word, for the notebook heading. A ceiling
-/// gets a second word saying which, because a theorist reading its own
-/// heading next session should know whether it ran out of money or of
-/// things to say.
-fn end_word(end: worker.End, size: Option(Int)) -> String {
+/// gets a second word saying which, because a session reading its own
+/// heading next time should know whether it ran out of money or of things
+/// to say. `finished_word` is what `Finished` becomes when the document
+/// exists (`"attacked"`, `"sighted"`) — the one thing that varies by role.
+pub fn end_word(
+  end: worker.End,
+  size: Option(Int),
+  finished_word: String,
+) -> String {
   case end, size {
-    worker.Finished, Some(_) -> "attacked"
+    worker.Finished, Some(_) -> finished_word
     worker.Finished, None -> "abandoned"
     worker.Abandoned, _ -> "abandoned"
     worker.TimedOut, _ -> "timed_out"
@@ -1015,24 +1020,37 @@ fn end_word(end: worker.End, size: Option(Int)) -> String {
   }
 }
 
-/// How the session ended, for the summary. `Finished` is the theorist's
-/// claim that its document is written, and it is believed exactly as far as
-/// the file on disk supports it: with no document there the line says
+/// How the session ended, for the summary. `Finished` is the role's claim
+/// that its document is written, and it is believed exactly as far as the
+/// file on disk supports it: with no document there the line says
 /// abandoned, because a report about a file that does not exist is not a
 /// report about the topic. A ceiling is named with its value from the
-/// config the session ran under, so `$80.0` here is the ceiling the CLI was
-/// launched with and not a number remembered from elsewhere.
-fn ended_words(
+/// config the session ran under. `role_word` (`"theorist"`, `"connector"`)
+/// and `doc_word` (`"attack"`, `"sighting"`) are the only two things that
+/// vary by role.
+pub fn ended_words(
   cfg: config.Config,
   end: worker.End,
   size: Option(Int),
+  role_word: String,
+  doc_word: String,
 ) -> String {
   case end, size {
     worker.Finished, Some(_) ->
-      "finished — the theorist reported its attack written; that is its claim about the document, and a captain's reading is the only adjudication"
+      "finished — the "
+      <> role_word
+      <> " reported its "
+      <> doc_word
+      <> " written; that is its claim about the document, and a captain's reading is the only adjudication"
     worker.Finished, None ->
-      "abandoned — the theorist reported its attack written, but no document exists at the attack path, so the claim is recorded as abandoned"
-    worker.Abandoned, _ -> "abandoned by the theorist"
+      "abandoned — the "
+      <> role_word
+      <> " reported its "
+      <> doc_word
+      <> " written, but no document exists at the "
+      <> doc_word
+      <> " path, so the claim is recorded as abandoned"
+    worker.Abandoned, _ -> "abandoned by the " <> role_word
     worker.TimedOut, _ -> "timed out"
     worker.BudgetExhausted(ceiling), _ ->
       "stopped at " <> worker.ceiling_words(cfg, ceiling)
@@ -1041,7 +1059,7 @@ fn ended_words(
 }
 
 /// The two ceilings a session ran under, for the summary line.
-fn ceilings(cfg: config.Config) -> String {
+pub fn ceilings(cfg: config.Config) -> String {
   int.to_string(cfg.max_turns)
   <> " turns, $"
   <> float.to_string(cfg.max_budget_usd)
