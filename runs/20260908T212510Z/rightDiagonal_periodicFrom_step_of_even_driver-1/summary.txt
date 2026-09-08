@@ -1,0 +1,16 @@
+
+node      rightDiagonal_periodicFrom_step_of_even_driver
+identity  Cadence
+model     sonnet
+outcome   proved
+cost      $0.92
+turns     8
+estimate  M
+session   9c8e36bf-e129-406c-a650-50486310bee8
+log       c:/Users/dibuj/dev/rule30/runs/20260908T212510Z/rightDiagonal_periodicFrom_step_of_even_driver-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Cadence (#2a6f77): closed 21, abandoned 3, $16.22, calibration 17/22

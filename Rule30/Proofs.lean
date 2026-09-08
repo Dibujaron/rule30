@@ -26,6 +26,7 @@ import Rule30.Proofs.CenterColumnDensityTendstoHalfIffExcess
 import Rule30.Proofs.CenterColumnExcessInterpolate
 import Rule30.Proofs.CenterColumnNotEventuallyPeriodicOfAnyOther
 import Rule30.Proofs.CenterColumnNotEventuallyPeriodicOfRight
+import Rule30.Proofs.CenterColumnOtherOfCohomologousColumn
 import Rule30.Proofs.CenterColumnRightNotBothIsEventuallyPeriodic
 import Rule30.Proofs.CenterColumnSuccOfBlack
 import Rule30.Proofs.CenterColumnZero
@@ -59,7 +60,9 @@ import Rule30.Proofs.IsEventuallyPeriodicOfPeriodicStep
 import Rule30.Proofs.IsEventuallyPeriodicShift
 import Rule30.Proofs.LeftDiagonalBlackAfterWhite
 import Rule30.Proofs.LeftDiagonalComplAfterBlack
+import Rule30.Proofs.LeftDiagonalEqRowNatTestBit
 import Rule30.Proofs.LeftDiagonalMulPowEqSettledCenter
+import Rule30.Proofs.LeftDiagonalOnsetLeOfLine
 import Rule30.Proofs.LeftDiagonalPairNeverEventuallyShifted
 import Rule30.Proofs.LeftDiagonalPeriodLeOfBlackBetween
 import Rule30.Proofs.LeftDiagonalPeriodUnbounded
@@ -86,6 +89,7 @@ import Rule30.Proofs.RightDiagonalIsEventuallyPeriodic
 import Rule30.Proofs.RightDiagonalNotConstant
 import Rule30.Proofs.RightDiagonalPeriodicFromPow
 import Rule30.Proofs.RightDiagonalPeriodicFromStep
+import Rule30.Proofs.RightDiagonalPeriodicFromStepOfEvenDriver
 import Rule30.Proofs.RightDiagonalRecurrence
 import Rule30.Proofs.RightmostDifferenceMovesRight
 import Rule30.Proofs.RowCellEqEvolve

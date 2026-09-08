@@ -1,0 +1,5 @@
+
+centerColumn_other_of_cohomologous_columnVesper   sonnet  proved            $1.11   24 turns
+rightDiagonal_periodicFrom_step_of_even_driverCadence  sonnet  proved            $0.92   8 turns
+
+2 attempt(s), 2 closed, $2.03 in all
