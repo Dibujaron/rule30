@@ -57,6 +57,8 @@ import Rule30.Proofs.IsEventuallyPeriodicColumnUnique
 import Rule30.Proofs.IsEventuallyPeriodicCommonPeriod
 import Rule30.Proofs.IsEventuallyPeriodicOfPeriodicStep
 import Rule30.Proofs.IsEventuallyPeriodicShift
+import Rule30.Proofs.LeftDiagonalBlackAfterWhite
+import Rule30.Proofs.LeftDiagonalComplAfterBlack
 import Rule30.Proofs.LeftDiagonalMulPowEqSettledCenter
 import Rule30.Proofs.LeftDiagonalPairNeverEventuallyShifted
 import Rule30.Proofs.LeftDiagonalPeriodUnbounded
@@ -65,7 +67,9 @@ import Rule30.Proofs.LeftDiagonalPeriodicFromPow
 import Rule30.Proofs.LeftDiagonalPeriodicFromStep
 import Rule30.Proofs.LeftDiagonalPeriodicFromStepOfBlack
 import Rule30.Proofs.LeftDiagonalRecurrence
+import Rule30.Proofs.LeftDiagonalStepOnsetDichotomy
 import Rule30.Proofs.LeftDiagonalStepPeriodDichotomy
+import Rule30.Proofs.LeftDiagonalWhiteOfShift
 import Rule30.Proofs.LeftSolveEqColumn
 import Rule30.Proofs.NotEvolvePeriodAdjacent
 import Rule30.Proofs.NotIsEventuallyPeriodicAdjacent
