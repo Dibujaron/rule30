@@ -86,7 +86,21 @@ pub fn prove_one(
   // wastes both.
   use task_message <- result.try(brief.task_message(cfg, node))
   use roster_ <- result.try(roster.load(cfg.roster_path))
-  use l <- result.try(log.open(cfg.runs_root, log.new_run_id()))
+  // One run log and one attempt log, the same two `run` opens, rather than
+  // a single log at the run root. Three readers assume every attempt lives
+  // in `<run>/<name>-<n>/`: `brief.previous_attempt_file`, which otherwise
+  // cannot name a proof file this attempt parks, and
+  // `.claude/skills/startup/state.sh`, whose `runs/*/*/events.jsonl` glob
+  // otherwise cannot see this attempt at all while it is live — which is
+  // the one guard against a hand-started session messaging a live prover.
+  // The third is state.sh's claim check, which greps `runs/*/events.jsonl`
+  // for the `dispatch` event, so that event goes to the run log below and
+  // not to the attempt's.
+  use run_log <- result.try(log.open(cfg.runs_root, log.new_run_id()))
+  use l <- result.try(log.open(
+    run_log.dir,
+    node_id <> "-" <> int.to_string(list.length(node.attempts) + 1),
+  ))
   use lock_actor <- result.try(
     lock.start(240_000)
     |> result.map_error(fn(e) {
@@ -110,17 +124,18 @@ pub fn prove_one(
   let who = schedule.who_for_node(roster_, node, busy: [])
   use identity <- result.try(ensure_identity(cfg, roster_, who, model, g, l))
   let attempt_cfg = config.for_attempt(cfg, node)
-  log.event(l, "dispatch", [
+  log.event(run_log, "dispatch", [
     #("node", json.string(node_id)),
     #("identity", json.string(identity.name)),
     #("model", json.string(model)),
     #("reason", json.string(dispatch_reason(d, node, failed))),
     #("max_turns", json.int(attempt_cfg.max_turns)),
     #("max_budget_usd", json.float(attempt_cfg.max_budget_usd)),
+    #("log", json.string(l.dir)),
   ])
 
   let claimed =
-    dag.claim(node, by: identity.name, at: log.now_iso(), run: l.run_id)
+    dag.claim(node, by: identity.name, at: log.now_iso(), run: run_log.run_id)
   let d = dag.update(d, claimed)
   use _ <- result.try(dag.save(d, cfg.dag_path))
 
@@ -144,7 +159,7 @@ pub fn prove_one(
   })
 
   let pending =
-    write_channels(cfg, l, l, identity, claimed, model, attempt, report)
+    write_channels(cfg, run_log, l, identity, claimed, model, attempt, report)
   auto_file_signals(cfg, l, node_id, identity, attempt)
   let parked = case attempt.outcome {
     dag.Closed -> None
@@ -152,6 +167,10 @@ pub fn prove_one(
   }
   let text = summary(d, l, identity, attempt, node_id, parked)
   log.summary(l, text)
+  // The run holds exactly one attempt, so its summary is the run's too;
+  // written to both because `runs/<run>/summary.txt` is what a reader
+  // opening the run directory looks for.
+  log.summary(run_log, text)
   io.println(text)
   // Only now, with the attempt's whole record already written — board
   // saved, channels written, signals auto-filed, summary logged and

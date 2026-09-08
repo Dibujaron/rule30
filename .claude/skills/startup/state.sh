@@ -223,6 +223,16 @@ for ev in "$runs_root"/*/*/events.jsonl; do
   found=1
 done
 [ "$found" -eq 0 ] && echo "  (none — no attempt has written an event in the last ${window_m}m without a summary)"
+# The denominator, printed whether or not anything matched. This section is a
+# glob over a directory layout, so a producer that does not match it is
+# invisible rather than absent, and the two render identically. On 2026-09-08 a
+# framework session read "(none)" here, concluded a rowless ListAgents ref was
+# a hand-started unknown rather than a live prover, and messaged it — the glob
+# was two levels deep and `prove-one` wrote one level up
+# (`startup-cannot-see-a-live-prove-one-attempt`). That producer is fixed; the
+# missing sentence is not, and it is the one that lets the next reader see what
+# was measured instead of inferring it.
+echo "  searched ${runs_root}/*/*/events.jsonl — a producer that writes its events anywhere else is invisible here, not absent"
 cat <<'NOTE'
   Each row is a session started by the harness — a prover, a theorist or a
   seeder — that is live or was within the window. It has no row in

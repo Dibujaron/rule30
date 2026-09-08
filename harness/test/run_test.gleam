@@ -21,6 +21,7 @@ import harness/dispatch
 import harness/roster
 import harness/schedule.{Plan}
 import harness/verify
+import harness/worker/brief
 import ports
 import simplifile
 
@@ -450,6 +451,73 @@ pub fn an_unclosed_attempts_proof_file_moves_into_its_attempt_directory_test() {
     read(attempt_dir <> "/summary.txt"),
     "proof     " <> attempt_dir <> "/" <> base,
   )
+}
+
+/// `prove-one` writes its attempt record where every other producer does.
+/// A `run` attempt writes `runs/<run>/<node>-<n>/`, a theorist
+/// `runs/<run>/theorist-1/`, a seeder `runs/<run>/seed-1/`; `prove_one`
+/// collapsed the run log and the attempt log into one at the run root, and
+/// two readers assume the subdirectory — `brief.previous_attempt_file`,
+/// which then cannot name a parked proof file, and
+/// `.claude/skills/startup/state.sh`, whose `runs/*/*/events.jsonl` glob
+/// then cannot see a live `prove-one` attempt at all. That second one is
+/// the only guard against a hand-started session messaging a live prover.
+/// See `startup-cannot-see-a-live-prove-one-attempt`.
+pub fn prove_one_writes_its_record_in_an_attempt_directory_test() {
+  let id = "harness_probe_fixture_" <> token()
+  let node = probe(id, [])
+  let f =
+    fixture_with_board(
+      "prove-one-attempt-dir",
+      [[init_line("s"), result_line("s", "abandoned")]],
+      ports.span(1),
+      roster.Roster([scripted_identity(), understudy()]),
+      Dag([node]),
+    )
+  let assert Ok(_) = dispatch.prove_one(f.cfg, id)
+  let assert Ok(runs) = simplifile.read_directory(f.cfg.runs_root)
+  let assert [run] = runs
+  let attempt_dir = f.cfg.runs_root <> "/" <> run <> "/" <> id <> "-1"
+  assert simplifile.is_file(attempt_dir <> "/events.jsonl") == Ok(True)
+  assert simplifile.is_file(attempt_dir <> "/summary.txt") == Ok(True)
+}
+
+/// The row this closes: a proof file parked by a `prove-one` attempt was
+/// invisible to the next brief, so a worker that trusted the brief would
+/// re-prove an L node from scratch
+/// (`brief-says-to-read-the-existing-proof-file`). The write side moved the
+/// file into whatever log it was handed and the read side only ever looked
+/// inside `<node>-<n>` directories, so the two met on the `run` path and
+/// nowhere else.
+///
+/// Writes a real file under the live `Rule30/Proofs/` under a per-call
+/// token, for the reason the parking test above gives.
+pub fn a_file_parked_by_prove_one_is_named_by_the_next_brief_test() {
+  let id = "harness_probe_fixture_" <> token()
+  let node = probe(id, [])
+  let f =
+    fixture_with_board(
+      "prove-one-parked-brief",
+      [[init_line("s"), result_line("s", "abandoned")]],
+      ports.span(1),
+      roster.Roster([scripted_identity(), understudy()]),
+      Dag([node]),
+    )
+  let rel = dag.proof_path(node)
+  let live = f.cfg.repo_root <> "/" <> rel
+  let assert Ok(False) = simplifile.is_file(live)
+  let assert Ok(_) =
+    simplifile.write(live, "-- a fixture's unclosed work
+")
+  let assert Ok(_) = dispatch.prove_one(f.cfg, id)
+  assert simplifile.is_file(live) == Ok(False)
+  let assert Ok(runs) = simplifile.read_directory(f.cfg.runs_root)
+  let assert [run] = runs
+  let base = string.split(rel, "/") |> list.last |> result.unwrap(rel)
+  let parked = f.cfg.runs_root <> "/" <> run <> "/" <> id <> "-1/" <> base
+  assert read(parked) == "-- a fixture's unclosed work
+"
+  assert brief.previous_attempt_file(f.cfg, node) == Some(parked)
 }
 
 /// The other half of the invariant: a closed node's file is exactly what
