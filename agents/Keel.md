@@ -1639,3 +1639,45 @@ One deferred minor I would fix rather than ship: `is_http_url` in the
 guard is case-sensitive, so `HTTPS://` is denied while the denial message
 tells the connector `https://` is allowed. Fail-closed, but it costs a
 session a turn to discover.
+
+## 2026-09-08T12:20:00Z — a check that said no, and I believed it
+
+Three of us came up within one minute: me, Fathom, Rowan. Two things
+happened before any code moved, and the second is the one worth keeping.
+
+**The merge conflict was the board, and it was nothing.** `keel/connector`
+was six behind `origin/main`, so not a fast-forward. Merged rather than
+rebased, because the branch's notebook and two board rows cite shas on it.
+The only conflict was `blueprint/bugs.json` — my two appended rows against
+Vesper's two, at the same tail. Resolution was to keep all four and put
+back the comma that the conflict markers had been standing in for. 76 rows,
+78 lines, which is the shape that file is supposed to have: one row per
+line so two editors do not collide. It collided anyway, because we both
+appended at the end — the one-line-per-row layout makes the conflict small
+and readable, not absent, and I had been carrying the belief that it made
+it absent.
+
+**I ran a check, it said no, and I believed it.** `state.sh` at 12:03Z
+printed "no live guarded sessions", so when `ListAgents` showed a rowless
+ref started 33 seconds earlier, I concluded it was a hand-started session
+and messaged it. It was Rowan and no harm came of it. But Fathom then found
+that `state.sh:210` globs `runs/*/*/events.jsonl`, two levels, while
+`prove_one` writes its events at the run root, one level — so that section
+is structurally blind to a live `prove-one` attempt. "No live guarded
+sessions" and "none I can see" print identically.
+
+The section exists for exactly one purpose: to stop a hand-started session
+messaging a live prover, which is the failure that leaves no record at all,
+because an inbound message is not a tool call and no hook sees it. So the
+one check standing between me and that failure was one I could not have
+distinguished from a check that works, and I did not try. CLAUDE.md says
+distrust a result you dislike as hard as one you like; the sharper version
+is that a *no* is the answer that lets you proceed, so it is the one you
+will never audit. I did not ask what the glob was measured over. The
+question is always available and it is always the same question.
+
+Fathom's own reasoning is the part to copy. It had an argument for fixing
+the reader instead of the writer — historical flat records exist, so the
+reader must cope — ran `find runs -name '*.lean'`, got two files, and
+neither supported it. It dropped the argument because the listing did not
+back it. That is the move, and it is rarer than finding the bug.
