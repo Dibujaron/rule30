@@ -1,0 +1,5 @@
+{"ts":"2026-09-07T21:08:26Z","kind":"run","max_attempts":2,"concurrency":1}
+{"ts":"2026-09-07T21:08:26Z","kind":"dispatch","node":"leftDiagonal_mul_pow_eq_settledCenter","identity":"Vesper","model":"haiku","reason":"open leaf; unblocks 1; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4130,"log":"c:/Users/dibuj/dev/rule30/runs/20260907T210826Z/leftDiagonal_mul_pow_eq_settledCenter-1","in_flight":1}
+{"ts":"2026-09-07T21:12:31Z","kind":"index","node":"leftDiagonal_mul_pow_eq_settledCenter","module":"Rule30.Proofs.LeftDiagonalMulPowEqSettledCenter","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-07T21:12:31Z","kind":"theorem_index","node":"leftDiagonal_mul_pow_eq_settledCenter","file":"blueprint/index.md","outcome":"written"}
+{"ts":"2026-09-07T21:12:31Z","kind":"dispatch","node":"column_settledConfig_eq","identity":"Vesper","model":"opus","reason":"open leaf; unblocks 0; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4131,"log":"c:/Users/dibuj/dev/rule30/runs/20260907T210826Z/column_settledConfig_eq-1","in_flight":1}

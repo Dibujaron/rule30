@@ -1,0 +1,5 @@
+
+leftDiagonal_mul_pow_eq_settledCenterVesper   haiku   proved            $0.54   24 turns
+column_settledConfig_eq           Vesper   opus    budget_exhausted  $0.92   3 turns
+
+2 attempt(s), 1 closed, $1.46 in all
