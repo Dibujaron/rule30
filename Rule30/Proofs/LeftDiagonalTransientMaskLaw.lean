@@ -5,6 +5,14 @@ import Rule30.Proofs.LeftDiagonalRecurrence
 **What this says.** A settled cell on diagonal k+2 at j, under a transient driver on k+1, with the cell below settled, stays settled at j+1 iff its own cell is black.
 **Why it is true.** The recurrence at k gives the XOR relationship; when the driver diagonal is transient and this diagonal is settled at j, the difference at j+1 comes solely from whether this diagonal's cell is black.
 **Where the work is.** The same case-split on the recurrence values: with this diagonal settled at j and the driver transient, the four Bool values determine the outcome by calculation.
+
+**Checked type** (written by the harness after `lake build` and the `type_of%` check passed, not by the worker):
+```lean
+Statements.leftDiagonal_transient_mask_law (k j M : ℕ) (hc : leftDiagonal (k + 2) j = leftDiagonal (k + 2) (j + M))
+  (hT : leftDiagonal (k + 1) (j + 1) ≠ leftDiagonal (k + 1) (j + 1 + M))
+  (h0 : leftDiagonal k (j + 2) = leftDiagonal k (j + 2 + M)) :
+  leftDiagonal (k + 2) (j + 1) ≠ leftDiagonal (k + 2) (j + 1 + M) ↔ leftDiagonal (k + 2) j = false
+```
 -/
 
 theorem leftDiagonal_transient_mask_law (k j M : ℕ)

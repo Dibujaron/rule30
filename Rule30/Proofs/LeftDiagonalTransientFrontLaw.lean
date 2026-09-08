@@ -5,6 +5,14 @@ import Rule30.Proofs.LeftDiagonalRecurrence
 **What this says.** A cell on a left diagonal differs from its shifted counterpart exactly when its driver cell on the shallower diagonal is white, given the two neighbors are settled.
 **Why it is true.** The recurrence relation xor-ing three terms shows the difference propagates when the driver (the middle term in the or) is white.
 **Where the work is.** The xor-or algebra: sixteen Bool cases, each decided by reflexivity.
+
+**Checked type** (written by the harness after `lake build` and the `type_of%` check passed, not by the worker):
+```lean
+Statements.leftDiagonal_transient_front_law (k j M : ℕ) (hT : leftDiagonal (k + 2) j ≠ leftDiagonal (k + 2) (j + M))
+  (h1 : leftDiagonal (k + 1) (j + 1) = leftDiagonal (k + 1) (j + 1 + M))
+  (h0 : leftDiagonal k (j + 2) = leftDiagonal k (j + 2 + M)) :
+  leftDiagonal (k + 2) (j + 1) ≠ leftDiagonal (k + 2) (j + 1 + M) ↔ leftDiagonal (k + 1) (j + 1) = false
+```
 -/
 
 theorem leftDiagonal_transient_front_law (k j M : ℕ)

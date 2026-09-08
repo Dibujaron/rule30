@@ -67,8 +67,11 @@ import Rule30.Proofs.LeftDiagonalPeriodicFromPow
 import Rule30.Proofs.LeftDiagonalPeriodicFromStep
 import Rule30.Proofs.LeftDiagonalPeriodicFromStepOfBlack
 import Rule30.Proofs.LeftDiagonalRecurrence
+import Rule30.Proofs.LeftDiagonalShiftOfWhite
 import Rule30.Proofs.LeftDiagonalStepOnsetDichotomy
 import Rule30.Proofs.LeftDiagonalStepPeriodDichotomy
+import Rule30.Proofs.LeftDiagonalTransientFrontLaw
+import Rule30.Proofs.LeftDiagonalTransientMaskLaw
 import Rule30.Proofs.LeftDiagonalWhiteOfShift
 import Rule30.Proofs.LeftSolveEqColumn
 import Rule30.Proofs.NotEvolvePeriodAdjacent

@@ -564,3 +564,11 @@ Pushing the implication *inside* the existential makes the choice total; `hN k :
 ## 2026-09-08T12:36:40Z — leftDiagonal_white_of_shift (haiku, proved)
 
 **Generalize + cases on Bool pattern**: When a recurrence reduces to an equality like `xor a (b || c) = false`, rewrite with the recurrence, generalize the unknown term to x, and `cases x <;> rfl`. This isolates the Boolean value so both branches close by reflexivity. Reusable across all four white-shift family nodes. **Nat.le_induction with interval bounds**: `induction i, hi using Nat.le_induction` carries both index and bound through the two cases, letting the base use the bound value directly and the succ discharge by omega. Clean for inductions over [j+1, ∞)-style intervals.
+
+## 2026-09-08T12:43:29Z — leftDiagonal_transient_front_law (haiku, proved)
+
+**Proof shape:** recurrence + Bool case split. `leftDiagonal_recurrence` at two indices, then generalize four Bool values, then `cases a <;> cases b <;> cases c <;> cases c' <;> decide` closes all 16 branches. No induction, no omega loops—just xor/or arithmetic on Bool.
+
+**Reindex pattern:** `rw [show j + M + k = j + k + M from by omega]` bridges recurrences stated at different times. Both R1 and R2 then read as the same structure modulo the hypotheses h0 and h1, which collapse the xor-or tree to a single Bool question.
+
+**Axioms:** propext, Quot.sound (both allowed).

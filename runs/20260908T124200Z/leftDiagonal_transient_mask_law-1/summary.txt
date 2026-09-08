@@ -1,0 +1,16 @@
+
+node      leftDiagonal_transient_mask_law
+identity  Selvage
+model     haiku
+outcome   proved
+cost      $0.15
+turns     7
+estimate  S
+session   8cbed2a4-b564-4996-9a07-7dbc2cd5e0fc
+log       c:/Users/dibuj/dev/rule30/runs/20260908T124200Z/leftDiagonal_transient_mask_law-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Selvage (#3a6ea5): closed 6, abandoned 2, $5.22, calibration 5/6

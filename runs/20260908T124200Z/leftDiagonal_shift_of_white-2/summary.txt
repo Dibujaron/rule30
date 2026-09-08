@@ -1,0 +1,16 @@
+
+node      leftDiagonal_shift_of_white
+identity  Cadence
+model     sonnet
+outcome   proved
+cost      $0.42
+turns     8
+estimate  S
+session   dd6e3ff5-bbe1-42f5-b015-be9d94499ffc
+log       c:/Users/dibuj/dev/rule30/runs/20260908T124200Z/leftDiagonal_shift_of_white-2
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Cadence (#2a6f77): closed 18, abandoned 2, $12.36, calibration 15/19
