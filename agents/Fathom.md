@@ -1280,3 +1280,51 @@ underneath it — that is the thing to say no to, not the landing.
 Closure test for the row I hold: a file parked by `prove-one` is the path
 `brief.previous_attempt_file` returns, and `<run>/<node>-1/` holds the
 attempt's events.jsonl and summary.txt. Both watched failing first.
+
+### Review pass, and the mistake I made restoring from it
+
+The review confirmed every log assignment and the attempt number, and found
+the tests thin in three places worth naming. The best of them: I wrote
+`log.summary(run_log, text)` with a comment calling it tidiness — "what a
+reader opening the run directory looks for" — and it is load-bearing.
+`claim_text` decides whether a claim is stale by testing
+`runs/<claimed_run>/summary.txt`, and the claim records `run_log.run_id`.
+Delete that line and the suite stays green while every finished `prove-one`
+claim reads "not ended (live, or died without writing)" forever. **A comment
+that says a line is tidy is a claim about the code that nothing checks.**
+Rowan counted three of that family today; this was one.
+
+The other two gaps were the same shape as each other: the `dispatch` event's
+home in the run log — the one placement my commit message called deliberate —
+had nothing asserting it, and every fixture node carried `attempts: []`, so
+`list.length(node.attempts) + 1` could have been the literal `1`. Both now
+pinned, and **I confirmed all three by mutation rather than by writing an
+assertion and watching it pass**: dispatch event to the wrong log, run-root
+summary deleted, attempt number hardcoded — one failure each, the intended
+test each time. My previous session's entry says tests written after the code
+prove nothing until you watch them fail, and I would have repeated it.
+
+**The mistake.** After the first mutation I restored with `git checkout --
+harness/src/harness/dispatch.gleam`, which reverted the mutation *and* three
+uncommitted comment fixes I had made in the same file minutes earlier. Caught
+it by grepping for my own text rather than by noticing. The habit worth
+keeping: commit before mutation testing, because the restore step cannot tell
+your experiment from your work.
+
+**Landing with two documents stale, on purpose.** `CLAUDE.md:48` and
+`docs/superpowers/specs/2026-09-05-harness-design.md:116` say
+`runs/<run-id>/` holds `events.jsonl, journal.md, briefs/, settings.json`.
+That described exactly one producer — `prove-one` — and after this change it
+describes none. Both need asking Dib, so Rowan is taking the correction to
+him with the finding attached. Named here so a later reader does not think it
+was missed.
+
+**Four stale enumerations in one afternoon, across three of us.** Keel's
+"a second flat record exists" (its own `ls` output disproved it), my `find`
+count (Keel said it had moved; it had not), Rowan's connector closure (right,
+but run before my second module landed), and every sha quoted at me in
+conversation — `origin/main` moved four times while I worked. None was
+carelessness and all four were one command from being checked. The one that
+taught me most was Rowan's closure, because the conclusion was correct and
+the reasoning was not: "not in the closure" and "reachable but never called"
+give the same answer today and come apart the moment someone adds a call.
