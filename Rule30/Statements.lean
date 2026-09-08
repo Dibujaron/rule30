@@ -1186,4 +1186,32 @@ theorem leftDiagonal_period_le_of_black_between (m q N n : ℕ)
       PeriodicFrom (leftDiagonal (m + n + 1)) q M := by
   sorry
 
+/-- **Bridge to the row model.** Diagonal `k` at index `j` is bit `k` of the
+packed row `j + k`. So the first `k + 1` left diagonals are the low `k + 1` bits
+of `rowNat`, an autonomous finite system — which is what lets the onset wall be
+stated as a claim about the orbit of `1` under a truncated bit map.
+
+Proved by Selvage at `leftDiagonal_onset_le` attempt 2
+(`runs/20260908T124200Z/leftDiagonal_onset_le-2/`), which did not close that
+node; seeded here so the bridge is importable. -/
+theorem leftDiagonal_eq_rowNat_testBit (k j : ℕ) :
+    leftDiagonal k j = (rowNat (j + k)).testBit k := by
+  sorry
+
+/-- **The onset wall, conditional on its own boundary line.** If at every step
+the settled neighbour on the half-speed line is black, or the new diagonal
+already agrees with itself one period later just inside the line, then every
+diagonal has settled by index `k`. This is the onset induction with nothing
+hidden: what remains is the one Boolean condition per diagonal, true for the
+seed by measurement and unproved.
+
+Proved by Selvage at `leftDiagonal_onset_le` attempt 2
+(`runs/20260908T124200Z/leftDiagonal_onset_le-2/`), which did not close that
+node; seeded here so the reduction is importable. -/
+theorem leftDiagonal_onset_le_of_line
+    (h : ∀ m, leftDiagonal (m + 1) (m + 2) = true ∨
+      leftDiagonal (m + 2) (m + 1 + 2 ^ (m + 2)) = leftDiagonal (m + 2) (m + 1))
+    (k : ℕ) : ∃ p > 0, ∃ N ≤ k, PeriodicFrom (leftDiagonal k) p N := by
+  sorry
+
 end Statements
