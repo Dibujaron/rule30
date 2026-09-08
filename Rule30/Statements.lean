@@ -1168,4 +1168,22 @@ theorem rightDiagonal_driver_flip_iff_white (k q : ℕ)
       ↔ rightDiagonal k (j + 2) = false := by
   sorry
 
+/-- **A shared period carries inwards past every diagonal that stays black.**
+If diagonals `m` and `m + 1` share the period `q` from `N` on, and each of the
+next `n` diagonals inwards has black cells arbitrarily far out, then some pair
+`m + n`, `m + n + 1` still shares `q`. This is the reduction the period wall
+needs: it turns a bound on the period of diagonal `k` into a statement about
+how many of the first `k` diagonals are eventually white.
+
+Parked by Vesper at `leftDiagonal_period_le` attempt 1
+(`runs/20260908T205802Z/leftDiagonal_period_le-1/`), which abandoned that node
+and proved this instead. -/
+theorem leftDiagonal_period_le_of_black_between (m q N n : ℕ)
+    (h0 : PeriodicFrom (leftDiagonal m) q N)
+    (h1 : PeriodicFrom (leftDiagonal (m + 1)) q N)
+    (hb : ∀ i < n, ∀ J : ℕ, ∃ j ≥ J, leftDiagonal (m + 1 + i) j = true) :
+    ∃ M, PeriodicFrom (leftDiagonal (m + n)) q M ∧
+      PeriodicFrom (leftDiagonal (m + n + 1)) q M := by
+  sorry
+
 end Statements
