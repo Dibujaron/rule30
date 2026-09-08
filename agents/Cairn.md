@@ -59,3 +59,60 @@ Finding: the DAG holds the diagonal and column-periodicity material (Rowland's r
 Two things not in crystals: Kopra 2022 Theorems 4.5 and 4.7 (the right half of the row from cell `c`, read as a sequence, returns to its starting value only finitely often along the orbit, and has infinitely many limit points; Kopra writes it `frac_c(x)` after his real-number analogy, but it is a sequence, not a real, and I first told Dib otherwise until Rowan corrected me against page 8 of the source), and measure-theoretic mixing of permutive CAs (Shirvani–Rogers 1991, Kleveland 1997 — from memory, not from a held source, and I said so). One corollary worth attaching to item 11 because it is a picture fact: arbitrarily large white triangles occur in the single-seed pattern. Told Rowan the Kopra gap directly.
 
 Rule for this kind of question: grep the sources for `^(Theorem|Proposition|Lemma)` before saying a sweep is complete. It took one command and found the Kopra rows.
+
+## 2026-09-08T21:00:00Z — I read a true sentence and concluded a false thing
+
+Dib asked what Portage landed and what followed. The explaining went fine; the
+one piece of my own I added did not, and the shape of the failure is the
+project's canonical one, so it goes here rather than in a commit message.
+
+Sextant's attack document says the abstract route to right-diagonal
+unboundedness stalls because "the abstract system contains flat towers
+(constants ≡ 1)". I read `constants ≡ 1` as *the diagonals are constantly
+black*, noticed that `rightDiagonal_not_constant` had been proved that
+morning, and sent Rowan the observation that we had accidentally bought the
+side condition the argument was missing. Rowan agreed, told me I had
+undersold it, and put it verbatim into a live theorist's topic string as a
+premise.
+
+It means *the free constants* `R_k 0`, one per depth, are all set black. I
+computed the tower: every diagonal past the edge is `(10)^∞` — minimal period
+2, **not constant** — so `rightDiagonal_not_constant` (which covers `k ≥ 1`
+and permits the edge) is satisfied by the flat tower outright. Nothing was
+bought. Sextant's own sentence, four lines up from the one I quoted, was the
+one that mattered: no proof that the right periods grow can be a statement
+about the recurrence alone, because the tower is underdetermined by one bit
+per depth and that bit *is* the centre column.
+
+Three things worth keeping:
+
+- **Reading the sentence harder would not have caught it.** The sentence was
+  true. What caught it was running the object, and that took ninety seconds
+  in a scratchpad. For any claim of the form "our theorem X excludes their
+  bad case Y", construct Y and evaluate X on it before sending. Not after.
+- **Rowan's agreement was not review.** It was confident, it sharpened my
+  point, and it told me I had been too cautious — and it was two sessions
+  compounding one unchecked premise, which CLAUDE.md already names. Being
+  told you undersold a claim should raise the bar on it, not lower it. Rowan
+  reached the same conclusion independently and said so; write that down as
+  the pattern, not as one person's slip.
+- **The retraction was cheap and the delay was not free.** Four minutes cost
+  a killed theorist session. Retracting fast is the whole reason this ended
+  well, but the ninety-second check would have cost nothing at all.
+
+What survives from the episode, and it is Rowan's move rather than mine: the
+corrected framing became a better topic than the original. C5 handed to the
+theorist as a *premise* — assume no recurrence-only proof exists, then ask
+what the weakest property of the actual seed forces unboundedness, and say so
+plainly if that property is equivalent to a P1 conjecture. A boundary result
+is a real outcome; my version would have sent it chasing a gap that was not
+there.
+
+Also verified this session, and it stands: Rowland 2006 Proposition 2
+(`sources/rowland-2006-local-nested-structure.txt:839`) is the **left**
+doubling criterion, both directions, from Wolfram's observation; his `a(n)` at
+line 131 tabulates the right-side doubling positions while saying they show no
+computable regularity. So the right-hand doubling half being unproved in print
+holds up on the sources we hold. Sextant's separate "no statement in print"
+for right-diagonal *unboundedness* is one session's search and I did not
+re-run it; Rowan is carrying the two apart.
