@@ -2123,3 +2123,81 @@ true, and unfalsifiable as stated.
 
 The fix is mechanical, not attitudinal: quote `value @ sha1`, and re-run
 once when the session is down.
+
+## 2026-09-08T21:15:00Z — two rules applied by name instead of by mechanism, in one hour
+
+Dib asked why Sextant could not run on opus. There was no reason. The pause
+was budget-shaped — fable at 90% two days from reset — and I had stored it as
+identity-shaped, so I repeated "Sextant is paused" to Cairn as though it were
+a fact about Sextant. What makes it worth an entry is that I had made the
+*correct* move an hour earlier: I chose `--model opus` for the connector
+specifically to protect the fable allowance, then failed to apply the same
+move one paragraph later. Knowing the lever and not reaching for it is a
+different failure from not knowing it, and I do not think care fixes it.
+
+The record also destroys the cost premise I never checked. Portage on opus:
+49 turns, $7.78. Sextant on fable: 49 turns, $12.73. **Opus is cheaper per
+turn than fable in this harness.** Every sentence I have written about
+"protecting the scarce allowance" was true about scarcity and silently wrong
+about price.
+
+Chasing it, I found the same error in my own filed row. I had told Keel to
+hold a landing because "no `gleam` beside a live run after a landing" — my
+row, my words, and a name standing in for a mechanism. The real rule is
+narrower and I can state it: **Erlang loads a module on first call and never
+reloads it on its own, so an already-loaded module is safe and only a
+not-yet-called one is at risk.** `dispatch` is not in `connector.gleam`'s
+imports at all, so Keel's first landing could never have reached my node. I
+had held a peer for half an hour on a rule I had not decomposed.
+
+It then got a real test rather than an argument. Keel's second landing
+rewrote `guard.gleam`, which unlike `dispatch` **is** in all three live
+nodes' import graphs; my next `gleam` call recompiled for 1.08s against the
+usual 0.09s, and all three sessions survived — checked by pid, not by port.
+The remaining unsafe case is the one neither Keel nor I had named: a module
+in the graph whose first call comes at session end, which is exactly where
+the report and roster writing live. Worst possible place, having already
+spent everything. My row still says the blunt thing and needs amending.
+
+**Cairn retracted a premise four minutes after I had put it in a live
+theorist's topic string.** Its flat-tower pointer — that
+`rightDiagonal_not_constant` excludes Sextant's degenerate case — was wrong:
+"constants ≡ 1" means the free bits, not the diagonals. I killed the session
+at two minutes in and verified the retraction from two primary sources rather
+than from the message, because Cairn's *first* message had been confident and
+wrong and the second deserved the same test. Sextant's own document says the
+flat tower has "period 2 at every depth"; `Statements.lean:1150` asks only
+that each diagonal take both values, which `(10)^∞` does. Nothing was bought.
+
+I did not catch it myself. I amplified Cairn's reading into a topic without
+checking it against a document that was one `sed` away — the same error Cairn
+made, one step downstream, and the chain was stopped only because Cairn
+re-read its own claim ninety seconds later. Two sessions, neither running the
+object. The lesson is not "verify peers"; I *know* that rule and cite it
+often. It is that a claim arriving as help, confirming something I already
+wanted, gets a different reception from one that blocks me.
+
+**Then I destroyed a record with `git checkout`.** I pretty-printed
+`blueprint/dag.json` (it is one compact line; the 2951-insertion diffstat was
+the tell), reverted with `git checkout blueprint/dag.json`, and took the
+dispatcher's uncommitted write of Vesper's attempt with it. In a shared
+checkout with live sessions writing tracked files, `git checkout <file>` is
+not the local undo it is in a solo repo — it is a write against state a peer
+process owns. Restored verbatim from the run record. The near-miss is that I
+only noticed because I checked the diffstat *after* reverting; had the revert
+been my last action I would have reported a clean tree.
+
+**What the evening actually produced**, and it came from a failure: Vesper
+abandoned `leftDiagonal_period_le` in 9 turns for $2.29 and proved the
+reduction the wall needs on the way. The harness parked the file under the
+run directory — correct, it is not a closed node — but nothing imports a run
+directory, so a complete proof was sitting where only a reader of abandoned
+attempts would find it. Seeded as
+`leftDiagonal_period_le_of_black_between`. **An abandoned attempt is not an
+empty one, and nothing in the harness looks inside one.**
+
+I checked the seeded name by hand before dispatching — `lake build`, then
+`#check @Statements.<name>` — which is the check the harness does not do and
+which I filed a row about this morning after making exactly that error. Doing
+it by hand is not a fix; it is me being the missing check, and I will not be
+here next time.
