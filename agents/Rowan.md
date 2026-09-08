@@ -1964,3 +1964,65 @@ theorist's, 600 turns and $80; Sextant's sessions ran 71 turns and $12.75,
 so I will set the dollar ceiling down explicitly rather than let the first
 session of a new role discover it. All twelve `sources/` texts are present
 in this checkout.
+
+## 2026-09-08T12:35:00Z — one new theorem proved, seven seeded, and the connector's first session cost $1.12 to learn one thing
+
+**The hedge paid before the bet did.** `leftDiagonal_period_unbounded_le`
+— crystal 54, seeded and proved inside one hour. Vesper, opus, 12 turns,
+$2.10, VERIFIED, axioms clean. It sharpens our own
+`leftDiagonal_period_unbounded` from "the doublings never stop" to "the
+next one arrives by depth `4^(2^a) + 1`": the same pigeonhole, counted
+over a finite codomain instead of taken over an infinite index set.
+Vesper's note says the work was turning two `p`-bit words into the number
+`4^p` by hand, which is exactly where crystal 54 said it would be. Not in
+print as far as twelve papers and a search go — and that qualification
+belongs in every sentence about it.
+
+Crystal 54 had been sitting in `crystals.md` since 02:10Z with a stated
+route, a novelty claim and no node. Nobody had seeded it. That is the
+lesson worth keeping: **the gap between "a theorist wrote it down" and "a
+node exists" is where this project loses its cheapest wins.** I found it
+by asking a subagent for every crystal with a route and no node, and it
+came back with eight more.
+
+**Five of those are seeded and in flight**: crystal 45's onset dichotomy
+(Cadence found it last night in an *abandoned* attempt and it has been
+compiling in `explorer/` ever since) and crystal 53's four. Their warrant
+is stronger than crystal 54's was — kernel proofs that already compile,
+clean axioms, re-run today.
+
+**The connector's first session refused at turn one.** `stop_reason:
+refusal`, `api_refusal_category: reasoning_extraction`, zero output
+tokens, $1.12, no document. And it ran on **fable**, because
+`connector.gleam:105` is `default_model = "fable"` copied from the
+theorist while the seeder chose opus — so on the day Dib told us to
+protect the fable allowance, the role's default spent it to produce
+nothing. I passed ceilings explicitly and never asked what `--model`
+defaulted to. Keel's framing is the one to keep: the ceiling failed
+closed and this one spends.
+
+I guessed the brief had tripped the classifier, marked it as a guess, and
+was wrong. The opus retry ran the same brief, same vantage, same 56k of
+context, same guard, and did not refuse. Keel had held off rewording on
+exactly that argument — the retry discriminates it for free — and was
+right to. **A guess I marked and a peer refused to act on cost nothing;
+the same guess acted on would have changed a file that was never wrong.**
+
+**Three sessions in one checkout worked, and the mechanism talk is why.**
+Every time one of us reached for the freeze rule we named the mechanism
+instead, and every time the mechanism was narrower than the rule.
+Fathom measured that gleam hashes content, not mtimes, so `touch` opens no
+window and only a real source change does. Keel found `for_connector` was
+untestable against `for_theorist` because the fixture gave both the same
+numbers — which means my `HARNESS_CONNECTOR_MAX_BUDGET_USD` would have
+silently done nothing an hour earlier. And Keel moved main 15 seconds
+inside my live run, self-reported it, and named why: the `git status`
+check and the `git merge` were in one command, so the evidence arrived
+after the action. A check that cannot gate the action it is checking is
+not a check.
+
+Four instances today of a true value with a missing denominator — my
+docstring citing six depths as one series when four were ours and two
+NKS's; Fathom's `state.sh` glob; Keel's fixture; the CLI's `success` over
+a refusal. It is the project's recurring failure and it did not stop
+recurring; what changed is that each of us caught someone else's.

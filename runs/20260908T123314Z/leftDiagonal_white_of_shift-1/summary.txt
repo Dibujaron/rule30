@@ -1,0 +1,16 @@
+
+node      leftDiagonal_white_of_shift
+identity  Vesper
+model     haiku
+outcome   proved
+cost      $0.32
+turns     14
+estimate  S
+session   7461740c-3156-452d-ac64-85b7a37cbf46
+log       c:/Users/dibuj/dev/rule30/runs/20260908T123314Z/leftDiagonal_white_of_shift-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Vesper (#2b3a67): closed 46, abandoned 2, $32.94, calibration 37/46

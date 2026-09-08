@@ -1,0 +1,16 @@
+
+node      leftDiagonal_black_after_white
+identity  Vesper
+model     haiku
+outcome   proved
+cost      $0.32
+turns     12
+estimate  S
+session   9d2d9cb5-58f0-4b62-8543-6442aab46c96
+log       c:/Users/dibuj/dev/rule30/runs/20260908T123314Z/leftDiagonal_black_after_white-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Vesper (#2b3a67): closed 45, abandoned 2, $32.63, calibration 36/45

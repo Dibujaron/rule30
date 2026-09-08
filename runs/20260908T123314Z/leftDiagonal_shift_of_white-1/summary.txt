@@ -1,0 +1,17 @@
+
+node      leftDiagonal_shift_of_white
+identity  Selvage
+model     haiku
+outcome   budget_exhausted
+cost      $0.67
+turns     41
+estimate  S
+session   331dfdb8-eeee-4008-939c-951a845622f9
+log       c:/Users/dibuj/dev/rule30/runs/20260908T123314Z/leftDiagonal_shift_of_white-1
+proof     c:/Users/dibuj/dev/rule30/runs/20260908T123314Z/leftDiagonal_shift_of_white-1/LeftDiagonalShiftOfWhite.lean (moved out of Rule30/Proofs/: not a closed node)
+
+verifier:
+the CLI ended the session at the CLI's turn ceiling (40 turns): {"duration_api_ms":237518,"stop_reason":"tool_use","session_id":"331dfdb8-eeee-4008-939c-951a845622f9","total_cost_usd":0.6744226999999998,"usage":{"input_tokens":322,"cache_creation_input_tokens":109215,"cache_read_input_tokens":3336587,"output_tokens":24129,"output_tokens_details":{"thinking_tokens":7042},"server_tool_use":{"web_search_requests":0,"web_fetch_requests":0},"service_tier":"standard","cache_creation":{"ephemeral_1h_input_tokens":109215,"ephemeral_5m_input_tokens":0},"inference_geo":"not_available","iterations":[{"input_tokens":8,"output_tokens":902,"cache_read_input_tokens":108243,"cache_creation_input_tokens":972,"cache_creation":{"ephemeral_5m_input_tokens":0,"ephemeral_1h_input_tokens":972},"type":"message"}],"speed":"standard"},"modelUsage":{"claude-haiku-4-5-20251001":{"inputTokens":1594,"outputTokens":24148,"cacheReadInputTokens":3336587,"cacheCreationInputTokens":109215,"webSearchRequests":0,"costUSD":0.6744226999999998,"contextWindow":200000,"maxOutputTokens":320
+… (clipped; the full text is in events.jsonl)
+
+Selvage (#3a6ea5): closed 5, abandoned 2, $5.06, calibration 4/5

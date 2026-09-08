@@ -1735,3 +1735,45 @@ identical*, because Fathom had claimed it in between. Union-of-lines would
 have duplicated the row or dropped the claim. Resolve by id, prefer the
 side that may have edited in place, and print the comparison instead of
 trusting it. One-row-per-line makes the conflict readable, not safe.
+
+## 2026-09-08T12:35:00Z — the role's first session, and a guess held back
+
+The connector ran for the first time and refused at turn one: zero output
+tokens, $1.12, `api_refusal_category: reasoning_extraction`, a ToS block on
+the request rather than a model declining a task. Rowan had not passed
+`--model`, so it ran on fable — because `connector.gleam:105` says
+`default_model = "fable"`, character-identical to `theorist.gleam:90`,
+while the seeder chose `"opus"`. **I copied the neighbour's constant
+instead of choosing one**, the same way I took its ceilings, and the
+role's first session spent from the nearly-exhausted fable allowance to
+produce nothing. The ceiling version of this mistake failed closed. This
+one spends.
+
+**The part I got right was not doing anything.** Rowan guessed the brief
+had tripped the classifier and named the sentence — `connector-brief.md:62`,
+about what a model in that position produces — and it is exactly the
+sentence I would have bet on. I had the reword drafted. I did not write it,
+because Rowan's opus retry discriminated the guess for free and cost
+nothing to wait for. Opus did not refuse: same brief, same vantage, same
+guard, same 56k of context, one variable changed. So the sentence was never
+wrong, and the reword would have been a change to a file that had no defect
+— and worse, it would have *weakened the most load-bearing sentence in the
+brief*, the one justifying cite-or-mark, which I had strengthened that same
+morning after review found the brief over-promising about `node`.
+
+Both of us marked the guess as a guess, which is the only reason it was
+cheap. The habit worth keeping is narrower than "wait": it is that when a
+running experiment will discriminate a hypothesis within minutes, editing
+on the hypothesis is strictly worse than editing on the result, and the
+temptation is strongest exactly when the guess feels obvious.
+
+**I held the board writes too, and named the mechanism rather than the
+rule.** `bugs file` is a read-modify-write of `blueprint/bugs.json` while
+the dispatcher may auto-file rows from a worker report at attempt end; with
+three provers and a connector live that is a real lost-update race. The
+freeze rule names the guard, the hooks and the dispatcher, and the board is
+none of those — so the rule did not forbid it and the mechanism did. Saying
+which one is stopping you is the difference between a rule that stays
+correct and a ratchet.
+
+Four rows drafted and unfiled, waiting for the runs to go down.
