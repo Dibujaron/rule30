@@ -1198,3 +1198,85 @@ verify_test's note says a failed run will; read, then deleted.
 Closure test, as the row filed it: run_test moves a token-named probe out
 of the live `Rule30/Proofs/` into `runs/<run>/<id>-1/` with a
 `proof_file` event and a summary line; a proved attempt keeps its file.
+
+## 2026-09-08, session rule30-fa [a2b6f4] — three of us in the checkout
+
+**Startup found nothing at risk and one handoff.** No commits on this disk
+only, no dirty worktrees, no held claims, no live guarded sessions;
+`keel/connector` pushed and unlanded. Keel and Rowan both started within a
+minute of me. The session-title hook applied on Dib's next prompt, so we
+went from `rule30-fa`/`rule30-23`/`rule30-46` to `Fathom`/`Keel`/`Rowan`
+mid-conversation and the bare names became addresses. Worth expecting: the
+first `ListAgents` of a session shows hex, the second shows names.
+
+**The row I took was true and its cause was not what it said.**
+`brief-says-to-read-the-existing-proof-file` reads as a budget_exhausted
+problem. It is a `prove-one` problem. `prove_one` opened one log at the run
+root (dispatch.gleam:89) and used it as both run log and attempt log, so it
+was the only producer with no attempt directory — `run` attempts, theorists
+and seeders all write `<run>/<name>-<n>/`. `park_proof_file` parks into
+whatever log it is handed, so a `prove-one` attempt's file landed at the run
+root, where `brief.previous_attempt_file` — which enumerates `<node>-<n>`
+entries only — could never see it. My own 5e8b6a4: a write side serving both
+dispatch paths, a read side serving one, and tests covering only the path
+where they meet. Keel's phrasing, which is better than mine: a value with no
+guard at the exact moment it becomes possible to get wrong.
+
+**The finding that made it worth more than the row.**
+`.claude/skills/startup/state.sh:210` globs `runs/*/*/events.jsonl`, two
+levels, so the LIVE GUARDED SESSIONS section could not see a live
+`prove-one` attempt at all. That section is the only guard against a
+hand-started session messaging a live prover, and the arrival leaves no
+record by construction. It had already been exercised: Keel read "no live
+guarded sessions" at 12:03Z, concluded a rowless ListAgents ref was a
+hand-started unknown, and messaged it. It was Rowan, so nothing was harmed.
+Filed as its own row and fixed by the same change.
+
+Two things I want to keep from how that got filed. Keel volunteered the
+reliance unprompted, and I filed the row against the *section* rather than
+against the reading — because a section whose "none" is indistinguishable
+from "none I can see" is broken at the point of intended use, and a row
+written as someone's misreading gets fixed with a warning telling readers to
+be careful, which fixes nothing. And a row that waits for the person who
+relied on it to volunteer the reliance is a row that mostly does not exist.
+
+**An argument of mine that failed, recorded because it was convenient.** I
+was ready to fix the *reader* — teach `previous_attempt_file` about the run
+root — and I had a reason: flat records persist on disk forever, so the
+reader must learn the root regardless. `find runs -name '*.lean'` returns
+two files, one on a node now `proved` and one predating the naming scheme
+that would match no reader anyway. The evidence did not support the
+argument. Keel had argued the write side first, on design grounds, and was
+right. The tell was that I liked the conclusion before I had the listing.
+
+**A denominator I nearly quoted wrong, twice in one session.** Keel said
+`keel/connector` was 21 commits, `/startup` said 19; both sound, the gap
+being two merge commits with no patch id for `git cherry` to compare, and
+the number that actually mattered was neither (how far *behind* it was).
+Then I ran `git diff --stat origin/main` on my own tree and read three files
+I had not touched — because `origin/main` had moved under me while I worked.
+Against `b078199`, the commit I branched from, it is three files. Diff
+against your base, not against a moving ref.
+
+**What the fix is.** `prove_one` opens a run log and an attempt log, the two
+`run` opens. The `dispatch` event goes to the run log — not for symmetry but
+because state.sh:143 greps `runs/*/events.jsonl` one level deep for it, a
+third reader of the layout I found only by looking. Plus: the live-guarded
+section now prints the glob it searched, so "(none)" carries its own
+denominator. That half is bash with no automated test, so it was red-greened
+against a fixture holding all three shapes — with only a flat run live it
+printed "(none)", which is exactly what Keel read this morning.
+
+**Freeze question, answered by mechanism.** Rowan asked whether my landing
+blocks a run, rather than citing the rule at me. `.gitignore:15` is
+`/harness/build/` and `git ls-files harness/build` is empty, so a
+fast-forward moves tracked source only and touches no BEAM the running
+dispatcher has loaded. My three files are `dispatch.gleam`, `run_test.gleam`
+and `state.sh`; the guard and the hooks are untouched, and no worker reads
+any of them. The one real hazard is `gleam build`/`gleam test` in the
+*shared checkout* during a live run, which rewrites `harness/build/`
+underneath it — that is the thing to say no to, not the landing.
+
+Closure test for the row I hold: a file parked by `prove-one` is the path
+`brief.previous_attempt_file` returns, and `<run>/<node>-1/` holds the
+attempt's events.jsonl and summary.txt. Both watched failing first.
