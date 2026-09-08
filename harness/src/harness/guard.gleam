@@ -138,6 +138,8 @@ pub type Decision {
 }
 
 /// The handful of fields `decide` cares about, pulled out of a hook's JSON.
+/// `url` is a `WebFetch` call's target and `query` a `WebSearch` call's
+/// text; both are empty for every other tool.
 type HookInput {
   HookInput(
     event: String,
@@ -145,6 +147,8 @@ type HookInput {
     file_path: String,
     command: String,
     to: String,
+    url: String,
+    query: String,
     session_id: String,
     transcript_path: String,
   )
@@ -174,12 +178,24 @@ fn hook_input_decoder() -> decode.Decoder(HookInput) {
     "",
     decode.string,
   ))
+  use url <- decode.then(decode.optionally_at(
+    ["tool_input", "url"],
+    "",
+    decode.string,
+  ))
+  use query <- decode.then(decode.optionally_at(
+    ["tool_input", "query"],
+    "",
+    decode.string,
+  ))
   decode.success(HookInput(
     event:,
     tool_name:,
     file_path:,
     command:,
     to:,
+    url:,
+    query:,
     session_id:,
     transcript_path:,
   ))
@@ -233,6 +249,7 @@ fn decide_pre(rules: Rules, hi: HookInput) -> Decision {
       decide_write(rules, hi.file_path)
     "Bash" -> decide_bash_for(rules, hi.command)
     "SendMessage" -> decide_message(rules)
+    "WebFetch" | "WebSearch" -> decide_web(rules, hi)
     _ -> Allow
   }
 }
@@ -257,6 +274,102 @@ fn decide_message(rules: Rules) -> Decision {
 
 /// What a dispatched session is told when it tries to `SendMessage`.
 pub const message_deny_reason = "harness guard: a dispatched session cannot message another session. It speaks to peers and to Dib through the notebook and journal fields of its end-of-turn report, which the harness writes to disk verbatim; messaging a session from inside an attempt is not available to it."
+
+/// The two web tools. A connector may fetch over `http://` or `https://`
+/// and may search; anything else it hands `WebFetch` is refused, since the
+/// grant is a read-only GET to the web and nothing wider — no login, no
+/// form, no POST, in keeping with the boundary that no agent posts to an
+/// external service. The other three roles are refused here as well as by
+/// the CLI allowlist: `worker.launch` already leaves both tools off their
+/// `--allowedTools`, so the CLI would refuse the call before any hook
+/// fires, but the guard is the trust boundary the project names, not the
+/// CLI's list — so the grant stays this role's alone whichever layer is
+/// loosened later.
+fn decide_web(rules: Rules, hi: HookInput) -> Decision {
+  case rules.role, hi.tool_name {
+    Connector(..), "WebFetch" ->
+      case is_http_url(hi.url) {
+        True -> Allow
+        False -> Deny(NotPermitted, web_deny_reason)
+      }
+    Connector(..), _ -> Allow
+    Prover(..), _ | Seeder(..), _ | Theorist(..), _ ->
+      Deny(NotPermitted, web_other_role_deny_reason)
+  }
+}
+
+/// What a connector is told when it hands `WebFetch` something that is not
+/// a web URL.
+pub const web_deny_reason = "harness guard: a connector may fetch http:// and https:// URLs only — read-only, no login, no form, no POST; anything else is not available to it"
+
+/// What any role but the connector is told when it reaches for the web:
+/// the grant is the connector's alone.
+pub const web_other_role_deny_reason = "harness guard: the web is available to a connector session only; this session has no WebFetch or WebSearch"
+
+fn is_http_url(url: String) -> Bool {
+  let trimmed = string.trim(url)
+  string.starts_with(trimmed, "http://")
+  || string.starts_with(trimmed, "https://")
+}
+
+/// The `kind` of the second row written for every web call, beside the
+/// guard row: `{"kind":"web","event":..,"node":..,"tool":..,"url":..,"query":..,"urls":[..]}`.
+pub const web_kind = "web"
+
+/// A second row beside the guard row for every `WebFetch` or `WebSearch`
+/// `PreToolUse`, and for a `WebFetch`'s `PostToolUse` or
+/// `PostToolUseFailure`, whatever the decision — a refused fetch is still a
+/// URL the session reached for, and a `PostToolUseFailure` row says the
+/// fetch never actually completed. `event` is the hook event name that
+/// fired, `url` is the fetch's target, `query` the search's text, and
+/// `urls` every `http://` or `https://` token anywhere in the hook body:
+/// the URL itself for a fetch, and whatever a search's payload carried. The
+/// guard row's `attempted` is capped at 400 characters and a citation is
+/// matched by exact URL, so the URL is repeated here uncapped.
+fn web_row(l: log.Log, rules: Rules, hi: HookInput, body: String) -> Nil {
+  case hi.event, hi.tool_name {
+    "PreToolUse", "WebFetch"
+    | "PreToolUse", "WebSearch"
+    | "PostToolUse", "WebFetch"
+    | "PostToolUseFailure", "WebFetch"
+    ->
+      log.event(l, web_kind, [
+        #("event", json.string(hi.event)),
+        #("node", json.string(rules.holder)),
+        #("tool", json.string(hi.tool_name)),
+        #("url", json.string(hi.url)),
+        #("query", json.string(hi.query)),
+        #("urls", json.array(urls_in(body), json.string)),
+      ])
+    _, _ -> Nil
+  }
+}
+
+/// Every `http://` or `https://` token in `text`, in order, once each. A
+/// token runs to the next space, newline, tab, double quote or backslash —
+/// the things that end a URL inside a JSON string — with trailing `,` `.`
+/// `;` `)` `]` `}` dropped, since those are punctuation around a URL more
+/// often than part of one.
+pub fn urls_in(text: String) -> List(String) {
+  text
+  |> string.replace("\\", " ")
+  |> string.replace("\"", " ")
+  |> string.replace("\n", " ")
+  |> string.replace("\t", " ")
+  |> string.split(" ")
+  |> list.filter(fn(t) {
+    string.starts_with(t, "http://") || string.starts_with(t, "https://")
+  })
+  |> list.map(trim_trailing_punctuation)
+  |> list.unique
+}
+
+fn trim_trailing_punctuation(t: String) -> String {
+  case list.any([",", ".", ";", ")", "]", "}"], string.ends_with(t, _)) {
+    True -> trim_trailing_punctuation(string.drop_end(t, 1))
+    False -> t
+  }
+}
 
 fn decide_write(rules: Rules, file_path: String) -> Decision {
   case rules.role {
@@ -714,7 +827,8 @@ fn respond_to_hook(
   build: BuildLock,
   log: log.Log,
 ) -> Response(mist.ResponseData) {
-  let #(event_name, tool_name, attempted) = case parse_hook_input(body) {
+  let parsed = parse_hook_input(body)
+  let #(event_name, tool_name, attempted) = case parsed {
     Ok(hi) -> #(hi.event, hi.tool_name, attempted_of(hi))
     Error(_) -> #("", "", "")
   }
@@ -725,6 +839,10 @@ fn respond_to_hook(
     log,
     event(rules, event_name, tool_name, attempted, decision),
   )
+  case parsed {
+    Ok(hi) -> web_row(log, rules, hi, body)
+    Error(_) -> Nil
+  }
   json_response(200, decision_json(decision, event_name))
 }
 
@@ -774,8 +892,9 @@ fn release_stale_hold(
 }
 
 /// What the worker actually asked for: the command for a `Bash` call, the
-/// path for a write, the recipient for a `SendMessage`, and nothing for
-/// anything else. This is the field a denial row was missing — `tool: Bash,
+/// path for a write, the recipient for a `SendMessage`, the URL for a
+/// `WebFetch`, the query for a `WebSearch`, and nothing for anything else.
+/// This is the field a denial row was missing — `tool: Bash,
 /// decision: Deny(...)` says a call was refused and never says which call, so
 /// a filed guard bug could not be acted on without the transcript, which the
 /// board does not have.
@@ -784,6 +903,8 @@ fn attempted_of(hi: HookInput) -> String {
     "Bash" -> hi.command
     "Edit" | "Write" | "MultiEdit" | "NotebookEdit" -> hi.file_path
     "SendMessage" -> hi.to
+    "WebFetch" -> hi.url
+    "WebSearch" -> hi.query
     _ -> ""
   }
 }
@@ -953,7 +1074,7 @@ fn settings_json(token: String, port: Int) -> json.Json {
           "PreToolUse",
           json.preprocessed_array([
             hook_matcher(
-              "Edit|Write|MultiEdit|NotebookEdit|Bash|SendMessage",
+              "Edit|Write|MultiEdit|NotebookEdit|Bash|SendMessage|WebFetch|WebSearch",
               hook_command(token, port, 280, "PreToolUse"),
               300,
             ),
@@ -963,7 +1084,7 @@ fn settings_json(token: String, port: Int) -> json.Json {
           "PostToolUse",
           json.preprocessed_array([
             hook_matcher(
-              "Bash",
+              "Bash|WebFetch",
               hook_command(token, port, 20, "PostToolUse"),
               30,
             ),
@@ -978,7 +1099,7 @@ fn settings_json(token: String, port: Int) -> json.Json {
           "PostToolUseFailure",
           json.preprocessed_array([
             hook_matcher(
-              "Bash",
+              "Bash|WebFetch",
               hook_command(token, port, 20, "PostToolUseFailure"),
               30,
             ),
