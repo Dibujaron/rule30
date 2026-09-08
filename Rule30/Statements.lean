@@ -1020,6 +1020,50 @@ theorem leftDiagonal_compl_after_black (m N : ℕ)
     ∀ i ≥ N, leftDiagonal (m + 4) (i + 1) = !leftDiagonal (m + 2) (i + 2) := by
   sorry
 
+/-! ### The two masking laws of the transient band
+
+Seeded 2026-09-08 from blueprint/crystals.md item 50 (Sextant's C1),
+kernel-checked in `explorer/scratch_masking.lean`. A cell is *transient*
+when it differs from the same diagonal read one shift `M` later; with
+`M = 2 ^ k` that difference is what the settled word has already forgotten.
+These two say when a transient survives one step and when a settled cell
+is protected from one. New phrasing of `rule30_left_local_law` in diagonal
+coordinates; Wolfram 1986 §5 states the first in words for the difference
+pattern of two random rows. -/
+
+/-- **The front's law.** A transient on diagonal `k + 2` at `j`, with the
+two cells to its left settled at the same shift, continues to `j + 1`
+exactly when its driver cell on diagonal `k + 1` is white. -/
+theorem leftDiagonal_transient_front_law (k j M : ℕ)
+    (hT : leftDiagonal (k + 2) j ≠ leftDiagonal (k + 2) (j + M))
+    (h1 : leftDiagonal (k + 1) (j + 1) = leftDiagonal (k + 1) (j + 1 + M))
+    (h0 : leftDiagonal k (j + 2) = leftDiagonal k (j + 2 + M)) :
+    (leftDiagonal (k + 2) (j + 1) ≠ leftDiagonal (k + 2) (j + 1 + M))
+      ↔ leftDiagonal (k + 1) (j + 1) = false := by
+  sorry
+
+/-- **The masking law.** A settled cell on diagonal `k + 2` at `j`, sitting
+under a transient driver, stays settled at `j + 1` exactly when its own
+cell is black — so a black cell masks the transient above it. -/
+theorem leftDiagonal_transient_mask_law (k j M : ℕ)
+    (hc : leftDiagonal (k + 2) j = leftDiagonal (k + 2) (j + M))
+    (hT : leftDiagonal (k + 1) (j + 1) ≠ leftDiagonal (k + 1) (j + 1 + M))
+    (h0 : leftDiagonal k (j + 2) = leftDiagonal k (j + 2 + M)) :
+    (leftDiagonal (k + 2) (j + 1) ≠ leftDiagonal (k + 2) (j + 1 + M))
+      ↔ leftDiagonal (k + 2) j = false := by
+  sorry
+
+/-- **The front's law at each diagonal's own period.** `leftDiagonal_transient_front_law`
+with every shift taken to be that diagonal's own power of two, which is the
+form an argument about the settled word actually cites. -/
+theorem leftDiagonal_transient_front_law_pow (k j : ℕ)
+    (hT : leftDiagonal (k + 2) j ≠ leftDiagonal (k + 2) (j + 2 ^ (k + 2)))
+    (h1 : leftDiagonal (k + 1) (j + 1) = leftDiagonal (k + 1) (j + 1 + 2 ^ (k + 1)))
+    (h0 : leftDiagonal k (j + 2) = leftDiagonal k (j + 2 + 2 ^ k)) :
+    (leftDiagonal (k + 2) (j + 1) ≠ leftDiagonal (k + 2) (j + 1 + 2 ^ (k + 2)))
+      ↔ leftDiagonal (k + 1) (j + 1) = false := by
+  sorry
+
 /-! ## P1 — the settled configuration: the left side of the picture as a row of its own
 
 Seeded 2026-09-07 from blueprint/crystals.md items 46–47, out of Sextant's
