@@ -1,0 +1,20 @@
+
+connector  Portage
+model      opus
+problem    centerColumn_other_isEventuallyPeriodic_of_center
+vantage    profinite dynamics: odometers, binary rooted tree automorphisms, and the in-degree-one pair map on period-L settled words
+sighting   c:/Users/dibuj/dev/rule30/docs/connections/2026-09-08-profinite-dynamics-odometers-binary-rooted-tree-automorphisms-and-the-in-degree-one-pair-map-on-period-l-settled-words.md
+document   exists, 35178 bytes
+ended      finished — the connector reported its sighting written; that is its claim about the document, and a captain's reading is the only adjudication
+ceilings   150 turns, $25.0
+cost       $7.78
+turns      49
+session    87cd5e6d-e7e7-48eb-ac6c-65b611ccec5e
+log        c:/Users/dibuj/dev/rule30/runs/20260908T123120Z/connector-1
+
+The sighting document is complete with all six sections: four connections carrying dictionaries and run tests, a long section 4, and two topics handed to the theorist — the strongest being that the centre column is the constant of integration of the transient-free right diagonals rather than a cell inside a transient.
+
+next vantage, in the connector's words:
+**Cocycles and coboundaries over an odometer** — the ergodic theory of skew products `Z_2 x_φ {0,1}`, Anzai skew products, and the coboundary equation `φ = ψ - ψ∘T`. Section 3.2 turns the residual into a statement about Birkhoff sums along a growing orbit segment, and "when is a sequence of Birkhoff sums eventually periodic" is a coboundary question that this field has a hundred years of technique for; nothing on the board is phrased as a sum, and I could only build the identity, not attack it. A connector coming from there should be given `explorer/portage_odometer.mjs` section C and asked whether the transient part of the sum can be treated as a cocycle over the settled part.
+
+The vantage I could not reach from where I stood is **algebraic and expansive subdynamics of `Z^2` actions** — Boyle–Lind directional expansiveness, Ledrappier-type `Z^2` subshifts, Kitchens–Schmidt. The picture is a `Z^2` array in which one diagonal direction is exactly periodic (right), the other is eventually periodic (left), and the vertical direction is the only one where nothing is periodic; the theory of expansive directions exists precisely to say which directions in a space-time diagram carry the information, and Kůrka's notes (held, §6) reach the doorstep of it with `E(F)` and `A(F)` and Sablik's convexity, then stop. I did not have the tools to state a dictionary row there and I did not want to fake one. That vantage would also be the right one to ask whether the residual is a *directional* statement in disguise: the `0.25` seam, the `0.24` damage front and the `0.41` period exponent are three slopes measured in the same picture, and nothing on the board relates them.

@@ -1,0 +1,12 @@
+## Portage on connector-1 — 2026-09-08T13:06:56Z
+
+Sighted the P1 frontier from profinite dynamics. The vantage's three named objects — odometers, binary rooted tree automorphisms, the in-degree-one pair map on period-L settled words — all died, and they died in a way that was worth the session: every one of them lives in the settled region on the left, and I re-derived that a fixed column leaves the settled region rather than entering it (column -X is settled only while t < 4X, from the measured seam speed 0.25). So the profinite machinery cannot produce an eventually periodic column at all.
+
+What survived is the mirror image. On the right side there are no transients: the right diagonals are exactly periodic from index 0, and c(t) = rightDiagonal t 0 sits inside the periodic part rather than inside a transient, which is the exact opposite of the situation every obstruction on the board describes. Written as a dictionary into the group ring F_2[T]/(T^L): each right diagonal is an antiderivative, T·R_k = g_k with T = 1 + shift; the period doubles exactly when g_k is a unit; the complement is the socle; and the centre column is the constant of integration, fixed by integrating in from the white cone. Four million terms at forty depths, zero failures. The doubling criterion itself turns out to be already published on brunni.de, which I fetched and cited; the F_2[[T]] reading and the constant-of-integration reading are not.
+
+Two identities came out that a theorist can have. c(k) is a single parity along the segment of right diagonal k-1 between the cone's left edge and the origin (2999/2999), which makes the wall a statement about a Birkhoff sum rather than about a cell — the first such phrasing on the board. And c(k) = cell(k+X, X) whenever P_k divides X, so the centre column's prefix is copied verbatim into every power-of-two column (column 4096 reproduces c(0..33); 16,559 instances, no failures).
+
+Three flags. docs/sources.md says Rowland gives right-diagonal period "exactly 2^k"; the minimal periods are A094605 and P_39 = 2^16, not 2^39 — the board's own statement and docstring are correct, the index line drifted. I could not fetch OEIS (403), so A094605 is marked UNVERIFIED with the searches named. And there is a 2026 arXiv paper, Chan-Lopez and Martin-Ruiz, arXiv:2604.00165, whose abstract claims a mechanism for the centre column's apparent randomness; I fetched only the abstract and someone should read it.
+
+Scripts: explorer/portage_odometer.mjs, portage_rightdiag.mjs, portage_copies.mjs, portage_pairmap.mjs.
+
