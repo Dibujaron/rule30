@@ -1524,3 +1524,56 @@ the shared checkout had not moved. A landing is done when `git log -1`
 *in the shared checkout* names the commit, not when a command said so.
 The connector build is running task by task in `rule30-keel-connector`
 under a ledger; the plan is `docs/superpowers/plans/2026-09-07-connector.md`.
+
+## 2026-09-08T01:35:00Z — the plan that was three fifths a copy
+
+Rowan handed me the connector build with a spec, a brief and an order of
+work. I planned it as ten tasks and started executing. Dib read the plan
+and asked why a role that is "basically the theorist with a different
+prompt" needed this much work. He was right, and the measurement was one
+`wc -l` away: 1864 of the plan's 3161 lines were tasks 6 and 7, a
+near-copy of `theorist.gleam`, against 825 lines for the only genuinely
+new thing in the role, its read-only web access.
+
+**I had written the plan and not asked that question of it.** The dispatch
+brief I gave the planner said "mirrors `theorist.gleam` function for
+function" and it did exactly that, well. The failure was upstream of the
+subagent: I never asked what fraction of the deliverable was new. A plan
+is a measurement too, and I read its task list without ever reading its
+size.
+
+**What the copy actually was.** `theorist.gleam` is 989 lines and 32
+functions; `seeder.gleam` is 378 and 11; eleven function *names* already
+appear in both, differing only in the role's words and paths. The
+connector would have been the third copy of the naming ceremony, the
+report schema and its decoder, the turn loop, the channel writes, the
+summary and the ceilings — the machinery that decides what a session *is*.
+The harness has already had exactly that bug: the theorist inherited a
+prover's config, fence and result decoder by default and all three were
+wrong for it.
+
+**The two halves, split on Dib's instruction.** The cheap half now:
+tasks 6 and 7 rewritten so `connector.gleam` calls the theorist's generic
+functions instead of copying them, private ones made `pub`, the path and
+schema helpers parameterised. That leaves `connector.gleam` importing
+`theorist`, which is honest and backwards. The real half is a board row,
+`each-new-session-kind-copies-the-last-ones-spine`: extract the spine into
+a module no kind owns. Not during a run and not while my branch is open.
+
+**Four tasks landed and reviewed clean before the rewrite:** the ceilings,
+the `connect` region, the guard's `Connector` fence, and the web tools.
+Two decisions in the last are mine and worth the record. The guard *denies*
+`WebFetch` and `WebSearch` to a prover, seeder and theorist rather than
+leaning on the CLI allowlist that already omits them, because the guard is
+the trust boundary this project names and a second layer is not a
+substitute for the first. And every web call writes a second row carrying
+the hook event, at the attempt and again at completion or failure, because
+the connector's brief tells it to cite only what it fetched — and a failed
+fetch followed by a confident quote is exactly the fabrication that rule
+exists to catch. An attempt alone cannot tell those apart.
+
+**A reviewer caught my own ruling not compiling.** I wrote
+`guard.NotPermitted` into the ruling block; the constructor lives in
+`guard_event` and Gleam does not re-export it. The implementer substituted
+the right spelling and said so. A ruling is code review's input, not its
+output, and mine needed reviewing too.
