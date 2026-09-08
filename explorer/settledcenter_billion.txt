@@ -1,0 +1,138 @@
+# The settled centre column s(k) = S_k(0) of rule 30, k = 0 .. 10^9 - 1
+#
+# Method: k <= 240,000 by the forbit-style orbit of the diagonal recurrence,
+#   branch bits at the eventually-white diagonals read from the BigInt engine
+#   (372,100 rows); k > 240,000 by the period-32 bit-parallel step alone,
+#   started from the settled words S_199999, S_200000 of that orbit.
+# Validation: the kernel prefix s(0..10); the seed's column -2^17 read
+#   downward for every k <= 240,000 (check 1 of explorer/settledcenter.mjs);
+#   the bit-parallel step against the slow orbit on 87,868..240,000 and
+#   against a bit-serial solve on 200,000 random pairs.
+# Command: node explorer/settledcenter_billion.mjs
+# Node v22.20.0, run 2026-09-08T01:55:32.990Z
+
+engine: 372100 rows; column -131072 and 14 diagonal windows read (5.5 s, 70 MB rss)
+slow orbit to k = 240000: eventually-white diagonals 2, 7, 28, 399, 53207, 58286, 87866
+   branch taken (k:index, d = period doubles, c = complement type): 3:1d 8:1d 29:0d 400:0d 53208:0c 58287:1c 87867:1d
+   engine window agrees with the orbit at k = 2400, 53210, 87868, 100000, 150000, 200000, 240000
+   period of S_k for k = 199999, 200000, 240000: 32, 32, 32 (5.6 s)
+bit-parallel step: 152133 words of the slow orbit (k = 87,868..240000) reproduced, 0 disagreements;
+   200000 random pairs against the bit-serial solve, 0 disagreements (5.7 s)
+bit-parallel orbit 200001 .. 999999999: 15.6 s, 15.6 ns/diagonal
+   eventually-white diagonal encountered below 10^9: none (the attack document puts the next at 1,420,878,968)
+(21.3 s, 258 MB rss)
+
+## 1. Validation
+
+s(0..10)      = 11011100110   expected 11011100110   OK
+s(0..119)     = 110111001100010110111100001100101000111101100011010111000111001111011110000010110011111100000110011010010111110011100011
+s(k) vs the seed's column -131072 read downward, k = 0..240000:
+   240001 of 240001 terms agree, 0 disagree
+(this reproduces check 1 of explorer/settledcenter.mjs, whose K_MAX is also 240000)
+
+## 2. Balance: black cells among the first N terms
+
+             N        black          white     excess 2*black - N   black/N
+       1000000       500206         499794                412   0.50020600
+      10000000      5000603        4999397               1206   0.50006030
+     100000000     49999875       50000125               -250   0.49999875
+    1000000000    500028902      499971098              57804   0.50002890
+(0.1 s)
+
+## 3. Eventual periodicity: lags 1..524288 over the final 1048576 terms
+
+   For each lag p, the longest suffix of the window on which s(t) = s(t - p).
+   Window: terms 998951424 .. 999999999. A true eventual period p
+   would show a suffix of length 1048576 - p, i.e. the whole window.
+
+   word-level scan cross-checked against a bit-level scan on lags 1..400: 0 disagreements
+s, final 2^20 terms:
+   longest agreeing suffix 22 terms, at lag 407154
+   best suffix/lag ratios: 1.000 (lag 1, suffix 1); 0.333 (lag 9, suffix 3); 0.250 (lag 12, suffix 3)
+   (0.1 s)
+
+control (period 1237 injected from index 314572 of the same window):
+   longest agreeing suffix 734004 terms, at lag 1237
+   best suffix/lag ratios: 593.374 (lag 1237, suffix 734004); 296.187 (lag 2474, suffix 732767); 197.125 (lag 3711, suffix 731530)
+   (0.1 s)
+   expected: lag 1237, suffix at least 734004 — found lag 1237, suffix 734004: OK
+
+verdict: no lag below 524288 agrees on more than 22 of the final 1048576 terms,
+   against 1048576 required for an eventual period. s shows no eventual periodicity here.
+
+## 4. Distinct factors (words) of length n occurring in s(0 .. 999999999)
+
+   one pass over 1000000000 terms, 16777216-entry presence table (0.9 s)
+
+    n   distinct factors        2^n    missing
+    1                  2          2          0
+    2                  4          4          0
+    3                  8          8          0
+    4                 16         16          0
+    5                 32         32          0
+    6                 64         64          0
+    7                128        128          0
+    8                256        256          0
+    9                512        512          0
+   10               1024       1024          0
+   11               2048       2048          0
+   12               4096       4096          0
+   13               8192       8192          0
+   14              16384      16384          0
+   15              32768      32768          0
+   16              65536      65536          0
+   17             131072     131072          0
+   18             262144     262144          0
+   19             524288     524288          0
+   20            1048576    1048576          0
+   21            2097152    2097152          0
+   22            4194304    4194304          0
+   23            8388608    8388608          0
+   24           16777216   16777216          0
+
+   every word of length up to 24 occurs.
+   (1.0 s)
+
+## 5. Autocorrelation: P(s(t) = s(t+d)) over the first 100000000 terms
+
+    d   P(s(t) = s(t+d))       equal pairs of        pairs
+    1   0.499960        49996037 of    99999999
+    2   0.500002        50000176 of    99999998
+    3   0.500048        50004787 of    99999997
+    4   0.500039        50003922 of    99999996
+    5   0.500021        50002073 of    99999995
+    6   0.499941        49994081 of    99999994
+    7   0.500099        50009904 of    99999993
+    8   0.500015        50001520 of    99999992
+    9   0.500058        50005812 of    99999991
+   10   0.500117        50011714 of    99999990
+   11   0.499990        49999014 of    99999989
+   12   0.500008        50000785 of    99999988
+   13   0.499929        49992859 of    99999987
+   14   0.499975        49997472 of    99999986
+   15   0.500031        50003070 of    99999985
+   16   0.500011        50001109 of    99999984
+   17   0.499988        49998806 of    99999983
+   18   0.499971        49997131 of    99999982
+   19   0.499990        49998969 of    99999981
+   20   0.500023        50002266 of    99999980
+   21   0.500033        50003263 of    99999979
+   22   0.500036        50003565 of    99999978
+   23   0.500017        50001678 of    99999977
+   24   0.499919        49991839 of    99999976
+   25   0.500003        50000243 of    99999975
+   26   0.500013        50001333 of    99999974
+   27   0.499960        49995988 of    99999973
+   28   0.500007        50000732 of    99999972
+   29   0.500060        50005936 of    99999971
+   30   0.499929        49992894 of    99999970
+   31   0.500031        50003132 of    99999969
+   32   0.500057        50005703 of    99999968
+   (0.2 s)
+
+## 6. Cost
+
+   total 22.8 s, peak 358 MB rss
+   s stored as a Uint32Array of 31250000 words = 119 MiB (one bit per term)
+   command: node explorer/settledcenter_billion.mjs
+   output: explorer/settledcenter_billion.txt

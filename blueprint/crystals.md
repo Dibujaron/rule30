@@ -466,7 +466,15 @@ in another coat, and would sit beside it, not under it.
     `log₂ log₂ K` branch bits to depth `K`). *Computed*: 240,001 terms, every
     lag to 120,000, longest agreeing tail 16 cells; balanced, factor counts
     those of a random sequence. *Open*; no route; the wall in another
-    configuration. Sextant C3.
+    configuration. Sextant C3. **Read to `10^9` terms on 2026-09-08**
+    (`explorer/settledcenter_billion.mjs`, 23 s, by a subagent with an
+    independent cross-check): balanced (excess `+57,804` at `10^9`, `1.8σ`,
+    sign flipping across `10^6..10^9`), every word of every length up to
+    24 occurs, no lag below `2^19` agrees on more than 22 of the final
+    `2^20` terms (a fair coin's maximum; a planted period 1237 was found),
+    autocorrelation at lags `1..32` within `±2.3σ` of one half. No
+    structure by any of the four measures at this depth; no eventually-white
+    diagonal below `10^9`, consistent with crystal 55.
 49. **There is only one left side of rule 30, up to a translation along the
     edge** — a computed finding against a published surmise. For every
     configuration white far to the left with its leftmost black cell at the
