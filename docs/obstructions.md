@@ -345,3 +345,48 @@ is visible, or a different reading of the wall altogether.
 
 **Recorded** 2026-09-08 by Sextant, from the attack document
 `docs/attacks/2026-09-08-leftdiagonal-period-le-the-period-wall-through-the-orbit-of-the-recurrence-alone-why-the-gaps-between-eventually-white-diagonals-grow.md`.
+
+## A universal argument over periodic words cannot give the right diagonals' minimality
+
+**The natural attempt.** Every right diagonal is exactly periodic from index
+`0` with no transient, and `rightDiagonal_recurrence` makes diagonal `k` the
+running XOR of the driver `g_k j = rightDiagonal (k-1) (j+1) || rightDiagonal
+(k-2) (j+2)`. With `L` a common period of the two shallower diagonals, the
+doubling criterion says the minimal period of diagonal `k` is `2L` when the
+driver has odd weight over `[0, L)` and `L` when it is even. The odd branch
+is elementary. For the even branch, "the minimal period is `L`" is exactly
+"the driver has no period shorter than `L`", so prove *that* for every pair
+of periodic words: given `v` of exact period `L` and `u` of period dividing
+`L`, show `j ↦ v (j+1) || u (j+2)` has exact period `L`.
+
+**Why it fails.** The statement is false for the finite system at every
+period. Exhaustively, at `L = 4`, `64` of the `192` pairs with `v` of exact
+period `4` give a driver of shorter period, and `56` of them give an
+integrated word of minimal period below `4`; the smallest witness is
+`u = 1000`, `v = 1110`, whose new diagonal has period `2`. At `L = 8` the
+rates are `8,704` and `6,272` of `61,440` pairs (`14 %` and `10 %`);
+sampled, `1.35 %` at `L = 16`, `0.027 %` at `L = 32`, and none in `400,000`
+samples at `L = 64` (`explorer/sextant_rightdriver.mjs`, test B). The rate
+falls like `2^(-0.37 L)`, so the seed's survival to `L = 2^27` is what a coin
+would do, and it carries no evidence of a mechanism — the same shape as the
+hitting-time obstruction above, with a different witness set. What the seed's
+own words do give, and no universal statement does, is the *structural* half:
+where the previous depth doubled, `rightDiagonal (k-1)` is antiperiodic at
+`L/2` and the driver then loses its period only if `rightDiagonal (k-2)` is
+constantly black, which no right diagonal past the edge is; that closes every
+depth that follows a doubling (attack document, C4) and leaves the interior of
+a plateau — a run of consecutive depths with equal periods — where both
+feeding diagonals fail half-periodicity and can cover for each other.
+
+**What it would take.** A pairing law between two adjacent right diagonals of
+the *seed*, of the kind the forbidden block (`crystals` 8) is for two adjacent
+cells of a row: on a plateau a collapse needs, at every position, one of three
+local coincidences (only `R_{k-1}` flips under the half shift and `R_{k-2}` is
+black there; only `R_{k-2}` flips and `R_{k-1}` is black; both flip and they
+differ), and the measured number of positions where all three fail is `0.16 L`
+to `0.25 L` at every plateau depth to `k = 54`. Nothing on the board relates
+two neighbouring right diagonals except the recurrence itself, which is what
+the counterexamples above satisfy.
+
+**Recorded** 2026-09-08 by Sextant, from the attack document
+`docs/attacks/2026-09-08-falsify-rightdiagonal-period-doubles-iff-odd-weight-the-minimal-period-of-right-diagonal-k-is-2l-when-g-k-has-odd-weight.md`.

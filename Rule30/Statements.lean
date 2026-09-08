@@ -1106,3 +1106,65 @@ theorem harness_probe : True := by
   sorry
 
 end Statements
+
+/-! ## P1 — the right diagonals: exact periods on the side with no transients
+
+Seeded 2026-09-08 from Sextant's attack on
+`rightDiagonal_period_doubles_iff_odd_weight`, out of Portage's first
+connector sighting. The right diagonals are periodic from their very first
+term (`rightDiagonal_periodicFrom_pow`), so unlike the left family there is
+no transient anywhere and index `0` — the centre column — is not buried in
+one. These three settle the doubling half of the criterion and the depth
+immediately after each doubling; what stays open is the interior of a
+plateau. -/
+
+/-- **An odd driver makes the next right diagonal antiperiodic, and pins its
+minimal period at `2 * L`.** If the driver `g` has odd weight over one period
+`L`, every cell of diagonal `k + 2` is the complement of the cell `L` later,
+so `2 * L` is a period and `L` is not. Stated as that pair because the board
+has no `minimalPeriod` for `ℕ → Bool`; it pins the minimum anyway, since every
+period here is a power of two dividing `2 ^ k`, and the only such power
+dividing `2 * L` but not `L` is `2 * L`.
+
+The doubling half of the criterion, and the reason the other half is hard:
+this argument never needs to know the driver has no shorter period, and the
+non-doubling half does. -/
+theorem rightDiagonal_antiperiodic_of_odd_driver (k L : ℕ)
+    (hL0 : PeriodicFrom (rightDiagonal k) L 0)
+    (hL1 : PeriodicFrom (rightDiagonal (k + 1)) L 0)
+    (hodd : Odd ((Finset.range L).sum
+      (fun j => if rightDiagonal (k + 1) (j + 1) || rightDiagonal k (j + 2) then 1 else 0))) :
+    (∀ j, rightDiagonal (k + 2) (j + L) = ! rightDiagonal (k + 2) j)
+      ∧ PeriodicFrom (rightDiagonal (k + 2)) (2 * L) 0
+      ∧ ¬ PeriodicFrom (rightDiagonal (k + 2)) L 0 := by
+  sorry
+
+/-- **No right diagonal past the edge is constant.** Every `rightDiagonal k`
+with `k ≥ 1` takes both colours. `rightDiagonal 0` is the right edge and is
+constantly black (`evolve_right_edge`); it is the only one.
+
+The first statement on this board that says a right diagonal is never
+degenerate. The proof is a descent: if a diagonal is constant its driver is
+identically white, which forces the two diagonals inside it white from an
+index, and a sequence periodic from `0` that is white from an index is white
+everywhere — so the descent ends at `rightDiagonal 1`, which alternates. -/
+theorem rightDiagonal_not_constant (k : ℕ) (hk : 1 ≤ k) :
+    (∃ j, rightDiagonal k j = true) ∧ (∃ j, rightDiagonal k j = false) := by
+  sorry
+
+/-- **Right after a doubling the driver keeps the full period.** If `q` is a
+period of diagonal `k` and diagonal `k + 1` is antiperiodic at `q` — which is
+exactly what the previous depth doubling gives — then the driver differs from
+its own `q`-shift exactly where diagonal `k` is white.
+
+So the driver has period `q` only if diagonal `k` is constantly black, which
+`rightDiagonal_not_constant` forbids for `k ≥ 1`. This is why the one anomaly
+in the measured picture sits at `k = 2`: there the diagonal two out is the
+black right edge, the excluded case. -/
+theorem rightDiagonal_driver_flip_iff_white (k q : ℕ)
+    (hq : PeriodicFrom (rightDiagonal k) q 0)
+    (hanti : ∀ j, rightDiagonal (k + 1) (j + q) = ! rightDiagonal (k + 1) j) (j : ℕ) :
+    ((rightDiagonal (k + 1) (j + 1) || rightDiagonal k (j + 2))
+        ≠ (rightDiagonal (k + 1) (j + q + 1) || rightDiagonal k (j + q + 2)))
+      ↔ rightDiagonal k (j + 2) = false := by
+  sorry

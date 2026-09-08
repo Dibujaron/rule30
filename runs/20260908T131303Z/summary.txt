@@ -1,0 +1,21 @@
+
+theorist  Sextant
+model     opus
+topic     falsify rightDiagonal_period_doubles_iff_odd_weight: the MINIMAL period of right diagonal k is 2L when g_k has odd weight over one period L and L otherwise; measured to 140,000 terms with every depth covered by at least 2 guaranteed periods; the right diagonals have no transients, so this is a doubling criterion on the side where index 0 is not inside one
+attack    c:/Users/dibuj/dev/rule30/docs/attacks/2026-09-08-falsify-rightdiagonal-period-doubles-iff-odd-weight-the-minimal-period-of-right-diagonal-k-is-2l-when-g-k-has-odd-weight.md
+document  exists, 32398 bytes
+ended     finished — the theorist reported its attack written; that is its claim about the document, and a captain's reading is the only adjudication
+ceilings  150 turns, $25.0
+cost      $15.18
+turns     87
+session   f34b2710-1fb5-4f76-a0cb-04fb071deeac
+log       c:/Users/dibuj/dev/rule30/runs/20260908T131303Z/theorist-1
+
+The criterion survives to depth 65 (period 2^27, 1.07e9 terms), but splits into a theorem (the doubling branch, minimality free), a second theorem I found this session (no collapse at any depth following a doubling, because it would force a constant right diagonal), and one open statement confined to the interior of a plateau — 19 of the 64 depths — which no universal argument over periodic words can reach.
+
+next topic, in the theorist's words:
+Attack **what is left of this criterion after C4: the plateau case.** Stated as the next theorist should get it: *if `rightDiagonal k` and `rightDiagonal (k+1)` have the same minimal period `L`, must the driver `g_{k+2} j = R_{k+1} (j+1) || R_k (j+2)` also have minimal period `L`?* C4 settles the case where `R_{k+1}` is antiperiodic at `L/2` by turning a collapse into "`R_k` is constant black"; on a plateau `R_{k+1}` is not antiperiodic, both feeding diagonals fail half-periodicity, and the collapse condition becomes a mixed one — where only `R_{k+1}` flips under the half shift, `R_k` must be black there; where only `R_k` flips, `R_{k+1}` must be black; where both flip, they must differ. That is three local conditions on two neighbouring diagonals, all three checkable, and the measured number of positions where they fail together runs from `0.16 L` to `0.25 L` at every plateau depth to `k = 54` — so the question is whether some pairing law between adjacent right diagonals forbids all three at once, in the way the forbidden block forbids `11` above a black cell. It is the last third of a claim whose other two thirds are now theorems — 19 of the 64 depths below `k = 65`, listed in C4 — which makes it the cheapest open statement on this board to finish.
+
+And it splits once more, which is where I would start. At the *second* depth of every plateau — `k` with a doubling at `k-2` — the diagonal `R_{k-2}` is antiperiodic at `L/2` by C1, so `R_{k-2}` flips at *every* position under the half shift and the first of the three conditions — the one that asks anything where `R_{k-2}` does not flip — is vacuous; the fingerprint is that its class of violations is empty, and it is empty at exactly those 15 depths of the 32 measured (`explorer/sextant_rightperiods.mjs`, plateau block: `3, 6, 9, 11, 18, 27, 29, 31, 36, 39, 41, 43, 45, 51, 53`, all with a doubling two depths earlier, against `0.5 q` violations there and `0.375 q` at the rest). What is left at those depths is a single statement of C4's kind: *wherever `rightDiagonal (k-1)` agrees with its own half-period shift, is it ever white?* — measured `0.25 q` such white positions at every one of them, and a collapse needs all of them to be black. That is one existential about one diagonal, and it would close half of what remains.
+
+Second choice, and a genuinely open question I could not settle here: **are the right-diagonal minimal periods unbounded?** On the left that is proved (`leftDiagonal_period_unbounded`, from the in-degree-one pair map); on the right the pair map has in-degree `2^(weight)`, the same proof does not run, the abstract system contains flat towers (constants `≡ 1`), and I found no statement in print either way — so the right side may be missing a theorem the left side already has.
