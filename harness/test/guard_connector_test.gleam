@@ -389,3 +389,36 @@ pub fn a_fetch_that_completes_leaves_a_post_row_test() {
   assert string.contains(only, "\"url\":\"https://example.org/ok\"")
   let assert Ok(_) = simplifile.delete(dir)
 }
+
+/// The Bash denial must describe the role's actual grammar. A connector,
+/// seeder and theorist may all run `node <script>` under explorer/, and the
+/// denial used to say only the two `lake` forms were permitted — true about
+/// everything it named and wrong about the set. Rowan's connector hit this
+/// on its first two calls: a session that reads the message carefully
+/// concludes it has no computational tool and writes a document with no run
+/// tests, which is where the previous round's value almost entirely was.
+pub fn the_bash_denial_names_node_for_the_roles_that_have_it_test() {
+  let ls = "{\"hook_event_name\":\"PreToolUse\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"ls docs/\"}}"
+  let assert guard.Deny(reason: c, ..) = guard.decide(connector, ls)
+  assert string.contains(c, "node <script>")
+  assert string.contains(c, "explorer/")
+  assert string.contains(c, "lake build")
+  let assert guard.Deny(reason: t, ..) = guard.decide(theorist, ls)
+  assert string.contains(t, "node <script>")
+  let assert guard.Deny(reason: s, ..) = guard.decide(seeder, ls)
+  assert string.contains(s, "node <script>")
+  // A prover genuinely has only the two lake forms, so its message must not
+  // offer a tool the guard would then deny it.
+  let assert guard.Deny(reason: p, ..) = guard.decide(prover, ls)
+  assert !string.contains(p, "node")
+  assert string.contains(p, "lake build")
+}
+
+/// The same must hold for a command refused on shell operators rather than
+/// on grammar — that is the arm Rowan's connector actually hit.
+pub fn the_shell_operator_denial_also_names_the_roles_grammar_test() {
+  let piped = "{\"hook_event_name\":\"PreToolUse\",\"tool_name\":\"Bash\",\"tool_input\":{\"command\":\"ls docs/ 2>/dev/null; echo hi\"}}"
+  let assert guard.Deny(reason: c, ..) = guard.decide(connector, piped)
+  assert string.contains(c, "node <script>")
+  assert string.contains(c, "no shell operators")
+}

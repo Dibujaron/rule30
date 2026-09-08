@@ -475,10 +475,26 @@ fn has_dot_dot_segment(path: String) -> Bool {
 /// `string.trim` would otherwise remove a merely-leading one.
 const forbidden_bash_chars = [";", "&", "|", "`", "$", ">", "<", "\n", "\r"]
 
-fn bash_deny() -> Decision {
+/// Why a `Bash` command was refused, naming the grammar THIS role actually
+/// has. A seeder, theorist and connector may also run `node <script>` under
+/// `explorer/` (`decide_bash_for`), and a message that omits it is true
+/// about everything it names and wrong about the set: Rowan's connector hit
+/// this on its first two calls, and a session that reads it carefully
+/// concludes it has no computational tool at all. The previous round's
+/// value was almost entirely in its run tests, so that is an expensive
+/// thing to be quietly told. The decision was right; only its account of
+/// itself was wrong, so the role is threaded into the message rather than
+/// anything being widened.
+fn bash_deny(role: Role) -> Decision {
   Deny(
     NotPermitted,
-    "harness guard: only 'lake build [modules]' and 'lake env lean <file>' are permitted, with no shell operators",
+    "harness guard: only 'lake build [modules]', 'lake env lean <file>'"
+      <> case role {
+        Prover(..) -> ""
+        Seeder(..) | Theorist(..) | Connector(..) ->
+          " and 'node <script>' under explorer/"
+      }
+      <> " are permitted, with no shell operators",
   )
 }
 
@@ -495,7 +511,7 @@ fn contains_forbidden_bash_char(command: String) -> Bool {
 /// is denied.
 fn decide_bash_for(rules: Rules, command: String) -> Decision {
   case contains_forbidden_bash_char(command) {
-    True -> bash_deny()
+    True -> bash_deny(rules.role)
     False -> {
       let trimmed = string.trim(command)
       // The `node` arm is reachable ONLY under `Seeder`, `Theorist` and
@@ -521,7 +537,7 @@ fn decide_bash_for(rules: Rules, command: String) -> Decision {
         | Seeder(..), Error(Nil)
         | Theorist(..), Error(Nil)
         | Connector(..), Error(Nil)
-        -> match_bash_grammar(trimmed)
+        -> match_bash_grammar(rules.role, trimmed)
       }
     }
   }
@@ -554,7 +570,7 @@ fn node_script(command: String) -> Result(String, Nil) {
   }
 }
 
-fn match_bash_grammar(trimmed: String) -> Decision {
+fn match_bash_grammar(role: Role, trimmed: String) -> Decision {
   let tokens =
     string.split(trimmed, " ")
     |> list.filter(fn(t) { t != "" })
@@ -562,14 +578,14 @@ fn match_bash_grammar(trimmed: String) -> Decision {
     ["lake", "build", ..modules] ->
       case list.all(modules, is_module_name) {
         True -> AcquireBuild
-        False -> bash_deny()
+        False -> bash_deny(role)
       }
     ["lake", "env", "lean", path] ->
       case is_lean_path_arg(path) {
         True -> Allow
-        False -> bash_deny()
+        False -> bash_deny(role)
       }
-    _ -> bash_deny()
+    _ -> bash_deny(role)
   }
 }
 
