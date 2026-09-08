@@ -24,6 +24,7 @@
 - Brief = `docs/connector-brief.md` + the persona's notebook + the problem wall rendered by `seed.open_section` (the same text the theorist's brief carries for that wall) + `docs/obstructions.md` + `docs/sources.md` + `Rule30/Basic.lean`; never `blueprint/index.md`, never the proof notes, never `blueprint/crystals.md`, never another persona's notebook.
 - The problem is always `theorist.default_topic` (the P1 frontier wall as the board has it today); the vantage is free text and never changes which wall.
 - Never started by the scheduler; `--bare` is never passed (`worker.launch_with_tools` keeps the same args as `worker.launch` plus the tool list).
+- **Reuse, not a third copy.** `connector.gleam` imports `harness/theorist` and calls its generic functions rather than re-implementing them: the naming ceremony (`who`), the document path rule (`attack_path` and kin), the report schema's shape, and the "who you are" preamble are shared, each parameterised by the one word or directory that differs per role; a handful of theorist functions that were private become `pub` for this alone, with no change to their behaviour. What differs by role — `Options`, `Flags`, `Report` (a shared field would lie: `topic` is not `vantage`), `brief`, `render`, `run` — is `connector.gleam`'s own. This is the cheap half of the fix Dib asked for when the plan first costed the role at 1864 lines; extracting a shared spine module that neither `theorist.gleam` nor `connector.gleam` owns is `each-new-session-kind-copies-the-last-ones-spine` on the bug board, filed from this build, and stays out of scope here.
 - Tests never touch the live checkout: every fixture is under `harness/build/test-runs/connector/` with its own `repo_root`; guard ports come from `ports.span(1)`.
 - Work in the worktree `C:/Users/dibuj/dev/rule30-keel-connector` (branch `keel/connector`, base `origin/main` f0e2360); never in `C:/Users/dibuj/dev/rule30`.
 - Doc comments state the current contract, not history; new terms go in `docs/glossary.md` (Task 9); `CLAUDE.md` is edited only with Dib's yes (Task 10).
@@ -38,7 +39,9 @@
 | `harness/src/harness/guard.gleam` | modify | `Connector(sighting_path)` role; `url`/`query` hook fields; `decide_web`; `web` row; wider PreToolUse matcher |
 | `harness/hooks/settings.template.json` | modify | PreToolUse matcher gains `WebFetch|WebSearch` (held equal to the generated file by a test) |
 | `harness/src/harness/worker.gleam` | modify | `default_tools`, `launch_with_tools`; `launch` delegates |
-| `harness/src/harness/connector.gleam` | create | the verb: flags, who, paths, brief, report, run, summary |
+| `harness/src/harness/theorist.gleam` | modify | seven private functions made `pub` — `ensure_identity`, `inlined`, `document_size`, `ceilings` unchanged otherwise; `who_you_are`, `end_word`, `ended_words` also gain a parameter — plus five already-`pub` functions parameterised in place (`who`, `attack_path`, `numbered_attack_path`, `free_attack_path`, `report_schema`) and the private `free_from` given a parameter too; the theorist's own call sites pass what each used to hardcode |
+| `harness/test/theorist_test.gleam` | modify | call sites of the six parameterised functions updated to the new signatures; asserts nothing about the theorist's behaviour changes |
+| `harness/src/harness/connector.gleam` | create | only the role-specific half: `Options`, `Flags`, `parse_flags`, `default_port`, `Report`, `role`, `task_message`, `brief`, `render`, `Session`, `run` and the summary; the naming ceremony, the document path rule, the report schema's shape and the "who you are" preamble are `theorist.*` calls, not reimplementations |
 | `harness/src/harness.gleam` | modify | `connect` CLI arm and usage string |
 | `harness/src/harness/writes.gleam` | modify | `agents/<Name>.md` risk line names `connect` as a writer |
 | `harness/test/config_test.gleam` | modify | connector ceiling tests |
@@ -1121,17 +1124,548 @@ WebSearch there and nowhere else."
 
 ---
 
-### Task 6: `connector.gleam` — flags, who, the problem, the sighting path, the report, the brief
+### Task 6: theorist reuse, and `connector.gleam`'s pure half — flags, who, the problem, the sighting path, the report, the brief
+
+Five of the theorist's functions (counting the attack-path family — `attack_path`,
+`numbered_attack_path`, `free_attack_path`, `free_from` — as one) do
+everything this task needs except say "theorist": they hardcode one word
+or one directory and are otherwise the naming ceremony, the document path
+rule, the report schema and the "who you are" preamble, unconditionally.
+This task parameterises four of them (`who`, the attack-path family,
+`report_schema`, `who_you_are`), makes the fifth, `inlined`, `pub` with no
+other change, updates the theorist's own call sites to pass what they used
+to hardcode, and only then writes `connector.gleam` — which is thin,
+because it calls them.
 
 **Files:**
-- Create: `harness/src/harness/connector.gleam` (everything except `Session`, `run`, `write_channels`, `document_size`, `summary`, which are Task 7)
-- Test: `harness/test/connector_test.gleam` (create; fixture helpers here are reused by Task 7)
+- Modify: `harness/src/harness/theorist.gleam` (`who` lines 138-187; the
+  attack-path family lines 316-372; `report_schema` lines 405-458;
+  `who_you_are` lines 669-686; `inlined` lines 688-694; call sites at line
+  598 in `render`, and lines 746-747 and 797 in `run`)
+- Modify: `harness/test/theorist_test.gleam` (`who` lines 553-562; the
+  attack-path tests lines 587-651; the `report_schema` assertions lines
+  845-848)
+- Create: `harness/src/harness/connector.gleam` (everything except `Session`,
+  `run`, `write_channels`, `document_size`, `summary`, which are Task 7 —
+  and Task 7 also finishes parameterising the theorist: `ensure_identity`,
+  `document_size`, `ceilings`, `end_word`, `ended_words`)
+- Test: `harness/test/connector_test.gleam` (create; fixture helpers here are
+  reused by Task 7)
 
 **Interfaces:**
-- Consumes: `theorist.slug(topic: String) -> String`, `theorist.today() -> String`, `theorist.default_topic(d: dag.Dag) -> Result(String, String)`, `theorist.frontier_wall`, `seed.open_section(open: List(dag.Node)) -> String`, `roster.read_notebook(agents_dir, identity) -> String`, `roster.region_description(region) -> String`, `roster.for_region(roster, region) -> List(Identity)`, `schedule.who_for(roster_, region, busy: List(String)) -> schedule.Who`, `schedule.Existing(Identity)`, `schedule.Mint(region:, busy:)`, `worker.Role(decode:, act:, park:)`, `worker.nudge`, `worker.parked`, `worker.Ending(end, notes, report, gone)`, `worker.Finished`, `worker.Abandoned`, `dag.load(path) -> Result(Dag, String)`, `dag.Node` (fields `id`, `region`, `size`, `status`, `description`), `dag.Wall`, `dag.Open`.
-- Produces (all `pub`): `region = "connect"`, `session_name = "connector-1"`, `default_model = "fable"`, `type Options(model: String, port: Int, vantage: Option(String), persona: Option(String))`, `type Flags(model: String, vantage: Option(String), persona: Option(String))`, `parse_flags(List(String)) -> Result(Flags, String)`, `default_port(config.Config) -> Int`, `who(roster.Roster, Option(String)) -> Result(schedule.Who, String)`, `problem(dag.Dag) -> Result(dag.Node, String)`, `named_for(problem_id: String, vantage: Option(String)) -> String`, `sighting_path(repo_root, date, named) -> String`, `numbered_sighting_path(repo_root, date, named, n: Int) -> String`, `free_sighting_path(repo_root, date, named) -> String`, `type Report(outcome, summary, notebook, journal, next_vantage)`, `report_schema() -> String`, `report_from_dynamic(Dynamic) -> Result(Report, String)`, `role() -> worker.Role(Report)`, `task_message(problem_id, vantage: Option(String), sighting_path) -> String`, `fallback_task: String`, `brief(cfg, identity, problem: dag.Node, vantage: Option(String), sighting_path) -> Result(String, String)`, `render(...) -> String` (labelled arguments as below).
+- Consumes (from `theorist.gleam`, after this task's Step 1):
+  `theorist.who(roster_: roster.Roster, region: String, role_word: String, persona: Option(String)) -> Result(schedule.Who, String)`,
+  `theorist.who_you_are(identity: roster.Identity, notebook: String, region: String, role_word: String) -> String`,
+  `theorist.attack_path(repo_root: String, date: String, topic: String, dir: String) -> String`,
+  `theorist.numbered_attack_path(repo_root: String, date: String, topic: String, dir: String, n: Int) -> String`,
+  `theorist.free_attack_path(repo_root: String, date: String, topic: String, dir: String) -> String`,
+  `theorist.report_schema(finished_word: String, notebook_description: String, journal_description: String, next_field_name: String, next_field_description: String) -> String`,
+  `theorist.inlined(file: Result(String, Nil), relative: String) -> String`,
+  `theorist.default_topic(d: dag.Dag) -> Result(String, String)` (already
+  `pub`, unchanged), `theorist.slug`, `theorist.today`, `theorist.frontier_wall`
+  (already `pub`, unchanged), `seed.open_section(open: List(dag.Node)) -> String`,
+  `roster.read_notebook`, `schedule.who_for`, `schedule.Existing`,
+  `schedule.Mint`, `worker.Role(decode:, act:, park:)`, `worker.nudge`,
+  `worker.parked`, `worker.Ending(end, notes, report, gone)`,
+  `worker.Finished`, `worker.Abandoned`, `dag.load`, `dag.Node`, `dag.Wall`,
+  `dag.Open`.
+- Produces (all `pub`, in `connector.gleam`): `region = "connect"`,
+  `session_name = "connector-1"`, `default_model = "fable"`,
+  `type Options(model, port, vantage: Option(String), persona: Option(String))`,
+  `type Flags(model, vantage: Option(String), persona: Option(String))`,
+  `parse_flags(List(String)) -> Result(Flags, String)`,
+  `default_port(config.Config) -> Int`,
+  `who(roster.Roster, Option(String)) -> Result(schedule.Who, String)`,
+  `problem(dag.Dag) -> Result(dag.Node, String)`,
+  `named_for(problem_id: String, vantage: Option(String)) -> String`,
+  `sighting_path(repo_root, date, named) -> String`,
+  `numbered_sighting_path(repo_root, date, named, n: Int) -> String`,
+  `free_sighting_path(repo_root, date, named) -> String`,
+  `type Report(outcome, summary, notebook, journal, next_vantage)`,
+  `report_schema() -> String`, `report_from_dynamic(Dynamic) -> Result(Report, String)`,
+  `role() -> worker.Role(Report)`,
+  `task_message(problem_id, vantage: Option(String), sighting_path) -> String`,
+  `fallback_task: String`,
+  `brief(cfg, identity, problem: dag.Node, vantage: Option(String), sighting_path) -> Result(String, String)`,
+  `render(...) -> String` (labelled arguments as below).
 
-- [ ] **Step 1: Write the failing tests**
+Why `who`, the attack-path family, `report_schema`, `who_you_are` and
+`inlined` and not the rest: everything else the theorist has is either
+type-forced apart (`Flags`, `Options`, `Report`, `parse_flags`,
+`report_from_dynamic`, `role` — a connector's `Report` has `next_vantage`,
+not `next_topic`, so no function that touches the concrete `Report` record
+can be shared without generics Gleam doesn't have here) or genuinely a
+different brief (`task_message`, `brief`, `render`, and `run` in Task 7).
+These five are the ones with no such excuse: same roster shape, same
+path arithmetic, same JSON schema shape, same preamble paragraph, one word
+or one directory apart.
+
+- [ ] **Step 1: Parameterise the five theorist functions this role reuses**
+
+This is a refactor, not new behaviour: no new test is added, and the
+existing suite must still report the same total, all green, after it. In
+`harness/src/harness/theorist.gleam`:
+
+(a) Replace `who`'s doc comment and signature, lines 138-155 (up to the
+`) -> Result(schedule.Who, String) {` line):
+
+```gleam
+// --- who runs -------------------------------------------------------------------
+
+/// Who the session runs as. With a name: that persona, if it is on the
+/// roster in `region` — a name in another region is refused, not borrowed,
+/// because a prover's notebook in this role's brief would be a
+/// differently-briefed agent wearing the name. Without one: the eldest
+/// identity of `region` on the roster, or the decision to mint one.
+///
+/// `busy` is empty on purpose. A dispatched prover is held busy by the
+/// scheduler's in-flight list; a hand-started session has no scheduler, and
+/// nothing outside this process records which of `region`'s identities are
+/// live, so this cannot tell an idle persona from one whose session is
+/// running in another window. The captain who starts two at once names the
+/// second with `--as`. `role_word` names the role in the two error messages
+/// below (`"theorist"`, `"connector"`) — it says nothing to the caller,
+/// only to whoever reads a refusal, and it is also used, naively pluralised
+/// with a trailing `s`, to list who is on the roster.
+pub fn who(
+  roster_: roster.Roster,
+  region: String,
+  role_word: String,
+  persona: Option(String),
+) -> Result(schedule.Who, String) {
+```
+
+and its body, lines 156-187 (the rest of the function):
+
+```gleam
+  let prefix = "harness/" <> role_word <> ": "
+  case persona {
+    None -> Ok(schedule.who_for(roster_, region, busy: []))
+    Some(name) ->
+      case list.find(roster_.identities, fn(i) { i.name == name }) {
+        Ok(identity) if identity.region == region ->
+          Ok(schedule.Existing(identity))
+        Ok(identity) ->
+          Error(
+            prefix
+            <> name
+            <> " is on the roster for region "
+            <> identity.region
+            <> ", not "
+            <> region
+            <> "; a "
+            <> role_word
+            <> " runs only as a "
+            <> role_word,
+          )
+        Error(Nil) ->
+          Error(
+            prefix
+            <> "no "
+            <> role_word
+            <> " named "
+            <> name
+            <> " on the roster"
+            <> case roster.for_region(roster_, region) {
+              [] ->
+                "; the "
+                <> region
+                <> " region is empty, so leave --as off to mint one"
+              some ->
+                "; the "
+                <> role_word
+                <> "s are "
+                <> string.join(list.map(some, fn(i) { i.name }), ", ")
+            },
+          )
+      }
+  }
+}
+```
+
+(b) In `run` (the theorist's own call site), replace line 746:
+
+```gleam
+  use who_ <- result.try(who(roster_, options.persona))
+```
+
+with:
+
+```gleam
+  use who_ <- result.try(who(roster_, region, "theorist", options.persona))
+```
+
+(c) Replace the attack-path family, lines 316-372, with:
+
+```gleam
+/// Where a session's document goes when nothing is there yet:
+/// `docs/<dir>/<date>-<slug>.md` under the repository root, `date` as
+/// `YYYY-MM-DD`. Pure; `free_attack_path` is what a session is actually
+/// fenced to, because this path is taken by the first session of the day
+/// on a topic and a second must not be fenced to a file that exists.
+/// `dir` is the role's directory under `docs/` — `"attacks"` for a
+/// theorist, `"connections"` for a connector — so the two never collide
+/// even sharing a date and a slug.
+pub fn attack_path(
+  repo_root: String,
+  date: String,
+  topic: String,
+  dir: String,
+) -> String {
+  numbered_attack_path(repo_root, date, topic, dir, 1)
+}
+
+/// `attack_path` with an ordinal: `1` is the bare path, `2` and up carry
+/// `-2`, `-3`, ... before `.md`. So the second session on `the transients`
+/// on 2026-09-07 writes `2026-09-07-the-transients-2.md`.
+pub fn numbered_attack_path(
+  repo_root: String,
+  date: String,
+  topic: String,
+  dir: String,
+  n: Int,
+) -> String {
+  let ordinal = case n {
+    1 -> ""
+    _ -> "-" <> int.to_string(n)
+  }
+  repo_root
+  <> "/docs/"
+  <> dir
+  <> "/"
+  <> date
+  <> "-"
+  <> slug(topic)
+  <> ordinal
+  <> ".md"
+}
+
+/// The first path for `topic` today that nothing is at: the bare path,
+/// else `-2`, else `-3`, and so on. Read off the disk at session start,
+/// once, and then fixed for the session's life — the guard, the brief, the
+/// first message, the dispatch row and the summary all name the one path
+/// this returns.
+///
+/// Two sessions on one topic in one day are the design's intended use
+/// (several independent attacks, then a comparison), and before this they
+/// resolved to the same path: the second was fenced to the file the first
+/// had written, and its Write overwrote it. Anything at the path counts as
+/// taken, a directory included, since a Write there would fail anyway.
+pub fn free_attack_path(
+  repo_root: String,
+  date: String,
+  topic: String,
+  dir: String,
+) -> String {
+  free_from(repo_root, date, topic, dir, 1)
+}
+
+fn free_from(
+  repo_root: String,
+  date: String,
+  topic: String,
+  dir: String,
+  n: Int,
+) -> String {
+  let path = numbered_attack_path(repo_root, date, topic, dir, n)
+  case simplifile.file_info(path) {
+    Ok(_) -> free_from(repo_root, date, topic, dir, n + 1)
+    Error(_) -> path
+  }
+}
+```
+
+(d) In `run`, replace line 747:
+
+```gleam
+  let attack = free_attack_path(cfg.repo_root, today(), topic)
+```
+
+with:
+
+```gleam
+  let attack = free_attack_path(cfg.repo_root, today(), topic, "attacks")
+```
+
+(e) Replace `report_schema`'s signature and its `outcome`/`notebook`/
+`journal`/`next_topic` fields (lines 406-456, i.e. everything from
+`pub fn report_schema() -> String {` to the closing `])` of the
+`properties` object) with:
+
+```gleam
+pub fn report_schema(
+  finished_word: String,
+  notebook_description: String,
+  journal_description: String,
+  next_field_name: String,
+  next_field_description: String,
+) -> String {
+  let string_field = fn(description: String) {
+    json.object([
+      #("type", json.string("string")),
+      #("description", json.string(description)),
+    ])
+  }
+  json.object([
+    #("type", json.string("object")),
+    #(
+      "properties",
+      json.object([
+        #(
+          "outcome",
+          json.object([
+            #("type", json.string("string")),
+            #(
+              "enum",
+              json.array(
+                ["in_progress", finished_word, "abandoned"],
+                json.string,
+              ),
+            ),
+          ]),
+        ),
+        #("summary", string_field("one sentence on the state of the document")),
+        #("notebook", string_field(notebook_description)),
+        #("journal", string_field(journal_description)),
+        #(next_field_name, string_field(next_field_description)),
+      ]),
+    ),
+```
+
+(the `required` array and the closing `|> json.to_string` at the end of the
+function, lines 449-458, change only their last name, `next_topic`, which
+is no longer a literal: replace them with)
+
+```gleam
+    #(
+      "required",
+      json.array(
+        ["outcome", "summary", "notebook", "journal", next_field_name],
+        json.string,
+      ),
+    ),
+  ])
+  |> json.to_string
+}
+```
+
+(f) In `run`, replace the `worker.launch` call inside `worker.drive` (part
+of lines 793-800):
+
+```gleam
+      worker.launch(session_cfg, options.model, g, brief_path, report_schema()),
+```
+
+with:
+
+```gleam
+      worker.launch(
+        session_cfg,
+        options.model,
+        g,
+        brief_path,
+        report_schema(
+          "attacked",
+          "what you tried on this topic, what died and at what depth, which sources you searched, what you would try next. Empty until the end.",
+          "what you attacked, what died, what survived and to what depth. Empty until the end.",
+          "next_topic",
+          "the Next topic paragraph of your document, verbatim: at least one sentence naming what should be attacked next and why. Empty until the end.",
+        ),
+      ),
+```
+
+(g) Replace `who_you_are`, lines 669-686, with:
+
+```gleam
+/// The section a prover's brief opens with, in the role's terms: the name,
+/// the region, and the notebook verbatim. The same shape whatever the role
+/// — an identity is a notebook, and the notebook is what spans sessions —
+/// so `region` and `role_word` are the only two things that vary.
+pub fn who_you_are(
+  identity: roster.Identity,
+  notebook: String,
+  region: String,
+  role_word: String,
+) -> String {
+  let book = case string.trim(notebook) {
+    "" -> "Your notebook is empty: this is its first entry-worthy session."
+    _ -> notebook
+  }
+  "## Who you are\n\nYou are "
+  <> identity.name
+  <> ", a "
+  <> role_word
+  <> " for region "
+  <> region
+  <> ": "
+  <> roster.region_description(region)
+  <> ".\n\nYour notebook, verbatim — you wrote all of it, and nothing else has:\n\n"
+  <> book
+}
+```
+
+(h) In `render`, replace line 598:
+
+```gleam
+      who_you_are(identity, notebook),
+```
+
+with:
+
+```gleam
+      who_you_are(identity, notebook, region, "theorist"),
+```
+
+(i) Add `pub` to `inlined`, line 689 (no other change):
+
+```gleam
+pub fn inlined(file: Result(String, Nil), relative: String) -> String {
+```
+
+Run: `cd C:/Users/dibuj/dev/rule30-keel-connector/harness && gleam test`
+Expected: the announced total is unchanged from before this step, and
+`<total> passed, no failures` — the theorist's own tests (`who`, the
+attack-path tests, the `report_schema` assertions, all the `render`/brief
+tests) fail to compile until their call sites are updated too, which is
+the next step.
+
+Update `harness/test/theorist_test.gleam`:
+
+Replace lines 553-562 (the `who` test) with:
+
+```gleam
+pub fn who_picks_the_eldest_theorist_or_decides_to_mint_test() {
+  assert theorist.who(peopled(), theorist.region, "theorist", None)
+    == Ok(schedule.Existing(identity("Vesper", theorist.region)))
+  assert theorist.who(peopled(), theorist.region, "theorist", Some("Quill"))
+    == Ok(schedule.Existing(identity("Quill", theorist.region)))
+  assert theorist.who(
+      roster.Roster([identity("Scripted", "P1")]),
+      theorist.region,
+      "theorist",
+      None,
+    )
+    == Ok(schedule.Mint(region: theorist.region, busy: []))
+  let assert Error(empty) =
+    theorist.who(roster.Roster([]), theorist.region, "theorist", Some("Nobody"))
+  assert string.contains(empty, "leave --as off")
+}
+```
+
+Replace lines 587-632 (the two attack-path tests — each `attack_path` and
+`numbered_attack_path` call gains `"attacks"` as its last argument before
+the ordinal, if any) with:
+
+```gleam
+pub fn the_attack_path_is_dated_and_slugged_test() {
+  assert theorist.slug(theorist.frontier_wall)
+    == "centercolumn-other-iseventuallyperiodic-of-center"
+  assert theorist.slug("  The transients of the left diagonals! ")
+    == "the-transients-of-the-left-diagonals"
+  assert theorist.attack_path("C:/r", "2026-09-07", "Onset & period", "attacks")
+    == "C:/r/docs/attacks/2026-09-07-onset-period.md"
+  assert theorist.numbered_attack_path(
+      "C:/r",
+      "2026-09-07",
+      "Onset & period",
+      "attacks",
+      1,
+    )
+    == "C:/r/docs/attacks/2026-09-07-onset-period.md"
+  assert theorist.numbered_attack_path(
+      "C:/r",
+      "2026-09-07",
+      "Onset & period",
+      "attacks",
+      2,
+    )
+    == "C:/r/docs/attacks/2026-09-07-onset-period-2.md"
+  let today = theorist.today()
+  assert string.length(today) == 10
+  assert string.starts_with(today, "20")
+}
+
+/// The path a session is fenced to is the first free one: bare when
+/// nothing is there, `-2` when the bare file exists, `-3` when both do — a
+/// directory at the path counts as taken too.
+pub fn the_free_attack_path_is_the_first_not_taken_test() {
+  let f = fixture("free-path", [], roster.Roster([]))
+  let bare = theorist.attack_path(f.repo, "2026-09-07", "the seam", "attacks")
+  let second =
+    theorist.numbered_attack_path(f.repo, "2026-09-07", "the seam", "attacks", 2)
+  let third =
+    theorist.numbered_attack_path(f.repo, "2026-09-07", "the seam", "attacks", 3)
+  assert theorist.free_attack_path(f.repo, "2026-09-07", "the seam", "attacks")
+    == bare
+  let assert Ok(_) = simplifile.create_directory_all(f.repo <> "/docs/attacks")
+  let assert Ok(_) = simplifile.write(bare, "first")
+  assert theorist.free_attack_path(f.repo, "2026-09-07", "the seam", "attacks")
+    == second
+  let assert Ok(_) = simplifile.create_directory(second)
+  assert theorist.free_attack_path(f.repo, "2026-09-07", "the seam", "attacks")
+    == third
+  // Another topic, or another day, is untouched by the seam's files.
+  assert theorist.free_attack_path(f.repo, "2026-09-07", "the onset", "attacks")
+    == theorist.attack_path(f.repo, "2026-09-07", "the onset", "attacks")
+  assert theorist.free_attack_path(f.repo, "2026-09-08", "the seam", "attacks")
+    == theorist.attack_path(f.repo, "2026-09-08", "the seam", "attacks")
+}
+```
+
+In `a_second_attack_on_one_topic_in_a_day_gets_its_own_file_test` (starting
+line 639), replace its two path calls with:
+
+```gleam
+  let first =
+    theorist.attack_path(repo, theorist.today(), "the transients", "attacks")
+  let second =
+    theorist.numbered_attack_path(
+      repo,
+      theorist.today(),
+      "the transients",
+      "attacks",
+      2,
+    )
+```
+
+Replace lines 845-848 (the four `report_schema` assertions) with:
+
+```gleam
+  let schema =
+    theorist.report_schema(
+      "attacked",
+      "notebook description",
+      "journal description",
+      "next_topic",
+      "next topic description",
+    )
+  assert !string.contains(schema, "estimate")
+  assert string.contains(schema, "\"attacked\"")
+  assert string.contains(schema, "next_topic")
+  assert string.contains(schema, "notebook")
+```
+
+- [ ] **Step 2: Run the tests to verify the theorist is unchanged, then commit alone**
+
+Run: `cd C:/Users/dibuj/dev/rule30-keel-connector/harness && gleam test`
+Expected: the announced total is exactly what it was before Step 1 (no
+test added or removed, only signatures); `<total> passed, no failures`;
+passed equals the announced total.
+
+```
+cd C:/Users/dibuj/dev/rule30-keel-connector
+git add harness/src/harness/theorist.gleam harness/test/theorist_test.gleam
+git commit -m "Keel: parameterise five theorist functions the connector will reuse
+
+who, the attack-path family, report_schema and who_you_are hardcoded one
+word or one directory each; inlined hardcoded nothing and was only
+private. All five stay behind theorist's own call sites unchanged in
+behaviour — the suite's total and every assertion are the same as before
+this commit — and connector.gleam, next commit, calls them instead of
+copying them. Base f0e2360."
+```
+
+- [ ] **Step 3: Write the failing tests for `connector.gleam`'s pure half**
 
 Create `harness/test/connector_test.gleam`:
 
@@ -1561,12 +2095,12 @@ pub fn the_brief_says_which_files_are_absent_and_that_no_vantage_was_given_test(
 }
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [ ] **Step 4: Run the tests to verify they fail**
 
 Run: `cd C:/Users/dibuj/dev/rule30-keel-connector/harness && gleam test`
-Expected: compile error — module `harness/connector` does not exist.
+Expected: a compile error — module `harness/connector` does not exist.
 
-- [ ] **Step 3: Write the minimal implementation**
+- [ ] **Step 5: Write the minimal implementation, calling `theorist.*` instead of copying it**
 
 Create `harness/src/harness/connector.gleam`:
 
@@ -1604,22 +2138,30 @@ Create `harness/src/harness/connector.gleam`:
 //// process knows which connectors are live: `who` treats every connector
 //// on the roster as idle, and one live session per persona is the
 //// captain's restraint here rather than the harness's check.
+////
+//// **This module imports `theorist` and calls it, on purpose.** A
+//// connector differs from a theorist in its brief, its fence and its
+//// report's words, and nowhere else: the naming ceremony (`who`,
+//// delegating to `theorist.who`), the document path rule (`sighting_path`
+//// and kin, delegating to `theorist.attack_path` and kin with `"connections"`
+//// where the theorist passes `"attacks"`), the report schema's shape
+//// (`report_schema`, delegating to `theorist.report_schema`), and the "who
+//// you are" preamble in `render` (`theorist.who_you_are`) are reused
+//// rather than copied; `theorist.inlined` likewise. What genuinely differs
+//// — `Options`, `Flags`, `Report` (a shared field would lie: `topic` is
+//// not `vantage`), `task_message`, `brief`, `render`, and `run` in the
+//// next task — is this module's own. The deeper fix, a shared spine module
+//// neither kind owns, is `each-new-session-kind-copies-the-last-ones-spine`
+//// on the bug board and is not this module's job.
 
 import gleam/dynamic.{type Dynamic}
 import gleam/dynamic/decode
-import gleam/float
-import gleam/int
-import gleam/io
-import gleam/json
 import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/result
 import gleam/string
 import harness/config
 import harness/dag
-import harness/guard
-import harness/lock
-import harness/log
 import harness/roster
 import harness/schedule
 import harness/seed
@@ -1640,7 +2182,8 @@ pub const session_name = "connector-1"
 /// What the verb is told beyond the config: the model to spend, the guard's
 /// port, the vantage — a field to attack from, or `None`, meaning the
 /// connector chooses — and the persona to run as, or `None` to take the
-/// eldest connector on the roster or mint one.
+/// eldest connector on the roster or mint one. Not `theorist.Options`: the
+/// `vantage` field would be a lie under `topic`'s name.
 pub type Options {
   Options(
     model: String,
@@ -1653,7 +2196,8 @@ pub type Options {
 /// The `connect` verb's arguments, parsed: an optional bare vantage,
 /// `--as <Name>` and `--model M`, in any order. The model defaults to the
 /// strongest the CLI offers, as a theorist's does: hours of a session's
-/// time on one problem is the pass worth spending on.
+/// time on one problem is the pass worth spending on. Not
+/// `theorist.Flags`, for the same reason as `Options`.
 pub type Flags {
   Flags(model: String, vantage: Option(String), persona: Option(String))
 }
@@ -1667,7 +2211,9 @@ const usage = "connect [<vantage>] [--as <Name>] [--model M]"
 /// second bare argument is refused rather than joined, because a vantage
 /// meant as one phrase and arrived as two words would silently attack from
 /// the first word alone. An unknown flag is refused for the same reason a
-/// theorist's is: a misspelt `--model` would spend hours on the wrong model.
+/// theorist's is: a misspelt `--model` would spend hours on the wrong
+/// model. The shape is `theorist.parse_flags`'s exactly, but it is not
+/// reused: it is built on `Flags`, which is this module's own type.
 pub fn parse_flags(flags: List(String)) -> Result(Flags, String) {
   parse_flags_into(
     flags,
@@ -1709,118 +2255,22 @@ pub fn default_port(cfg: config.Config) -> Int {
 
 // --- who runs -------------------------------------------------------------------
 
-/// Who the session runs as. With a name: that persona, if it is on the
-/// roster in the `connect` region — a name in another region is refused,
-/// not borrowed, because a theorist's or a prover's notebook in a
-/// connector's brief would be a differently-briefed agent wearing the name.
-/// Without one: the eldest connector on the roster, or the decision to mint
-/// one.
-///
-/// `busy` is empty on purpose, as it is for a theorist: nothing outside
-/// this process records which connectors are live. The captain who starts
-/// two connectors at once names the second with `--as`.
+/// Who the session runs as: `theorist.who`, told this region and this
+/// role's word. See `theorist.who` for the rule (a name in another region
+/// is refused, not borrowed; `busy` is empty on purpose).
 pub fn who(
   roster_: roster.Roster,
   persona: Option(String),
 ) -> Result(schedule.Who, String) {
-  case persona {
-    None -> Ok(schedule.who_for(roster_, region, busy: []))
-    Some(name) ->
-      case list.find(roster_.identities, fn(i) { i.name == name }) {
-        Ok(identity) if identity.region == region ->
-          Ok(schedule.Existing(identity))
-        Ok(identity) ->
-          Error(
-            "harness/connector: "
-            <> name
-            <> " is on the roster for region "
-            <> identity.region
-            <> ", not "
-            <> region
-            <> "; a connector runs only as a connector",
-          )
-        Error(Nil) ->
-          Error(
-            "harness/connector: no connector named "
-            <> name
-            <> " on the roster"
-            <> case roster.for_region(roster_, region) {
-              [] ->
-                "; the connect region is empty, so leave --as off to mint one"
-              some ->
-                "; the connectors are "
-                <> string.join(list.map(some, fn(i) { i.name }), ", ")
-            },
-          )
-      }
-  }
-}
-
-/// The identity the session runs as, given `who`'s decision. A mint runs
-/// the naming ceremony under the session's guard settings: the newcomer is
-/// saved to the roster, its notebook is opened with the paragraph it wrote
-/// about itself, and the `naming` event says why — the same three writes,
-/// in the same order, that the dispatcher makes for a minted prover.
-fn ensure_identity(
-  cfg: config.Config,
-  roster_: roster.Roster,
-  who_: schedule.Who,
-  model: String,
-  g: guard.Guard,
-  l: log.Log,
-) -> Result(roster.Identity, String) {
-  case who_ {
-    schedule.Existing(identity) -> Ok(identity)
-    schedule.Mint(region: r, busy:) -> {
-      use #(identity, color_reason) <- result.try(worker.name_identity(
-        cfg,
-        roster_,
-        r,
-        model,
-        g.settings_path,
-        l,
-      ))
-      let roster_ = roster.add(roster_, identity)
-      use _ <- result.try(roster.save(roster_, cfg.roster_path))
-      use _ <- result.try(
-        roster.append_notebook(
-          cfg.agents_dir,
-          identity,
-          identity.created <> " — named for " <> r,
-          case identity.color, color_reason {
-            Some(color), Some(reason) ->
-              identity.naming_reason
-              <> "\n\nColour: "
-              <> color
-              <> " — "
-              <> reason
-            _, _ -> identity.naming_reason
-          },
-        ),
-      )
-      log.event(l, "naming", [
-        #("name", json.string(identity.name)),
-        #("region", json.string(identity.region)),
-        #("reason", json.string(identity.naming_reason)),
-        #(
-          "because",
-          json.string(case busy {
-            [] -> "region empty"
-            names -> "all busy: " <> string.join(names, ", ")
-          }),
-        ),
-      ])
-      Ok(identity)
-    }
-  }
+  theorist.who(roster_, region, "connector", persona)
 }
 
 // --- the problem and the file -----------------------------------------------------
 
 /// The problem: always the current P1 frontier as the board has it, the
-/// same wall the theorist's default topic is (`theorist.default_topic`),
-/// returned whole because the brief carries its description — the residual
-/// paragraph — verbatim. A captain who wants a different wall names it
+/// same wall `theorist.default_topic` names — reused as-is, since it hard-
+/// codes nothing role-specific — returned whole because the brief carries
+/// its description verbatim. A captain who wants a different wall names it
 /// inside the vantage text; the vantage never changes which node this is.
 pub fn problem(d: dag.Dag) -> Result(dag.Node, String) {
   use id <- result.try(
@@ -1843,56 +2293,40 @@ pub fn named_for(problem_id: String, vantage: Option(String)) -> String {
   }
 }
 
+/// This role's directory under `docs/`, the one thing that distinguishes
+/// its documents from a theorist's `attack_path` family in
+/// `theorist.attack_path` and kin.
+const sighting_dir = "connections"
+
 /// Where the sighting goes when nothing is there yet:
-/// `docs/connections/<date>-<slug>.md` under the repository root, `date` as
-/// `YYYY-MM-DD`, the slug as `theorist.slug` makes it. Pure;
+/// `docs/connections/<date>-<slug>.md` under the repository root — delegates
+/// to `theorist.attack_path` with this role's directory. Pure;
 /// `free_sighting_path` is what a session is actually fenced to.
 pub fn sighting_path(repo_root: String, date: String, named: String) -> String {
-  numbered_sighting_path(repo_root, date, named, 1)
+  theorist.attack_path(repo_root, date, named, sighting_dir)
 }
 
-/// `sighting_path` with an ordinal: `1` is the bare path, `2` and up carry
-/// `-2`, `-3`, ... before `.md`, as a theorist's attack document does.
+/// `sighting_path` with an ordinal — delegates to `theorist.numbered_attack_path`.
 pub fn numbered_sighting_path(
   repo_root: String,
   date: String,
   named: String,
   n: Int,
 ) -> String {
-  let ordinal = case n {
-    1 -> ""
-    _ -> "-" <> int.to_string(n)
-  }
-  repo_root
-  <> "/docs/connections/"
-  <> date
-  <> "-"
-  <> theorist.slug(named)
-  <> ordinal
-  <> ".md"
+  theorist.numbered_attack_path(repo_root, date, named, sighting_dir, n)
 }
 
-/// The first sighting path for `named` today that nothing is at: the bare
-/// path, else `-2`, else `-3`, and so on. Read off the disk at session
-/// start, once, and then fixed for the session's life — the guard, the
-/// brief, the first message, the dispatch row and the summary all name the
-/// one path this returns. Several sessions on one problem in one day is the
-/// design's intended use, and a second must not be fenced to the first's
-/// file. Anything at the path counts as taken, a directory included.
+/// The first sighting path for `named` today that nothing is at — delegates
+/// to `theorist.free_attack_path`. Read off the disk at session start,
+/// once, and then fixed for the session's life — the guard, the brief, the
+/// first message, the dispatch row and the summary all name the one path
+/// this returns.
 pub fn free_sighting_path(
   repo_root: String,
   date: String,
   named: String,
 ) -> String {
-  free_from(repo_root, date, named, 1)
-}
-
-fn free_from(repo_root: String, date: String, named: String, n: Int) -> String {
-  let path = numbered_sighting_path(repo_root, date, named, n)
-  case simplifile.file_info(path) {
-    Ok(_) -> free_from(repo_root, date, named, n + 1)
-    Error(_) -> path
-  }
+  theorist.free_attack_path(repo_root, date, named, sighting_dir)
 }
 
 // --- the report -----------------------------------------------------------------
@@ -1904,6 +2338,8 @@ fn free_from(repo_root: String, date: String, named: String, n: Int) -> String {
 /// why the session has no write access to `agents/`. `next_vantage` is the
 /// document's section 6, repeated here so a captain's next round can be read
 /// off the summaries. No size estimate and no bugs: a connector has no node.
+/// Not `theorist.Report`: `next_vantage` would lie under `next_topic`'s
+/// name, and the two `outcome` enums differ (`sighted` vs `attacked`).
 pub type Report {
   Report(
     outcome: String,
@@ -1914,59 +2350,16 @@ pub type Report {
   )
 }
 
-/// The `--json-schema` every connector turn is held to.
+/// The `--json-schema` every connector turn is held to: `theorist.report_schema`
+/// with this role's outcome word and field wording.
 pub fn report_schema() -> String {
-  let string_field = fn(description: String) {
-    json.object([
-      #("type", json.string("string")),
-      #("description", json.string(description)),
-    ])
-  }
-  json.object([
-    #("type", json.string("object")),
-    #(
-      "properties",
-      json.object([
-        #(
-          "outcome",
-          json.object([
-            #("type", json.string("string")),
-            #(
-              "enum",
-              json.array(["in_progress", "sighted", "abandoned"], json.string),
-            ),
-          ]),
-        ),
-        #("summary", string_field("one sentence on the state of the document")),
-        #(
-          "notebook",
-          string_field(
-            "an entry for your own notebook, for your future self: what you were wrong about, which field you should have looked at sooner, which resemblances died and at which seam. Empty until the end.",
-          ),
-        ),
-        #(
-          "journal",
-          string_field(
-            "a short written update for Dib, in your own words: which fields you sighted, which dictionaries survived to section 5 and which died in section 4. Empty until the end.",
-          ),
-        ),
-        #(
-          "next_vantage",
-          string_field(
-            "the Next vantage paragraph of your document, verbatim: which field the next connector should attack from and why. Empty until the end.",
-          ),
-        ),
-      ]),
-    ),
-    #(
-      "required",
-      json.array(
-        ["outcome", "summary", "notebook", "journal", "next_vantage"],
-        json.string,
-      ),
-    ),
-  ])
-  |> json.to_string
+  theorist.report_schema(
+    "sighted",
+    "an entry for your own notebook, for your future self: what you were wrong about, which field you should have looked at sooner, which resemblances died and at which seam. Empty until the end.",
+    "a short written update for Dib, in your own words: which fields you sighted, which dictionaries survived to section 5 and which died in section 4. Empty until the end.",
+    "next_vantage",
+    "the Next vantage paragraph of your document, verbatim: which field the next connector should attack from and why. Empty until the end.",
+  )
 }
 
 /// Decode a `Report` out of a turn's `structured_output`.
@@ -1988,7 +2381,8 @@ fn report_decoder() -> decode.Decoder(Report) {
 /// and `abandoned` ends it; anything else is a turn that ended early and
 /// gets sent back round. Whether the document exists is checked in `run`,
 /// after the session, because it is a fact about the file and not about
-/// the turn.
+/// the turn. Not reused from `theorist.role`: both pattern-match their own
+/// concrete `Report` type, which Gleam cannot make generic over here.
 pub fn role() -> worker.Role(Report) {
   worker.Role(
     decode: report_from_dynamic,
@@ -2060,7 +2454,9 @@ pub const fallback_task = "Look at this problem from every region of mathematics
 /// Everything is read from disk at render time. Only this identity's
 /// notebook is read: another connector's is not this one's memory, and a
 /// theorist's would make the connector think in the theorist's vocabulary.
-/// The index, the crystals and the proof notes are not read at all.
+/// The index, the crystals and the proof notes are not read at all — that
+/// is the whole point of this role, and it is why `brief`/`render` are not
+/// shared with the theorist's, which reads all three.
 pub fn brief(
   cfg: config.Config,
   identity: roster.Identity,
@@ -2087,9 +2483,11 @@ pub fn brief(
 
 /// The brief from its parts. The pure half, so it can be tested without a
 /// checkout. Section order is the order a session should read in: who it is
-/// and what it remembers, the task, the problem with its residual and the
-/// fence, the three files that say what is dead, what is held and what the
-/// words mean, and last the shape of the document it owes.
+/// and what it remembers (`theorist.who_you_are`, told this role's word),
+/// the task, the problem with its residual and the fence, the three files
+/// that say what is dead, what is held and what the words mean (each
+/// inlined with `theorist.inlined`), and last the shape of the document it
+/// owes.
 pub fn render(
   identity identity: roster.Identity,
   notebook notebook: String,
@@ -2103,7 +2501,7 @@ pub fn render(
 ) -> String {
   string.join(
     [
-      who_you_are(identity, notebook),
+      theorist.who_you_are(identity, notebook, region, "connector"),
       "",
       "## The task (docs/connector-brief.md)",
       case task {
@@ -2142,13 +2540,13 @@ pub fn render(
       seed.open_section([problem]),
       "",
       "## The obstructions (docs/obstructions.md)",
-      inlined(obstructions, "docs/obstructions.md"),
+      theorist.inlined(obstructions, "docs/obstructions.md"),
       "",
       "## The sources (docs/sources.md)",
-      inlined(sources, "docs/sources.md"),
+      theorist.inlined(sources, "docs/sources.md"),
       "",
       "## The definitions (Rule30/Basic.lean)",
-      inlined(basic, "Rule30/Basic.lean"),
+      theorist.inlined(basic, "Rule30/Basic.lean"),
       "",
       "## What the document must contain",
       "In this order, each under its own heading, a section with nothing in",
@@ -2170,68 +2568,210 @@ pub fn render(
     "\n",
   )
 }
-
-/// The section a prover's brief opens with, in the connector's terms: the
-/// name, the region, and the notebook verbatim. The same shape on purpose —
-/// an identity is a notebook, and the notebook is what spans sessions.
-fn who_you_are(identity: roster.Identity, notebook: String) -> String {
-  let book = case string.trim(notebook) {
-    "" -> "Your notebook is empty: this is its first entry-worthy session."
-    _ -> notebook
-  }
-  "## Who you are\n\nYou are "
-  <> identity.name
-  <> ", a connector for region "
-  <> region
-  <> ": "
-  <> roster.region_description(region)
-  <> ".\n\nYour notebook, verbatim — you wrote all of it, and nothing else has:\n\n"
-  <> book
-}
-
-/// A file inlined whole, or one line saying it is not in the checkout.
-fn inlined(file: Result(String, Nil), relative: String) -> String {
-  case file {
-    Ok(text) -> text
-    Error(Nil) -> "(no " <> relative <> " in this checkout)"
-  }
-}
 ```
 
-(`gleam/float`, `gleam/io`, `harness/lock` are imported for Task 7; if `gleam build` warns they are unused after this task, leave them — Task 7 uses all three.)
-
-- [ ] **Step 4: Run the tests to verify they pass**
+- [ ] **Step 6: Run the tests to verify they pass**
 
 Run: `cd C:/Users/dibuj/dev/rule30-keel-connector/harness && gleam test`
-Expected: announced total = previous + 10 (one new module, ten tests); `<total> passed, no failures`; passed equals the announced total.
+Expected: announced total = previous + 10 (one new module, ten tests);
+`<total> passed, no failures`; passed equals the announced total.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 7: Commit**
 
 ```
 cd C:/Users/dibuj/dev/rule30-keel-connector
 git add harness/src/harness/connector.gleam harness/test/connector_test.gleam
-git commit -m "Keel: connector module, the pure half: flags, who, the problem, the path, the report, the brief
+git commit -m "Keel: connector module, the pure half, calling theorist instead of copying it
 
-Shaped after theorist.gleam and reusing its slug, today and
-default_topic. The brief carries six inputs and the test puts the
-index, the crystals and a proof note on disk to show they stay out."
+who, sighting_path and kin, and report_schema delegate to theorist's
+newly-parameterised functions; render calls theorist.who_you_are and
+theorist.inlined. Options, Flags, Report, task_message, brief and render
+are this module's own, because their meaning or their inputs genuinely
+differ. The test puts the index, the crystals and a proof note on disk
+to show they stay out of the brief."
 ```
 
 ---
 
 ### Task 7: `connector.run` — the session, its record, the channels and the summary
 
+Five more theorist functions are reused here the same way: `ensure_identity`
+is already fully generic and only needs `pub`; `document_size` and
+`ceilings` are the same; `end_word` and `ended_words` hardcode one or two
+words each and are parameterised like Task 6's five. `Session`, `run`,
+`write_channels` and `summary` stay the connector's own, because each is
+built around the concrete `Report` type or names its own record directory,
+guard rules and tool list.
+
 **Files:**
-- Modify: `harness/src/harness/connector.gleam` (append after `inlined`)
-- Test: `harness/test/connector_test.gleam` (append; the fixture from Task 6 is reused)
+- Modify: `harness/src/harness/theorist.gleam` (`ensure_identity` line 194;
+  `document_size` line 879; `ceilings` line 985; `end_word` lines 945-957;
+  `ended_words` lines 966-982; call sites at lines 854 and 926)
+- Modify: `harness/test/theorist_test.gleam` — no change: none of these
+  five is called directly by a test (each is exercised only through `run`
+  and `summary`, whose output text is unchanged because the theorist's own
+  call sites pass the same words as before)
+- Modify: `harness/src/harness/connector.gleam` (append after `render`)
+- Test: `harness/test/connector_test.gleam` (append; the fixture from
+  Task 6 is reused)
 
 **Interfaces:**
-- Consumes: `log.open(runs_root, run_id) -> Result(Log, String)`, `log.new_run_id()`, `log.event`, `log.journal(run_log, name, session_name, text)`, `log.summary(run_log, text)`, `log.now_iso()`, `lock.start(ms)`, `guard.start(rules, lock, log, port) -> Result(Guard, String)`, `guard.write_settings(g, path)`, `guard.Rules`, `guard.Connector(sighting_path:)`, `worker.write_brief(l, name, text) -> Result(String, String)`, `worker.launch_with_tools(cfg, model, g, brief_path, schema, tools)` (Task 5), `worker.default_tools`, `worker.drive(cfg, l, launch, first_message, role) -> #(Tally, Ending(r))`, `worker.ceiling_words(cfg, ceiling)`, `config.for_connector(cfg)` (Task 1), `roster.append_notebook`, `roster.usd`, `theorist.today()`.
+- Consumes (from `theorist.gleam`, after this task's Step 1):
+  `theorist.ensure_identity(cfg, roster_, who_: schedule.Who, model, g: guard.Guard, l: log.Log) -> Result(roster.Identity, String)`,
+  `theorist.document_size(path: String) -> Option(Int)`,
+  `theorist.ceilings(cfg: config.Config) -> String`,
+  `theorist.end_word(end: worker.End, size: Option(Int), finished_word: String) -> String`,
+  `theorist.ended_words(cfg: config.Config, end: worker.End, size: Option(Int), role_word: String, doc_word: String) -> String`;
+  and from Task 6: `theorist.who`, `theorist.free_attack_path`,
+  `theorist.report_schema`, `connector.who`, `connector.problem`,
+  `connector.free_sighting_path`, `connector.named_for`, `connector.role`,
+  `connector.report_schema`, `connector.task_message`, `connector.brief`;
+  `log.open`, `log.new_run_id`, `log.event`, `log.journal`, `log.summary`,
+  `log.now_iso`, `lock.start`, `guard.start`, `guard.write_settings`,
+  `guard.Rules`, `guard.Connector(sighting_path:)`, `worker.write_brief`,
+  `worker.launch_with_tools`, `worker.default_tools`, `worker.drive`,
+  `config.for_connector`, `roster.append_notebook`, `roster.usd`,
+  `theorist.today`.
 - Produces: `pub type Session(summary, guard, dir, identity, problem: String, vantage: Option(String), sighting_path)`, `pub fn run(cfg: config.Config, options: Options) -> Result(Session, String)`, `pub const web_tools = ["WebFetch", "WebSearch"]`.
 
-- [ ] **Step 1: Write the failing tests**
+- [ ] **Step 1: Make five more theorist functions reusable**
 
-Append to `harness/test/connector_test.gleam` (the helpers first, then the tests):
+Another pure refactor: no test added, the suite's total is unchanged. In
+`harness/src/harness/theorist.gleam`:
+
+(a) Add `pub` to `ensure_identity`'s signature, line 194 (no other change
+— the function hardcodes nothing role-specific):
+
+```gleam
+pub fn ensure_identity(
+```
+
+(b) Add `pub` to `document_size`, line 879 (no other change):
+
+```gleam
+pub fn document_size(path: String) -> Option(Int) {
+```
+
+(c) Add `pub` to `ceilings`, line 985 (no other change):
+
+```gleam
+pub fn ceilings(cfg: config.Config) -> String {
+```
+
+(d) Replace `end_word`, lines 945-957, with:
+
+```gleam
+/// How the session ended, in a word, for the notebook heading. A ceiling
+/// gets a second word saying which, because a session reading its own
+/// heading next time should know whether it ran out of money or of things
+/// to say. `finished_word` is what `Finished` becomes when the document
+/// exists (`"attacked"`, `"sighted"`) — the one thing that varies by role.
+pub fn end_word(end: worker.End, size: Option(Int), finished_word: String) -> String {
+  case end, size {
+    worker.Finished, Some(_) -> finished_word
+    worker.Finished, None -> "abandoned"
+    worker.Abandoned, _ -> "abandoned"
+    worker.TimedOut, _ -> "timed_out"
+    worker.BudgetExhausted(worker.Turns), _ -> "budget_exhausted: turns"
+    worker.BudgetExhausted(worker.Dollars), _ -> "budget_exhausted: dollars"
+    worker.BudgetExhausted(worker.Rounds), _ -> "budget_exhausted: rounds"
+    worker.BudgetExhausted(worker.Unknown(_)), _ -> "budget_exhausted: cli"
+    worker.RateLimited, _ -> "rate_limited"
+  }
+}
+```
+
+(e) In `write_channels`, replace line 854:
+
+```gleam
+            <> end_word(ending.end, size)
+```
+
+with:
+
+```gleam
+            <> end_word(ending.end, size, "attacked")
+```
+
+(f) Replace `ended_words`, lines 966-982, with:
+
+```gleam
+/// How the session ended, for the summary. `Finished` is the role's claim
+/// that its document is written, and it is believed exactly as far as the
+/// file on disk supports it: with no document there the line says
+/// abandoned, because a report about a file that does not exist is not a
+/// report about the topic. A ceiling is named with its value from the
+/// config the session ran under. `role_word` (`"theorist"`, `"connector"`)
+/// and `doc_word` (`"attack"`, `"sighting"`) are the only two things that
+/// vary by role.
+pub fn ended_words(
+  cfg: config.Config,
+  end: worker.End,
+  size: Option(Int),
+  role_word: String,
+  doc_word: String,
+) -> String {
+  case end, size {
+    worker.Finished, Some(_) ->
+      "finished — the "
+      <> role_word
+      <> " reported its "
+      <> doc_word
+      <> " written; that is its claim about the document, and a captain's reading is the only adjudication"
+    worker.Finished, None ->
+      "abandoned — the "
+      <> role_word
+      <> " reported its "
+      <> doc_word
+      <> " written, but no document exists at the "
+      <> doc_word
+      <> " path, so the claim is recorded as abandoned"
+    worker.Abandoned, _ -> "abandoned by the " <> role_word
+    worker.TimedOut, _ -> "timed out"
+    worker.BudgetExhausted(ceiling), _ ->
+      "stopped at " <> worker.ceiling_words(cfg, ceiling)
+    worker.RateLimited, _ -> "rate limited"
+  }
+}
+```
+
+(g) In `summary`, replace line 926:
+
+```gleam
+      "ended     " <> ended_words(cfg, ending.end, size),
+```
+
+with:
+
+```gleam
+      "ended     " <> ended_words(cfg, ending.end, size, "theorist", "attack"),
+```
+
+Run: `cd C:/Users/dibuj/dev/rule30-keel-connector/harness && gleam test`
+Expected: the announced total is exactly what it was after Task 6's Step 2
+(no test added or removed); `<total> passed, no failures`; every theorist
+summary/notebook assertion still holds, because `"attacked"` and
+`"theorist"`/`"attack"` are exactly what these call sites hardcoded before.
+
+- [ ] **Step 2: Commit the theorist change alone**
+
+```
+cd C:/Users/dibuj/dev/rule30-keel-connector
+git add harness/src/harness/theorist.gleam
+git commit -m "Keel: five more theorist functions made pub, two parameterised, for the connector to reuse
+
+ensure_identity, document_size and ceilings hardcoded nothing and were
+only private. end_word and ended_words hardcode the finished word and
+the role/document words; the theorist's own call sites (write_channels,
+summary) now pass 'attacked' / 'theorist' / 'attack' explicitly, which
+is what they meant all along. No behaviour change: same suite total,
+same summary text."
+```
+
+- [ ] **Step 3: Write the failing tests for `connector.run`**
+
+Append to `harness/test/connector_test.gleam` (the helpers first, then the
+tests):
 
 ```gleam
 // --- session helpers ----------------------------------------------------------------
@@ -2633,14 +3173,18 @@ pub fn a_second_sighting_on_one_vantage_in_a_day_gets_its_own_file_test() {
 }
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [ ] **Step 4: Run the tests to verify they fail**
 
 Run: `cd C:/Users/dibuj/dev/rule30-keel-connector/harness && gleam test`
 Expected: compile error — `connector.run`, `connector.Session` do not exist.
 
-- [ ] **Step 3: Write the minimal implementation**
+- [ ] **Step 5: Write the minimal implementation**
 
-Append to `harness/src/harness/connector.gleam`:
+Append to `harness/src/harness/connector.gleam` (add
+`import gleam/int`, `import gleam/io`, `import gleam/json`,
+`import harness/guard`, `import harness/lock`, `import harness/log` to the
+import block at the top of the file — no `gleam/float`: `theorist.ceilings`
+carries the one `float.to_string` this module would otherwise have needed):
 
 ```gleam
 // --- the session ----------------------------------------------------------------
@@ -2654,7 +3198,9 @@ pub const web_tools = ["WebFetch", "WebSearch"]
 
 /// What one connector session left behind: the summary a captain reads,
 /// the guard it ran under, its record directory, who ran it, the problem,
-/// the vantage and the sighting path it was fenced to.
+/// the vantage and the sighting path it was fenced to. Not `theorist.Session`:
+/// `problem`/`vantage`/`sighting_path` would lie under `topic`/`attack_path`'s
+/// names.
 pub type Session {
   Session(
     summary: String,
@@ -2668,19 +3214,17 @@ pub type Session {
 }
 
 /// Start one connector session, wait for it to end, then look at what it
-/// left.
-///
-/// The order is the contract: the problem (from the board) and who runs
-/// (from the flags or the roster) are settled before anything is written,
-/// so a bad `--as` costs nothing; then the sighting path, chosen once as
-/// the first free `<date>-<slug>[-n].md`; then the record directory, the
-/// guard and its settings — fenced to that path; then the ceremony if a
-/// persona is being minted; then the brief (no brief, no session) and the
-/// session, launched with the two web tools on its allowlist — and only
-/// once the session is closed, the notebook and journal from its report and
-/// the look at the file it was fenced to write. A session that reported
-/// `sighted` with no document on disk is recorded as abandoned, whatever it
-/// claimed.
+/// left. The order mirrors `theorist.run`'s, because the contract is the
+/// same contract: the problem and who runs are settled before anything is
+/// written, so a bad `--as` costs nothing; then the sighting path, chosen
+/// once as the first free `<date>-<slug>[-n].md`; then the record
+/// directory, the guard and its settings — fenced to that path; then the
+/// ceremony if a persona is being minted (`theorist.ensure_identity`); then
+/// the brief (no brief, no session) and the session, launched with the two
+/// web tools on its allowlist — and only once the session is closed, the
+/// notebook and journal from its report and the look at the file it was
+/// fenced to write. A session that reported `sighted` with no document on
+/// disk is recorded as abandoned, whatever it claimed.
 pub fn run(cfg: config.Config, options: Options) -> Result(Session, String) {
   use d <- result.try(dag.load(cfg.dag_path))
   use wall <- result.try(problem(d))
@@ -2711,7 +3255,7 @@ pub fn run(cfg: config.Config, options: Options) -> Result(Session, String) {
     options.port,
   ))
   use _ <- result.try(guard.write_settings(g, g.settings_path))
-  use identity <- result.try(ensure_identity(
+  use identity <- result.try(theorist.ensure_identity(
     cfg,
     roster_,
     who_,
@@ -2759,7 +3303,7 @@ pub fn run(cfg: config.Config, options: Options) -> Result(Session, String) {
       role(),
     )
 
-  let size = document_size(sighting)
+  let size = theorist.document_size(sighting)
   write_channels(
     cfg,
     run_log,
@@ -2770,7 +3314,7 @@ pub fn run(cfg: config.Config, options: Options) -> Result(Session, String) {
     ending,
     size,
   )
-  let summary =
+  let summary_text =
     summary(
       options,
       session_cfg,
@@ -2782,9 +3326,9 @@ pub fn run(cfg: config.Config, options: Options) -> Result(Session, String) {
       ending,
       size,
     )
-  log.summary(run_log, summary)
+  log.summary(run_log, summary_text)
   Ok(Session(
-    summary:,
+    summary: summary_text,
     guard: g,
     dir: l.dir,
     identity:,
@@ -2799,7 +3343,9 @@ pub fn run(cfg: config.Config, options: Options) -> Result(Session, String) {
 /// with the time, the problem, the vantage, the model and how the session
 /// ended; and the journal under the run. A failed notebook write is
 /// printed, not fatal — the session happened and its summary must still be
-/// written.
+/// written. Not reused from `theorist.write_channels`: the heading text
+/// carries the vantage, which a theorist's has no field for, and the two
+/// functions close over their own `Report` type.
 fn write_channels(
   cfg: config.Config,
   run_log: log.Log,
@@ -2827,7 +3373,7 @@ fn write_channels(
             <> " ("
             <> model
             <> ", "
-            <> end_word(ending.end, size)
+            <> theorist.end_word(ending.end, size, "sighted")
             <> ")"
           case
             roster.append_notebook(
@@ -2850,23 +3396,13 @@ fn write_channels(
   }
 }
 
-/// The sighting document as it sits on disk after the session: its size in
-/// bytes, or nothing.
-fn document_size(path: String) -> Option(Int) {
-  case simplifile.file_info(path) {
-    Ok(info) ->
-      case simplifile.file_info_type(info) {
-        simplifile.File -> Some(info.size)
-        _ -> None
-      }
-    Error(_) -> None
-  }
-}
-
 /// The summary a captain reads: who ran, the problem, the vantage, where
 /// the document is, whether it exists, how the session ended in words that
 /// never call a connection proved, the ceilings it ran under, what it cost,
-/// and the next vantage the connector named.
+/// and the next vantage the connector named. Not reused from
+/// `theorist.summary`: the table has an extra `vantage` line and closes
+/// over the connector's own `Report`, but `theorist.ceilings` and
+/// `theorist.ended_words` do the two lines that are genuinely shared.
 fn summary(
   options: Options,
   cfg: config.Config,
@@ -2903,8 +3439,9 @@ fn summary(
         Some(bytes) -> "exists, " <> int.to_string(bytes) <> " bytes"
         None -> "MISSING — nothing is at that path"
       },
-      "ended      " <> ended_words(cfg, ending.end, size),
-      "ceilings   " <> ceilings(cfg),
+      "ended      "
+        <> theorist.ended_words(cfg, ending.end, size, "connector", "sighting"),
+      "ceilings   " <> theorist.ceilings(cfg),
       "cost       $" <> roster.usd(tally.cost_usd),
       "turns      " <> int.to_string(tally.turns),
       "session    " <> tally.session_id,
@@ -2918,69 +3455,30 @@ fn summary(
     "\n",
   )
 }
-
-/// How the session ended, in a word, for the notebook heading. A ceiling
-/// gets a second word saying which.
-fn end_word(end: worker.End, size: Option(Int)) -> String {
-  case end, size {
-    worker.Finished, Some(_) -> "sighted"
-    worker.Finished, None -> "abandoned"
-    worker.Abandoned, _ -> "abandoned"
-    worker.TimedOut, _ -> "timed_out"
-    worker.BudgetExhausted(worker.Turns), _ -> "budget_exhausted: turns"
-    worker.BudgetExhausted(worker.Dollars), _ -> "budget_exhausted: dollars"
-    worker.BudgetExhausted(worker.Rounds), _ -> "budget_exhausted: rounds"
-    worker.BudgetExhausted(worker.Unknown(_)), _ -> "budget_exhausted: cli"
-    worker.RateLimited, _ -> "rate_limited"
-  }
-}
-
-/// How the session ended, for the summary. `Finished` is the connector's
-/// claim that its document is written, believed exactly as far as the file
-/// on disk supports it.
-fn ended_words(
-  cfg: config.Config,
-  end: worker.End,
-  size: Option(Int),
-) -> String {
-  case end, size {
-    worker.Finished, Some(_) ->
-      "finished — the connector reported its sighting written; that is its claim about the document, and a captain's reading is the only adjudication"
-    worker.Finished, None ->
-      "abandoned — the connector reported its sighting written, but no document exists at the sighting path, so the claim is recorded as abandoned"
-    worker.Abandoned, _ -> "abandoned by the connector"
-    worker.TimedOut, _ -> "timed out"
-    worker.BudgetExhausted(ceiling), _ ->
-      "stopped at " <> worker.ceiling_words(cfg, ceiling)
-    worker.RateLimited, _ -> "rate limited"
-  }
-}
-
-/// The two ceilings a session ran under, for the summary line.
-fn ceilings(cfg: config.Config) -> String {
-  int.to_string(cfg.max_turns)
-  <> " turns, $"
-  <> float.to_string(cfg.max_budget_usd)
-}
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [ ] **Step 6: Run the tests to verify they pass**
 
 Run: `cd C:/Users/dibuj/dev/rule30-keel-connector/harness && gleam test`
-Expected: announced total = previous + 5; `<total> passed, no failures`; passed equals the announced total. The five session tests each take a few seconds (a fake shim process and a guard on a free port each).
+Expected: announced total = previous + 5; `<total> passed, no failures`;
+passed equals the announced total. The five session tests each take a few
+seconds (a fake shim process and a guard on a free port each).
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 7: Commit**
 
 ```
 cd C:/Users/dibuj/dev/rule30-keel-connector
 git add harness/src/harness/connector.gleam harness/test/connector_test.gleam
 git commit -m "Keel: connector.run — the connector-1 record, the web tools on the allowlist, the summary
 
-Problem settled from the board, who from the roster, the sighting path
-chosen once as the first free <date>-<slug>[-n].md, a Connector guard on
-the given port, the ceremony if minting, then worker.drive under the
+Problem settled from the board, who from the roster (theorist.who), the
+sighting path chosen once as the first free <date>-<slug>[-n].md, a
+Connector guard on the given port, the ceremony via
+theorist.ensure_identity if minting, then worker.drive under the
 connector ceilings; notebook and journal from the report; a sighted
-claim with no file on disk recorded as abandoned."
+claim with no file on disk recorded as abandoned. Session, run,
+write_channels and summary are this module's own; ceilings and
+ended_words are theorist's, parameterised."
 ```
 
 ---
@@ -3190,12 +3688,12 @@ Spec sentences mapped to the task that implements them.
 - "Not the index, not the proof notes, not the crystals list" — Task 6 (`the_brief_carries_the_six_inputs_and_nothing_else_test` puts all three on disk and asserts their absence).
 
 **Persona**
-- region `connect`, minted through the naming ceremony on first use — Task 2 (region wording, "connector" in the prompt), Task 6/7 (`who`, `ensure_identity`, `a_connector_is_minted_when_the_roster_has_none_test`).
+- region `connect`, minted through the naming ceremony on first use — Task 2 (region wording, "connector" in the prompt), Task 6 (`who`, delegating to `theorist.who(roster_, region, "connector", persona)`), Task 7 (`ensure_identity`, reused from `theorist.gleam` and made `pub` there; `a_connector_is_minted_when_the_roster_has_none_test`).
 - "one live session per persona" — captain's restraint, as for the theorist (`who` passes `busy: []`); documented in the module note.
-- "notebook `agents/<Name>.md` inlined at render time and written from the report; no other connector's notebook and no theorist's" — Task 6 (`who_you_are`; the brief test asserts Lodestar's and Vesper's are absent), Task 7 (`write_channels`).
+- "notebook `agents/<Name>.md` inlined at render time and written from the report; no other connector's notebook and no theorist's" — Task 6 (`render` calling `theorist.who_you_are`, parameterised by region and role word; the brief test asserts Lodestar's and Vesper's are absent), Task 7 (`write_channels`, this module's own).
 
 **Deliverable**
-- "The sighting document, and nothing else … six sections" — Task 6 (the brief's closing section lists the six), Task 7 (`document_size`, the summary's `document` line; a `sighted` claim with no file is recorded as abandoned).
+- "The sighting document, and nothing else … six sections" — Task 6 (the brief's closing section lists the six), Task 7 (`theorist.document_size`, reused and made `pub`; the summary's `document` line; a `sighted` claim with no file is recorded as abandoned).
 - "Nothing in it reaches the board directly" — Task 3 (statements, DAG, proposals, crystals all denied).
 
 **Order of work, item 2 (Keel)**
