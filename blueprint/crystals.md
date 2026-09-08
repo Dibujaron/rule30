@@ -612,7 +612,10 @@ in another coat, and would sit beside it, not under it.
     New to the held sources: the eighth eventually-white diagonal and the
     exactness of NKS's sixth doubling. Consequence: `leftDiagonal_period_le`
     holds for every `k < 2^31 - 1` on the strength of the computation.
-    Sextant C4.
+    Sextant C4. *For later, not now* (Dib, 2026-09-08): the same orbit run
+    on past the sixth doubling, at period 64 a word in two machine words,
+    would give the seventh doubling, which no source holds, at a cost of
+    minutes; a low-value footnote until something needs the number.
 56. **The period wall's honest form, and why no universal bound proves it.**
     `leftDiagonal_period_le ⟺ ∀ n, k_n ≥ 2^n - 1` where `k_n` is the
     `n`-th doubling (`3, 8, 29, 400, 87867, 2107985255`); with crystal 54,
