@@ -8,6 +8,7 @@
 
 import gleam/dynamic/decode
 import gleam/erlang/process.{type Pid, type Subject}
+import gleam/float
 import gleam/int
 import gleam/io
 import gleam/json
@@ -124,6 +125,7 @@ pub fn prove_one(
   let who = schedule.who_for_node(roster_, node, busy: [])
   use identity <- result.try(ensure_identity(cfg, roster_, who, model, g, l))
   let attempt_cfg = config.for_attempt(cfg, node)
+  io.println(dispatch_line(node_id, identity.name, model, attempt_cfg))
   log.event(run_log, "dispatch", [
     #("node", json.string(node_id)),
     #("identity", json.string(identity.name)),
@@ -590,6 +592,7 @@ fn start(
       // attempt under the ordinary ones. Recorded here so the event says
       // what the attempt was allowed, not only what it was asked.
       let attempt_cfg = config.for_attempt(cfg, node)
+      io.println(dispatch_line(node.id, identity.name, model, attempt_cfg))
       log.event(run_.run_log, "dispatch", [
         #("node", json.string(node.id)),
         #("identity", json.string(identity.name)),
@@ -1087,23 +1090,30 @@ pub fn status(cfg: config.Config) -> Result(String, String) {
         _ -> ""
       }
     })
-  let leaf_line = fn(n: dag.Node) {
+  let leaf_line = fn(n: dag.Node, name_next: Bool) {
     "  "
     <> n.id
     <> " — unblocks "
     <> int.to_string(dag.unblocks(d, n.id))
     <> ", size "
     <> size_text(n)
+    <> case name_next {
+      True -> next_attempt_text(cfg, n)
+      False -> ""
+    }
   }
   let walled = dag.open_leaves(d) |> list.filter(fn(n) { n.size == dag.Wall })
   let startable = schedule.startable(d)
+  // A wall has an empty ladder, so `config.model_for` has no model to name
+  // and the line must not invent one; the section already says the
+  // scheduler will not offer these.
   let walled_lines = case walled {
     [] -> ["  (none)"]
-    ws -> list.map(ws, leaf_line)
+    ws -> list.map(ws, fn(n) { leaf_line(n, False) })
   }
   let startable_lines = case startable {
     [] -> ["  (none)"]
-    ss -> list.map(ss, leaf_line)
+    ss -> list.map(ss, fn(n) { leaf_line(n, True) })
   }
   Ok(
     string.join(rows, "\n")
@@ -1114,6 +1124,60 @@ pub fn status(cfg: config.Config) -> Result(String, String) {
     <> "\n\nOpen leaves, in dispatch order:\n"
     <> string.join(startable_lines, "\n"),
   )
+}
+
+/// What the next attempt at `n` would actually spend: how many attempts
+/// have already burned a rung, the model that rung selects, and the
+/// ceilings that attempt would run under.
+///
+/// This exists because a dollar figure whose currency is unstated is not an
+/// authorisation. Two `L research` leaves print an identical size, and one
+/// may be on `opus` at $4.00 while the other is on `fable` — the scarcest
+/// allowance in the project — at $20.00, because they differ only in how
+/// many attempts have already failed. On 2026-09-08 two sessions each
+/// approved a spend without seeing which of those they were approving. The
+/// scheduler already computes both values (`config.model_for`,
+/// `config.for_attempt`); this only puts them where the decision is made.
+fn next_attempt_text(cfg: config.Config, n: dag.Node) -> String {
+  let failed = config.failed_attempts(n)
+  case config.model_for(n.size, failed, research: n.research) {
+    Error(Nil) -> ""
+    Ok(model) -> {
+      let attempt_cfg = config.for_attempt(cfg, n)
+      ", "
+      <> int.to_string(failed)
+      <> " failed, next: "
+      <> model
+      <> ", "
+      <> int.to_string(attempt_cfg.max_turns)
+      <> " turns, $"
+      <> float.to_string(attempt_cfg.max_budget_usd)
+    }
+  }
+}
+
+/// The one line a captain sees on the terminal when an attempt actually
+/// starts. The `dispatch` event has carried the model and both ceilings all
+/// along; until now they reached `events.jsonl` and never the screen, so
+/// the spend was authorised without its denomination being visible anywhere
+/// the person authorising it was looking.
+fn dispatch_line(
+  node_id: String,
+  identity: String,
+  model: String,
+  attempt_cfg: config.Config,
+) -> String {
+  "dispatching "
+  <> node_id
+  <> " as "
+  <> identity
+  <> " on "
+  <> model
+  <> " — "
+  <> int.to_string(attempt_cfg.max_turns)
+  <> " turns, $"
+  <> float.to_string(attempt_cfg.max_budget_usd)
+  <> " ceiling"
 }
 
 /// A node's size, with `research` after it when the node is one.

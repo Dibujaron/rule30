@@ -118,6 +118,65 @@ pub fn status_lists_every_node_and_the_open_leaves_test() {
   assert !string.contains(leaves, "probe_corollary")
 }
 
+/// An open leaf's line must name the model and the ceilings the next
+/// attempt would run under. A captain reads this one screen before choosing
+/// what to dispatch, and a dollar figure whose currency is not stated is
+/// not an authorisation: on 2026-09-08 two sessions each approved a spend
+/// without seeing that it was denominated in the scarcest allowance rather
+/// than the plentiful one. The scheduler already knows both values.
+pub fn status_names_the_model_and_ceilings_of_the_next_attempt_test() {
+  let d = Dag([node("harness_probe", "harness_probe", dag.S, [])])
+  let assert Ok(text) = dispatch.status(cfg_for(d))
+  let assert Ok(#(_, leaves)) =
+    string.split_once(text, "Open leaves, in dispatch order:
+")
+  // An S node with no failed attempts sits on the bottom rung.
+  assert string.contains(leaves, "next: haiku")
+  assert string.contains(leaves, "40 turns")
+  assert string.contains(leaves, "$4.0")
+}
+
+/// A research node at its top rung must show the research ceilings and the
+/// top-rung model, not the ordinary ones — that is the dispatch that spends
+/// the most and it is the one whose denomination went unstated.
+pub fn status_names_the_research_ceilings_at_the_top_rung_test() {
+  let base = node("research_probe", "research_probe", dag.L, [])
+  let spent =
+    dag.Node(
+      ..base,
+      research: True,
+      attempts: [attempt(dag.GaveUp)],
+    )
+  let assert Ok(text) = dispatch.status(cfg_for(Dag([spent])))
+  let assert Ok(#(_, leaves)) =
+    string.split_once(text, "Open leaves, in dispatch order:
+")
+  // L's ladder is [opus, fable]; one failed attempt puts the next on fable,
+  // under the research ceilings rather than the ordinary $4.
+  assert string.contains(leaves, "next: fable")
+  assert string.contains(leaves, "120 turns")
+  assert string.contains(leaves, "$20.0")
+}
+
+/// A walled leaf has no next model — `config.model_for` gives a wall an
+/// empty ladder — so its line must not invent one.
+pub fn status_names_no_model_for_a_walled_leaf_test() {
+  let d =
+    Dag([
+      node("harness_probe", "harness_probe", dag.S, []),
+      node("walled_probe", "walled_probe", dag.Wall, []),
+    ])
+  let assert Ok(text) = dispatch.status(cfg_for(d))
+  let assert Ok(#(walled, _)) =
+    string.split_once(text, "Open leaves, in dispatch order:
+")
+  let assert Ok(#(_, walled_section)) =
+    string.split_once(walled, "will not offer these):
+")
+  assert string.contains(walled_section, "walled_probe")
+  assert !string.contains(walled_section, "next:")
+}
+
 pub fn status_lists_a_walled_ready_node_separately_from_open_leaves_test() {
   let d =
     Dag([
