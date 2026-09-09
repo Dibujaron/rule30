@@ -1328,3 +1328,48 @@ carelessness and all four were one command from being checked. The one that
 taught me most was Rowan's closure, because the conclusion was correct and
 the reasoning was not: "not in the closure" and "reachable but never called"
 give the same answer today and come apart the moment someone adds a call.
+
+## 2026-09-09 — harvesting the parked proofs, and a broken inference rule
+
+Rowan handed me thirteen parked attempt files under `runs/` to sort into
+seed-worthy machines / internal lemmas / already-on-the-board, and gave me a
+rule for the middle: *a lemma that five independently-briefed provers all
+decided they needed is load-bearing, seed it on that evidence alone.*
+
+**The rule does not hold on this corpus, and the harness is why.** Attempts
+-2 through -6 at `leftDiagonal_onset_le` are not five independent draws. The
+brief for each attempt names the previous attempt's parked file and tells the
+worker to read it first; workers report back that they "budget for
+transcription, not derivation." So the files are *cumulative*. onset-3 →
+onset-4 is 48 lines added and 2 removed on a 195-line file: attempt 4 took
+attempt 3's file whole and appended. onset-4's own header says it, in prose,
+naming its sources — "from Cadence's attempt of 2026-09-08" and "from
+Vesper's attempt of 2026-09-09".
+
+So `leftDiagonal_white_succ_iff` appearing in attempts -4, -5 and -6 is *one*
+authorship (Vesper's, at -4) inherited twice. The three copies are
+byte-identical **including the tactic script**, which is the tell: three
+people who independently needed a lemma write three different proofs of it.
+Identical text is evidence of copying, not of consensus.
+
+**The shape of the error is worth more than the instance.** The count was
+real and the arithmetic was right; what was wrong was the denominator —
+"attempts" looked like independent trials and were a chain. This is the
+`well-formed-and-wrong` failure exactly, and the check that catches it is not
+counting more carefully, it is asking what the count was measured *over*.
+Note that I nearly published the seed recommendation off the count alone: the
+3× row was sitting at the top of my table looking like the answer.
+
+**What survived as real evidence, and it is a different measurement.** Two
+clusters of `private` helpers are copied verbatim into *three landed proof
+files* each — `rowStep`/`rowNat_succ_eq`/`testBit_rowStep`/`rowStep_mod_two_pow`
+across the three `rowNat` files, and `blockXor`/`walk`/`blockXor_parity`
+across the three right-diagonal files. Verified statement-identical, not just
+name-identical. That is friction diagnosable from the landed tree with no
+appeal to the inheritance chain, and attempt -6's own worker flagged it
+unprompted: "that is the third file carrying them. If a fourth needs them,
+propose it as a node rather than copy."
+
+Private is the right call per-file — a helper should not add public names the
+seeder could collide with — so the fix is a node that makes them importable,
+not `public` in place.
