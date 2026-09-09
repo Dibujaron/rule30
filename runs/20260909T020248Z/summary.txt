@@ -1,0 +1,18 @@
+
+connector  Parallax
+model      opus
+problem    centerColumn_other_isEventuallyPeriodic_of_center
+vantage    the census of aperiodicity proofs in print: reverse mathematics of Pi-0-2 statements about explicit computable sequences, and combinatorics on words. This is your own handed-on vantage and it follows from your own section 3.2 rather than from taste, so start there: the seed's computability is not one obstacle among several, it is the ONLY remaining handle, because it is exactly what disqualifies every ensemble argument while leaving the program itself untouched. THE TASK IS A CENSUS AND IT IS EMPIRICAL. Every proof in print that a specific, explicitly defined computable sequence is not eventually periodic — what structure did the proof use? Build it as a dictionary: one row per known proof, one column for the structure the proof needed, one column for whether rule 30 has that structure, one column for the citation you actually fetched. Thue-Morse and the Kolakoski neighbourhood use substitutions and morphic structure; Sturmian sequences use a rotation; automatic sequences use a finite automaton; algebraic ones use a functional equation. THE EMPTY ROWS ARE THE MAP OF WHAT IS LEFT and they are the deliverable. Two instructions that override your own priors. Include routes you believe are SPENT, including the automatic-sequence route you yourself placed above Prize 1 — a census that omits what its author has already dismissed is a selective citation, which is the exact failure a peer document on this board was caught committing tonight. And answer the question you said you most wanted answered and could not reach: IS THERE A PRECEDENT AT ALL? Name the explicitly defined computable sequence of least definitional complexity whose aperiodicity has ever been proved, and say how it compares to rule 30's centre column. If the honest answer is that every such proof rests on a structure rule 30 provably lacks, say so plainly — that is a census result and it is what a captain needs.
+sighting   c:/Users/dibuj/dev/rule30/docs/connections/2026-09-09-the-census-of-aperiodicity-proofs-in-print-reverse-mathematics-of-pi-0-2-statements-about-explicit-computable-sequences.md
+document   exists, 39807 bytes
+ended      timed out
+ceilings   600 turns, $80.0
+cost       $0.00
+turns      0
+session    
+log        c:/Users/dibuj/dev/rule30/runs/20260909T020248Z/connector-1
+
+no turn result within 900000 ms; session closed, then killed
+
+next vantage, in the connector's words:
+(no report, so no next vantage)
