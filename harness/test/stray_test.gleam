@@ -300,3 +300,18 @@ pub fn a_sweep_saves_after_every_file_and_not_once_at_the_end_test() {
   assert list.length(out) == 3
   assert stray.lookup(out, "vanished.lean", "h-vanished.lean") == None
 }
+
+pub fn a_sweep_checks_parked_proofs_before_theorist_scratch_test() {
+  // The listing is sorted for a reader and sorted puts explorer/ first, so
+  // the first real sweep spent its whole twelve-file budget on scratch and
+  // reached none of the six parked leftDiagonal_onset_le proofs — the
+  // artefacts the section exists for. Order is by producer, not by name.
+  assert stray.sweep_order([
+      "explorer/a.lean", "runs/r1/x.lean", "explorer/b.lean", "runs/r2/y.lean",
+    ])
+    == ["runs/r1/x.lean", "runs/r2/y.lean", "explorer/a.lean", "explorer/b.lean"]
+  // Within each group the incoming order is kept, so the listing a reader
+  // sees and the order the sweep works in do not disagree needlessly.
+  assert stray.sweep_order(["runs/b.lean", "runs/a.lean"])
+    == ["runs/b.lean", "runs/a.lean"]
+}

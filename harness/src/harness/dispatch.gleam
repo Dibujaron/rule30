@@ -1174,6 +1174,7 @@ fn sweep_strays(
   let cache = stray.load(cache_path)
   let unchecked =
     stray_proofs(cfg)
+    |> stray.sweep_order
     |> list.filter(fn(path) {
       case stray.hash_of(cfg.repo_root <> "/" <> path) {
         Error(_) -> False

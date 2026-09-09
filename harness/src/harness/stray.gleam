@@ -324,6 +324,24 @@ pub fn lookup(cache: List(Entry), path: String, hash: String) -> Option(Verdict)
   }
 }
 
+/// The order a sweep should work through `paths`: everything under `runs/`
+/// first, then the rest, each keeping the order it came in.
+///
+/// The listing is sorted for a reader, and sorted puts `explorer/` before
+/// `runs/`. With a per-run cap that is backwards: the first sweep after
+/// this landed spent all twelve of its checks on theorist scratch and
+/// reached none of the six parked `leftDiagonal_onset_le` proofs, which are
+/// the artefacts the whole section exists for. A file under `runs/` was
+/// produced by an attempt that was dispatched, paid for, and did not close
+/// its node; a file under `explorer/` is somebody's working scratch and is
+/// usually superseded. Both are worth checking and only one is worth
+/// checking first.
+pub fn sweep_order(paths: List(String)) -> List(String) {
+  let #(parked, scratch) =
+    list.partition(paths, fn(p) { string.starts_with(p, "runs/") })
+  list.append(parked, scratch)
+}
+
 /// Check each path in turn, handing the cache to `save` after **every**
 /// file rather than once at the end.
 ///
