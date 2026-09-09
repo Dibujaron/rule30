@@ -1,0 +1,16 @@
+
+node      centerColumn_run_boundary
+identity  Vesper
+model     sonnet
+outcome   proved
+cost      $0.81
+turns     10
+estimate  S
+session   2d59df3b-42a9-4e1b-8202-7f1b069322e6
+log       c:/Users/dibuj/dev/rule30/runs/20260909T175238Z/centerColumn_run_boundary-2
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Vesper (#2b3a67): closed 62, abandoned 5, $56.24, calibration 51/63

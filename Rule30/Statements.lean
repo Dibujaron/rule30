@@ -1506,4 +1506,32 @@ theorem leftDiagonal_onset_le_of_stepMod_preperiod
     ∀ k, ∃ p > 0, ∃ N ≤ k, PeriodicFrom (leftDiagonal k) p N := by
   sorry
 
+/-- **The onset wall, with no cellular automaton in it: an equivalence.** Every
+left diagonal has settled by its own index if and only if, for every `k`, the
+orbit of `1` under the truncated step `r ↦ (4 * r) ^^^ ((2 * r) ||| r)` modulo
+`2 ^ (k + 1)` takes the same value at times `2 * k` and `2 * k + 2 ^ k`.
+
+The right-hand side mentions no diagonal, no configuration, no evolution: it is
+a return condition on the forward orbit of a single number under one integer
+operation. Rule 30's whole content, for this wall, is that bit-twiddle.
+
+This composes two theorems already on the board and nothing else —
+`leftDiagonal_onset_le_iff_rowNat_return` for the equivalence and
+`rowNat_mod_eq_iterate` to rewrite each side. It is seeded as a node rather
+than asserted because the captain had been repeating the composition from his
+own reading, which is not the same as a checked theorem, and a claim of this
+size is exactly the kind this project's rules say a reading cannot settle.
+
+Note the contrast with `leftDiagonal_onset_le_of_stepMod_preperiod`, which is
+an *implication* from a strictly stronger hypothesis quantified over every
+start below `2 ^ (k + 1)`. This is the equivalence, and it needs only the orbit
+of `1`. -/
+theorem leftDiagonal_onset_le_iff_stepMod_return :
+    (∀ k, ∃ p > 0, ∃ N ≤ k, PeriodicFrom (leftDiagonal k) p N) ↔
+    ∀ k : ℕ,
+      (fun r => ((4 * r) ^^^ ((2 * r) ||| r)) % 2 ^ (k + 1))^[2 * k] (1 % 2 ^ (k + 1))
+        = (fun r => ((4 * r) ^^^ ((2 * r) ||| r)) % 2 ^ (k + 1))^[2 * k + 2 ^ k]
+            (1 % 2 ^ (k + 1)) := by
+  sorry
+
 end Statements

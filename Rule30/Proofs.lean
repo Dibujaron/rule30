@@ -30,6 +30,7 @@ import Rule30.Proofs.CenterColumnNotEventuallyPeriodicOfRight
 import Rule30.Proofs.CenterColumnNotIsEventuallyPeriodicOfCohomologous
 import Rule30.Proofs.CenterColumnOtherOfCohomologousColumn
 import Rule30.Proofs.CenterColumnRightNotBothIsEventuallyPeriodic
+import Rule30.Proofs.CenterColumnRunBoundary
 import Rule30.Proofs.CenterColumnSuccOfBlack
 import Rule30.Proofs.CenterColumnZero
 import Rule30.Proofs.ColumnOneOfWhite
@@ -71,6 +72,7 @@ import Rule30.Proofs.LeftDiagonalEqRowNatTestBit
 import Rule30.Proofs.LeftDiagonalMulPowEqSettledCenter
 import Rule30.Proofs.LeftDiagonalOnsetLeIffRowNatReturn
 import Rule30.Proofs.LeftDiagonalOnsetLeOfLine
+import Rule30.Proofs.LeftDiagonalOnsetLeOfStepModPreperiod
 import Rule30.Proofs.LeftDiagonalPairNeverEventuallyShifted
 import Rule30.Proofs.LeftDiagonalPeriodLeOfBlackBetween
 import Rule30.Proofs.LeftDiagonalPeriodUnbounded
