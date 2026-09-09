@@ -59,6 +59,7 @@ import Rule30.Proofs.EvolvePeriodSubOne
 import Rule30.Proofs.EvolveRightEdge
 import Rule30.Proofs.EvolveRightSecondDiagonal
 import Rule30.Proofs.EvolveSubOneEqXor
+import Rule30.Proofs.ExistsConfigSameCenterColumn
 import Rule30.Proofs.IsEventuallyPeriodicColumnUnique
 import Rule30.Proofs.IsEventuallyPeriodicCommonPeriod
 import Rule30.Proofs.IsEventuallyPeriodicOfPeriodicStep

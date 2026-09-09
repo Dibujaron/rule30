@@ -1,0 +1,16 @@
+
+node      exists_config_same_centerColumn
+identity  Vesper
+model     opus
+outcome   proved
+cost      $2.37
+turns     11
+estimate  S
+session   e8e0e5a5-27ff-4167-83e2-11bdee164780
+log       c:/Users/dibuj/dev/rule30/runs/20260909T000315Z/exists_config_same_centerColumn-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Vesper (#2b3a67): closed 57, abandoned 4, $46.67, calibration 46/57
