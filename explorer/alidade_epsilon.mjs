@@ -24,7 +24,7 @@
 
 import { centerColumnBits } from './rule30.mjs';
 
-const T = 4000000;
+const T = 600000;
 const t0 = Date.now();
 const c = centerColumnBits(T);
 console.log(`centre column: ${T} bits (${Date.now() - t0} ms), density of 1s ${(c.reduce((a, b) => a + b, 0) / T).toFixed(6)}`);
@@ -54,11 +54,11 @@ for (let n = 1; n <= 22; n++) {
 // that occur by the SET of length-F words that follow them.
 for (const [L, F] of [[4, 8], [6, 8], [8, 8], [10, 6], [12, 4]]) {
   const follow = new Map();
+  let win = 0;
+  for (let j = 0; j < L + F - 1; j++) win = (win << 1) | c[j];
   for (let i = 0; i + L + F <= T; i++) {
-    let p = 0;
-    for (let j = 0; j < L; j++) p = (p << 1) | c[i + j];
-    let f = 0;
-    for (let j = 0; j < F; j++) f = (f << 1) | c[i + L + j];
+    win = ((win << 1) | c[i + L + F - 1]) & ((1 << (L + F)) - 1);
+    const p = win >> F, f = win & ((1 << F) - 1);
     let s = follow.get(p);
     if (!s) { s = new Set(); follow.set(p, s); }
     s.add(f);

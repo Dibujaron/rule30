@@ -438,3 +438,71 @@ one positively. A warning to whoever takes it: **do not accept a bad verdict fro
 a run shorter than `10^6` rows**, and treat a factor count in the hundreds as
 "has not settled yet" rather than "never settles". Both rules are written in the
 blood of this session.
+
+---
+
+## Captain's adjudication, 2026-09-09, Rowan
+
+The harness records a theorist's outcome as *its* claim about its document, and
+says a captain's reading is the only adjudication. This is that reading for C3,
+prompted by Dib refusing the novelty claim on sight and being right.
+
+**The enumeration is correct and I am keeping it.** Re-derived two independent
+ways — an exhaustive window-map sweep over all `2^(2L)` states to `L = 12`
+(16,777,216 states), and a brute force over all `2^n` words for every `n ≤ 22`
+with no permutivity and no window map — agreeing exactly with each other and,
+after the documented leftward reading is undone, with all ten of C3's rows word
+for word. Cycle counts match too. Nothing below disturbs any number in this
+document.
+
+**"Reproduces Wolfram's Table 6.2" is two thirds true.** The table is a primary
+source in this checkout — `sources/wolfram-1986-random-sequence-generation.txt`,
+lines 833–856 — so this was checkable and is now checked. Period 1 (`0`, `01`)
+and period 4 (`0000001`, `0000111`, `0010011`, `0111111`, in the printed order,
+one orbit) reproduce. The period-3 entry `000011111001` does **not**: read
+left-to-right in space it has no temporal period under rule 30 at all. The
+unique length-12 necklace of minimal temporal period 3 is `000010011111` under
+rule 30, and `000011111001` under **rule 86**, rule 30's mirror. The printed
+word is the rule 86 element.
+
+**And C3's check (a) is void, which matters more than the discrepancy.** It was
+offered here as an orientation guard, on the stated argument that a wrong
+orientation would produce a self-consistent but mirrored table and that
+Wolfram's words coming back unchanged rules that out. It cannot do that work.
+`0`, `01` and all four period-4 words are reversal-symmetric as necklaces and
+are blind to a reflection; the length-12 word is the only discriminating entry
+in the table, and it "matched" only because a mirrored reading met a mirrored
+word. Two reflections cancelled and the check returned the answer that looked
+like confirmation.
+
+That is a **null check reading as a passing one** — not a wrong value, but a
+test structurally incapable of detecting the thing it was built to detect. It is
+the sharpest instance this project has yet recorded of its own recurring
+failure, and it is worth more than the claim it was guarding.
+
+Whether the fault is Wolfram's print or the OCR is not settleable from what we
+hold: an exact twelve-character reversal is not a plausible OCR corruption and
+it lands precisely on the rule 86 element, but Fig. 6.3, the picture that would
+decide it, is an image lost in the OCR. Either way **Table 6.2 does not certify
+the orientation of this enumeration**, and no downstream text should say it
+does.
+
+**The extension is routine and is not novelty.** Wolfram states the algorithm
+and the `2^(2p)` bound in §6 of the same paper, and his eq. (3.3) is the
+leftward function. `L = 12` ran in seconds here. A table truncated in 1986 was
+truncated by interest, not by capability, so continuing it is close to
+definitionally uninteresting — Dib's filter, and it is the right one. Keep this
+as verified data; do not report it upward as a result.
+
+**Two by-products of the check that are worth more than C3's claim.** The
+extension to `L = 11` (`1, 2, 143, 275`) and `L = 12` (`1, 2, 7, 12, 60, 84,
+100, 138`) resolves the loose end C2 flagged honestly: spatial period 138 is
+genuine, at minimal temporal period 12, and simply sat outside the `L ≤ 10`
+sweep. And cross-check (b) overstated its evidence — it lists seven measured
+spatial periods, says the enumeration predicts them, then names only the three
+that were in the table. 138, 143 and 275 were neither predicted nor flagged.
+They are predicted, at `L = 12` and `L = 11`, but only after work this document
+did not do.
+
+Verification scripts: `explorer/t62_enum.cjs`, `t62_orient.cjs`,
+`t62_vs_talus.cjs`.
