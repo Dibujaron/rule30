@@ -1,0 +1,16 @@
+
+node      leftDiagonal_onset_le
+identity  Vesper
+model     fable
+outcome   rate_limited
+cost      $0.00
+turns     1
+estimate  L
+session   55492935-ce31-423f-b74c-acae4591639b
+log       c:/Users/dibuj/dev/rule30/runs/20260909T183919Z/leftDiagonal_onset_le-9
+proof     -
+
+verifier:
+the five-hour window is rate limiting; resume session 55492935-ce31-423f-b74c-acae4591639b
+
+Vesper (#2b3a67): closed 63, abandoned 5, $57.14, calibration 51/64

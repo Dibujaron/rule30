@@ -1,0 +1,14 @@
+{"ts":"2026-09-09T18:39:19Z","kind":"run","max_attempts":1,"concurrency":1}
+{"ts":"2026-09-09T18:39:19Z","kind":"dispatch","node":"leftDiagonal_onset_le","identity":"Vesper","model":"fable","reason":"open leaf; unblocks 0; research node at its top rung, attempt 6 there","max_turns":120,"max_budget_usd":20.0,"port":4130,"log":"c:/Users/dibuj/dev/rule30/runs/20260909T183919Z/leftDiagonal_onset_le-9","in_flight":1}
+{"ts":"2026-09-09T18:39:27Z","kind":"stray","file":"explorer/alidade_scratch_survival.lean","verdict":"clean"}
+{"ts":"2026-09-09T18:39:32Z","kind":"stray","file":"explorer/meridian_scratch_runs.lean","verdict":"clean"}
+{"ts":"2026-09-09T18:39:32Z","kind":"stray","file":"explorer/parallax3_scratch_trace.lean","verdict":"no_theorems"}
+{"ts":"2026-09-09T18:39:32Z","kind":"stray","file":"explorer/scratch_blacktime.lean","verdict":"no_theorems"}
+{"ts":"2026-09-09T18:39:32Z","kind":"stray","file":"explorer/scratch_doubling.lean","verdict":"no_theorems"}
+{"ts":"2026-09-09T18:39:41Z","kind":"stray","file":"explorer/scratch_leftdiagonal_unbounded.lean","verdict":"broken"}
+{"ts":"2026-09-09T18:39:46Z","kind":"stray","file":"explorer/scratch_masking.lean","verdict":"clean"}
+{"ts":"2026-09-09T18:39:52Z","kind":"stray","file":"explorer/scratch_onset_dichotomy.lean","verdict":"clean"}
+{"ts":"2026-09-09T18:39:59Z","kind":"stray","file":"explorer/scratch_p2.lean","verdict":"broken"}
+{"ts":"2026-09-09T18:40:06Z","kind":"stray","file":"explorer/scratch_reemit.lean","verdict":"clean"}
+{"ts":"2026-09-09T18:40:11Z","kind":"stray","file":"explorer/scratch_rightdoubling.lean","verdict":"clean"}
+{"ts":"2026-09-09T18:40:16Z","kind":"stray","file":"explorer/scratch_rightunbounded.lean","verdict":"clean"}
