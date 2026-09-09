@@ -909,3 +909,28 @@ periods are powers of two; the witness ring has period 3.
 login while verifying its own witnesses, and the verdict here is recovered from
 the scripts it left — `explorer/mmc_verify.cjs` and siblings — re-run and
 independently checked, not from its report, which never arrived.
+
+**Second addendum, and it reopens the question rather than closing it.** The
+witness above has row period 3; rule 30's settled words have **power-of-two**
+periods. Constraining the background to rule 30 rings of power-of-two row
+period and no eventually-white left diagonal, the maximum mean cycle is
+**exactly `1/2`** — as an exact rational, at every size computed: `4/8` at
+`N = 4` (14 admissible rings), `8/16` at `N = 8` (30 admissible), `16/32` at
+`N = 16` (1,470 admissible). Not a measurement and not near `1/2`; equal to it.
+
+So under the constraint rule 30 actually satisfies, the reachable-set bound is
+**exactly critical**. The wall needs the front's speed to be at most `1/2`, and
+the worst admissible background achieves `1/2` on the nose. Whether that
+suffices is now a question about whether the onset induction tolerates
+equality, which is a Lean question rather than a measurement — and it is the
+first time this quantity has been an exact rational rather than a simulated
+average.
+
+Worth stating what this does *not* say. `1/2` being achieved means no
+strictly-better bound is available from this constraint set, so any argument
+needing a margin is dead. And the rings are periodic backgrounds; the settled
+region is not periodic, so a bound proved over rings transfers only if the
+settled words' local statistics are dominated by some ring's, which is not
+established here.
+
+Computed with `explorer/mmc_pow2.cjs`, left by the killed agent and re-run.
