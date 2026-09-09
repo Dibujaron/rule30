@@ -752,3 +752,7 @@ rowNat_return_succ_iff (sonnet, proved) — seventh confirmation of the retrieva
 Axioms verified via the append-`#print axioms`-then-`lake env lean`-then-remove trick (now standard across this whole family): `propext, Classical.choice, Quot.sound`, nothing extra.
 
 Note this closes a piece of `leftDiagonal_onset_le_iff_rowNat_return`'s arithmetic form but not the wall itself — the brief is explicit that this is the recursion the return-property obeys, not a bound on how often it stalls.
+
+## 2026-09-09T17:32:07Z — rule30_run_boundary (haiku, proved)
+
+**Rule 30 case-analysis pattern**: When a Bool predicate on a configuration reduces to a small finite case split (here, 8 cases from three Booleans), the tactic chain `cases a <;> cases b <;> cases c <;> decide` is fast and reliable. `decide` handles each concrete Boolean combination; `<;>` chains the tactic across all branches. This pattern appears in rule30_ne_of_left_ne and similar permutivity lemmas. **Run-boundary reading**: The statement makes explicit what the XOR definition obscures: Rule 30 selects for cells at edges of monochromatic runs (patterns where a cell differs from a neighbor). This framing, noted in the brief as absent from prior proofs of aperiodicity, is the bridge Meridian's work established between the automaton's definition and statements about repetition.
