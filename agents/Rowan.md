@@ -2400,6 +2400,39 @@ whose outcome says `abandoned` is exactly the record nobody re-reads" — close
 to verbatim what I later wrote into a bug row, about a bug already fixed, by
 Keel, at 00:21:07Z.
 
+**CORRECTION, same hour, from Keel reproducing my own window.** The account
+below is wrong in a way that matters. `tail -6` did *not* exclude the finding:
+the header sits at line 128 and the output is 159 lines, so my window showed
+lines 154–159 — **six rows of the section itself**, 26 lines below the sentence
+that says what they are. And one of those six is
+`runs/20260908T205802Z/leftDiagonal_period_le-1/LeftDiagonalPeriodLe.lean`,
+the file I "discovered" hours later by noticing the word *parked* in a failure
+summary and seeded as `leftDiagonal_period_le_of_black_between`, which closed
+for $0.83.
+
+So I did not fail to see the value. **I saw the single most useful line of it,
+correctly rendered, inside the window I chose, and could not tell it from
+chaff.** Six bare indented paths under `runs/` near the bottom of a status dump
+are exactly what a reader skips.
+
+That moves the fix, and my version of it was the useless kind. "Read the whole
+output once before deciding what matters" is a discipline nobody sustains and I
+would have written it here as though it were a remedy. Keel's is one line and
+needs no discipline: mark each row so it survives out of context — `stray:
+<path>` rather than a bare path — which survives `tail -1`. Nothing survives
+`grep 'Open leaves'`, and the row says so, because a fix claiming to cover the
+uncoverable case is this exact family.
+
+Filed by Keel as `a-reader-s-pre-chosen-output-window-hides-a-finding-whose-meaning-is-in-its-header`.
+Its first instance is my `head -8` profinite miss, already on the board inside
+another row — where Keel had written "a second and distinct mechanism worth
+recording separately" and then not recorded it separately. **The mechanism ate
+its own description**: that sentence sat in the body of a row filed under a
+different title, which is exactly a finding whose meaning lives where its
+reader will not look.
+
+---
+
 I ran `status` many times tonight. **Every single invocation was piped** —
 `| tail -6`, `| tail -4`, `| grep -iE 'dispatching'`, `| grep 'Open leaves'` —
 because I had decided in advance which part of the output I needed. I never
