@@ -2315,3 +2315,77 @@ was "mmhm" and he was right to refuse it. A map with four fewer blind alleys
 is worth having and is not progress on the prize, and I should say those two
 things in the same breath rather than letting the first stand for the
 second.
+
+## 2026-09-09T00:55:00Z — the failure was in my own instrumentation, and it ran all night
+
+Dib: "whatever you're doing to notice when sessions are done, consistently
+doesn't work lol". He was right and the cause is mine. I launched every
+session as `nohup gleam run -- ... &` **inside** a `run_in_background` call.
+The `&` makes the wrapper shell exit at once, so the completion notification
+fired within seconds and reported on the *launcher*, never the session. The
+real work was a detached `erl` process nothing was watching. Every
+"completed (exit code 0)" I received all night was noise, and I found out
+sessions had ended only when Dib asked or when I happened to poll.
+
+The harness offered the right mechanism and I defeated it with
+belt-and-braces. Fixed by dropping the `nohup ... &`.
+
+**That is the fourth instance today of one family, and the family is now
+sharp enough to name properly.** Keel's `git merge --ff-only | tail && git
+worktree remove` — pipeline status is `tail`'s, so the `&&` fired on a
+failed merge. My `netstat | grep | head` then `$?` — read `head`'s status,
+concluded "ports are free" from a command that was never the test. A `git
+commit` chained behind a backgrounded dispatch, which ran in the detached
+shell and silently never landed; I caught it only by reading `git status`
+rather than trusting the absence of an error. And now a completion
+notification watching the wrong process for six hours.
+
+Every one is **a result and an action wired so the result cannot gate the
+action**, and every one *looks* like a check. Keel's proposed rule is the
+only one of these that is mechanical: never pipe a command whose exit status
+you are about to branch on. I would add a second: **never let a notification
+stand in for a check on the thing you actually care about** — ask what
+process the notification is about.
+
+Dib also caught the softer version. I reported sessions "live" from
+listening ports, which prove a socket is bound and nothing else, then went
+to check event activity and read `runs/<run-id>/events.jsonl`, which is
+empty by design — the session's log is one level down in `theorist-1/` or
+`connector-1/`. My conclusion was right both times and my evidence was
+wrong both times. **A right conclusion from wrong evidence is not a lucky
+escape; it is the same defect as being wrong, minus the tell.**
+
+## 2026-09-09T00:58:00Z — three routes, three times "weaker" was not weaker
+
+Tonight's pattern, and I think it is the actual finding rather than any one
+result. Three independent attempts to find something weaker than Prize 1
+came back the other way:
+
+- the residual is **equivalent** to P1 (Talus, two lines, verified);
+- non-automaticity of the centre column is **strictly stronger** than P1
+  (Parallax, floor 130,553 states) — eventually periodic implies automatic,
+  so non-automatic implies P1 and more;
+- the environment-based speed bound **provably caps at 0.501** where the
+  onset wall needs 1/2 (Rosetta).
+
+Either P1 is rigid against weakening, which would be worth knowing and
+worth stating as a claim somebody could refute, or we are systematically
+bad at judging what "weaker" means. I do not know which, and a fourth
+instance starts to settle it. I want this written down *before* the fourth
+arrives so it is a prediction rather than a story told afterwards.
+
+Rosetta's is the best single result of the night and its summary undersold
+it. "First speed bound below 1" reads as a near miss; the content is that
+**the front is slow because its paths die, not because they are blocked**,
+so the entire "background blocks the front" family caps at 0.501 and cannot
+be repaired. It names the mechanism the failing arguments ignore, which is
+worth more than the number.
+
+One thing I flagged and have now sent to a subagent rather than let stand:
+0.50106 against a target of exactly 1/2, with blocks spread 0.50076-0.50133,
+is about two block-widths above the target — and two of Rosetta's own
+scripts disagree in the third decimal (0.50106 vs 0.5045), a gap larger than
+the effect. If the true optimum is exactly 1/2 the environment argument is
+*critical* rather than failing, which is a different and better story. A
+measured number sitting one part in a thousand above a round target is
+exactly the shape this project has been burned by.
