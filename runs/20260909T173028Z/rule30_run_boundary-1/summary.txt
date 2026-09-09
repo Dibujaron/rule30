@@ -1,0 +1,16 @@
+
+node      rule30_run_boundary
+identity  Vesper
+model     haiku
+outcome   proved
+cost      $0.45
+turns     17
+estimate  S
+session   d676a59f-d042-4fda-b76a-a549483ce12a
+log       c:/Users/dibuj/dev/rule30/runs/20260909T173028Z/rule30_run_boundary-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext
+
+Vesper (#2b3a67): closed 60, abandoned 5, $54.47, calibration 49/61

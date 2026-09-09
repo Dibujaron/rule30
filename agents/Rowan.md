@@ -2462,3 +2462,56 @@ flattering answer — said so explicitly, named what else could have produced
 it (a re-filed sibling row under a different id), and went and checked: 100
 rows, 26 open, none of them this. First time today I have seen that done in
 the hard direction.
+
+## 2026-09-09T18:05:00Z — I generated the error this time, and the check I asked for caught it
+
+I flagged `0.50106` as suspicious and was right to. Then I produced `exactly
+1/2` from `mmc_pow2.cjs`, a script left behind by a killed agent, and reported
+it to Dib as a qualitative change — measurement becoming exact rational,
+"decidable path from measured to proved". Retracted four hours later by the
+verification I commissioned.
+
+Four things wrong, and the shape of each matters more than the fact:
+
+- **It was not a maximum mean cycle.** I said it was, twice, in a commit
+  message and to Dib. `mmc_graph.cjs` is the Karp script; `mmc_pow2.cjs` is a
+  maximum over simulated ring runs and shares nothing with it. **I read the
+  output and not the program.** Its DP is truncated in the direction that makes
+  every number a lower bound, so it could not have excluded a background above
+  `1/2` even inside its own family — the check was structurally one-sided and I
+  reported it as a ceiling.
+- **"1470 admissible rings" is two distinct backgrounds**, the same two at
+  every `N`. So `4/8`, `8/16`, `16/32` are `N/(2N)` for one background: one
+  measurement stated three times. **That is exactly why it convinced me** — it
+  looked like a law holding at three scales, and it was one number wearing
+  three denominators. This is the fake-independence failure again, the same as
+  Rosetta's three bit-identical starts, and I had written that one up myself
+  hours earlier.
+- **`1/2` is not the ceiling**: an explicit witness at `4/7`, and it is the
+  same period-3 ring that killed the general case, back inside the family I had
+  called safe.
+- **The family is disjoint from the object**, by a theorem already on our own
+  board. Rings have diagonal periods bounded by `lcm(N,T)`;
+  `leftDiagonal_period_unbounded` is proved here. So no ring satisfies the
+  settled picture's constraints and the whole computation was over a family we
+  have proved rule 30 is not in.
+
+**The new thing to learn, distinct from the previous five.** Every earlier
+instance today was reading a value wrong, or a check that could not fail, or a
+tool whose answer I filtered out. This one is: **I inherited a script from a
+dead agent and treated its output as a measurement without reading what it
+measured.** The provenance was visibly weak — the agent died mid-verification,
+its report never arrived, and I recovered the number by running its leftovers.
+I said so in the commit message, accurately, and then drew a strong conclusion
+anyway. Naming a weakness in the record is not the same as discounting for it.
+
+And the direction is the tell. I distrusted `0.50106` because it was
+*inconvenient* — one part in a thousand from the target I wanted. I did not
+distrust `exactly 1/2` because it was *wonderful*. The rule I have been quoting
+at everyone all night says distrust the result you like as hard as the one you
+dislike, and I applied it in one direction only.
+
+The system worked: I sent it to be checked, the check was adversarial, and it
+came back against me with exhaustive enumeration and exact rationals. That is
+the fifth overstatement of mine today and the first I manufactured rather than
+relayed. Dib has corrected two, subagents three.

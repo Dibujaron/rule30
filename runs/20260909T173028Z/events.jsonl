@@ -1,0 +1,5 @@
+{"ts":"2026-09-09T17:30:28Z","kind":"run","max_attempts":2,"concurrency":2}
+{"ts":"2026-09-09T17:30:28Z","kind":"dispatch","node":"rule30_run_boundary","identity":"Vesper","model":"haiku","reason":"open leaf; unblocks 1; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4130,"log":"c:/Users/dibuj/dev/rule30/runs/20260909T173028Z/rule30_run_boundary-1","in_flight":1}
+{"ts":"2026-09-09T17:30:28Z","kind":"dispatch","node":"leftDiagonal_onset_le","identity":"Cadence","model":"fable","reason":"open leaf; unblocks 0; research node at its top rung, attempt 5 there","max_turns":120,"max_budget_usd":20.0,"port":4131,"log":"c:/Users/dibuj/dev/rule30/runs/20260909T173028Z/leftDiagonal_onset_le-6","in_flight":2}
+{"ts":"2026-09-09T17:32:07Z","kind":"index","node":"rule30_run_boundary","module":"Rule30.Proofs.Rule30RunBoundary","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-09T17:32:07Z","kind":"theorem_index","node":"rule30_run_boundary","file":"blueprint/index.md","outcome":"written"}

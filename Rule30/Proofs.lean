@@ -108,6 +108,7 @@ import Rule30.Proofs.RowNatReturnSuccIff
 import Rule30.Proofs.Rule30LeftLocalLaw
 import Rule30.Proofs.Rule30LeftPermutive
 import Rule30.Proofs.Rule30NeOfLeftNe
+import Rule30.Proofs.Rule30RunBoundary
 import Rule30.Proofs.Rule30Translate
 import Rule30.Proofs.SidewaysInverse
 import Rule30.Proofs.StripEventuallyPeriodic
