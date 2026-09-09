@@ -633,6 +633,116 @@ in another coat, and would sit beside it, not under it.
     and the orbit forgets the symmetry of a post-doubling word within seven
     steps (`orbitclass.mjs`). The seventh obstruction entry. Sextant C3, C5.
 
+57. **The onset ladder's constants are the period staircase, and each rung
+    has an exact expiry.** The constant `16` that closes
+    `leftDiagonal_onset_le_of_le_5000` (via `rowNat (2k) ≡ rowNat (2k+16)
+    mod 2^(k+1)`) is not a bound the wall forgot to ask for: it is `2^5`,
+    and the `5` is the number of doublings by depth 5000. The least
+    constant closing depth `k` is the staircase `1, 2, 4, 8, 16, 32`
+    stepping at exactly the `k_n` of crystals 55 and 56 — `3, 8, 29, 400,
+    87867, 2107985255`. So `16` works at `k = 87866` and fails at
+    `k = 87867`, and `_of_le_87866` is the last theorem that can use it.
+    Likewise the `4` in `stepMod_preperiod_le_of_le_11` is the same
+    staircase read at `k ≤ 11`. *Computed* (Talus, theorist, 2026-09-09:
+    staircase from the recurrence alone for `k = 0..600`, stepping at
+    `3, 8, 29, 400` with nothing between; the step at `k = 400` confirmed
+    in four `decide +kernel` calls; the fifth step checked directly at
+    `k = 87866/87867`). **Cross-confirmed**: the staircase's step positions
+    are NKS p. 871's first-appearance depths, already on file here as
+    crystal 14 from an independent source, which is the check on this
+    entry. **Consequence for a seeder:** the `_of_le_N` ladder is a
+    finite resource with a known end, not a strategy. Do not propose a
+    rung above `87866`; a rung at `87866` is the last honest one and is
+    supply, not insight. The onset wall's honest form is therefore the
+    same shape as crystal 56's: a claim about the `k_n`, not about a
+    constant.
+58. **The halving law: doubling a row is sliding the picture one cell in
+    from the edge.** `T(2s) = 2T(s)` for the row map `T(r) = 4r ⊕ (2r ∨ r)`.
+    *Proved on the board* (`step_two_mul`, `stepMod_iterate_two_mul`,
+    2026-09-09) — the strongest status any entry here carries. Consequence,
+    and the reason it was sought: the even states are a perfect copy of the
+    whole system one bit narrower, so the growth of the truncated attractor
+    from level `n` to `n+1` is exactly the number of **odd** periodic
+    points, which are exactly rule 30's truncated left sides with a black
+    left edge. The measured law "the attractor grows by the longest cycle
+    length, no exception in 519 levels" reduces to a statement about that
+    one set. Talus, theorist, 2026-09-09.
+59. **The transient wall is in the wrong currency for every finite-automata
+    field, and Robert's theorem is the one exception.** Every Černý-type,
+    transformation-semigroup and random-mapping bound is polynomial in the
+    **number of states**; ours is `2^n` and the wall needs a bound in `n`,
+    so a cubic bound reads `2^(3n)` and no search fixes that. The one
+    theorem in the right currency is **Robert's**: a Boolean network whose
+    interaction graph is acyclic is nilpotent of class at most `n`
+    (arXiv:1503.04688; as convergence, arXiv:2309.11363). Rule 30's row map
+    is a Boolean network on `n` nodes whose graph is the path `i−2 → i`,
+    `i−1 → i` **plus a self-loop at every `i`**, and the loop at `i` is
+    present exactly when bit `i−1` is white and cut exactly when it is
+    black — the project's reset lemma in the field's own vocabulary. Four
+    seams, all real: the hypothesis is about the *global* graph and ours has
+    all `n` loops; the standard weakening is by feedback vertex set and ours
+    is all `n` nodes, so every FVS bound reads `2^n`; the loops are cut by
+    the *state*, not by a letter, so there is no reset **word**; and
+    Robert's conclusion is a unique fixed point where our attractor has
+    cycles up to 16. Two facts worth keeping separately. **Rule 30 is rule
+    150 plus one quadratic term:** `4r ⊕ (2r ∨ r) = (4r ⊕ 2r ⊕ r) ⊕ (2r ∧ r)`,
+    and `F₂`-linear CA get transient `≤ n` for free, so that term is the
+    entire difficulty. **Triangularity alone bounds nothing:** the odometer
+    on bits `0…n−2` with the top bit held until it returns to zero is a
+    perfectly good triangular map with tail exactly `2^(n−1)`, so rule 30's
+    measured `1.56 n` is not forced by triangularity and the "rule 30 is
+    hyper-contracting" reading is an artefact of comparing against a random
+    map (`Θ(√N)`) rather than a random *triangular* one (`Θ(n)`). Gnomon,
+    connector, 2026-09-09, `docs/connections/2026-09-09-synchronizing-automata-*.md`.
+    The identity verified independently by the captain over `r < 10^5`.
+60. **The row map is a T-function, and the T-function field's decision
+    apparatus returns NO in two bits.** `T(r) = 4r ⊕ (2r ∨ r)` is a
+    T-function: bit `i` of the output reads only bits `i, i−1, i−2`, so it
+    descends to a map on `n`-bit words for every `n`. Dictionary, kernel
+    checked (`explorer/vernier_scratch_tfunc.lean`): the centre column is
+    `bit_t` of `T^t(1)`, and left diagonal `k` is `bit_k` of the orbit
+    delayed by `k`. So the whole P1 residual restates with no automaton in
+    it. The field's own tests then rule the map out of its theory: `T` is
+    the identity mod 2 (so never a single cycle) and `T(1) ≡ T(3) mod 4`
+    (so never invertible), and Anashin's Theorem 5.2 makes
+    measure-preservation equivalent to bijectivity mod 2. *Verified
+    independently by the captain*: identity mod 2 over `r < 2000`;
+    `T(1) = 7`, `T(3) = 11`, both `≡ 3 mod 4`. Vernier, connector,
+    2026-09-09. **Consequence for a seeder:** the dictionary is a real
+    reformulation and worth stating; the single-cycle and invertibility
+    machinery of that field is closed and must not be proposed.
+
+## The convergence of 2026-09-09, and the object no node states
+
+Four sessions on 2026-09-09 — Talus twice (theorist), Gnomon and Vernier
+(connectors) — reached the same object from four vocabularies, independently:
+
+- Gnomon's levels whose self-loop is **never** cut, because their control
+  diagonal is eventually white (`k = 3, 8, 29, 400`);
+- Talus's steps of the onset-constant **staircase** (crystal 57);
+- the doubling positions `k_n` of crystals 55 and 56;
+- NKS p. 871's depths of **first appearance** of each period.
+
+These are one set: the `k` at which left diagonal `k` is eventually white.
+It is the residual of `leftDiagonal_onset_le`, of `leftDiagonal_period_le`,
+of the attractor-growth law (crystal 58), and of Robert's missing hypothesis
+(crystal 59). **No node on the board states it** — the closest are
+`leftDiagonal_white_of_shift` and `leftDiagonal_step_period_dichotomy`,
+which are local. That absence is the gap this tier exists to fill.
+
+The captain's reading of what that licenses, and what it does not. Naming
+the object does not make it tractable — crystal 56 already says the residual
+is a *lower* bound on the gaps between whites in one specific orbit, and
+that is exactly as open as it was. What it licenses is the conditional
+form: Gnomon's own falsifiable test is *"between the settling of diagonal
+`k−1` and its first black cell at or after that time, at most `C` rows
+pass"*, which is **false as stated** — the measured maximum increment is 7
+for `k < 600`, and the four exceptional levels have no black cell ever. So
+the honest statement is the same claim with the eventually-white levels as
+an explicit hypothesis rather than something a proof has to survive. A
+conditional whose hypothesis is the open object is a normal node; the
+unconditional version is the wall.
+
 ## Not credible or not verified
 
 - arXiv:2207.13237 (Das, "Rule 30: Solving the Chaos") claims an analytical
@@ -643,7 +753,7 @@ in another coat, and would sit beside it, not under it.
 - NKS "period 64 at depth 2,107,985,255 or more": single source.
 - Wolfram's definition of the 0.252 boundary is not stated anywhere found.
 
-## Rowan's ranking for the next tier
+## Rowan's ranking, 2026-09-07 (superseded for P1 by the ranking below)
 
 By value over cost: 3 (four preimages, the leftward solve) → 8 and 5 and 10
 (trivial first nodes) → 11 (rows `2^n`) → 13 (Rowland's doubling criterion,
@@ -651,3 +761,47 @@ under a wall) → 16 (sandwich lemma for every rule) → 17 and 18 (Jen and
 Kopra beyond the single cell) → 22 and 23 (fixed points, no period 2) → 25
 and 26 (rings). Item 19 if kernel `decide` copes. Items 6 and 28 when a
 prover has the topology set up. Not 27, not anything with "≈" in it.
+
+## Rowan's ranking for the next tier, 2026-09-09 (P1)
+
+Board state this ranking answers: 113 of 117 nodes proved, three walls that
+must not be dispatched, and **one** dispatchable leaf — `leftDiagonal_onset_le`,
+eleven attempts, abandoned tonight with two thirds of its budget unspent
+because the prover had no idea left worth the money. The scheduler has
+nothing to schedule. So this tier is not "more nodes"; it is the specific
+question of whether the object of crystal 57–60 can be given a stateable
+shape.
+
+By value over cost:
+
+1. **The eventually-white diagonal, as an object.** `leftDiagonal k` is
+   eventually white — a definition and its two or three immediate lemmas.
+   Nothing on the board names it and four independent routes end at it. Even
+   the trivial consequences are worth having, because every later statement
+   in this tier is phrased in it.
+2. **Item 13, Rowland's period-doubling criterion.** Ranked under a wall on
+   2026-09-07 and never seeded. It is a *published proof*, not a conjecture,
+   and it is the theorem that connects item 1 to the doubling positions. If
+   one thing from this tier lands, this is the one that should.
+3. **Gnomon's conditional** (see the convergence section): the onset bound
+   with the eventually-white levels as an explicit hypothesis. The
+   unconditional form is the wall; the conditional form is an ordinary node.
+   Propose it only with the hypothesis stated — the unconditional version is
+   measured false.
+4. **The `bdry` boundary walk**, from the parked file of attempt 11 on the
+   onset wall (`runs/20260909T212551Z/leftDiagonal_onset_le-11/`). Sixteen
+   kernel-clean theorems the build cannot see, and the fourth time an onset
+   attempt has rebuilt that walk from scratch. This is harvest, not
+   invention: read the file, seed the ones that are a machine rather than an
+   internal lemma of one tactic script.
+5. **The T-function dictionary** (crystal 60): centre column as `bit_t` of
+   `T^t(1)`. A clean restatement of the P1 residual with no automaton in it,
+   already kernel checked in `explorer/`.
+
+**Not this tier, and why.** No further `_of_le_N` rung above `87866`
+(crystal 57 gives its exact expiry). Nothing from the single-cycle or
+invertibility machinery of the T-function field (crystal 60: closed). No
+proposal that leans on triangularity to bound a transient (crystal 59: the
+odometer witness has tail `2^(n-1)`). And nothing phrased as a bound in the
+number of states — that is the currency error crystal 59 exists to record.
+
