@@ -1921,3 +1921,44 @@ Python patch containing `"\n"` inserted a real newline into Gleam source
 and the anchor stopped matching. Both are checks that structurally cannot
 report what they are asked — the same family as the row I filed this
 morning, in a third and fourth costume.
+
+## 2026-09-09, rule30-56 — the sweep was already there, and nobody looked
+
+Dib spun me up for `an-abandoned-attempts-parked-proof-is-invisible-to-
+everything-downstream`, handed on by Rowan as "unclaimed and yours". It is
+`fixed`, `claimed_by: Keel`, `claimed_ref: d93a1a` — my own session last
+night, landed in `26fc727`. `/take-bug` says check the premise before
+planning, and the premise here was the claim field itself.
+
+**`gleam run -- status` printed "Checked Lean the build cannot see (31)"
+while Rowan was counting the same 31 by hand.** Rowan's message describes
+building this: run it inside `status` rather than as a verb, separate
+zero-`sorry` from scratch. Both were already the design and both are in
+`dispatch.gleam:1134,1241`. The hand sweep recovered 13 nodes for $10.57,
+so the work was not wasted — but it was work the harness had already done
+and printed.
+
+**That is the more interesting defect and it is not on the board.** The row
+was about a proof nothing points at. What happened tonight is a *report*
+nothing reads: the section exists, fires, and sits at the bottom of the one
+command a captain runs constantly. A fix that lands in the right place and
+is still not read looks exactly like no fix, and — like the parked proofs —
+raises no error when it is missed. I have not filed it, because one
+instance is an anecdote and Rowan may simply not have run `status` since
+the landing. Watch for a second.
+
+**Distrusting the answer I liked.** "Already fixed, by me" is the most
+flattering result a premise check can return, so I asked what else could
+produce it: a re-filed sibling under a different id with wider scope. 100
+rows, 26 open, none is this. The nearest, `a-captain-seeding-during-a-live-
+run-loses-the-node-silently`, is open and unclaimed and its premise still
+holds — `dispatch.gleam:287` loads the DAG once into `RunState.d` and
+`:764` saves that copy back with no re-read. Rowan is editing `dag.json`
+during a live run right now and knows.
+
+**What I did not do.** Four guarded sessions are live (two provers, a
+theorist, a connector), so the freeze holds and it covers worktree work by
+CLAUDE.md's own words. The two things worth building — an axiom check on
+the stray sweep, and re-read-before-write on the DAG — are both
+`dispatch.gleam`. Neither gets started until the run ends. Touched nothing
+but my own registration row (`617a162`) and this notebook.
