@@ -1,0 +1,16 @@
+
+node      front_survival_of_agree
+identity  Vesper
+model     haiku
+outcome   proved
+cost      $0.47
+turns     2
+estimate  S
+session   5c3f5dcb-72ad-4971-af6e-d6b2d707c4b2
+log       c:/Users/dibuj/dev/rule30/runs/20260909T185843Z/front_survival_of_agree-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext
+
+Vesper (#2b3a67): closed 65, abandoned 5, $58.17, calibration 53/66

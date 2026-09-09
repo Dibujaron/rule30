@@ -1,0 +1,16 @@
+
+node      leftDiagonal_onset_le_of_le_5000
+identity  Selvage
+model     sonnet
+outcome   proved
+cost      $1.32
+turns     8
+estimate  M
+session   b89f03e1-68fd-402a-aa02-248dde815ef1
+log       c:/Users/dibuj/dev/rule30/runs/20260909T185843Z/leftDiagonal_onset_le_of_le_5000-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Selvage (#3a6ea5): closed 10, abandoned 4, $21.63, calibration 7/11

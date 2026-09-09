@@ -1,0 +1,25 @@
+{"ts":"2026-09-09T18:58:43Z","kind":"run","max_attempts":4,"concurrency":3}
+{"ts":"2026-09-09T18:58:43Z","kind":"dispatch","node":"front_survival_of_agree","identity":"Vesper","model":"haiku","reason":"open leaf; unblocks 0; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4130,"log":"c:/Users/dibuj/dev/rule30/runs/20260909T185843Z/front_survival_of_agree-1","in_flight":1}
+{"ts":"2026-09-09T18:58:43Z","kind":"dispatch","node":"front_survival_of_white","identity":"Cadence","model":"haiku","reason":"open leaf; unblocks 0; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4131,"log":"c:/Users/dibuj/dev/rule30/runs/20260909T185843Z/front_survival_of_white-1","in_flight":2}
+{"ts":"2026-09-09T18:58:43Z","kind":"dispatch","node":"leftDiagonal_onset_le_of_le_5000","identity":"Selvage","model":"sonnet","reason":"open leaf; unblocks 0; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4132,"log":"c:/Users/dibuj/dev/rule30/runs/20260909T185843Z/leftDiagonal_onset_le_of_le_5000-1","in_flight":3}
+{"ts":"2026-09-09T18:59:48Z","kind":"index","node":"front_survival_of_white","module":"Rule30.Proofs.FrontSurvivalOfWhite","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-09T18:59:48Z","kind":"theorem_index","node":"front_survival_of_white","file":"blueprint/index.md","outcome":"written"}
+{"ts":"2026-09-09T18:59:48Z","kind":"dispatch","node":"stepMod_preperiod_le_of_le_11","identity":"Cadence","model":"sonnet","reason":"open leaf; unblocks 0; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4133,"log":"c:/Users/dibuj/dev/rule30/runs/20260909T185843Z/stepMod_preperiod_le_of_le_11-1","in_flight":3}
+{"ts":"2026-09-09T19:01:07Z","kind":"index","node":"front_survival_of_agree","module":"Rule30.Proofs.FrontSurvivalOfAgree","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-09T19:01:07Z","kind":"theorem_index","node":"front_survival_of_agree","file":"blueprint/index.md","outcome":"written"}
+{"ts":"2026-09-09T19:01:52Z","kind":"index","node":"stepMod_preperiod_le_of_le_11","module":"Rule30.Proofs.StepModPreperiodLeOfLe11","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-09T19:01:53Z","kind":"theorem_index","node":"stepMod_preperiod_le_of_le_11","file":"blueprint/index.md","outcome":"written"}
+{"ts":"2026-09-09T19:03:32Z","kind":"index","node":"leftDiagonal_onset_le_of_le_5000","module":"Rule30.Proofs.LeftDiagonalOnsetLeOfLe5000","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-09T19:03:32Z","kind":"theorem_index","node":"leftDiagonal_onset_le_of_le_5000","file":"blueprint/index.md","outcome":"written"}
+{"ts":"2026-09-09T19:03:37Z","kind":"stray","file":"runs/20260909T174534Z/centerColumn_run_boundary-1/CenterColumnRunBoundary.lean","verdict":"clean"}
+{"ts":"2026-09-09T19:03:43Z","kind":"stray","file":"explorer/scratch_rightunbounded_proof.lean","verdict":"clean"}
+{"ts":"2026-09-09T19:03:43Z","kind":"stray","file":"explorer/scratch_settledcenter.lean","verdict":"no_theorems"}
+{"ts":"2026-09-09T19:03:48Z","kind":"stray","file":"explorer/scratch_tier.lean","verdict":"clean"}
+{"ts":"2026-09-09T19:03:54Z","kind":"stray","file":"explorer/scratch_whitestep.lean","verdict":"clean"}
+{"ts":"2026-09-09T19:03:54Z","kind":"stray","file":"explorer/scratch_witness.lean","verdict":"no_theorems"}
+{"ts":"2026-09-09T19:04:02Z","kind":"stray","file":"explorer/sextant_scratch_coboundary.lean","verdict":"clean"}
+{"ts":"2026-09-09T19:04:10Z","kind":"stray","file":"explorer/sextant_scratch_shield.lean","verdict":"clean"}
+{"ts":"2026-09-09T19:04:19Z","kind":"stray","file":"explorer/sextant_scratch_shield_general.lean","verdict":"clean"}
+{"ts":"2026-09-09T19:04:19Z","kind":"stray","file":"explorer/talus2_scratch_rings.lean","verdict":"no_theorems"}
+{"ts":"2026-09-09T19:04:24Z","kind":"stray","file":"explorer/talus3_scratch_ride.lean","verdict":"clean"}
+{"ts":"2026-09-09T19:04:24Z","kind":"stray","file":"explorer/talus_scratch_halfline.lean","verdict":"no_theorems"}

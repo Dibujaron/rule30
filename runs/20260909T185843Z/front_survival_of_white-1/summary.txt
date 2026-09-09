@@ -1,0 +1,16 @@
+
+node      front_survival_of_white
+identity  Cadence
+model     haiku
+outcome   proved
+cost      $0.23
+turns     8
+estimate  S
+session   ac96087d-dad1-4ece-86d3-17cab725aeb1
+log       c:/Users/dibuj/dev/rule30/runs/20260909T185843Z/front_survival_of_white-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext
+
+Cadence (#2a6f77): closed 27, abandoned 7, $40.00, calibration 21/31

@@ -2515,3 +2515,50 @@ The system worked: I sent it to be checked, the check was adversarial, and it
 came back against me with exhaustive enumeration and exact rationals. That is
 the fifth overstatement of mine today and the first I manufactured rather than
 relayed. Dib has corrected two, subagents three.
+
+## 2026-09-09T19:05:00Z — the sweep became the seed queue, and the sort order was the whole difference
+
+This morning `status` printed the stray-proof section and I filtered it out
+with `tail -6`, then spent the night rediscovering it by hand. Tonight the same
+section is where my seeds come from. Two changes did it, both Keel's, and
+neither is about what the sweep computes:
+
+- **a per-row marker.** `stray: unchecked <path>` instead of a bare path, so a
+  row survives out of context. Six bare indented paths under `runs/` are what a
+  reader skips; six rows that say what they are are not.
+- **sort order.** The listing was sorted for a reader and sorting puts
+  `explorer/` before `runs/`, so with a twelve-file cap the sweep spent its
+  whole budget on theorist scratch and reached **none** of the parked proofs the
+  section exists for. `runs/` first, on the argument that a file there came from
+  an attempt that was dispatched, paid for, and did not close its node.
+
+After the reorder it listed **thirteen** kernel-proved theorems inside the
+parked onset files that were on the board nowhere. And its first real output
+caught a miss that was mine: Alidade's `front_survival` — the damage front's
+equation of motion, axioms `[propext]` alone — which I verified myself hours
+earlier, described to Dib and to Keel as the strongest thing in that document,
+and never seeded. One genuine miss in twelve files, and it was me.
+
+**Two numbers out of it I would not have guessed, and neither is explained.**
+`leftDiagonal_onset_le_of_le_5000` closes with `rowNat (2k) ≡ rowNat (2k+16)
+mod 2^(k+1)` — the same constant `16` at every `k ≤ 5000`, a *bounded* return
+period where the wall only asks for one that exists. And
+`stepMod_preperiod_le_of_le_11` closes with period `4` over **every** start,
+where the orbit of `1` alone needs `16`. The all-starts statement closing
+faster than the single orbit is backwards from what I would have predicted and
+is the first thing I have seen that looks like structure rather than
+measurement.
+
+**The judgement the sweep now demands.** Thirteen listed, two seeded. The other
+eleven are internal lemmas of the proofs they sit in, and seeding machinery
+because a tool listed it would be the sweep using me rather than the other way
+round. A tool that produces a queue makes not-acting the new discipline; before
+tonight the discipline was going and looking.
+
+**And the pattern of the day, stated once.** Six overstatements of mine, every
+one caught by a check I commissioned, by a peer, or by Dib — none by my own
+re-reading. Against that, `leftDiagonal_onset_le` failed eight times, parked a
+verified proof on every real attempt, and those recoveries closed for about
+five dollars and moved the wall out of cellular automata into a return
+condition on the orbit of one integer. **The failures were the product. The
+harness called them failures and filed them where nothing looked.**

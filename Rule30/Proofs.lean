@@ -62,6 +62,8 @@ import Rule30.Proofs.EvolveRightSecondDiagonal
 import Rule30.Proofs.EvolveSubOneEqXor
 import Rule30.Proofs.ExistsConfigSameCenterColumn
 import Rule30.Proofs.FrontSurvival
+import Rule30.Proofs.FrontSurvivalOfAgree
+import Rule30.Proofs.FrontSurvivalOfWhite
 import Rule30.Proofs.IsEventuallyPeriodicColumnUnique
 import Rule30.Proofs.IsEventuallyPeriodicCommonPeriod
 import Rule30.Proofs.IsEventuallyPeriodicOfPeriodicStep
@@ -73,6 +75,7 @@ import Rule30.Proofs.LeftDiagonalEqRowNatTestBit
 import Rule30.Proofs.LeftDiagonalMulPowEqSettledCenter
 import Rule30.Proofs.LeftDiagonalOnsetLeIffRowNatReturn
 import Rule30.Proofs.LeftDiagonalOnsetLeIffStepModReturn
+import Rule30.Proofs.LeftDiagonalOnsetLeOfLe5000
 import Rule30.Proofs.LeftDiagonalOnsetLeOfLine
 import Rule30.Proofs.LeftDiagonalOnsetLeOfStepModPreperiod
 import Rule30.Proofs.LeftDiagonalPairNeverEventuallyShifted
@@ -116,6 +119,7 @@ import Rule30.Proofs.Rule30NeOfLeftNe
 import Rule30.Proofs.Rule30RunBoundary
 import Rule30.Proofs.Rule30Translate
 import Rule30.Proofs.SidewaysInverse
+import Rule30.Proofs.StepModPreperiodLeOfLe11
 import Rule30.Proofs.StripEventuallyPeriodic
 import Rule30.Proofs.StripSucc
 import Rule30.Proofs.WindowCountHalf

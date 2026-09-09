@@ -1,0 +1,7 @@
+
+front_survival_of_white           Cadence  haiku   proved            $0.23   8 turns
+front_survival_of_agree           Vesper   haiku   proved            $0.47   2 turns
+stepMod_preperiod_le_of_le_11     Cadence  sonnet  proved            $0.62   8 turns
+leftDiagonal_onset_le_of_le_5000  Selvage  sonnet  proved            $1.32   8 turns
+
+4 attempt(s), 4 closed, $2.64 in all

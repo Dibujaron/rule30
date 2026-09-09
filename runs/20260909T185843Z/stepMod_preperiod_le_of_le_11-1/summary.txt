@@ -1,0 +1,16 @@
+
+node      stepMod_preperiod_le_of_le_11
+identity  Cadence
+model     sonnet
+outcome   proved
+cost      $0.62
+turns     8
+estimate  S
+session   b77ccb29-2765-4dc0-a330-def6be247fe9
+log       c:/Users/dibuj/dev/rule30/runs/20260909T185843Z/stepMod_preperiod_le_of_le_11-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext
+
+Cadence (#2a6f77): closed 28, abandoned 7, $40.61, calibration 21/32
