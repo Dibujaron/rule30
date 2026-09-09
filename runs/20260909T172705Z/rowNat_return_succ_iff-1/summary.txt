@@ -1,0 +1,16 @@
+
+node      rowNat_return_succ_iff
+identity  Vesper
+model     sonnet
+outcome   proved
+cost      $0.88
+turns     13
+estimate  M
+session   edd19452-3890-4439-8b6a-af3aed922d73
+log       c:/Users/dibuj/dev/rule30/runs/20260909T172705Z/rowNat_return_succ_iff-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Vesper (#2b3a67): closed 59, abandoned 5, $54.02, calibration 48/60

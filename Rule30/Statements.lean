@@ -1433,4 +1433,41 @@ theorem rowNat_return_succ_iff (n T p : ℕ)
         rowNat T % 2 ^ (n + 2) = rowNat (T + p) % 2 ^ (n + 2)) := by
   sorry
 
+/-- **Rule 30 as a run-boundary rule.** A cell is black at the next step exactly
+when it sits at one of three local run boundaries: it is black with a white cell
+to its left, or it is white with a black left neighbour and a white right
+neighbour, or it is white with a black right neighbour and a white left
+neighbour.
+
+This is rule 30 restated so that its condition is about *edges between runs*
+rather than about an XOR. It is the same rule — the proof is case analysis on
+three Booleans — but the presentation matters: every proof in print that an
+explicitly defined computable sequence is not eventually periodic reads a
+definition that is already about repetition (Kolakoski is its own run-length
+encoding; Ehrenfeucht–Mycielski complements after the longest repeated suffix),
+and rule 30's usual definition is not. Kernel-checked by Meridian (connector,
+2026-09-09) in `explorer/meridian_scratch_runs.lean`, axioms `[propext]`. -/
+theorem rule30_run_boundary (c : Config) (i : ℤ) :
+    rule30 c i = true ↔
+      (c i = true ∧ c (i - 1) = false) ∨
+      (c i = false ∧ c (i - 1) = true ∧ c (i + 1) = false) ∨
+      (c i = false ∧ c (i + 1) = true ∧ c (i - 1) = false) := by
+  sorry
+
+/-- **The centre column reads a run boundary at the origin.** `centerColumn
+(t + 1)` is black exactly when row `t` has one of the three run-boundary
+patterns at position `0`.
+
+So the centre column is the trace, at a fixed site, of where the runs of the
+picture begin and end — a statement about repetition in the row, which is the
+shape every published aperiodicity proof needs and which the XOR presentation
+hides. It does not by itself give a proof. Kernel-checked by Meridian in the
+same file. -/
+theorem centerColumn_run_boundary (t : ℕ) :
+    centerColumn (t + 1) = true ↔
+      (evolve t 0 = true ∧ evolve t (-1) = false) ∨
+      (evolve t 0 = false ∧ evolve t (-1) = true ∧ evolve t 1 = false) ∨
+      (evolve t 0 = false ∧ evolve t 1 = true ∧ evolve t (-1) = false) := by
+  sorry
+
 end Statements
