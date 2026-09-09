@@ -188,6 +188,18 @@ pub fn prove_one(
     Some(p) ->
       run_check(fn(path) { seed.check_file_in(cfg.repo_root, path) }, p)
   }
+  // `run` sweeps and this did not, which was an omission and not a choice.
+  // `prove-one` is the verb a captain reaches for on the node they just
+  // seeded and care about, so it dispatches exactly the attempts most
+  // likely to park a proof — six such dispatches on 2026-09-09 each went
+  // past a chance to fill the cache, and the section stayed `unchecked`
+  // afterwards, which reads identically to a sweep that ran and died.
+  //
+  // Called directly rather than through an `Env`, because `prove_one` has
+  // none and builds its live behaviour inline. The suite reaches this line
+  // in no test: every `prove_one` case in `dispatch_test` asserts `Error`
+  // from validation, far above here.
+  sweep_strays(cfg, lock_actor, run_log)
   Ok(attempt.outcome)
 }
 
@@ -1181,35 +1193,36 @@ fn sweep_strays(
       case lock.acquire(build_lock, holder, 600_000) {
         False -> io.println_error("harness/dispatch: " <> lock_held_message)
         True -> {
-          let filled =
-            list.fold(some, cache, fn(acc, path) {
+          stray.sweep(
+            cache,
+            some,
+            fn(path) {
               case stray.hash_of(cfg.repo_root <> "/" <> path) {
-                Error(_) -> acc
+                Error(_) -> Error(Nil)
                 Ok(hash) -> {
                   let verdict =
-                    stray.check(cfg.repo_root, cfg.lake, cfg.repo_root <> "/" <> path)
+                    stray.check(
+                      cfg.repo_root,
+                      cfg.lake,
+                      cfg.repo_root <> "/" <> path,
+                    )
                   log.event(l, "stray", [
                     #("file", json.string(path)),
                     #("verdict", json.string(stray.verdict_tag(verdict))),
                   ])
-                  stray.put(
-                    acc,
-                    stray.Entry(
-                      path:,
-                      hash:,
-                      verdict:,
-                      checked: log.now_iso(),
-                    ),
-                  )
+                  Ok(stray.Entry(path:, hash:, verdict:, checked: log.now_iso()))
                 }
               }
-            })
+            },
+            fn(entries) {
+              case stray.save(entries, cache_path) {
+                Ok(Nil) -> Nil
+                Error(reason) ->
+                  io.println_error("harness/dispatch: stray cache: " <> reason)
+              }
+            },
+          )
           lock.release(build_lock, holder)
-          case stray.save(filled, cache_path) {
-            Ok(Nil) -> Nil
-            Error(reason) ->
-              io.println_error("harness/dispatch: stray cache: " <> reason)
-          }
         }
       }
     }

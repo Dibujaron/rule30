@@ -1,8 +1,9 @@
+import gleam/int
 import gleam/list
 import gleam/option.{None, Some}
 import gleam/string
 import harness/shell
-import harness/stray.{Assumes, Broken, Clean, Entry, NoTheorems}
+import harness/stray.{type Entry, Assumes, Broken, Clean, Entry, NoTheorems}
 import lean_fixture
 import simplifile
 
@@ -255,4 +256,47 @@ pub fn a_file_with_only_definitions_is_not_asked_about_axioms_test() {
   let #(root, path) = stray_file("bare", "def stray_three : Nat := 3\n")
   let assert Ok(lake) = shell.which("lake")
   assert stray.check(root, lake, path) == stray.NoTheorems
+}
+
+pub fn a_sweep_saves_after_every_file_and_not_once_at_the_end_test() {
+  // The failure this is the fix for. The sweep runs after a run's summary
+  // has printed, so the console says the run is over while it is still
+  // working — a reader who interrupts there is doing the ordinary thing.
+  // Saving once at the end would throw away every verdict computed so far.
+  //
+  // The test records the size of the cache at each save, so a batched
+  // implementation shows one line and this fails.
+  let log = "build/test-runs/stray/saves.txt"
+  let _ = simplifile.create_directory_all("build/test-runs/stray")
+  let _ = simplifile.delete(log)
+  let assert Ok(Nil) = simplifile.write(log, "")
+
+  let entry_for = fn(path) {
+    case path {
+      "vanished.lean" -> Error(Nil)
+      _ ->
+        Ok(Entry(
+          path: path,
+          hash: "h-" <> path,
+          verdict: Clean([path]),
+          checked: "2026-09-09T19:00:00Z",
+        ))
+    }
+  }
+  let save = fn(entries: List(Entry)) {
+    let assert Ok(Nil) =
+      simplifile.append(log, int.to_string(list.length(entries)) <> "\n")
+    Nil
+  }
+
+  let out =
+    stray.sweep([], ["a.lean", "vanished.lean", "b.lean", "c.lean"], entry_for, save)
+
+  // Three saves, of one, two and three entries: the cache on disk grows as
+  // the sweep goes rather than appearing whole at the end.
+  let assert Ok(text) = simplifile.read(log)
+  assert string.trim(text) == "1\n2\n3"
+  // The path that could not be read is skipped, not cached as a verdict.
+  assert list.length(out) == 3
+  assert stray.lookup(out, "vanished.lean", "h-vanished.lean") == None
 }

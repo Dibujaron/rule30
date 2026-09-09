@@ -324,6 +324,40 @@ pub fn lookup(cache: List(Entry), path: String, hash: String) -> Option(Verdict)
   }
 }
 
+/// Check each path in turn, handing the cache to `save` after **every**
+/// file rather than once at the end.
+///
+/// The per-file save is the whole point of this function existing rather
+/// than a `list.fold` at the call site. The sweep runs after a run's
+/// summary has already printed, so the console says the run is over while
+/// this is still working: a reader who walks away or interrupts there is
+/// doing the ordinary thing, not making a mistake. A flush at the end of
+/// the fold would throw away every verdict computed so far — the fiction
+/// `CLAUDE.md`'s Boundaries section names, where the clean exit was never
+/// the case at risk. It shipped as that fiction on 2026-09-09 and was
+/// corrected the same evening.
+///
+/// `entry_for` returns `Error` for a path that cannot be read, which is
+/// skipped rather than cached: a file that vanished between the listing and
+/// the check is not a verdict.
+pub fn sweep(
+  cache: List(Entry),
+  paths: List(String),
+  entry_for: fn(String) -> Result(Entry, Nil),
+  save: fn(List(Entry)) -> Nil,
+) -> List(Entry) {
+  list.fold(paths, cache, fn(acc, path) {
+    case entry_for(path) {
+      Error(Nil) -> acc
+      Ok(entry) -> {
+        let acc = put(acc, entry)
+        save(acc)
+        acc
+      }
+    }
+  })
+}
+
 /// `cache` with `entry` in it, replacing any earlier entry for the same path.
 pub fn put(cache: List(Entry), entry: Entry) -> List(Entry) {
   [entry, ..list.filter(cache, fn(e) { e.path != entry.path })]
