@@ -2014,3 +2014,42 @@ positive control. I nearly did not run it, because the row said there was
 nothing to find — a row's prose telling me a check is pointless is exactly
 the shape I should distrust, and it is the second time today that running
 something the prose called settled moved the answer.
+
+## 2026-09-09, later — both increments landed, and the machinery outperformed me
+
+`dag.save_node` (`ccf3580`, landed `6bbdd25`) and the stray axiom check
+(`8d2debf`, landed `daac3ad`). Both rows closed against shas on the remote.
+
+**Three defects in one evening were caught by the harness, not by me, and
+none by review.**
+
+1. `writes_test` failed the moment the last `dag.save(` call site
+   disappeared — `blueprint/dag.json` had no live writer. That module exists
+   because a hand-maintained freeze list drifted twice in an afternoon, and
+   it caught a rename in a change that had nothing to do with freezes. It
+   then caught `stray.gleam`'s raw writes on the module's first day, which
+   is exactly what its comment promises and what I had forgotten it promised.
+2. The suite went to **325 of an announced 597** when the sweep ran inside
+   test runs against this checkout's real parked proofs. The pass count
+   alone reads fine; only the denominator says the modules were cancelled.
+   Second time today that reading the announced total first was the whole
+   check.
+3. The fixture tests caught `first_error` matching `"error:"` — a string
+   **this toolchain never prints**. Lean 4.33 tags diagnostics
+   `error(lean.unknownIdentifier):`, so a broken file's verdict was 120
+   characters of absolute path and no error at all. Nothing but a test
+   running real Lean finds that, and I would have shipped it.
+
+**I made the same parser mistake I had filed a row about, four hours
+apart.** My hand scan read a prose line beginning "theorem" as a
+declaration named `needs`; then `theorem_names` would have done it again,
+and worse — a `#print axioms needs` fails the elaboration, so a perfectly
+good file gets reported as one that does not compile. Knowing about a
+failure is not protection from it. `code_lines` strips comments and counts
+block depth because Lean's nest.
+
+**And I estimated where I could have measured.** The row justified the
+cache with "tens of minutes"; it is two to four. I corrected the row rather
+than quietly building on the better number, because the wrong one would
+have justified designs the right one does not — an estimate that happens to
+point at the same answer is still not evidence for it.
