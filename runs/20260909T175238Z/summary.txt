@@ -1,0 +1,5 @@
+
+centerColumn_run_boundary         Vesper   sonnet  proved            $0.81   10 turns
+leftDiagonal_onset_le_of_stepMod_preperiodCadence  sonnet  proved            $0.90   11 turns
+
+2 attempt(s), 2 closed, $1.71 in all

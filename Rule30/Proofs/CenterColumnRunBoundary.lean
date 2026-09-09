@@ -4,6 +4,15 @@ import Rule30.Basic
 **What this says.** The center column becomes black exactly when a run begins or ends at the origin in the previous row.
 **Why it is true.** The rule 30 output at the origin is an XOR of the left cell with the OR of center and right; this XOR is true exactly in the three run-boundary patterns.
 **Where the work is.** Unfolding the definition and rule30_eq, then verifying the XOR against all eight boolean triples to confirm the three patterns.
+
+**Checked type** (written by the harness after `lake build` and the `type_of%` check passed, not by the worker):
+```lean
+Statements.centerColumn_run_boundary (t : ℕ) :
+  centerColumn (t + 1) = true ↔
+    evolve t 0 = true ∧ evolve t (-1) = false ∨
+      evolve t 0 = false ∧ evolve t (-1) = true ∧ evolve t 1 = false ∨
+        evolve t 0 = false ∧ evolve t 1 = true ∧ evolve t (-1) = false
+```
 -/
 
 private lemma not_eq_true_of_bool (b : Bool) : ¬(b = true) → b = false := by

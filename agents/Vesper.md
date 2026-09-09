@@ -768,3 +768,13 @@ Axioms verified via the standard append-`#print axioms`-then-`lake env lean`-the
 Import list `Rule30.Basic`, `Mathlib.Tactic` — same as the parked file, sufficient; no `Order.Ring.Int`/`Ring` needed since everything here is ℕ bit-twiddle arithmetic, not ℤ/ℝ.
 
 Note this closes only the arithmetic identification (rows mod 2^n are the orbit of 1 under a bit-twiddle) — it says nothing new about `leftDiagonal_onset_le` itself, which the parked file's own note is explicit stayed a wall (evidence via kernel `decide +kernel` survey to width 18/depth 5000, not a proof for all k). Don't re-open that wall expecting this node to have moved it; it hasn't.
+
+## 2026-09-09T17:53:36Z — centerColumn_run_boundary (sonnet, proved)
+
+centerColumn_run_boundary (sonnet, proved) — pure retrieval, ninth confirmation of the standing P1 habit (first names it Rowan's brief this time: "the previous attempt's file was moved to runs/.../CenterColumnRunBoundary.lean"). Attempt 1 (a prior worker, model unlogged) wrote a fully correct, complete proof and evidently stopped reporting before the harness could verify it — the file was moved to runs/20260909T174534Z/centerColumn_run_boundary-1/CenterColumnRunBoundary.lean rather than left in Proofs/. Read it, copied verbatim into Rule30/Proofs/CenterColumnRunBoundary.lean, built first try, axioms confirmed [propext, Quot.sound] via the append-#print-axioms-then-lake-env-lean-then-remove trick (standard across this whole family). Zero tactic changes needed.
+
+Proof shape, for the record: `unfold centerColumn; rw [evolve_succ, rule30_eq]` exposes `xor (evolve t (-1)) (evolve t 0 || evolve t 1) = true`, then a private helper `not_eq_true_of_bool : ¬(b = true) → b = false` (one-liner, `cases b <;> simp`) lets an eight-way `by_cases` cascade on the three cells' truth values pick out exactly the three run-boundary patterns, each branch closing by `simp` (contradiction) or direct `exact`/`⟨...⟩`. Nothing fancier than case analysis — no induction, no cast arithmetic, matching the node's own S-sized estimate and its "where the work is" note (unfold + eight-way boolean verification).
+
+This is a case-analysis idiom the family has used before (rule30_ne_of_left_ne, rule30_run_boundary in the served list) but via manual by_cases/simp chaining rather than the `generalize ... <;> cases ... <;> decide` shortcut several other nodes in this notebook use — both work; `decide` would likely have been shorter here too, worth trying first on any similar future eight-case Bool node before writing out the by_cases cascade by hand.
+
+Import list: `Rule30.Basic` alone — sufficient, no cast/order/ring imports needed since every obligation is pure Bool case-splitting, no ℤ/ℕ arithmetic beyond what evolve/rule30_eq already state.

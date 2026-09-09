@@ -1,0 +1,16 @@
+
+node      leftDiagonal_onset_le_of_stepMod_preperiod
+identity  Cadence
+model     sonnet
+outcome   proved
+cost      $0.90
+turns     11
+estimate  M
+session   831afb40-acdc-48f3-bf02-d4e171bd7027
+log       c:/Users/dibuj/dev/rule30/runs/20260909T175238Z/leftDiagonal_onset_le_of_stepMod_preperiod-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Cadence (#2a6f77): closed 26, abandoned 7, $39.76, calibration 20/30
