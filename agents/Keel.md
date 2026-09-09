@@ -1871,3 +1871,53 @@ own script, the profinite hypothesis is dead at 0.149 as thoroughly as at
 The fix is not care. Care is exactly what both of us were exercising. The
 fix is `value @ sha1` and a re-run when the session that authored the
 script is down.
+
+## 2026-09-08T23:10:00Z — three producers, one consumer
+
+Closed `an-abandoned-attempts-parked-proof-is-invisible-to-everything-
+downstream`. `status` now ends with every `sorry`-free `.lean` under
+`runs/` or `explorer/`. Against the live checkout that is **28 files**.
+
+**The premise check was worth more than the fix.** The row said nothing
+downstream refers to a parked file, "not a later brief for the same node" —
+and that clause was already false at HEAD: `brief.gleam:441` calls
+`previous_attempt_file` and the task message names the moved path. Had I
+skipped the check I would have built a reader that already existed.
+
+But the reader is narrower than it looks: it finds a file only when it is
+under `<run>/<node.id>-<n>/` **and** carries the node's own proof basename.
+Two of eight files under `runs/` failed that. And the real scope was
+somewhere else entirely — fourteen `sorry`-free files sat in `explorer/`,
+tied to no node, reachable by no verb, one of them holding four cleanly-
+proved theorems including translation equivariance of rule 30 from a
+$14.22 theorist session that the board did not have.
+
+So: **three producers of checked Lean and one consumer, which knew about
+one producer and part of it.** The row's own suggested fix — a
+`parked_proof` field on the attempt record — would have caught none of the
+$14.22 one. That is why the skill puts the premise check before the plan,
+and it is the first time this session that the check changed what I built
+rather than confirming it.
+
+**The `sorry` filter is the whole design.** An unimported file full of
+holes is scratch and always will be; an unimported file with no holes is
+work already paid for that nothing points at. Without that line the section
+is noise and gets skipped, which reproduces the bug in a new place.
+
+**And it goes in `status`, not behind a new verb, because not going to look
+IS the failure.** A verb a captain has to remember to run is the same bug
+wearing a different hat. Rowan's cut and it is right.
+
+I measured 22 at 22:5x and the section printed 28 an hour later — five
+Sextant and Talus scratch files and one more parked proof, written while I
+was building the thing that finds them. **The population grows faster than
+anyone harvests it**, which is the argument for the section rather than for
+one sweep.
+
+**A tooling lesson, twice in one hour.** `grep -Lq` cannot work: `-q`
+suppresses exactly the output `-L` produces. It printed "1" and I nearly
+believed it. And the Bash tool eats one level of backslash escaping, so a
+Python patch containing `"\n"` inserted a real newline into Gleam source
+and the anchor stopped matching. Both are checks that structurally cannot
+report what they are asked — the same family as the row I filed this
+morning, in a third and fourth costume.
