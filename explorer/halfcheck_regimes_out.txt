@@ -1,0 +1,9 @@
+white diagonal k = 1420878968; predecessor weight 20 (even -> period stays 32)
+   segment 87869..1420878967: 1420791099 diagonals, speed 0.5011284, excess 1.128e-3
+white diagonal k = 2107985254; predecessor weight 17 (ODD -> period DOUBLES to 64)
+   segment 1420878969..2107985253: 687106285 diagonals, speed 0.5011434, excess 1.143e-3
+   STOP: the period leaves 32 here.
+
+ran to k = 2107985254 (2107897384 diagonals, 53.8 s)
+whites found past 87866: 1420878968(w=20), 2107985254(w=17,ODD)
+overall speed across the run: 0.5011333 (excess 1.133e-3) over 4225371729 steps

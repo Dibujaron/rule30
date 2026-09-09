@@ -95,7 +95,7 @@ const results = [];
 const PLIST = (process.env.HC_PLIST || '8,16,32,64,128,256').split(',').map(Number);
 for (const p of PLIST) {
   const perOrbit = Math.max(1000, Math.round(BUDGET / p / NORB));
-  const rng = mkRng(0x1234567 + p * 7919);
+  const rng = mkRng(0x1234567 + p * 7919 + (parseInt(process.env.HC_SEED || '0', 10) | 0));
   const samples = [];
   let escapes = 0;
   const t0 = Date.now();

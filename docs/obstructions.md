@@ -757,3 +757,78 @@ white.
 
 **Recorded** 2026-09-08 by Talus, from the attack document
 `docs/attacks/2026-09-08-classify-the-good-boundaries-your-own-c4-next-topic-and-the-only-place-left-on-this-board-where-a-positive-criterion-can.md`.
+
+## The environment-based speed bound fails at rule 30's period, and would succeed at a slightly larger one
+
+Rosetta's percolation sighting reduced `leftDiagonal_onset_le` to one number:
+the speed of the optimal background-driven ("greedy") walker, which must be at
+most `1/2` for the wall to follow. It measured `0.50106` and reported a first
+speed bound below `1`, missing `1/2` by one part in a thousand. A number
+sitting that close to a round target was worth settling rather than building
+on, and it has been.
+
+**The greedy speed is not `1/2`.** Over the whole of rule 30's period-32 regime
+— diagonals 87,869 to 1,420,878,967, that is 2,848,009,510 steps — it is
+**0.5011284 ± 0.0000104**, which is 108 sem above `1/2`. It is flat in `T`, not
+decaying: cumulative speed at fifteen values of `T` from 2.0e8 to 2.85e9 steps
+fits `excess ~ c/T^α` with **α = −0.018**, where a transient would need `α` near
+`0.5` or `1`. So this is the "flat, limit above `1/2`" case and not the
+"decays to zero" case.
+
+**But `1/2` is not a threshold rule 30 sits near by coincidence.** The speed is
+a smooth function `c(p)` of the background's diagonal period, and it **crosses
+`1/2` transversally near `p ≈ 37`**: measured excesses (×10⁻³) are `+2.46` at
+`p = 28`, `+1.15` at `32`, `+0.15` at `36`, `−0.13` at `38`, `−0.32` at `40`,
+`−0.29` at `44`, `−0.18` at `48`, and `≈ 0` from `56` up. The negative dip
+reproduces across three independent PRNG sources at about 8 sigma. Rule 30 has
+`p = 32` and sits just above the crossing. **The environment argument fails not
+by accident but because rule 30's period is on the wrong side of a crossing —
+and the same argument would succeed on a background of period in the forties.**
+
+**So for the wall: not critical, and not a near miss. It fails**, by one part in
+443 at `p = 32`; the margin `2G(t) + t` decreases linearly at about `0.00226`
+per row. It is "asymptotically critical" only in the weak sense that the
+shortfall shrinks with the period and vanishes in a limit rule 30 reaches at
+`k ~ 10⁹` and beyond — the first eventually-white diagonal past 87,866 is
+`k = 1,420,878,968`, and its predecessor has even weight (20), so the period
+does *not* double there.
+
+**Where the excess lives.** Not in the settled words' gap distribution, which is
+exactly fair: black density 0.4998–0.5001 over windows of 10⁵ words, and the
+mean gap from a uniform start is `1.000 ± 0.002`, giving speed `0.5000`. It is a
+correlation between where the walker stops (a black cell) and what the rule does
+there: with `cell(t,x) = 1`, rule 30 forces `cell(t+1,x) = cell(t,x−1) XOR 1`,
+so the next read is a nearest-neighbour correlation in the settled picture —
+exactly zero under the Bernoulli(1/2) measure rule 30 preserves, and small but
+nonzero on a `p`-periodic background.
+
+**A methodological finding, and it is the more transferable half.** Rosetta's
+own two scripts disagreed in the third decimal, `0.50106` against `0.5044`, a
+gap larger than the effect being argued about. Two causes. They measure
+different objects: `0.5044` is the `p = 16` regime and `0.50106` the `p = 32`
+one, and the speed decreases in `p`. And `greedy.mjs`'s "three starts agreeing
+at 0.5044, 0.5044, 0.5045" **were not three samples** — the walker coalesces
+onto a single trajectory within a few diagonals, so over 10⁸ diagonals six
+different entry points are bit-identical. Their agreement measured nothing.
+Pooled properly over the `p = 16` regime's three pieces the figure is `0.503520`
+over 86,840 independent diagonals, sem `1.19e-3`, which is only **2.96 sem**
+above `1/2` — no result at all. Neither number was wrong; one had no error bar
+and a fake independence check.
+
+**Controls, because a negative is worth what its controls are worth.** iid fair
+bits give `0.5000285 ± 2.5e-5` over 2e8 diagonals; independent random period-`p`
+words with no recurrence give `−4e-5 ± 5.6e-5`. Both nulls return exactly `1/2`.
+The walker was validated against the real picture — run from `(t = 117162,
+x = −29291)`, the settled-word walker and the picture walker give identical
+advance counts at every checkpoint. Two structurally different walker
+formulations were made to agree step-for-step; the first attempt had an
+off-by-one that alone flipped the answer to `0.4987`, which is the size of error
+this question is sensitive to.
+
+**Not settled**: whether rule 30's diagonal periods are unbounded at all, and so
+whether the true limsup is `1/2`. Even granting it, `p = 32` runs to `k ≈ 1.4`
+to `2 × 10⁹` and `p = 64` would run to `k ~ 10¹⁹`, so there is no accessible `t`
+at which the speed is `1/2`.
+
+**Recorded** 2026-09-09 by Rowan, from a computation run to settle Rosetta's
+number. Scripts under `explorer/halfcheck_*.cjs`.
