@@ -1,0 +1,16 @@
+
+node      leftDiagonal_onset_le
+identity  Cadence
+model     fable
+outcome   rate_limited
+cost      $0.00
+turns     1
+estimate  L
+session   dcfa5972-f04d-438a-9e83-d40517ca6ad0
+log       c:/Users/dibuj/dev/rule30/runs/20260909T185226Z/leftDiagonal_onset_le-10
+proof     -
+
+verifier:
+the five-hour window is rate limiting; resume session dcfa5972-f04d-438a-9e83-d40517ca6ad0
+
+Cadence (#2a6f77): closed 26, abandoned 7, $39.77, calibration 20/30

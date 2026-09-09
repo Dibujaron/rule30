@@ -1,0 +1,17 @@
+{"ts":"2026-09-09T18:52:26Z","kind":"run","max_attempts":3,"concurrency":3}
+{"ts":"2026-09-09T18:52:26Z","kind":"dispatch","node":"front_survival","identity":"Vesper","model":"haiku","reason":"open leaf; unblocks 2; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4130,"log":"c:/Users/dibuj/dev/rule30/runs/20260909T185226Z/front_survival-1","in_flight":1}
+{"ts":"2026-09-09T18:52:26Z","kind":"dispatch","node":"leftDiagonal_onset_le","identity":"Cadence","model":"fable","reason":"open leaf; unblocks 0; research node at its top rung, attempt 6 there","max_turns":120,"max_budget_usd":20.0,"port":4131,"log":"c:/Users/dibuj/dev/rule30/runs/20260909T185226Z/leftDiagonal_onset_le-10","in_flight":2}
+{"ts":"2026-09-09T18:54:34Z","kind":"index","node":"front_survival","module":"Rule30.Proofs.FrontSurvival","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-09T18:54:34Z","kind":"theorem_index","node":"front_survival","file":"blueprint/index.md","outcome":"written"}
+{"ts":"2026-09-09T18:54:42Z","kind":"stray","file":"runs/20260906T230339Z/isEventuallyPeriodic_of_periodic_step-2/parked-proof.lean","verdict":"clean"}
+{"ts":"2026-09-09T18:54:48Z","kind":"stray","file":"runs/20260908T004625Z/ColumnSettledConfigEq.lean","verdict":"clean"}
+{"ts":"2026-09-09T18:54:53Z","kind":"stray","file":"runs/20260908T123314Z/leftDiagonal_shift_of_white-1/LeftDiagonalShiftOfWhite.lean","verdict":"broken"}
+{"ts":"2026-09-09T18:55:02Z","kind":"stray","file":"runs/20260908T124200Z/leftDiagonal_onset_le-2/LeftDiagonalOnsetLe.lean","verdict":"clean"}
+{"ts":"2026-09-09T18:55:10Z","kind":"stray","file":"runs/20260908T134658Z/rightDiagonal_antiperiodic_of_odd_driver-1/RightDiagonalAntiperiodicOfOddDriver.lean","verdict":"clean"}
+{"ts":"2026-09-09T18:55:15Z","kind":"stray","file":"runs/20260908T134658Z/rightDiagonal_driver_flip_iff_white-1/RightDiagonalDriverFlipIffWhite.lean","verdict":"clean"}
+{"ts":"2026-09-09T18:55:21Z","kind":"stray","file":"runs/20260908T134658Z/rightDiagonal_not_constant-1/RightDiagonalNotConstant.lean","verdict":"clean"}
+{"ts":"2026-09-09T18:55:26Z","kind":"stray","file":"runs/20260908T205802Z/leftDiagonal_period_le-1/LeftDiagonalPeriodLe.lean","verdict":"clean"}
+{"ts":"2026-09-09T18:55:45Z","kind":"stray","file":"runs/20260908T224923Z/leftDiagonal_onset_le-3/LeftDiagonalOnsetLe.lean","verdict":"clean"}
+{"ts":"2026-09-09T18:56:05Z","kind":"stray","file":"runs/20260909T165940Z/leftDiagonal_onset_le-4/LeftDiagonalOnsetLe.lean","verdict":"clean"}
+{"ts":"2026-09-09T18:56:25Z","kind":"stray","file":"runs/20260909T171155Z/leftDiagonal_onset_le-5/LeftDiagonalOnsetLe.lean","verdict":"clean"}
+{"ts":"2026-09-09T18:57:06Z","kind":"stray","file":"runs/20260909T173028Z/leftDiagonal_onset_le-6/LeftDiagonalOnsetLe.lean","verdict":"clean"}

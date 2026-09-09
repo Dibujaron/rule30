@@ -1568,4 +1568,35 @@ theorem front_survival_of_agree (c d : Config) (i : ℤ)
     xor (rule30 c i) (rule30 d i) = ! d (i + 1) := by
   sorry
 
+/-- **The onset wall holds for every `k` up to 5000, by kernel computation.**
+Not an argument: `decide +kernel` evaluates the arithmetic return condition at
+every `k ≤ 5000` and the Lean kernel checks the evaluation.
+
+The interesting part is the period it uses. The condition that closes is
+`rowNat (2 * k) % 2 ^ (k + 1) = rowNat (2 * k + 16) % 2 ^ (k + 1)` — the same
+constant `16` at every `k`, not a period growing with the depth. So over the
+verified range the wall holds with a *bounded* return period, which is far
+stronger than the wall asks and is the shape a proof would want to exploit.
+
+Proved by Cadence at `leftDiagonal_onset_le` attempt 6; surfaced by the stray
+sweep. -/
+theorem leftDiagonal_onset_le_of_le_5000 (k : ℕ) (hk : k ≤ 5000) :
+    ∃ p > 0, ∃ N ≤ k, PeriodicFrom (leftDiagonal k) p N := by
+  sorry
+
+/-- **The stepMod preperiod hypothesis holds to width 11, for every start.**
+For every `k ≤ 11` and every `x < 2 ^ (k + 1)`, iterating the truncated step
+`stepMod (k + 1)` four extra times from step `2 * k` returns to where it was.
+Kernel-checked by `decide +kernel` over every start, not sampled.
+
+This is the universal hypothesis of
+`leftDiagonal_onset_le_of_stepMod_preperiod` verified exhaustively at small
+width, with period `4` rather than the `16` the orbit of `1` needs — the
+all-starts statement closes faster than the single orbit does. Proved by
+Cadence at `leftDiagonal_onset_le` attempt 6; surfaced by the stray sweep. -/
+theorem stepMod_preperiod_le_of_le_11 : ∀ k ≤ 11, ∀ x < 2 ^ (k + 1),
+    (fun r => ((4 * r) ^^^ ((2 * r) ||| r)) % 2 ^ (k + 1))^[2 * k + 4] x
+      = (fun r => ((4 * r) ^^^ ((2 * r) ||| r)) % 2 ^ (k + 1))^[2 * k] x := by
+  sorry
+
 end Statements
