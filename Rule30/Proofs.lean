@@ -71,6 +71,7 @@ import Rule30.Proofs.LeftDiagonalComplAfterBlack
 import Rule30.Proofs.LeftDiagonalEqRowNatTestBit
 import Rule30.Proofs.LeftDiagonalMulPowEqSettledCenter
 import Rule30.Proofs.LeftDiagonalOnsetLeIffRowNatReturn
+import Rule30.Proofs.LeftDiagonalOnsetLeIffStepModReturn
 import Rule30.Proofs.LeftDiagonalOnsetLeOfLine
 import Rule30.Proofs.LeftDiagonalOnsetLeOfStepModPreperiod
 import Rule30.Proofs.LeftDiagonalPairNeverEventuallyShifted

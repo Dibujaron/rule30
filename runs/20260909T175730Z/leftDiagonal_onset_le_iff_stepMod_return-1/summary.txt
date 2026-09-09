@@ -1,0 +1,16 @@
+
+node      leftDiagonal_onset_le_iff_stepMod_return
+identity  Vesper
+model     sonnet
+outcome   proved
+cost      $0.90
+turns     14
+estimate  S
+session   55383003-6f7a-4600-840e-2ac743ea7e9b
+log       c:/Users/dibuj/dev/rule30/runs/20260909T175730Z/leftDiagonal_onset_le_iff_stepMod_return-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Vesper (#2b3a67): closed 63, abandoned 5, $57.14, calibration 51/64
