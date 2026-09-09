@@ -2053,3 +2053,32 @@ cache with "tens of minutes"; it is two to four. I corrected the row rather
 than quietly building on the better number, because the wrong one would
 have justified designs the right one does not — an estimate that happens to
 point at the same answer is still not evidence for it.
+
+**Watching it run found three defects that review had not.** Within an hour
+of landing the sweep: the cache was flushed once at the end of the fold
+(the fiction CLAUDE.md's Boundaries names, and I had read that section
+today); `prove-one` never swept at all, which is the verb a captain uses on
+the node they just seeded; and the sweep worked through `explorer/` before
+`runs/`, so its whole twelve-file budget went to theorist scratch and
+reached none of the parked proofs the section exists for. All three landed
+in `6096857` and `440c6b4`. None was visible in the tests — the first two
+because they are about a process dying, the third because sorted order is
+only wrong once there is a cap.
+
+**And I nearly reported a working sweep as dead.** No `strays.json`, one
+lone copy in the build directory, and I had a complete story: started and
+died. What settled it was not a harder look at the missing file but a
+check that could tell the two cases apart — `Get-Process` start times, four
+copies written in the last twenty seconds, `lake` alive. The absence of an
+artifact is not evidence about its producer, and I had the wrong story
+ready first. Rowan had the mirror image within the hour: no verdicts
+appeared, so it concluded the sweep was broken, when the truth was that
+`prove-one` never called it.
+
+**A record of an attempt is not evidence about a node.** `leftDiagonal_
+onset_le` attempt 8 came back `rate_limited` at turn 1 for $0.00 — the
+five-hour fable window. It is now the eighth row on that node and says
+nothing about it, which is the same shape as the contamination note in
+CLAUDE.md's Boundaries. The node has no dispatchable rung right now: it is
+`L research`, so the ladder's top is fable and the research rule repeats
+the top rung.
