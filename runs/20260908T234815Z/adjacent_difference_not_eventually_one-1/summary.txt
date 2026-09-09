@@ -1,0 +1,16 @@
+
+node      adjacent_difference_not_eventually_one
+identity  Selvage
+model     sonnet
+outcome   proved
+cost      $0.63
+turns     14
+estimate  M
+session   37e62c2f-0218-4f9a-97d5-9a0783876f76
+log       c:/Users/dibuj/dev/rule30/runs/20260908T234815Z/adjacent_difference_not_eventually_one-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Selvage (#3a6ea5): closed 9, abandoned 4, $20.31, calibration 6/10

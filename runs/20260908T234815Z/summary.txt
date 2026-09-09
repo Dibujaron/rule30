@@ -1,0 +1,7 @@
+
+damage_not_autonomous             Cadence  haiku   proved            $0.32   18 turns
+adjacent_difference_not_eventually_oneSelvage  sonnet  proved            $0.63   14 turns
+rightDiagonal_first_failure       Cadence  sonnet  proved            $0.49   6 turns
+centerColumn_not_isEventuallyPeriodic_of_cohomologousVesper   haiku   proved            $0.49   18 turns
+
+4 attempt(s), 4 closed, $1.92 in all

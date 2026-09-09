@@ -12,6 +12,7 @@ appends one `import` line here when a node closes, keeping the list sorted
 and skipping a line that is already present. Edit it by hand only to remove a
 module whose node has been retired.
 -/
+import Rule30.Proofs.AdjacentDifferenceNotEventuallyOne
 import Rule30.Proofs.BoolDrivenEventuallyTwoPeriodic
 import Rule30.Proofs.BoolDrivenPeriodicFromOfReset
 import Rule30.Proofs.BoolDrivenPeriodicFromOfReturn
@@ -26,6 +27,7 @@ import Rule30.Proofs.CenterColumnDensityTendstoHalfIffExcess
 import Rule30.Proofs.CenterColumnExcessInterpolate
 import Rule30.Proofs.CenterColumnNotEventuallyPeriodicOfAnyOther
 import Rule30.Proofs.CenterColumnNotEventuallyPeriodicOfRight
+import Rule30.Proofs.CenterColumnNotIsEventuallyPeriodicOfCohomologous
 import Rule30.Proofs.CenterColumnOtherOfCohomologousColumn
 import Rule30.Proofs.CenterColumnRightNotBothIsEventuallyPeriodic
 import Rule30.Proofs.CenterColumnSuccOfBlack
@@ -34,9 +36,12 @@ import Rule30.Proofs.ColumnOneOfWhite
 import Rule30.Proofs.ColumnSettledConfigEq
 import Rule30.Proofs.ColumnSuccOfBlack
 import Rule30.Proofs.ConfigEqOfRightAndColumn
+import Rule30.Proofs.DamageNotAutonomous
 import Rule30.Proofs.EvolveEqFalseOfOutsideCone
 import Rule30.Proofs.EvolveFromEqOfAgreeOnWindow
+import Rule30.Proofs.EvolveFromEvolve
 import Rule30.Proofs.EvolveFromLeftPermutive
+import Rule30.Proofs.EvolveFromTranslate
 import Rule30.Proofs.EvolveHalfLeftEqColumn
 import Rule30.Proofs.EvolveHalfRightEqColumn
 import Rule30.Proofs.EvolveIsEventuallyPeriodicOfBetween
@@ -79,12 +84,14 @@ import Rule30.Proofs.LeftDiagonalTransientFrontLawPow
 import Rule30.Proofs.LeftDiagonalTransientMaskLaw
 import Rule30.Proofs.LeftDiagonalWhiteOfShift
 import Rule30.Proofs.LeftSolveEqColumn
+import Rule30.Proofs.MinimalPeriodDvd
 import Rule30.Proofs.NotEvolvePeriodAdjacent
 import Rule30.Proofs.NotIsEventuallyPeriodicAdjacent
 import Rule30.Proofs.NotIsEventuallyPeriodicPair
 import Rule30.Proofs.PeriodicFromMul
 import Rule30.Proofs.RightDiagonalAntiperiodicOfOddDriver
 import Rule30.Proofs.RightDiagonalDriverFlipIffWhite
+import Rule30.Proofs.RightDiagonalFirstFailure
 import Rule30.Proofs.RightDiagonalIsEventuallyPeriodic
 import Rule30.Proofs.RightDiagonalNotConstant
 import Rule30.Proofs.RightDiagonalPeriodUnbounded
@@ -97,6 +104,7 @@ import Rule30.Proofs.RowCellEqEvolve
 import Rule30.Proofs.Rule30LeftLocalLaw
 import Rule30.Proofs.Rule30LeftPermutive
 import Rule30.Proofs.Rule30NeOfLeftNe
+import Rule30.Proofs.Rule30Translate
 import Rule30.Proofs.SidewaysInverse
 import Rule30.Proofs.StripEventuallyPeriodic
 import Rule30.Proofs.StripSucc

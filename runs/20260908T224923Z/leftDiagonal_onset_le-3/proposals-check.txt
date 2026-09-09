@@ -1,0 +1,23 @@
+rowNat_succ_mod_two_pow_congr
+  route:   DOES NOT CLOSE — c:/Users/dibuj/dev/rule30/harness/build/checks/seed/rowNat_succ_mod_two_pow_congr_9d750946eaaf5ab43f4d9aa2b1f8ca9c.lean:8:66: error: unsolved goals
+  witness: BROKEN CHECK, says nothing about the statement — c:/Users/dibuj/dev/rule30/harness/build/checks/seed/witness_rowNat_succ_mod_two_pow_congr_b439050fa8c4ac245e5a7f12ab68b72c.lean:3:15: error(lean.unknownIdentifier): Unknown identifier `s`
+rowNat_mod_two_pow_eq_of_eq
+  route:   DOES NOT CLOSE — c:/Users/dibuj/dev/rule30/harness/build/checks/seed/rowNat_mod_two_pow_eq_of_eq_f397ac0777d3e939ca64d1feb1f4e17b.lean:1:0: error: object file 'C:\Users\dibuj\dev\rule30\.lake\build\lib\lean\Rule30\Proofs\RowNatSuccModTwoPowCongr.olean' of module Rule30.Proofs.RowNatSuccModTwoPowCongr does not exist
+  witness: unchecked — no witness supplied
+leftDiagonal_periodicFrom_of_rowNat_return
+  route:   DOES NOT CLOSE — c:/Users/dibuj/dev/rule30/harness/build/checks/seed/leftDiagonal_periodicFrom_of_rowNat_return_3ceacbb5626ce955f3380a9152e6a383.lean:1:0: error: object file 'C:\Users\dibuj\dev\rule30\.lake\build\lib\lean\Rule30\Proofs\RowNatModTwoPowEqOfEq.olean' of module Rule30.Proofs.RowNatModTwoPowEqOfEq does not exist
+  witness: unchecked — no witness supplied
+periodicFrom_trans_period
+  DOES NOT PROVE: About Bool sequences in general; nothing about rule 30.
+  route:   DOES NOT CLOSE — c:/Users/dibuj/dev/rule30/harness/build/checks/seed/periodicFrom_trans_period_48f94d54753b2e2dba63fa7cc09872d5.lean:5:80: error: unsolved goals
+  witness: PLACEHOLDER, refused without running — names nothing from the statement: true
+leftDiagonal_onset_le_iff_rowNat_return
+  DOES NOT PROVE: An equivalence between two ways of writing the wall; both sides are open.
+  route:   DOES NOT CLOSE — c:/Users/dibuj/dev/rule30/harness/build/checks/seed/leftDiagonal_onset_le_iff_rowNat_return_b1d14ea350a71ce06ff0ca3ab5c039ab.lean:1:0: error: object file 'C:\Users\dibuj\dev\rule30\.lake\build\lib\lean\Rule30\Proofs\LeftDiagonalPeriodicFromOfRowNatReturn.olean' of module Rule30.Proofs.LeftDiagonalPeriodicFromOfRowNatReturn does not exist
+  witness: unchecked — no witness supplied
+leftDiagonal_onset_le_of_le_5000
+  DOES NOT PROVE: Evidence for the wall, not the wall: says nothing at depth 5001. The kernel check needs `set_option maxRecDepth 100000 in` and `set_option maxHeartbeats 4000000 in` before the theorem.
+  route:   DOES NOT CLOSE — c:/Users/dibuj/dev/rule30/harness/build/checks/seed/leftDiagonal_onset_le_of_le_5000_60485be49cb0f17e83a37928d1d81c06.lean:1:0: error: object file 'C:\Users\dibuj\dev\rule30\.lake\build\lib\lean\Rule30\Proofs\LeftDiagonalPeriodicFromOfRowNatReturn.olean' of module Rule30.Proofs.LeftDiagonalPeriodicFromOfRowNatReturn does not exist
+  witness: PLACEHOLDER, refused without running — names nothing from the statement: rowNat (2 * k) % 2 ^ (k + 1) == rowNat (2 * k + 16) % 2 ^ (k + 1)
+
+2 placeholder, 1 broken check, 3 unchecked

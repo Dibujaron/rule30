@@ -1,0 +1,16 @@
+
+node      leftDiagonal_onset_le
+identity  Cadence
+model     fable
+outcome   abandoned
+cost      $7.84
+turns     37
+estimate  wall
+session   6e45cb1b-666f-4760-871a-140c7d1e0e04
+log       c:/Users/dibuj/dev/rule30/runs/20260908T224923Z/leftDiagonal_onset_le-3
+proof     c:/Users/dibuj/dev/rule30/runs/20260908T224923Z/leftDiagonal_onset_le-3/LeftDiagonalOnsetLe.lean (moved out of Rule30/Proofs/: not a closed node)
+
+verifier:
+Not proved and the wall stands; the file builds with an exact reformulation of the wall as one kernel-checkable congruence per depth (rowNat (2k) ≡ rowNat (2k + 2^k) mod 2^(k+1), proved equivalent in both directions), and with the wall itself kernel-verified at every depth up to 5000, seven times past the seeder's measured range.
+
+Cadence (#2a6f77): closed 22, abandoned 4, $24.27, calibration 18/24

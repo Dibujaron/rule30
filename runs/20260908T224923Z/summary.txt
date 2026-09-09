@@ -1,0 +1,8 @@
+
+evolveFrom_evolve                 Cadence  haiku   proved            $0.21   6 turns
+rule30_translate                  Vesper   haiku   proved            $0.37   13 turns
+minimalPeriod_dvd                 Selvage  sonnet  proved            $0.72   13 turns
+evolveFrom_translate              Vesper   haiku   proved            $0.34   12 turns
+leftDiagonal_onset_le             Cadence  fable   abandoned         $7.84   37 turns
+
+5 attempt(s), 4 closed, $9.49 in all

@@ -673,3 +673,20 @@ Imports: `Rule30.Basic`, `Rule30.Proofs.RightmostDifferenceMovesRight`, `Rule30.
 Axioms via the append-`#print axioms`-then-`lake env lean`-then-remove trick: `propext, Classical.choice, Quot.sound`. `Classical.choice` enters through `Nat.find`'s decidability (`classical` is invoked in `exists_agreement_length`), so it is genuinely load-bearing rather than inherited.
 
 NOVELTY, unverified by me: the brief records Sextant's claim that this fact is Rowland's introductory sentence with no proof in his paper and no statement in the held sources — Sextant's own search, not independently checked. I did not check it either and have no evidence bearing on it. Do not repeat the claim as settled.
+
+## 2026-09-08T22:50:44Z — rule30_translate (haiku, proved)
+
+**The proof shape**: Unfold `rule30_eq` to expose the three-cell structure `rule30 c i = (c (i-1)) ^^ (c i || c (i+1))`. When applied to the shifted config `fun x => c (x + s)`, the indices in the xor/or expression shift uniformly by `s`. Two `ring` calls align the arithmetic: `i - 1 + s = i + s - 1` and `i + 1 + s = i + s + 1`.
+
+**Import note**: `Mathlib.Tactic.Ring` is required; it does not ride in transitively on `Rule30.Basic`.
+
+**Reusable pattern**: Equivariance proofs over integer indices with polynomial rearrangement benefit from a single `simp only [rule30_eq]` followed by `ring` on each index position, rather than trying to massage the goal with casts or `omega`.
+
+
+## 2026-09-08T22:52:34Z — evolveFrom_translate (haiku, proved)
+
+Proof pattern for lifting equivariance from a single step through an iteration: establish function equality via funext on the inductive hypothesis, then apply the one-step lemma. Generalizing the step parameter in induction is essential when the one-step result needs to hold pointwise for all indices.
+
+## 2026-09-08T23:51:37Z — centerColumn_not_isEventuallyPeriodic_of_cohomologous (haiku, proved)
+
+**Cohomologous column condition (Prize 1 sufficient, not achieved).** The XOR of centerColumn with any nonzero column being eventually periodic is sufficient to prove aperiodicity—if centerColumn were periodic, both it and the other column would be, contradicting uniqueness. Measured with 0 survivors over 38,700 pairs (Sextant). The proof is pure lemma application: assume periodic, apply centerColumn_other_of_cohomologous_column to get the paired column periodic, apply isEventuallyPeriodic_column_unique to conclude x = 0, contradicting x ≠ 0. Kernel-checked in explorer/sextant_scratch_coboundary.lean; axioms propext, Classical.choice, Quot.sound.

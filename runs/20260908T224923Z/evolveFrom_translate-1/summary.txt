@@ -1,0 +1,16 @@
+
+node      evolveFrom_translate
+identity  Vesper
+model     haiku
+outcome   proved
+cost      $0.34
+turns     12
+estimate  S
+session   5bf61a7c-7f98-498d-a91e-b87f915891d1
+log       c:/Users/dibuj/dev/rule30/runs/20260908T224923Z/evolveFrom_translate-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Vesper (#2b3a67): closed 55, abandoned 4, $43.80, calibration 45/55

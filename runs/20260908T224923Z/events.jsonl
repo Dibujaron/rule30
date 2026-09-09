@@ -1,0 +1,14 @@
+{"ts":"2026-09-08T22:49:23Z","kind":"run","max_attempts":5,"concurrency":3}
+{"ts":"2026-09-08T22:49:23Z","kind":"dispatch","node":"rule30_translate","identity":"Vesper","model":"haiku","reason":"open leaf; unblocks 1; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4130,"log":"c:/Users/dibuj/dev/rule30/runs/20260908T224923Z/rule30_translate-1","in_flight":1}
+{"ts":"2026-09-08T22:49:23Z","kind":"dispatch","node":"evolveFrom_evolve","identity":"Cadence","model":"haiku","reason":"open leaf; unblocks 0; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4131,"log":"c:/Users/dibuj/dev/rule30/runs/20260908T224923Z/evolveFrom_evolve-1","in_flight":2}
+{"ts":"2026-09-08T22:49:23Z","kind":"dispatch","node":"minimalPeriod_dvd","identity":"Selvage","model":"sonnet","reason":"open leaf; unblocks 0; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4132,"log":"c:/Users/dibuj/dev/rule30/runs/20260908T224923Z/minimalPeriod_dvd-1","in_flight":3}
+{"ts":"2026-09-08T22:50:11Z","kind":"index","node":"evolveFrom_evolve","module":"Rule30.Proofs.EvolveFromEvolve","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-08T22:50:12Z","kind":"theorem_index","node":"evolveFrom_evolve","file":"blueprint/index.md","outcome":"written"}
+{"ts":"2026-09-08T22:50:12Z","kind":"dispatch","node":"leftDiagonal_onset_le","identity":"Cadence","model":"fable","reason":"open leaf; unblocks 0; research node at its top rung, attempt 2 there","max_turns":120,"max_budget_usd":20.0,"port":4133,"log":"c:/Users/dibuj/dev/rule30/runs/20260908T224923Z/leftDiagonal_onset_le-3","in_flight":3}
+{"ts":"2026-09-08T22:50:43Z","kind":"index","node":"rule30_translate","module":"Rule30.Proofs.Rule30Translate","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-08T22:50:44Z","kind":"theorem_index","node":"rule30_translate","file":"blueprint/index.md","outcome":"written"}
+{"ts":"2026-09-08T22:50:44Z","kind":"dispatch","node":"evolveFrom_translate","identity":"Vesper","model":"haiku","reason":"open leaf; unblocks 1; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4134,"log":"c:/Users/dibuj/dev/rule30/runs/20260908T224923Z/evolveFrom_translate-1","in_flight":3}
+{"ts":"2026-09-08T22:51:43Z","kind":"index","node":"minimalPeriod_dvd","module":"Rule30.Proofs.MinimalPeriodDvd","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-08T22:51:43Z","kind":"theorem_index","node":"minimalPeriod_dvd","file":"blueprint/index.md","outcome":"written"}
+{"ts":"2026-09-08T22:52:34Z","kind":"index","node":"evolveFrom_translate","module":"Rule30.Proofs.EvolveFromTranslate","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-08T22:52:34Z","kind":"theorem_index","node":"evolveFrom_translate","file":"blueprint/index.md","outcome":"written"}

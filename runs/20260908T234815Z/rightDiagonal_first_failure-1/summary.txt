@@ -1,0 +1,16 @@
+
+node      rightDiagonal_first_failure
+identity  Cadence
+model     sonnet
+outcome   proved
+cost      $0.49
+turns     6
+estimate  S
+session   b310f66c-bff8-4323-ab68-e176343d3c1e
+log       c:/Users/dibuj/dev/rule30/runs/20260908T234815Z/rightDiagonal_first_failure-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Cadence (#2a6f77): closed 24, abandoned 4, $25.07, calibration 19/26

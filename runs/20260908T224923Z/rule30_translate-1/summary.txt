@@ -1,0 +1,16 @@
+
+node      rule30_translate
+identity  Vesper
+model     haiku
+outcome   proved
+cost      $0.37
+turns     13
+estimate  S
+session   6216f1a1-4ae2-4539-a7ec-e79659b7615b
+log       c:/Users/dibuj/dev/rule30/runs/20260908T224923Z/rule30_translate-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext
+
+Vesper (#2b3a67): closed 54, abandoned 4, $43.46, calibration 44/54

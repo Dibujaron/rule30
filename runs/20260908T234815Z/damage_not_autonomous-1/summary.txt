@@ -1,0 +1,16 @@
+
+node      damage_not_autonomous
+identity  Cadence
+model     haiku
+outcome   proved
+cost      $0.32
+turns     18
+estimate  S
+session   c553f262-0eb0-4f08-aa0e-dcf067e5d68a
+log       c:/Users/dibuj/dev/rule30/runs/20260908T234815Z/damage_not_autonomous-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Cadence (#2a6f77): closed 23, abandoned 4, $24.59, calibration 19/25

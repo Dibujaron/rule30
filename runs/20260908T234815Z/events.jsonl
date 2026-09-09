@@ -1,0 +1,13 @@
+{"ts":"2026-09-08T23:48:15Z","kind":"run","max_attempts":4,"concurrency":3}
+{"ts":"2026-09-08T23:48:15Z","kind":"dispatch","node":"centerColumn_not_isEventuallyPeriodic_of_cohomologous","identity":"Vesper","model":"haiku","reason":"open leaf; unblocks 0; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4130,"log":"c:/Users/dibuj/dev/rule30/runs/20260908T234815Z/centerColumn_not_isEventuallyPeriodic_of_cohomologous-1","in_flight":1}
+{"ts":"2026-09-08T23:48:15Z","kind":"dispatch","node":"damage_not_autonomous","identity":"Cadence","model":"haiku","reason":"open leaf; unblocks 0; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4131,"log":"c:/Users/dibuj/dev/rule30/runs/20260908T234815Z/damage_not_autonomous-1","in_flight":2}
+{"ts":"2026-09-08T23:48:15Z","kind":"dispatch","node":"adjacent_difference_not_eventually_one","identity":"Selvage","model":"sonnet","reason":"open leaf; unblocks 0; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4132,"log":"c:/Users/dibuj/dev/rule30/runs/20260908T234815Z/adjacent_difference_not_eventually_one-1","in_flight":3}
+{"ts":"2026-09-08T23:50:12Z","kind":"index","node":"damage_not_autonomous","module":"Rule30.Proofs.DamageNotAutonomous","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-08T23:50:13Z","kind":"theorem_index","node":"damage_not_autonomous","file":"blueprint/index.md","outcome":"written"}
+{"ts":"2026-09-08T23:50:13Z","kind":"dispatch","node":"rightDiagonal_first_failure","identity":"Cadence","model":"sonnet","reason":"open leaf; unblocks 0; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4133,"log":"c:/Users/dibuj/dev/rule30/runs/20260908T234815Z/rightDiagonal_first_failure-1","in_flight":3}
+{"ts":"2026-09-08T23:50:21Z","kind":"index","node":"adjacent_difference_not_eventually_one","module":"Rule30.Proofs.AdjacentDifferenceNotEventuallyOne","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-08T23:50:21Z","kind":"theorem_index","node":"adjacent_difference_not_eventually_one","file":"blueprint/index.md","outcome":"written"}
+{"ts":"2026-09-08T23:51:15Z","kind":"index","node":"rightDiagonal_first_failure","module":"Rule30.Proofs.RightDiagonalFirstFailure","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-08T23:51:15Z","kind":"theorem_index","node":"rightDiagonal_first_failure","file":"blueprint/index.md","outcome":"written"}
+{"ts":"2026-09-08T23:51:37Z","kind":"index","node":"centerColumn_not_isEventuallyPeriodic_of_cohomologous","module":"Rule30.Proofs.CenterColumnNotIsEventuallyPeriodicOfCohomologous","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-08T23:51:37Z","kind":"theorem_index","node":"centerColumn_not_isEventuallyPeriodic_of_cohomologous","file":"blueprint/index.md","outcome":"written"}

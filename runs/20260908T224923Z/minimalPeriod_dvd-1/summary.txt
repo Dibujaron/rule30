@@ -1,0 +1,16 @@
+
+node      minimalPeriod_dvd
+identity  Selvage
+model     sonnet
+outcome   proved
+cost      $0.72
+turns     13
+estimate  S
+session   671046d6-526b-4556-b229-c558423ed48c
+log       c:/Users/dibuj/dev/rule30/runs/20260908T224923Z/minimalPeriod_dvd-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Selvage (#3a6ea5): closed 8, abandoned 4, $19.68, calibration 5/9

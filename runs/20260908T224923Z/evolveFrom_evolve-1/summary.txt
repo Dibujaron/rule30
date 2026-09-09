@@ -1,0 +1,16 @@
+
+node      evolveFrom_evolve
+identity  Cadence
+model     haiku
+outcome   proved
+cost      $0.21
+turns     6
+estimate  S
+session   237fff7d-3ebf-4440-b16b-16d42a812b19
+log       c:/Users/dibuj/dev/rule30/runs/20260908T224923Z/evolveFrom_evolve-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext
+
+Cadence (#2a6f77): closed 22, abandoned 3, $16.43, calibration 18/23
