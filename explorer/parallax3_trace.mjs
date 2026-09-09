@@ -85,14 +85,27 @@ for (let n = 1; n <= 10; n++) {
 console.log();
 console.log('=== C. the number-like ensemble: windows white on x <= -1 ===');
 console.log('(the class the seed lives in: uniform on cells x = 0..n-1, white left)');
-console.log('n  configs      distinct words  min count  max count  entropy/step');
-for (let n = 1; n <= 22; n++) {
-  const W = n + 1;             // positions 0 .. n (white to the left)
-  const off = 0;
-  const N = 1 << n;            // cells 0..n-1 free; cell n irrelevant for t<n
+//
+// CAUTION, and the reason this section is written the long way round. The first
+// version packed the row so that the ORIGIN was bit 0, with nothing to its left.
+// That forces cell(-1) to stay white at every time, when in truth it is black
+// from row 1 on: the picture ran off the edge of its own cone and the counts
+// came out as n+1 instead of the true 2,3,4,6,8,10,... The array below carries
+// n cells of padding on the left so the whole cone of times 0..n-1 is inside it.
+// The correct counts are cross-checked in explorer/parallax3_naive.mjs and agree
+// with explorer/numberlikewords.mjs.
+// The loop stops at n = 14 because the row is packed into a 32-bit int and the
+// width here is 2n+1: at n = 16 the mask (1 << 33) - 1 wraps and the counts
+// collapse to 2. Deeper counts are in explorer/parallax3_naive.mjs (to n = 18,
+// no bit packing) and explorer/numberlikewords.mjs (to n = 23, prefix sharing).
+console.log('n  configs      distinct words  min count  max count  log2(words)/n');
+for (let n = 1; n <= 14; n++) {
+  const W = 2 * n + 1;         // positions -n .. n; cells 0..n-1 free, rest white
+  const off = n;               // the origin
+  const N = 1 << n;
   const counts = new Map();
   for (let w = 0; w < N; w++) {
-    const v = columnWord(w, W, n, off);
+    const v = columnWord(w << n, W, n, off);   // shift the free cells to x >= 0
     counts.set(v, (counts.get(v) || 0) + 1);
   }
   let mn = Infinity, mx = -Infinity;

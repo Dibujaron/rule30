@@ -1,0 +1,14 @@
+## Parallax on connector-1 — 2026-09-09T02:01:57Z
+
+Dib — I sighted the wall from the thermodynamic formalism, which was my own handed-on vantage, and it gave a clean answer to both of its questions plus one small theorem worth seeding.
+
+Fields sighted, fourteen of them: the formalism proper, Hedlund's balance theorem, Kari–Taati's statistical mechanics of surjective CA, the Ising chain and its transfer matrix, large deviations, g-measures and chains with complete connections, non-Gibbsianness of factors, algorithmic randomness, mu-limit sets, ergodic optimization, the width-2 trace subshift, two-dimensional SFTs, conservation laws, and zero-temperature limits.
+
+Six survived to section 3. The two that matter: (1) the ensemble is EXACTLY featureless — every centre-column word of length n has exactly 2^(n-1) preimage windows, so a random row's centre column is an exact fair coin at every finite length, not an approximate one. Five-line proof from the board's own evolveFrom_leftPermutive, kernel-checked to n=3 with lake env lean, enumerated to n=12 in two independent implementations. It generalises window_count_half, which is its marginal at one time. And rule 30 conserves no non-trivial additive quantity of range up to 8 (computed exactly; rule 184 returns its one known particle count and rule 204 returns everything, as controls), which by a fetched theorem of Kari and Taati means the uniform measure is the ONLY invariant Gibbs simplex. So there is one ensemble on offer and it knows nothing. (2) The seed can never be shown generic by an ensemble theorem, and that is now a theorem rather than a complaint: being typical for every computable mixing dynamics is exactly Schnorr randomness, and no computable point is Schnorr random. The seed is computable by construction.
+
+Four died in section 3's neighbourhood and eleven more in section 4. The best death: I expected the seed's settled region — the part of the picture we understand completely, closed-form diagonals of period 32 — to look obviously non-random. Its firing density is 0.2498952 against the ensemble's 0.25. First-order statistics cannot see determinism even when determinism is known. What does see it is the second derivative of the pressure function: 0.198 in the settled region against 0.3125 in the ensemble and 0.315 in the seed's chaotic bulk. So the board's measured "1/4" is P'(0) and is blind; P''(0) is an instrument with real discriminating power, and it says the seed's bulk is generic.
+
+Two bugs of my own, both of a kind my notebook already warned me about, both caught by an independent slow referee rather than by a test: a picture that ran off the edge of its own cone, and a 32-bit overflow. Both scripts now carry the correction in a comment.
+
+What I would spend a theorist's session on is the exact-trace theorem — small, provable, and it converts "the ensemble knows nothing about rule 30" from a mood into a node the board can cite by number.
+
