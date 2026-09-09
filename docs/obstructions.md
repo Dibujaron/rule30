@@ -1293,6 +1293,22 @@ with the seed's cycle, and not a phase shift of it — the bit-53208 word has we
 (`explorer/talus5_bigcheck.mjs`). So `|A(53209)| = 848,026` where the law wants
 `848,010`.
 
+**And the exactness is not distinctive, against the right null.** The entry above
+compares rule 30 with a random *triangular* map, where it stands out. Compare it
+instead with the other elementary rules read the same way (bit `i` of `f(r)` is
+`R(r_{i-2}, r_{i-1}, r_i)`) and the law holds for **19 of the 256** over
+`n = 2..18`: `21, 30, 50, 62, 69, 70, 78, 110, 114, 118, 178, 198, 206, 222, 230,
+238, 242, 246, 254` — rules 110 and 62 among them. The reduction shows in the
+same sweep: of the 128 quiescent rules, 64 have no cycle containing an odd state,
+**17 have exactly one**, and the rest have between 10 and 131,072 — and 17 is
+also the number of quiescent rules satisfying the law
+(`explorer/talus5_scope.mjs`, exhaustive). The halving identity is generic too: it
+holds for exactly the 128 quiescent rules, rule 30's mirror 86 included, being
+Hedlund's shift-commutation (Kůrka's notes, line 273) specialised to a quiescent
+one-sided configuration. I had written the opposite into the attack document's
+first draft — that the identity distinguishes rule 30 from its mirror — and the
+sweep took it out.
+
 Two corrections to the entry above follow. Its "the increment doubling precisely
 at `n = 4, 9, 30, 401`" is a fact about the *whites* `w + 2`, not about NKS's
 doubling positions; the increment also doubles at `53209`, `58288` and `72577`,
@@ -1324,3 +1340,54 @@ realised left side, and the two must not be confused.
 
 **Recorded** 2026-09-09 by Talus, from the attack document
 `docs/attacks/2026-09-09-the-rigidity-law-of-the-t-map-s-attractor-which-is-the-one-thing-about-it-that-survives-a-correct-null-model-let-t-n-r-4.md`.
+
+## Every regularity the T-map view has produced reduces to Rowland's doubling positions
+
+Three times in one evening, a striking regularity in the truncated row map
+`T_n(r) = (4r XOR (2r OR r)) mod 2^n` has turned out to be the already-known
+left-diagonal doubling structure seen from a new angle. Recorded together
+because the pattern is the finding, and because each was individually
+convincing.
+
+1. **The constant return period `16`.** `leftDiagonal_onset_le_of_le_5000`
+   closes with `rowNat (2k) ≡ rowNat (2k + 16) mod 2^(k+1)` at every `k ≤ 5000`
+   — the same constant, where the equivalence only guarantees `2^k`. It fails
+   at `k = 87867`, which is exactly where the left-diagonal period regime moves
+   from 16 to 32. The constant held while the period was `16` and broke when it
+   was not.
+2. **The `O(n)` attractor.** `|A(n)|` looked linear and it is not: the growth
+   is `|A(n)| − |A(n-1)| = maxCycle(n)`, and `maxCycle` is unbounded by this
+   board's proved `leftDiagonal_period_unbounded`, so `|A(n)|` is
+   `Θ(n · P(n))`. The apparent linearity was the period being constant over the
+   sampled range.
+3. **The rigidity law itself.** `|A(n)| − |A(n-1)| = maxCycle(n)` holds with
+   zero exceptions over `n = 2..520` and fails first at `n = 53209`, with the
+   increment `32` against a `maxCycle` of `16`, and again at `n = 58288`.
+   Those two positions are **exactly two past the eventually-white left
+   diagonals at `53207` and `58286`** — offset `+2` in both cases, checked
+   against the independently computed white list `2, 7, 28, 399, 53207, 58286,
+   87866`.
+
+So the T-map reformulation is not, so far, generating structure that the
+diagonal picture did not already contain. It re-encodes the doubling positions
+in a different vocabulary, and every apparent law in the new vocabulary has an
+expiry date set by the old one. That is worth knowing before another session is
+spent looking for regularities there: **the right prior is that a clean pattern
+in `T_n` is a period regime in disguise, and the question to ask first is where
+it breaks rather than why it holds.**
+
+**What the reformulation did buy, and it is not nothing.** The equivalence
+itself (`leftDiagonal_onset_le_iff_stepMod_return`, proved) puts the wall in a
+vocabulary with no automaton in it. The halving identity `step (2s) = 2 step s`
+(proved, axioms `[propext, Quot.sound]`) makes the truncations a coherent tower
+rather than unrelated finite systems. And the T-map side independently
+confirmed NKS p. 871's fourth doubling position: the attractor's growth slope
+changes at `n = 401`, the first 16-cycle, with the 8-cycle count freezing at
+`n = 400`. A cross-check between two descriptions nobody had connected is worth
+more than the regularities that died.
+
+**Recorded** 2026-09-09 by Rowan, after the third instance. The first two were
+found by commissioned verification; the third by a theorist that reduced the
+law to "T_n has exactly one odd cycle" — Rowland's uniqueness conjecture at
+truncation width `n` — and then located Rowland's own predicted counterexample
+column.

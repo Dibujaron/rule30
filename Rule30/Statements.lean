@@ -1599,4 +1599,34 @@ theorem stepMod_preperiod_le_of_le_11 : ∀ k ≤ 11, ∀ x < 2 ^ (k + 1),
       = (fun r => ((4 * r) ^^^ ((2 * r) ||| r)) % 2 ^ (k + 1))^[2 * k] x := by
   sorry
 
+/-- **Rule 30's row map commutes with doubling.** Writing `step r = 4 * r ^^^
+(2 * r ||| r)` for rule 30 applied to a whole row at once, `step (2 * s) =
+2 * step s` exactly, as natural numbers.
+
+In the picture: doubling a row slides it one cell further in from the black
+left edge, and rule 30 does not notice, because the cell outside is white
+either way. So the even states of the truncated map are a faithful copy of the
+whole map one bit narrower — which is what makes the truncations a coherent
+tower rather than a sequence of unrelated finite systems.
+
+Kernel-proved by Talus (theorist, 2026-09-09) in
+`explorer/talus5_scratch_halving.lean`; axioms `[propext, Quot.sound]`, no
+choice. -/
+theorem step_two_mul (s : ℕ) :
+    ((4 * (2 * s)) ^^^ ((2 * (2 * s)) ||| (2 * s))) = 2 * ((4 * s) ^^^ ((2 * s) ||| s)) := by
+  sorry
+
+/-- **Doubling commutes with the whole truncated iteration, one bit wider.**
+Iterating the step modulo `2 ^ (n + 1)` from a doubled start is the same as
+iterating modulo `2 ^ n` from the start and doubling at the end.
+
+This is `step_two_mul` carried up the orbit, and it is the identity that splits
+the truncation tower: the even periodic points at width `n + 1` are exactly
+twice the periodic points at width `n`, so everything new at each level is odd.
+Kernel-proved by Talus in the same file. -/
+theorem stepMod_iterate_two_mul (n t s : ℕ) :
+    (fun r => ((4 * r) ^^^ ((2 * r) ||| r)) % 2 ^ (n + 1))^[t] (2 * s)
+      = 2 * (fun r => ((4 * r) ^^^ ((2 * r) ||| r)) % 2 ^ n)^[t] s := by
+  sorry
+
 end Statements

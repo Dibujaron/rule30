@@ -81,9 +81,11 @@ From `docs/obstructions.md`, the entries that bear on this topic:
   computed number and can never be a node. What *can* be a node is C1, which is proved,
   and the finite instances C3 closes in the kernel.
 
-**A new dead end, appended to `docs/obstructions.md`** as *"The rigidity law of the
-T-map's attractor is Rowland's uniqueness conjecture in disguise, and it is false from
-n = 53209"*.
+**A new dead end, appended to `docs/obstructions.md`** as *"The T-map's rigidity law is
+Rowland's uniqueness conjecture in disguise, and it is false from n = 53209"*. It also
+carries two corrections to the entry above it, which is the one that handed on this
+topic: the increment's doubling positions are the whites `w + 2`, not NKS's doubling
+positions, and the two lists agree only below `53209`.
 
 ---
 
@@ -134,9 +136,31 @@ in-degree-zero removal, which returns *exactly* the cyclic nodes, and the cycle
 decomposition was re-derived independently by walking `img` from each survivor; the
 resulting `|A(31)| = 114` and `|A(420)| = 3386` reproduce Rowan's two independently
 computed values to the digit, from code sharing nothing with theirs. (iii) Symmetry:
-this project has twice been caught by a mirror image passing every symmetric check. The
-halving identity is *not* symmetric — it is false for the mirror rule, since it says the
-white side is on the left — and it is now proved rather than measured, in the kernel.
+this project has twice been caught by a mirror image passing every symmetric check, so I
+tested rather than argued, and **I was wrong about this one**. I had written that the
+halving identity is asymmetric and false for the mirror rule.
+`explorer/talus5_scope.mjs` says otherwise: read all 256 elementary rules as T-functions
+(bit `i` of `f(r)` is `R(r_{i-2}, r_{i-1}, r_i)`), and the identity holds for exactly
+`128` of them — precisely the quiescent ones, `R(0,0,0) = 0` — **including rule 86, rule
+30's mirror**. The identity is shift-equivariance of a quiescent cellular automaton and is
+generic; it is not a fact about rule 30. What guards against the old mirror failure here
+is not the identity but `rowCell_eq_evolve` on the board, plus the check in that same
+script that the *table* reading of rule 30 agrees with `4r XOR (2r OR r)` (0 mismatches,
+2,000 random states at `n = 20`).
+
+**A null for the exactness, which the topic did not have.** Rowan's null was a random
+triangular map, and rule 30's exactness stood out against it. The nearer null is the
+other elementary rules read the same way, and against *that* the exactness is not a
+signature at all: the rigidity law holds for **19 of the 256 rules** over `n = 2..18` —
+`21, 30, 50, 62, 69, 70, 78, 110, 114, 118, 178, 198, 206, 222, 230, 238, 242, 246,
+254` — of which 17 are quiescent. The reduction shows up in the same table: of the 128
+quiescent rules, `64` have *no* cycle containing an odd state, `17` have exactly one, and
+the rest have between 10 and 131,072. Seventeen with one odd cycle, seventeen satisfying
+the law — the equivalence this document argues for, appearing as a count across the whole
+rule space (I checked that the two counts agree, not that the two sets are the same
+rules). So "rule 30's attractor obeys an arithmetic identity with no exceptions" is
+company rule 110 and rule 62 also keep, and in every case what it means is: one odd
+cycle.
 
 **Kernel.** `explorer/talus5_scratch_halving.lean`, accepted by `lake env lean`, axioms
 `[propext, Quot.sound]` for all three theorems — no `Classical.choice`. The proof is
@@ -149,10 +173,16 @@ three lines: `4·(2s) = 2·(4s)`, then `2·x = x <<< 1` and `Nat.shiftLeft_xor_d
 system at all: Wolfram 1986 §7 and Table 6.2 study cycles on *rings*, a different object
 (finite and cyclic in space, where this is finite and *bounded* in space with a white
 exterior); Jen, Kopra, Kůrka, Boyle–Kitchens, Schüle–Stoop are about periodic points of
-the CA on `ℤ`, again a different object. The nearest statement in print is Wolfram 1986
-§7's remark that a picture with an all-white left tail is determined by what is inside
-it, which is the same shift-invariance in words and not as an identity. I would file the
-identity itself as *folklore, new phrasing*; the consequence for the attractor as *new*.
+the CA on `ℤ`, again a different object. The nearest statement in print is the one the
+identity turns out to *be*: Kůrka's lecture notes, line 273, "By a theorem of Hedlund, a
+map `F : A^ℤ → A^ℤ` is a cellular automaton iff it is continuous and commutes with the
+shift, `σ ∘ F = F ∘ σ`." Doubling a number is the shift, and a quiescent rule keeps the
+white tail white, so `step_two_mul` is Hedlund's shift-commutation specialised to
+one-sided quiescent configurations — which is why it holds for all 128 quiescent
+elementary rules and not for rule 30 alone. I file the identity as **a known result in
+new clothes** (Hedlund via Kůrka), and the consequence for the attractor —
+`|A(n)| - |A(n-1)| = #odd periodic points` — as new, since the object it is about
+appears in none of the held sources.
 
 **Route.** `step_two_mul` is proved. `stepMod_two_mul` and `stepMod_iterate_two_mul` are
 proved. The attractor statement needs a definition (`IsPeriodicPoint` for the truncated
@@ -377,9 +407,13 @@ reproducing obstruction 4's independently, and by the doubling controls at `30` 
 at these widths is not computed, it is *argued* — every cycle is `2^j` times an odd
 cycle (C1), every level `m ≤ 53208` has exactly one odd cycle of length `P(m) ≤ 16`
 (C3 plus the whites list), and both cycles at `53209` have length `16`, so
-`maxCycle(53209) = 16`. If some level below held an odd cycle of length `32` the ratio
-statement would change, though the failure of the law would not, since the increment
-`32` would then need a `32`-cycle at a level with no doubling.
+`maxCycle(53209) = 16`. The middle step is the one carrying weight, and what closes it is
+C3's dichotomy — a new odd cycle can only appear at a white, the whites below `53207` are
+`2, 7, 28, 399`, and the flip control shows each of those four returns the *same* cycle.
+So the gap is not open, but it is an argument rather than an enumeration, and if it were
+wrong — if some level below held an odd cycle of length `32` — the ratio `2` would change
+while the failure of the law would not, since a `32`-cycle at a level with no doubling is
+itself a violation of the staircase.
 
 **Novelty.** Rowland 2006 §5 (lines 930–946) names the column and the mechanism and
 leaves the realisation conditional. Obstruction 13 (mine, yesterday) exhibits the second
@@ -413,7 +447,9 @@ eventually-white diagonals all happen to have odd parity, which is the last thin
 anybody would call structure once it is written down.** The honest summary of the whole
 topic is: a random triangular map's attractor sizes are ragged because a random
 triangular map has many odd cycles; rule 30's are exact because, so far and only so far,
-it has one.
+it has one. The nearer null agrees: 19 of the 256 elementary rules satisfy the same law
+over `n = 2..18`, and among the 128 quiescent rules the number satisfying it and the
+number with exactly one odd cycle are both 17.
 
 ---
 
@@ -429,6 +465,16 @@ it has one.
   diagonals* shifted by two, `4, 9, 30, 401, 53209, 58288, 87868`; NKS's doublings give
   `4, 9, 30, 401, 87868`. The lists agree below `53209` and differ there. Dies at the
   same place and for the same reason.
+- **"The halving identity distinguishes rule 30 from its mirror."** Mine, written into
+  this document's first draft and taken out an hour later. It holds for exactly the 128
+  quiescent elementary rules, rule 86 among them (`explorer/talus5_scope.mjs`,
+  exhaustive over `2^17` states per rule). It is shift-equivariance and nothing more.
+  The claim died on the first test, which is the only reason it is here rather than in
+  section 3.
+- **"The exactness is what distinguishes rule 30 from the null."** Against a random
+  triangular map, yes. Against the 256 elementary rules read the same way, no: 19 of them
+  satisfy the law over `n = 2..18`, including rules 110 and 62. Dies at the first honest
+  null.
 - **"The top-bit lift is the handle."** Not false, but it does not close: the increment
   read from the top is a sum over the cycles of `A(n-1)` whose bit `n-2` is identically
   white, an unenumerated family. Read from the bottom bit it is a single count. I spent
