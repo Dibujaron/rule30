@@ -178,6 +178,11 @@ fn env(f: Fixture, verdict: verify.Verdict) -> dispatch.Env {
     // proofs, which a fixture run has no business doing and no `lake` to do
     // it with.
     sweep_strays: fn(_lock) { Nil },
+    // And again: the real gate runs `lake build Rule30.Statements` before
+    // every dispatch. Wired directly it took this suite past ten minutes
+    // without failing a single assertion, which is the shape of a slow test
+    // nobody can diagnose.
+    statement_gate: fn(_lock, _node) { Ok(Nil) },
   )
 }
 

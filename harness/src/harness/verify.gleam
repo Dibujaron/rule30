@@ -250,6 +250,102 @@ pub fn check_source(node: dag.Node) -> String {
   <> "#print axioms harness_check\n"
 }
 
+// --- does a seeded name resolve where the verifier looks -----------------------
+
+/// Does `Statements.<lean_name>` resolve? `Ok` carries the signature Lean
+/// printed; `Error` carries one line saying what is wrong.
+///
+/// **The check a captain naturally runs answers a different question.**
+/// `lake env lean Rule30/Statements.lean` exits 0 on a file whose theorems
+/// sit in the wrong namespace, because the file genuinely compiles. On
+/// 2026-09-08 three statements were appended AFTER `end Statements`, so they
+/// compiled into the root namespace; three workers were dispatched, burned
+/// $5.02, and each independently reported that its proof was correct and the
+/// fault was outside its reach. It was: `check_source` generates
+/// `type_of% @Statements.<lean_name>`, which cannot elaborate against a name
+/// that is not there, so every attempt at such a node is unverifiable by
+/// construction and its failure reads as node difficulty.
+///
+/// Reproduced against this toolchain on 2026-09-09 in the fixture project:
+/// a theorem after `end Statements` gives `lake build` exit 0, `#check
+/// @Statements.escaped_lemma` "Unknown identifier", and `#check
+/// @escaped_lemma` a printed signature.
+///
+/// `@` for the same reason `check_source` uses it: without it a statement
+/// with implicit or instance binders elaborates as a bare term and Lean
+/// inserts metavariables it cannot solve, so a resolvable name reports as a
+/// stuck instance problem.
+///
+/// **`lake build Rule30.Statements` runs first, and that is not a
+/// nicety.** A stale olean reports unknown identifiers for a file that is
+/// already correct, which sends the reader chasing a namespace fault that
+/// does not exist. The row that asked for this check carried that caution
+/// from the hour it was filed in.
+pub fn statement_resolves(
+  repo_root: String,
+  lake: String,
+  lean_name: String,
+) -> Result(String, String) {
+  case shell.run(lake, ["build", "Rule30.Statements"], repo_root, 600_000) {
+    Error(msg) -> Error("could not build Rule30.Statements: " <> msg)
+    Ok(shell.Run(status:, output:)) if status != 0 ->
+      Error("Rule30.Statements does not build: " <> first_line(output))
+    Ok(_) -> probe_name(repo_root, lake, lean_name)
+  }
+}
+
+fn probe_name(
+  repo_root: String,
+  lake: String,
+  lean_name: String,
+) -> Result(String, String) {
+  let dir = repo_root <> "/harness/build/checks"
+  let path = dir <> "/resolves-" <> lean_name <> ".lean"
+  let _ = simplifile.create_directory_all(dir)
+  case simplifile.write(path, resolve_source(lean_name)) {
+    Error(e) ->
+      Error("could not write the probe: " <> simplifile.describe_error(e))
+    Ok(Nil) ->
+      case shell.run(lake, ["env", "lean", path], repo_root, 600_000) {
+        Error(msg) -> Error(msg)
+        Ok(shell.Run(status:, output:)) if status != 0 ->
+          Error(unresolved_message(lean_name, output))
+        Ok(shell.Run(output:, ..)) ->
+          Ok(string.trim(statement_of(output, lean_name)))
+      }
+  }
+}
+
+/// The probe file: import the statements and ask for the name.
+pub fn resolve_source(lean_name: String) -> String {
+  "import Rule30.Statements
+#check @Statements." <> lean_name <> "
+"
+}
+
+/// Why a name did not resolve, in one line, with the root-namespace case
+/// named because it is the one that has actually happened here and the one
+/// a reader will not think of.
+fn unresolved_message(lean_name: String, output: String) -> String {
+  "`Statements."
+  <> lean_name
+  <> "` does not resolve, so every attempt at this node is unverifiable by "
+  <> "construction: the generated check is `type_of% @Statements."
+  <> lean_name
+  <> "`. If the statement is in the file, check it is above `end "
+  <> "Statements` -- a theorem below it compiles into the root namespace and "
+  <> "`lake build` still exits 0. Lean said: "
+  <> first_line(output)
+}
+
+fn first_line(output: String) -> String {
+  output
+  |> string.split("\n")
+  |> list.find(fn(line) { string.contains(line, "error") })
+  |> result.unwrap(string.trim(output))
+  |> string.trim
+}
+
 // --- the annotation -----------------------------------------------------------
 
 /// The line that opens the harness's block in a proof note. It names the

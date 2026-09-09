@@ -344,3 +344,66 @@ pub fn annotated_refuses_comment_delimiters_test() {
   let assert Error(_) = verify.annotated(a_proof, "Statements.x : ```")
   Nil
 }
+
+// --- does a seeded name resolve where the verifier looks ----------------------
+
+/// Append `text` to the fixture's `Rule30/Statements.lean`, run `f`, and put
+/// the file back byte-for-byte whatever happens. The statements file is
+/// pinned by other tests, so a leftover edit here would fail them somewhere
+/// else entirely.
+fn with_appended_statement(text: String, f: fn(String, String) -> a) -> a {
+  let root = lean_fixture.built()
+  let path = root <> "/Rule30/Statements.lean"
+  let assert Ok(original) = simplifile.read(path)
+  let assert Ok(Nil) = simplifile.write(path, original <> text)
+  let assert Ok(lake) = shell.which("lake")
+  let out = f(root, lake)
+  let assert Ok(Nil) = simplifile.write(path, original)
+  // Leave the oleans matching the file on disk, or the next test that
+  // builds sees a statement this one appended.
+  let _ = shell.run(lake, ["build", "Rule30.Statements"], root, 600_000)
+  out
+}
+
+pub fn a_name_inside_the_namespace_resolves_test() {
+  let assert Ok(lake) = shell.which("lake")
+  let assert Ok(signature) =
+    verify.statement_resolves(lean_fixture.built(), lake, "harness_probe")
+  assert signature == "Statements.harness_probe : True"
+}
+
+pub fn a_name_below_end_statements_is_refused_test() {
+  // The worked instance, reproduced. Three statements were appended after
+  // `end Statements` on 2026-09-08, so they compiled into the root
+  // namespace; three workers were dispatched at them, burned $5.02, and
+  // each correctly reported a fault it could not reach. The file compiles,
+  // which is why `lake build` never caught it and why this check is about
+  // resolution rather than elaboration.
+  use root, lake <- with_appended_statement(
+    "\n/-- Below `end Statements`: compiles, wrong namespace. -/\ntheorem escaped_lemma : True := by\n  sorry\n",
+  )
+  // The premise, asserted rather than assumed: the file still builds.
+  let assert Ok(shell.Run(status: 0, ..)) =
+    shell.run(lake, ["build", "Rule30.Statements"], root, 600_000)
+  // And the name still does not resolve where the verifier looks.
+  let assert Error(reason) =
+    verify.statement_resolves(root, lake, "escaped_lemma")
+  assert string.contains(reason, "escaped_lemma")
+  assert string.contains(reason, "end Statements")
+}
+
+pub fn a_name_that_is_not_in_the_file_at_all_is_refused_test() {
+  let assert Ok(lake) = shell.which("lake")
+  let assert Error(reason) =
+    verify.statement_resolves(lean_fixture.built(), lake, "no_such_statement")
+  assert string.contains(reason, "no_such_statement")
+}
+
+pub fn the_probe_makes_binders_explicit_test() {
+  // Same reason `check_source` does: without `@`, a statement with implicit
+  // or instance binders elaborates as a bare term and Lean inserts
+  // metavariables it cannot solve, so a name that resolves perfectly well
+  // reports as a stuck instance problem.
+  assert verify.resolve_source("some_name")
+    == "import Rule30.Statements\n#check @Statements.some_name\n"
+}

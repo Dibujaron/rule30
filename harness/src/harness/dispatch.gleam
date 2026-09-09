@@ -109,6 +109,13 @@ pub fn prove_one(
       "could not start the build lock: " <> string.inspect(e)
     }),
   )
+  // Same gate as `run`, and here for the reason the comment above gives
+  // about a missing statement: a node whose name does not resolve is
+  // unverifiable by construction, and finding that out after the guard is
+  // up and an identity has been named wastes both. It sits below that
+  // check rather than beside it because it needs the build lock.
+  use _ <- result.try(statement_gate(cfg, lock_actor, node, run_log))
+
   use g <- result.try(guard.start(
     guard.Rules(
       repo_root: cfg.repo_root,
@@ -231,6 +238,12 @@ pub type Env {
     /// a test that called it would elaborate this checkout's own parked
     /// proofs against whatever `lake` the test config names.
     sweep_strays: fn(Subject(lock.Msg)) -> Nil,
+    /// Does this node's seeded statement resolve as
+    /// `Statements.<lean_name>`? `Error` refuses the dispatch. Injected for
+    /// the same reason as the two above and learned the same way: wired
+    /// directly, it ran a real `lake build` inside every fixture run and
+    /// took the suite past ten minutes without failing anything.
+    statement_gate: fn(Subject(lock.Msg), dag.Node) -> Result(Nil, String),
   )
 }
 
@@ -266,6 +279,9 @@ pub fn live_env(cfg: config.Config, l: log.Log) -> Env {
     },
     index: fn(node) { write_index(cfg, l, node) },
     sweep_strays: fn(build_lock) { sweep_strays(cfg, build_lock, l) },
+    statement_gate: fn(build_lock, node) {
+      statement_gate(cfg, build_lock, node, l)
+    },
     check_proposals: fn(path) { seed.check_file_in(cfg.repo_root, path) },
   )
 }
@@ -561,7 +577,13 @@ fn start(
       <> "scheduler should never have offered a node in this state",
     ),
   )
-  case brief.task_message(cfg, node) {
+  // A statement that does not resolve is no statement as far as the
+  // verifier is concerned, so it takes the same exit as one that is missing.
+  let gated = case run_.env.statement_gate(run_.build_lock, node) {
+    Error(reason) -> Error(reason)
+    Ok(Nil) -> brief.task_message(cfg, node)
+  }
+  case gated {
     // No statement, no attempt — but not the run's end either: skip the
     // node and let the loop find another.
     Error(reason) -> {
@@ -1141,6 +1163,86 @@ pub fn status(cfg: config.Config) -> Result(String, String) {
     <> "\n\n"
     <> stray_section(cfg),
   )
+}
+
+/// Refuse to dispatch at a node whose seeded statement does not resolve as
+/// `Statements.<lean_name>`.
+///
+/// Every attempt at such a node is unverifiable by construction: the check
+/// the harness generates is `type_of% @Statements.<lean_name>`, so a
+/// correct proof is rejected and the failure reads as node difficulty. On
+/// 2026-09-08 three statements were appended below `end Statements`, three
+/// workers were dispatched, $5.02 was spent, and all three independently
+/// reported that their proofs were right and the fault was beyond their
+/// reach. It was.
+///
+/// **Pre-dispatch and not at seeding time, which is where the row asked for
+/// it.** The seeder never writes `Rule30/Statements.lean` — it proposes,
+/// and a captain lands by hand (`seed.gleam`'s Proposal doc, and the
+/// seeder's own guard forbids that file). So at `seed check` time the name
+/// is not in the statements file at all and there is nothing to resolve;
+/// worse, the hand landing is exactly what produced the worked instance. A
+/// gate here catches a bad name whoever wrote it.
+///
+/// Under the build lock, because it runs `lake` and a sibling worker may be
+/// verifying. Costs one no-op `lake build` and one elaboration per dispatch
+/// — seconds against an attempt that costs dollars and minutes.
+fn statement_gate(
+  cfg: config.Config,
+  build_lock: Subject(lock.Msg),
+  node: dag.Node,
+  l: log.Log,
+) -> Result(Nil, String) {
+  let holder = node.id <> " (statement gate)"
+  case lock.acquire(build_lock, holder, 600_000) {
+    False -> {
+      // Not a refusal: the gate could not run, and a node is not condemned
+      // for that. The attempt proceeds and the verifier will still catch an
+      // unresolvable name, at the cost this gate exists to avoid.
+      //
+      // **Said out loud, in both places, and that is the point of this
+      // branch existing separately at all.** A gate that fails open
+      // silently is absent exactly when the build lock is busiest — during
+      // a concurrent run, which is when dispatch happens — and the record
+      // afterwards shows an ordinary attempt. "Could not check" must not
+      // read as "checked and clean": that is a state that looks like
+      // success and is not, which is this project's most repeated defect.
+      log.event(l, "statement_gate", [
+        #("node", json.string(node.id)),
+        #("result", json.string("not checked: the build lock was held")),
+      ])
+      io.println_error(
+        "harness/dispatch: "
+        <> node.id
+        <> ": the statement gate did NOT run (the build lock was held for "
+        <> "ten minutes); dispatching unchecked",
+      )
+      Ok(Nil)
+    }
+    True -> {
+      let checked =
+        verify.statement_resolves(cfg.repo_root, cfg.lake, node.lean_name)
+      lock.release(build_lock, holder)
+      case checked {
+        Ok(signature) -> {
+          log.event(l, "statement_gate", [
+            #("node", json.string(node.id)),
+            #("result", json.string("resolves")),
+            #("statement", json.string(signature)),
+          ])
+          Ok(Nil)
+        }
+        Error(reason) -> {
+          log.event(l, "statement_gate", [
+            #("node", json.string(node.id)),
+            #("result", json.string("refused")),
+            #("reason", json.string(reason)),
+          ])
+          Error(reason)
+        }
+      }
+    }
+  }
 }
 
 /// How many strays one run will elaborate before it stops.
