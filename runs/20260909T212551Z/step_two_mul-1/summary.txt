@@ -1,0 +1,16 @@
+
+node      step_two_mul
+identity  Vesper
+model     haiku
+outcome   proved
+cost      $0.76
+turns     32
+estimate  S
+session   41e3e0ff-a518-4308-a3ad-b904ab65eed0
+log       c:/Users/dibuj/dev/rule30/runs/20260909T212551Z/step_two_mul-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Vesper (#2b3a67): closed 66, abandoned 5, $58.93, calibration 54/67

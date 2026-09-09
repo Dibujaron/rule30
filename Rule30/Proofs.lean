@@ -120,6 +120,7 @@ import Rule30.Proofs.Rule30RunBoundary
 import Rule30.Proofs.Rule30Translate
 import Rule30.Proofs.SidewaysInverse
 import Rule30.Proofs.StepModPreperiodLeOfLe11
+import Rule30.Proofs.StepTwoMul
 import Rule30.Proofs.StripEventuallyPeriodic
 import Rule30.Proofs.StripSucc
 import Rule30.Proofs.WindowCountHalf

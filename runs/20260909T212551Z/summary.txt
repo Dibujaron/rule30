@@ -1,0 +1,5 @@
+
+step_two_mul                      Vesper   haiku   proved            $0.76   32 turns
+leftDiagonal_onset_le             Cadence  fable   abandoned         $6.92   27 turns
+
+2 attempt(s), 1 closed, $7.68 in all

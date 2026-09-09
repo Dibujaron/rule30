@@ -1,0 +1,10 @@
+{"ts":"2026-09-09T21:25:51Z","kind":"run","max_attempts":2,"concurrency":2}
+{"ts":"2026-09-09T21:25:51Z","kind":"dispatch","node":"step_two_mul","identity":"Vesper","model":"haiku","reason":"open leaf; unblocks 1; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4130,"log":"c:/Users/dibuj/dev/rule30/runs/20260909T212551Z/step_two_mul-1","in_flight":1}
+{"ts":"2026-09-09T21:25:51Z","kind":"dispatch","node":"leftDiagonal_onset_le","identity":"Cadence","model":"fable","reason":"open leaf; unblocks 0; research node at its top rung, attempt 6 there","max_turns":120,"max_budget_usd":20.0,"port":4131,"log":"c:/Users/dibuj/dev/rule30/runs/20260909T212551Z/leftDiagonal_onset_le-11","in_flight":2}
+{"ts":"2026-09-09T21:29:57Z","kind":"index","node":"step_two_mul","module":"Rule30.Proofs.StepTwoMul","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-09T21:29:57Z","kind":"theorem_index","node":"step_two_mul","file":"blueprint/index.md","outcome":"written"}
+{"ts":"2026-09-09T21:37:39Z","kind":"stray","file":"runs/20260909T212551Z/leftDiagonal_onset_le-11/LeftDiagonalOnsetLe.lean","verdict":"clean"}
+{"ts":"2026-09-09T21:37:39Z","kind":"stray","file":"explorer/talus4_scratch_staircase.lean","verdict":"no_theorems"}
+{"ts":"2026-09-09T21:37:39Z","kind":"stray","file":"explorer/talus5_probe.lean","verdict":"no_theorems"}
+{"ts":"2026-09-09T21:38:05Z","kind":"stray","file":"explorer/talus5_scratch_halving.lean","verdict":"clean"}
+{"ts":"2026-09-09T21:38:05Z","kind":"stray","file":"explorer/vernier_scratch_tfunc.lean","verdict":"no_theorems"}

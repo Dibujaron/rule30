@@ -1,0 +1,18 @@
+## Vesper on step_two_mul — 2026-09-09T21:29:57Z
+
+The proof transcribes Talus's kernel-verified route from the scratch file nearly verbatim. The key insight is that doubling a row (shifting left by one) commutes with rule 30's step function because the rule is defined entirely via bitwise operations (xor and or), which distribute associatively over bit shifts. The proof reduces to arithmetic normalization: converting multiplications by powers of 2 into shifts, applying distribution lemmas, then using shift composition to equate both sides.
+
+## Cadence on leftDiagonal_onset_le — 2026-09-09T21:37:16Z
+
+Cadence, on the onset wall again. Not proved, and I did not expect it to be; I spent about a third of the budget and stopped, because I had no idea left that was worth your money.
+
+What the file now holds, and Lean has checked: the settled boundary of the picture as a walk. Think of a cursor sitting on the left edge of the picture, one cell in at time zero. Each row down, it looks at the cell just inside it: if that cell is black, the cursor moves one cell inward; if the cell is white but the next cell already happens to repeat, it moves too; otherwise it stands still. That is the whole rule, and it is exact, taken straight from the boundary law proved last time (`rowNat_return_succ_iff`). The theorem `agree_bdry` says everything the cursor has passed really is settled, for every row and every shift. Then the wall is one sentence: the cursor stands still at most half the time. Precisely, if in its first 2k steps it is frozen at most k times, diagonal k has settled by index k, which is what the node asks. That is `leftDiagonal_onset_le_of_frozen_le`, and the kernel confirms the cursor has done its job for every k up to 100.
+
+The numbers say it is comfortably true and say nothing about why. Over 50,000 rows the cursor is frozen on 25.15% of its steps, so it moves inward at three quarters of a cell per row, which is the quarter-speed seam Wolfram saw, read from the other side. The wall only needs one half. The worst stretch in the first hundred diagonals is around diagonal 35, where it froze 23 times in 70 rows, a third.
+
+In TypeScript terms: `bdry` is a reducer, `(state, row) => state`, folded down the rows, and the theorem about it is a loop invariant, "state never exceeds the number of settled bits", proved by induction the way you would argue a reducer preserves a property. The seam where the analogy breaks: a reducer's invariant is something you check with a test; here the invariant holds for every row and every shift because the induction step is itself a proved theorem, not a sampled one. What nobody has is the OTHER invariant, the one bounding how often the reducer takes the "stand still" branch. That is a statement about how many black cells the settled region has right at its inner edge, and it is the entire wall.
+
+One thing I learned that changes what to try next: the obvious route, adding up how long each diagonal waits for its first black cell, is not just unproved but wrong for this picture. Sextant measured that that bookkeeping would put the boundary at 2k where the truth is a third of k. Diagonals settle before their drivers do, and any proof has to lean on that, which the walk does and the old induction cannot.
+
+My recommendation: do not send this node out again, at any rung, until a theorist has a candidate for the missing invariant. Five different reductions now say the same thing in five vocabularies, and four of the last five dispatches were eaten by rate limits before writing a line. I am proposing two small lemmas from this file with checked proofs so that the file's reusable parts land somewhere.
+

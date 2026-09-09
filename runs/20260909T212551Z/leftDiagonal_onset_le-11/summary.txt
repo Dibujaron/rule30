@@ -1,0 +1,16 @@
+
+node      leftDiagonal_onset_le
+identity  Cadence
+model     fable
+outcome   abandoned
+cost      $6.92
+turns     27
+estimate  wall
+session   3d5c71a2-6ff7-4623-bab7-30ace53f8274
+log       c:/Users/dibuj/dev/rule30/runs/20260909T212551Z/leftDiagonal_onset_le-11
+proof     c:/Users/dibuj/dev/rule30/runs/20260909T212551Z/leftDiagonal_onset_le-11/LeftDiagonalOnsetLe.lean (moved out of Rule30/Proofs/: not a closed node)
+
+verifier:
+Not proved and the wall stands; the file builds with the settled boundary defined as a computable walk on the packed rows, a proof that everything under the walk is settled, and the reduction of the wall to "the walk is frozen at most k times in its first 2k steps", kernel-checked to depth 100 and measured frozen on 25.15% of steps over 50,000 rows.
+
+Cadence (#2a6f77): closed 28, abandoned 8, $47.53, calibration 21/33

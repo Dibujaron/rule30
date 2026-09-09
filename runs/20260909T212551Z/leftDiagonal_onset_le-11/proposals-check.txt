@@ -1,0 +1,10 @@
+periodicFrom_trans_period
+  DOES NOT PROVE: A statement about Bool sequences, not about rule 30; it bears on no wall by itself.
+  route:   closes the statement
+  witness: unchecked — no witness supplied
+leftDiagonal_white_succ_iff
+  DOES NOT PROVE: Local mechanism only; it bounds no run length and proves nothing about any onset.
+  route:   closes the statement
+  witness: unchecked — no witness supplied
+
+2 unchecked
