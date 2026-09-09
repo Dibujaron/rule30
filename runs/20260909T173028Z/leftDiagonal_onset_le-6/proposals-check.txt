@@ -1,0 +1,12 @@
+rowStep_mod_preperiod_le
+  DOES NOT PROVE: Strictly stronger than leftDiagonal_onset_le, not a restatement: it is about every start below 2^(k+1), and only its instance at 1 is the wall. Nobody has a proof; the per-bit growth of the transient reaches 3 for a single start, so no per-bit invariant with slope 2 exists and any proof must amortise over at least three bits.
+  WARNING: the statement mixes ℕ and ℤ or uses absolute value — found |·|. Provers spent their budgets cycling on casts (two of the three exhaustions on 2026-09-07); the captain's rule in docs/prover-cookbook.md prefers a statement in ℕ, with an absolute value over casts written as two ℕ inequalities.
+  route:   none claimed
+  witness: PLACEHOLDER, refused without running — names nothing from the statement: (List.range (2 ^ (k + 1))).all (fun x => (fun r => ((4 * r) ^^^ ((2 * r) ||| r)) % 2 ^ (k + 1))^[2 * k + 4] x == (fun r => ((4 * r) ^^^ ((2 * r) ||| r)) % 2 ^ (k + 1))^[2 * k] x)
+leftDiagonal_onset_le_of_rowStep_mod_preperiod
+  DOES NOT PROVE: Conditional on the universal preperiod statement; proves nothing about the wall on its own.
+  WARNING: the statement mixes ℕ and ℤ or uses absolute value — found |·|. Provers spent their budgets cycling on casts (two of the three exhaustions on 2026-09-07); the captain's rule in docs/prover-cookbook.md prefers a statement in ℕ, with an absolute value over casts written as two ℕ inequalities.
+  route:   DOES NOT CLOSE — c:/Users/dibuj/dev/rule30/harness/build/checks/seed/leftDiagonal_onset_le_of_rowStep_mod_preperiod_d8468cc832393b5f6b3da18b9f7da8d5.lean:11:28: error(lean.unknownIdentifier): Unknown identifier `leftDiagonal_periodicFrom_of_rowNat_return`
+  witness: unchecked — no witness supplied
+
+1 placeholder, 1 unchecked, 2 with a cast warning

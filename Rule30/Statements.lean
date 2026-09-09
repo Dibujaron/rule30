@@ -1470,4 +1470,40 @@ theorem centerColumn_run_boundary (t : ℕ) :
       (evolve t 0 = false ∧ evolve t 1 = true ∧ evolve t (-1) = false) := by
   sorry
 
+/-- **The rows, modulo `2 ^ n`, are the orbit of `1` under one integer
+operation.** Writing `stepMod n r = ((4 * r) ^^^ ((2 * r) ||| r)) % 2 ^ n` — rule
+30 applied to a whole row at once, as a single bit-twiddle on a natural number,
+truncated to `n` bits — the seed's row `t` reduced mod `2 ^ n` is exactly
+`(stepMod n)^[t]` applied to `1`.
+
+This is `rowCell_eq_evolve` and `rowNat` pushed to their conclusion: the picture
+below the cone is the forward orbit of `1` under a map from `Fin (2 ^ n)` to
+itself. Proved by Cadence at `leftDiagonal_onset_le` attempt 6; axioms
+`[propext, Quot.sound]`. -/
+theorem rowNat_mod_eq_iterate (n t : ℕ) :
+    rowNat t % 2 ^ n = (fun r => ((4 * r) ^^^ ((2 * r) ||| r)) % 2 ^ n)^[t] (1 % 2 ^ n) := by
+  sorry
+
+/-- **The onset wall reduces to a preperiod bound for a finite map.** If for every
+`k` and every start `x < 2 ^ (k + 1)` the orbit of `x` under the truncated step
+`stepMod (k + 1)` is repeating from step `2 * k` on, then every left diagonal
+has settled by its own index.
+
+The hypothesis mentions no cellular automaton: it says a map on the integers mod
+`2 ^ (k + 1)` — take `r`, form `4 * r XOR (2 * r OR r)`, truncate — has preperiod
+at most `2 * k` from **every** start. That is stronger than needed, since only
+the start `1` is used, and it is stated in the strong form because that is what
+the survey measures.
+
+Proved by Cadence at `leftDiagonal_onset_le` attempt 6
+(`runs/20260909T173028Z/leftDiagonal_onset_le-6/`), which abandoned the wall
+itself for the sixth time; re-verified by the captain, axioms exactly the three
+permitted. -/
+theorem leftDiagonal_onset_le_of_stepMod_preperiod
+    (H : ∀ k x : ℕ, x < 2 ^ (k + 1) → ∃ p > 0, ∀ t ≥ 2 * k,
+      (fun r => ((4 * r) ^^^ ((2 * r) ||| r)) % 2 ^ (k + 1))^[t + p] x
+        = (fun r => ((4 * r) ^^^ ((2 * r) ||| r)) % 2 ^ (k + 1))^[t] x) :
+    ∀ k, ∃ p > 0, ∃ N ≤ k, PeriodicFrom (leftDiagonal k) p N := by
+  sorry
+
 end Statements

@@ -1,0 +1,16 @@
+
+node      leftDiagonal_onset_le
+identity  Cadence
+model     fable
+outcome   abandoned
+cost      $5.97
+turns     10
+estimate  wall
+session   163ef67e-91b1-4b19-963c-d5f09f534f8a
+log       c:/Users/dibuj/dev/rule30/runs/20260909T173028Z/leftDiagonal_onset_le-6
+proof     c:/Users/dibuj/dev/rule30/runs/20260909T173028Z/leftDiagonal_onset_le-6/LeftDiagonalOnsetLe.lean (moved out of Rule30/Proofs/: not a closed node)
+
+verifier:
+Not proved and the wall stands; the file builds with a proved reduction of the node to a universal statement about the truncated row map started from ANY number below 2^(k+1), which the kernel confirms for every start at every width to 12 (and the survey to width 18, period never above 4), alongside the seed's own depth-5000 check.
+
+Cadence (#2a6f77): closed 25, abandoned 6, $38.05, calibration 19/29
