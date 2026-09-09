@@ -45,7 +45,7 @@ pub type Verdict {
 
 /// The axioms a proof may depend on: `propext`, `Classical.choice`, and
 /// `Quot.sound` — the three Lean and Mathlib rely on throughout.
-const allowed_axioms = ["propext", "Classical.choice", "Quot.sound"]
+pub const allowed_axioms = ["propext", "Classical.choice", "Quot.sound"]
 
 /// Verify `node`'s proof file, running `lake` (an absolute path, from
 /// `shell.which("lake")`) with `repo_root` as its working directory.

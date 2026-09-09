@@ -174,6 +174,10 @@ fn env(f: Fixture, verdict: verify.Verdict) -> dispatch.Env {
     // fixture has neither concern, so a stub is honest rather than a
     // shortcut.
     check_proposals: fn(_path) { Ok("stubbed check") },
+    // Same reason: the real sweep elaborates this checkout's own parked
+    // proofs, which a fixture run has no business doing and no `lake` to do
+    // it with.
+    sweep_strays: fn(_lock) { Nil },
   )
 }
 

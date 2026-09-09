@@ -27,6 +27,7 @@ import harness/log
 import harness/roster
 import harness/schedule.{type Plan}
 import harness/seed
+import harness/stray
 import harness/verify
 import harness/worker
 import harness/worker/brief
@@ -213,6 +214,11 @@ pub type Env {
     annotate: fn(dag.Node, String) -> Result(Nil, String),
     index: fn(dag.Node) -> Result(Nil, String),
     check_proposals: fn(String) -> Result(String, String),
+    /// Elaborate the unchecked strays once the run is over. Injected for
+    /// exactly the reason `check_proposals` is: the real one runs Lean, so
+    /// a test that called it would elaborate this checkout's own parked
+    /// proofs against whatever `lake` the test config names.
+    sweep_strays: fn(Subject(lock.Msg)) -> Nil,
   )
 }
 
@@ -247,6 +253,7 @@ pub fn live_env(cfg: config.Config, l: log.Log) -> Env {
       verify.annotate(cfg.repo_root, node, statement)
     },
     index: fn(node) { write_index(cfg, l, node) },
+    sweep_strays: fn(build_lock) { sweep_strays(cfg, build_lock, l) },
     check_proposals: fn(path) { seed.check_file_in(cfg.repo_root, path) },
   )
 }
@@ -349,6 +356,7 @@ fn run_with_log(
       })
     }
   }
+  env.sweep_strays(build_lock)
   Ok(text)
 }
 
@@ -1123,21 +1131,134 @@ pub fn status(cfg: config.Config) -> Result(String, String) {
   )
 }
 
+/// How many strays one run will elaborate before it stops.
+///
+/// Measured 2026-09-09 with warm oleans: 2.5s, 5.3s, 5.8s, 9.0s and 19.7s
+/// for five files. Twelve is about a minute of tail on a run that has just
+/// spent tens of minutes, and the cache means successive runs work through
+/// whatever is left rather than repeating it. A cap at all is because this
+/// is the least urgent thing the harness does and must never be the reason
+/// a run looks hung.
+const stray_sweep_limit = 12
+
+/// Elaborate the strays whose verdicts the cache does not already hold, and
+/// record what they rest on.
+///
+/// **Here, at the end of a run, and nowhere else.** The lock is free (no
+/// attempt is in flight), the process already holds it, and nobody is
+/// waiting on the output. `status` cannot do this — it would block for
+/// minutes on the lock a live run queues on, and a `status` that blocks is
+/// a `status` nobody runs, which is exactly how this section went unread
+/// for an evening on 2026-09-09.
+///
+/// A run killed before this point leaves the cache as it was, and those
+/// files print `unchecked`: the inert failure rather than a wrong verdict.
+fn sweep_strays(
+  cfg: config.Config,
+  build_lock: Subject(lock.Msg),
+  l: log.Log,
+) -> Nil {
+  let cache_path = stray.cache_path(cfg.repo_root)
+  let cache = stray.load(cache_path)
+  let unchecked =
+    stray_proofs(cfg)
+    |> list.filter(fn(path) {
+      case stray.hash_of(cfg.repo_root <> "/" <> path) {
+        Error(_) -> False
+        Ok(hash) -> stray.lookup(cache, path, hash) == None
+      }
+    })
+    |> list.take(stray_sweep_limit)
+  case unchecked {
+    [] -> Nil
+    some -> {
+      io.println(
+        "checking what "
+        <> int.to_string(list.length(some))
+        <> " unchecked stray .lean file(s) rest on; seconds each",
+      )
+      let holder = "stray sweep"
+      case lock.acquire(build_lock, holder, 600_000) {
+        False -> io.println_error("harness/dispatch: " <> lock_held_message)
+        True -> {
+          let filled =
+            list.fold(some, cache, fn(acc, path) {
+              case stray.hash_of(cfg.repo_root <> "/" <> path) {
+                Error(_) -> acc
+                Ok(hash) -> {
+                  let verdict =
+                    stray.check(cfg.repo_root, cfg.lake, cfg.repo_root <> "/" <> path)
+                  log.event(l, "stray", [
+                    #("file", json.string(path)),
+                    #("verdict", json.string(stray.verdict_tag(verdict))),
+                  ])
+                  stray.put(
+                    acc,
+                    stray.Entry(
+                      path:,
+                      hash:,
+                      verdict:,
+                      checked: log.now_iso(),
+                    ),
+                  )
+                }
+              }
+            })
+          lock.release(build_lock, holder)
+          case stray.save(filled, cache_path) {
+            Ok(Nil) -> Nil
+            Error(reason) ->
+              io.println_error("harness/dispatch: stray cache: " <> reason)
+          }
+        }
+      }
+    }
+  }
+}
+
 /// The `stray_proofs` section, listed by `status` rather than behind a
 /// verb of its own: not going to look IS the failure this addresses, and
 /// a verb a captain has to remember would reproduce it.
 fn stray_section(cfg: config.Config) -> String {
   let strays = stray_proofs(cfg)
+  let cache = stray.load(stray.cache_path(cfg.repo_root))
   "Checked Lean the build cannot see ("
   <> int.to_string(list.length(strays))
   <> "): `sorry`-free .lean under runs/ or explorer/ that "
   <> "Rule30/Proofs.lean does not import. A parked attempt's proof or a "
   <> "theorist's scratch -- work already paid for that no verb points at, "
   <> "and an attempt whose outcome says `abandoned` is exactly the record "
-  <> "nobody re-reads:\n"
+  <> "nobody re-reads. `proves X` means the file elaborates and rests only "
+  <> "on the three permitted axioms: worth reading, never `seed this`, since "
+  <> "a stray can be cleanly proved and prove something merely near what a "
+  <> "node asks for:\n"
   <> case strays {
     [] -> "  (none)"
-    some -> string.join(list.map(some, fn(p) { "  " <> p }), "\n")
+    some ->
+      string.join(
+        list.map(some, fn(p) { stray.row(p, verdict_for(cache, cfg, p)) }),
+        "\n",
+      )
+  }
+}
+
+/// The cached verdict for one stray, if the cache holds one computed over
+/// the bytes that are on disk now.
+///
+/// Never elaborates. `status` must not run Lean: the population is minutes
+/// of work and it holds the `lake` lock a live run queues on, and a
+/// `status` that blocks is a `status` nobody runs — which is how this very
+/// section went unread for an evening. The sweep at the end of a run fills
+/// the cache; anything it has not reached prints `unchecked`, which is
+/// inert and true.
+fn verdict_for(
+  cache: List(stray.Entry),
+  cfg: config.Config,
+  path: String,
+) -> Option(stray.Verdict) {
+  case stray.hash_of(cfg.repo_root <> "/" <> path) {
+    Error(_) -> None
+    Ok(hash) -> stray.lookup(cache, path, hash)
   }
 }
 

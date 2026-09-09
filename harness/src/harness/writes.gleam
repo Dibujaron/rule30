@@ -49,12 +49,18 @@ pub type Site {
 }
 
 /// The modules that are *allowed* to contain a raw `simplifile` write: the
-/// implementations behind the names in `declared`, plus the two that write
+/// implementations behind the names in `declared`, plus the three that write
 /// only into `harness/build/`, which is gitignored scratch and cannot be the
 /// subject of a freeze. A raw write anywhere else is a writer nobody declared.
+///
+/// `stray.gleam` is one of the three: it writes the copy it elaborates and
+/// its verdict cache, both under `harness/build/`. It was added here because
+/// this check failed on its first day and named both lines, which is the
+/// behaviour the module comment above promises.
 pub const implementations = [
   "bugs.gleam", "dag.gleam", "roster.gleam", "log.gleam", "guard.gleam",
   "dispatch.gleam", "worker.gleam", "verify.gleam", "seed.gleam", "index.gleam",
+  "stray.gleam",
 ]
 
 /// The hand-maintained half, and the only hand-maintained half.

@@ -6,7 +6,7 @@
 -module(harness_ffi).
 -export([spawn_port/3, port_send/2, port_recv/2, port_close/1,
          run_cmd/4, to_utf8/1, find_executable/1, now_iso/0, run_id/0,
-         mono_ms/0, token/0, set_cwd/1, free_port_span/1]).
+         mono_ms/0, token/0, set_cwd/1, free_port_span/1, sha256_hex/1]).
 
 %% ---- Deadlines -------------------------------------------------------------
 
@@ -186,3 +186,11 @@ hold_span(Base, N, Held) ->
             [gen_tcp:close(S) || S <- Held],
             error
     end.
+
+%% ---- Content hashing -------------------------------------------------------
+
+%% A file's content, as lowercase hex sha256. Keyed on content rather than
+%% mtime because a checkout, a rebase or a fresh worktree moves every mtime
+%% in the tree without changing a byte of it.
+sha256_hex(Bin) ->
+    string:lowercase(binary:encode_hex(crypto:hash(sha256, Bin))).
