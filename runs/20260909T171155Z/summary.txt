@@ -1,0 +1,6 @@
+
+leftDiagonal_onset_le_iff_rowNat_returnCadence  opus    proved            $1.50   7 turns
+leftDiagonal_agree_succ_iff       Vesper   sonnet  proved            $1.00   13 turns
+leftDiagonal_onset_le             Cadence  fable   abandoned         $5.51   16 turns
+
+3 attempt(s), 2 closed, $8.01 in all

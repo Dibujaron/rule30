@@ -1,0 +1,9 @@
+rowNat_return_succ_iff
+  DOES NOT PROVE: Does not bound how long the boundary stays frozen; that bound is the whole of leftDiagonal_onset_le.
+  route:   closes the statement
+  witness: BROKEN CHECK, says nothing about the statement — c:/Users/dibuj/dev/rule30/harness/build/checks/seed/witness_rowNat_return_succ_iff_c661c2968540dba6db07740be11da922.lean:3:53: error(lean.unknownIdentifier): Unknown identifier `T`
+periodicFrom_trans_period
+  route:   closes the statement
+  witness: unchecked — no witness supplied
+
+1 broken check, 1 unchecked

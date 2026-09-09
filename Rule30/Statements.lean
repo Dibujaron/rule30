@@ -1413,4 +1413,24 @@ theorem leftDiagonal_agree_succ_iff (m i : ℕ)
       (leftDiagonal (m + 3) (i + 1) = false ∧ leftDiagonal m (i + 4) = false) := by
   sorry
 
+/-- **The inductive step for the onset wall's arithmetic form.** Given that rows
+`T` and `T + p` already agree on their low `n + 1` bits, their successors agree
+on the low `n + 2` bits exactly when either bit `n` of `rowNat T` is set, or the
+two rows already agreed on `n + 2` bits.
+
+This is the recursion `leftDiagonal_onset_le_iff_rowNat_return` turns the wall
+into: the return property propagates one bit at a time, and the condition for it
+to keep propagating is a single bit of the current row. An inductive proof of the
+wall goes through here or not at all.
+
+Proved by Cadence at `leftDiagonal_onset_le` attempt 5
+(`runs/20260909T171155Z/leftDiagonal_onset_le-5/`), which abandoned the wall
+itself; re-verified by the captain, axioms exactly the three permitted. -/
+theorem rowNat_return_succ_iff (n T p : ℕ)
+    (h : rowNat T % 2 ^ (n + 1) = rowNat (T + p) % 2 ^ (n + 1)) :
+    rowNat (T + 1) % 2 ^ (n + 2) = rowNat (T + p + 1) % 2 ^ (n + 2) ↔
+      ((rowNat T).testBit n = true ∨
+        rowNat T % 2 ^ (n + 2) = rowNat (T + p) % 2 ^ (n + 2)) := by
+  sorry
+
 end Statements

@@ -1,0 +1,16 @@
+
+node      leftDiagonal_onset_le
+identity  Cadence
+model     fable
+outcome   abandoned
+cost      $5.51
+turns     16
+estimate  wall
+session   8b09e643-9a9f-4f8f-a584-f5df493c88b7
+log       c:/Users/dibuj/dev/rule30/runs/20260909T171155Z/leftDiagonal_onset_le-5
+proof     c:/Users/dibuj/dev/rule30/runs/20260909T171155Z/leftDiagonal_onset_le-5/LeftDiagonalOnsetLe.lean (moved out of Rule30/Proofs/: not a closed node)
+
+verifier:
+Not proved and the wall stands; the file builds on the now-served imports with the depth-5000 kernel check kept, plus one new verified theorem, the exact law of the settled boundary in the row model: it moves inward one cell exactly when the settled cell just inside it is black and stands still exactly when that cell is white, so the wall is precisely "the boundary stands still at most half the time".
+
+Cadence (#2a6f77): closed 25, abandoned 5, $32.09, calibration 19/28

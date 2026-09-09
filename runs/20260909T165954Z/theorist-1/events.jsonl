@@ -23,3 +23,26 @@
 {"ts":"2026-09-09T17:14:44Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Edit","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus3_sound.cjs","denial":"","decision":"Allow"}
 {"ts":"2026-09-09T17:14:47Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/talus3_sound.cjs","denial":"","decision":"Allow"}
 {"ts":"2026-09-09T17:14:48Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/talus3_sound.cjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T17:16:36Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus3_anchor.cjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T17:16:38Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/talus3_anchor.cjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T17:16:39Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/talus3_anchor.cjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T17:17:39Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus3_anchor.cjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T17:17:43Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/talus3_anchor.cjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T17:17:43Z","kind":"guard","node":"theorist-1","event":"PostToolUseFailure","tool":"Bash","attempted":"node explorer/talus3_anchor.cjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T17:17:50Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Edit","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus3_anchor.cjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T17:17:53Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/talus3_anchor.cjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T17:17:53Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/talus3_anchor.cjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T17:18:06Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Edit","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus3_anchor.cjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T17:18:10Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Edit","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus3_anchor.cjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T17:18:12Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/talus3_anchor.cjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T17:18:15Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/talus3_anchor.cjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T17:20:09Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/alidade_dp4.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T17:20:12Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/alidade_dp4.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T17:21:19Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus3_diag.cjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T17:21:22Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/talus3_diag.cjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T17:24:30Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/talus3_diag.cjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T17:25:33Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus3_visit.cjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T17:25:39Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/talus3_visit.cjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T17:25:55Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/talus3_visit.cjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T17:26:54Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus3_amp2.cjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T17:26:58Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/talus3_amp2.cjs","denial":"","decision":"Allow"}
