@@ -1,0 +1,46 @@
+
+seeder    Seeder
+model     opus
+region    P1
+ended     finished — the seeder reported its proposal written; that is its claim about the file, and the check below is the only adjudication
+ceilings  80 turns, $12.0
+cost      $8.05
+turns     51
+session   3173e088-96d0-403d-a672-f5793ca8fcfc
+log       c:/Users/dibuj/dev/rule30/runs/20260909T230801Z/seed-1
+proposal  c:/Users/dibuj/dev/rule30/blueprint/proposals/next.json
+
+Six P1 proposals written to blueprint/proposals/next.json — four under the two dispatchable walls, all six typechecking as proposed, with four compiled routes and two evaluated witnesses.
+
+check of c:/Users/dibuj/dev/rule30/blueprint/proposals/next.json:
+leftDiagonal_period_le_of_white_count
+  DOES NOT PROVE: Proves nothing about how many diagonals are eventually white, which is the whole of what is open. With w counting every diagonal it degenerates to the already-proved 2 ^ k. It is a claim about the left edge of the cone and bears on no prize conjecture.
+  under:   leftDiagonal_period_le
+  route:   none claimed
+  witness: unchecked — no witness supplied
+leftDiagonal_step_of_white_parity
+  DOES NOT PROVE: On the seed the even branch is so far vacuous: all four eventually-white diagonals below 400 carry odd parity and every one of them doubles the period. So this does not on its own make doublings rarer than whites — it says the two coincide exactly when the parity is odd, and pins the period exactly in that case. Not a prize conjecture; a claim about the left edge only.
+  under:   leftDiagonal_period_le
+  route:   none claimed
+  witness: holds over n < 10, i.e. the instance m = 1, q = 1, N = 0 of the odd branch: diagonal 2 is white everywhere, diagonal 1 is constantly black so the one-term parity sum is odd, and the conclusion is that diagonal 3 alternates. Reads evolve to depth 13. Only this one instance; the even branch cannot be witnessed because no instance of it occurs in the seed within reach.
+leftDiagonal_onset_le_of_black_ladder
+  DOES NOT PROVE: Says nothing about whether such a ladder with N k ≤ k exists — that is the wall. Do not read the measured N k / k → 2 as a proof of anything: the greedy ladder cannot retreat and the real seam does, on about a quarter of rows (crystal 52). Not a prize conjecture; the left edge only.
+  under:   leftDiagonal_onset_le
+  route:   DOES NOT CLOSE — c:/Users/dibuj/dev/rule30/harness/build/checks/seed/leftDiagonal_onset_le_of_black_ladder_782b925cf6d9629f30ee67572d50d584.lean:12:46: error: unsolved goals
+  witness: unchecked — no witness supplied
+leftDiagonal_not_both_eventually_white
+  DOES NOT PROVE: k/2 is not a useful bound and this does not pretend to be one. Not a prize conjecture; the left edge only.
+  under:   leftDiagonal_period_le
+  route:   closes the statement
+  witness: unchecked — no witness supplied
+periodicFrom_trans_period
+  DOES NOT PROVE: Pure sequence bookkeeping; there is no automaton in it and it proves nothing about rule 30.
+  route:   DOES NOT CLOSE — c:/Users/dibuj/dev/rule30/harness/build/checks/seed/periodicFrom_trans_period_be4eb69c3fe9be16e4af42f7b4853b10.lean:4:80: error: unsolved goals
+  witness: unchecked — no witness supplied
+centerColumn_eq_rowNat_testBit
+  DOES NOT PROVE: Supply, not insight, and it does not bear on aperiodicity: it is a change of notation for the centre column, and every hard thing about that sequence survives it unchanged. It opens the door to kernel computations about the centre column, and a computed prefix is not a theorem about the limit — no rung of that ladder can close P1.
+  route:   DOES NOT CLOSE — c:/Users/dibuj/dev/rule30/harness/build/checks/seed/centerColumn_eq_rowNat_testBit_508cc2a166b5cc209895954bee824ecc.lean:3:90: error: unsolved goals
+  witness: holds over t < 12; centerColumn reads evolve, so this costs about 3^11 neighbour evaluations at the last term
+
+4 unchecked, 2 holds
+
