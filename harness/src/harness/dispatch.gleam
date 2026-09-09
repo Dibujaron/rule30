@@ -1122,8 +1122,28 @@ pub fn status(cfg: config.Config) -> Result(String, String) {
     <> "offer these):\n"
     <> string.join(walled_lines, "\n")
     <> "\n\nOpen leaves, in dispatch order:\n"
-    <> string.join(startable_lines, "\n"),
+    <> string.join(startable_lines, "\n")
+    <> "\n\n"
+    <> stray_section(cfg),
   )
+}
+
+/// The `stray_proofs` section, listed by `status` rather than behind a
+/// verb of its own: not going to look IS the failure this addresses, and
+/// a verb a captain has to remember would reproduce it.
+fn stray_section(cfg: config.Config) -> String {
+  let strays = stray_proofs(cfg)
+  "Checked Lean the build cannot see ("
+  <> int.to_string(list.length(strays))
+  <> "): `sorry`-free .lean under runs/ or explorer/ that "
+  <> "Rule30/Proofs.lean does not import. A parked attempt's proof or a "
+  <> "theorist's scratch -- work already paid for that no verb points at, "
+  <> "and an attempt whose outcome says `abandoned` is exactly the record "
+  <> "nobody re-reads:\n"
+  <> case strays {
+    [] -> "  (none)"
+    some -> string.join(list.map(some, fn(p) { "  " <> p }), "\n")
+  }
 }
 
 /// What the next attempt at `n` would actually spend: how many attempts
@@ -1178,6 +1198,63 @@ fn dispatch_line(
   <> " turns, $"
   <> float.to_string(attempt_cfg.max_budget_usd)
   <> " ceiling"
+}
+
+/// Every `.lean` under `dir`, recursively, or `[]` if `dir` is not there.
+fn lean_files_under(dir: String) -> List(String) {
+  case simplifile.read_directory(dir) {
+    Error(_) -> []
+    Ok(entries) ->
+      list.flat_map(entries, fn(entry) {
+        let path = dir <> "/" <> entry
+        case simplifile.is_directory(path) {
+          Ok(True) -> lean_files_under(path)
+          _ ->
+            case string.ends_with(entry, ".lean") {
+              True -> [path]
+              False -> []
+            }
+        }
+      })
+  }
+}
+
+/// Checked Lean sitting in the checkout that the build cannot see:
+/// `sorry`-free `.lean` files under `runs/` and `explorer/`, which
+/// `Rule30/Proofs.lean` never imports because it imports only
+/// `Rule30.Proofs.*`.
+///
+/// Three things write Lean here and only one of them is read afterwards. A
+/// prover that does not close its node has its file moved out of
+/// `Rule30/Proofs/` into the attempt directory, and the next brief for that
+/// node names the moved path (`brief.previous_attempt_file`) -- but only
+/// when the file is under `<run>/<node.id>-<n>/` and carries the node's own
+/// proof basename, which two of the eight files under `runs/` did not. A
+/// theorist may write scratch anywhere it is allowed to, and `explorer/` is
+/// allowed: fourteen `sorry`-free files sat there on 2026-09-08, one
+/// holding four cleanly-proved theorems including translation equivariance
+/// of rule 30, from a $14.22 session, which the board did not have.
+///
+/// The `sorry` filter is what separates a finding from noise. An unimported
+/// file full of holes is scratch and always will be; an unimported file
+/// with no holes is work already paid for that nothing points at.
+pub fn stray_proofs(cfg: config.Config) -> List(String) {
+  [cfg.runs_root, cfg.repo_root <> "/explorer"]
+  |> list.flat_map(lean_files_under)
+  |> list.filter(fn(path) {
+    case simplifile.read(path) {
+      Ok(text) -> !string.contains(text, "sorry")
+      Error(_) -> False
+    }
+  })
+  |> list.map(fn(path) {
+    let root = cfg.repo_root <> "/"
+    case string.starts_with(path, root) {
+      True -> string.drop_start(path, string.length(root))
+      False -> path
+    }
+  })
+  |> list.sort(string.compare)
 }
 
 /// A node's size, with `research` after it when the node is one.

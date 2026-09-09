@@ -1253,3 +1253,61 @@ pub fn write_proposals_records_a_check_that_ran_test() {
   assert string.contains(check_text, "none claimed")
   assert string.contains(check_text, "no witness supplied")
 }
+
+// --- stray proofs ---------------------------------------------------------------
+
+fn strays_cfg() -> config.Config {
+  let assert Ok(c) = config.load()
+  let dir = "build/test-runs/dispatch-strays"
+  let _ = simplifile.delete(dir)
+  let assert Ok(_) = simplifile.create_directory_all(dir <> "/runs/r1/probe-1")
+  let assert Ok(_) = simplifile.create_directory_all(dir <> "/explorer")
+  let assert Ok(_) =
+    simplifile.write(
+      to: dir <> "/runs/r1/probe-1/Probe.lean",
+      contents: "theorem probe : True := trivial",
+    )
+  let assert Ok(_) =
+    simplifile.write(
+      to: dir <> "/runs/r1/probe-1/Half.lean",
+      contents: "theorem half : True := by sorry",
+    )
+  let assert Ok(_) =
+    simplifile.write(
+      to: dir <> "/explorer/scratch_done.lean",
+      contents: "theorem done : True := trivial",
+    )
+  let assert Ok(_) =
+    simplifile.write(to: dir <> "/explorer/notes.md", contents: "not lean")
+  config.Config(..c, repo_root: dir, runs_root: dir <> "/runs")
+}
+
+/// Checked Lean can sit in the checkout where no verb looks. Three producers
+/// write it — a prover's parked attempt, an older parked file under a name
+/// the brief's reader does not recognise, and a theorist writing scratch
+/// under explorer/ — and until this, one consumer knew about one of them.
+/// Measured at HEAD on 2026-09-08: 22 sorry-free .lean files outside
+/// Rule30/, fourteen of them in explorer/, one holding a $14.22 theorist's
+/// proof of translation equivariance that the board did not have.
+pub fn stray_proofs_lists_checked_lean_that_nothing_imports_test() {
+  let found = dispatch.stray_proofs(strays_cfg())
+  // Both roots are searched, recursively.
+  assert list.contains(found, "runs/r1/probe-1/Probe.lean")
+  assert list.contains(found, "explorer/scratch_done.lean")
+  // A file with `sorry` in it is scratch, not a finding: it is the noise
+  // this section must not drown itself in.
+  assert !list.contains(found, "runs/r1/probe-1/Half.lean")
+  // Only Lean.
+  assert !list.contains(found, "explorer/notes.md")
+  assert list.length(found) == 2
+}
+
+/// The section must appear in `status` rather than behind a verb of its own.
+/// Not going to look IS the failure this addresses, so a verb a captain has
+/// to remember would reproduce it.
+pub fn status_names_the_stray_proofs_test() {
+  let assert Ok(text) = dispatch.status(strays_cfg())
+  assert string.contains(text, "runs/r1/probe-1/Probe.lean")
+  assert string.contains(text, "explorer/scratch_done.lean")
+  assert !string.contains(text, "Half.lean")
+}
