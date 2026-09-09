@@ -14,3 +14,12 @@
 {"ts":"2026-09-09T17:11:00Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Edit","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus3_orbit.cjs","denial":"","decision":"Allow"}
 {"ts":"2026-09-09T17:11:03Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/talus3_orbit.cjs","denial":"","decision":"Allow"}
 {"ts":"2026-09-09T17:11:03Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/talus3_orbit.cjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T17:12:21Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus3_witness.cjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T17:12:24Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/talus3_witness.cjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T17:12:25Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/talus3_witness.cjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T17:14:17Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus3_sound.cjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T17:14:19Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/talus3_sound.cjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T17:14:22Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/talus3_sound.cjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T17:14:44Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Edit","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus3_sound.cjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T17:14:47Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/talus3_sound.cjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T17:14:48Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/talus3_sound.cjs","denial":"","decision":"Allow"}

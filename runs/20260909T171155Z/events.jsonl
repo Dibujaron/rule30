@@ -1,0 +1,8 @@
+{"ts":"2026-09-09T17:11:55Z","kind":"run","max_attempts":3,"concurrency":2}
+{"ts":"2026-09-09T17:11:55Z","kind":"dispatch","node":"leftDiagonal_agree_succ_iff","identity":"Vesper","model":"sonnet","reason":"open leaf; unblocks 0; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4130,"log":"c:/Users/dibuj/dev/rule30/runs/20260909T171155Z/leftDiagonal_agree_succ_iff-1","in_flight":1}
+{"ts":"2026-09-09T17:11:55Z","kind":"dispatch","node":"leftDiagonal_onset_le_iff_rowNat_return","identity":"Cadence","model":"opus","reason":"open leaf; unblocks 0; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4131,"log":"c:/Users/dibuj/dev/rule30/runs/20260909T171155Z/leftDiagonal_onset_le_iff_rowNat_return-1","in_flight":2}
+{"ts":"2026-09-09T17:13:47Z","kind":"index","node":"leftDiagonal_onset_le_iff_rowNat_return","module":"Rule30.Proofs.LeftDiagonalOnsetLeIffRowNatReturn","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-09T17:13:47Z","kind":"theorem_index","node":"leftDiagonal_onset_le_iff_rowNat_return","file":"blueprint/index.md","outcome":"written"}
+{"ts":"2026-09-09T17:13:47Z","kind":"dispatch","node":"leftDiagonal_onset_le","identity":"Cadence","model":"fable","reason":"open leaf; unblocks 0; research node at its top rung, attempt 4 there","max_turns":120,"max_budget_usd":20.0,"port":4132,"log":"c:/Users/dibuj/dev/rule30/runs/20260909T171155Z/leftDiagonal_onset_le-5","in_flight":2}
+{"ts":"2026-09-09T17:14:17Z","kind":"index","node":"leftDiagonal_agree_succ_iff","module":"Rule30.Proofs.LeftDiagonalAgreeSuccIff","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-09T17:14:17Z","kind":"theorem_index","node":"leftDiagonal_agree_succ_iff","file":"blueprint/index.md","outcome":"written"}

@@ -1,0 +1,16 @@
+
+node      leftDiagonal_agree_succ_iff
+identity  Vesper
+model     sonnet
+outcome   proved
+cost      $1.00
+turns     13
+estimate  M
+session   f0c0c13f-04c1-4f16-87bf-ad1f3668ef3f
+log       c:/Users/dibuj/dev/rule30/runs/20260909T171155Z/leftDiagonal_agree_succ_iff-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Vesper (#2b3a67): closed 58, abandoned 5, $53.14, calibration 47/59
