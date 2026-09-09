@@ -14,10 +14,10 @@
 ////
 //// **What is still maintained by hand, stated plainly rather than hidden:**
 //// the mapping from a file to the *names* of the functions that write it —
-//// `blueprint/dag.json` is written by `dag.save`, and so on. That mapping is
-//// small, changes about once a quarter, and cannot silently disagree with the
-//// code the way a list of files could, because the call sites are looked up
-//// fresh every time. What it can still miss is a brand-new writer that goes
+//// `blueprint/dag.json` is written by `dag.save_node`, and so on. That mapping
+//// is small, changes about once a quarter, and cannot silently disagree with
+//// the code the way a list of files could, because the call sites are looked
+//// up fresh every time. What it can still miss is a brand-new writer that goes
 //// through none of the known functions, and `unaccounted` below exists for
 //// exactly that: it reports raw `simplifile` writes sitting in a module that
 //// is not a declared writer implementation, which is what a new one looks
@@ -38,7 +38,7 @@ pub type Written {
     what: String,
     /// Why touching it during a run is unsafe, in one line.
     risk: String,
-    /// Source tokens to look for: `dag.save`, `bugs.save`, and so on.
+    /// Source tokens to look for: `dag.save_node`, `bugs.save`, and so on.
     writers: List(String),
   )
 }
@@ -62,8 +62,8 @@ pub fn declared() -> List(Written) {
   [
     Written(
       what: "blueprint/dag.json",
-      risk: "the dispatcher's source of truth; a save rewrites the whole board from the Dag it loaded, so an edit arriving in between is lost",
-      writers: ["dag.save"],
+      risk: "the dispatcher's source of truth; each write re-reads and replaces one node, so a concurrent edit to a different node survives and only a same-node edit is lost",
+      writers: ["dag.save_node"],
     ),
     Written(
       what: "blueprint/bugs.json",

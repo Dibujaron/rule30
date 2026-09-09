@@ -138,8 +138,7 @@ pub fn prove_one(
 
   let claimed =
     dag.claim(node, by: identity.name, at: log.now_iso(), run: run_log.run_id)
-  let d = dag.update(d, claimed)
-  use _ <- result.try(dag.save(d, cfg.dag_path))
+  use d <- result.try(dag.save_node(claimed, cfg.dag_path))
 
   let #(attempt, report) =
     worker.attempt(
@@ -153,8 +152,7 @@ pub fn prove_one(
       l,
     )
   let attempt = attribute(l, node_id, attempt)
-  let d = dag.update(d, record(claimed, attempt))
-  use _ <- result.try(dag.save(d, cfg.dag_path))
+  use d <- result.try(dag.save_node(record(claimed, attempt), cfg.dag_path))
   // On the attempt log, not the run log where `run` puts its `index` event
   // (see `returned`). Nothing reads either, and one attempt per run makes
   // this the more specific of the two homes; noted so the asymmetry reads
@@ -611,8 +609,7 @@ fn start(
           at: log.now_iso(),
           run: run_.run_log.run_id,
         )
-      let d = dag.update(state.d, claimed)
-      use _ <- result.try(dag.save(d, cfg.dag_path))
+      use d <- result.try(dag.save_node(claimed, cfg.dag_path))
       let deps =
         worker.Deps(
           verify: run_.verify,
@@ -688,8 +685,7 @@ fn returned(
   )
   let attempt = attribute(flight.attempt_log, node.id, attempt)
   let recorded = record(node, attempt)
-  let d = dag.update(state.d, recorded)
-  use _ <- result.try(dag.save(d, cfg.dag_path))
+  use d <- result.try(dag.save_node(recorded, cfg.dag_path))
   case attempt.outcome {
     dag.Closed -> {
       log.event(run_.run_log, "index", [
@@ -760,8 +756,7 @@ fn crashed(
     dag.get(state.d, flight.node_id)
     |> result.replace_error("`" <> flight.node_id <> "` vanished from the DAG"),
   )
-  let d = dag.update(state.d, dag.release(node, dag.Open))
-  use _ <- result.try(dag.save(d, run_.cfg.dag_path))
+  use d <- result.try(dag.save_node(dag.release(node, dag.Open), run_.cfg.dag_path))
   log.event(run_.run_log, "crashed", [
     #("node", json.string(node.id)),
     #("reason", json.string(reason)),
@@ -968,7 +963,7 @@ pub fn reopen(cfg: config.Config, node_id: String) -> Result(String, String) {
     dag.Claimed -> {
       let held = claim_text(cfg, node, log.now_iso())
       let reopened = dag.release(node, dag.Open)
-      use _ <- result.try(dag.save(dag.update(d, reopened), cfg.dag_path))
+      use _ <- result.try(dag.save_node(reopened, cfg.dag_path))
       // The DAG is the source of truth, so a hand edit to it is an event
       // with a reason, like every dispatch decision — and this one names
       // the claim it discarded, since the node no longer does.

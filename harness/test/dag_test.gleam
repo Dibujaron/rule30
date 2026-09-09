@@ -291,3 +291,70 @@ pub fn a_research_node_keeps_its_mark_through_a_save_test() {
   assert plain.research == False
   assert !string.contains(dag.encode(d), "research")
 }
+
+/// A scratch DAG on disk, one directory per test so the tests cannot see
+/// each other's files. Returns the path.
+fn scratch_dag(name: String, d: dag.Dag) -> String {
+  let dir = "build/test-runs/dag/" <> name
+  let _ = simplifile.delete(dir)
+  let assert Ok(_) = simplifile.create_directory_all(dir)
+  let path = dir <> "/dag.json"
+  let assert Ok(_) = dag.save(d, path)
+  path
+}
+
+pub fn save_node_keeps_a_node_another_writer_added_test() {
+  // The clobber this exists to stop. The dispatcher loads the DAG once at
+  // the start of a run and writes the whole file back at every attempt
+  // end, so a captain who seeds a node in between is doing a
+  // read-modify-write against a copy the dispatcher is also holding — and
+  // the dispatcher's write wins, silently, with no conflict and no error.
+  // A node was lost exactly this way on 2026-09-08 (board:
+  // a-captain-seeding-during-a-live-run-loses-the-node-silently).
+  //
+  // The fix is that a writer touching ONE node has no reason to write the
+  // other hundred. This test fails against a whole-file `save` of the
+  // stale copy, which is what makes it a test rather than a restatement.
+  let path =
+    scratch_dag(
+      "concurrent",
+      Dag([node("held", [], dag.Open, dag.M), node("other", [], dag.Open, dag.S)]),
+    )
+  // The dispatcher's copy, loaded at the start of the run.
+  let assert Ok(stale) = dag.load(path)
+
+  // The captain seeds a new node, and edits nothing the dispatcher holds.
+  let assert Ok(fresh) = dag.load(path)
+  let seeded = node("seeded_meanwhile", [], dag.Open, dag.S)
+  let assert Ok(_) = dag.save(Dag([seeded, ..fresh.nodes]), path)
+
+  // The dispatcher now records its attempt on the node it does hold.
+  let assert Ok(held) = dag.get(stale, "held")
+  let assert Ok(merged) = dag.save_node(Node(..held, status: dag.Proved), path)
+
+  // Both writes survive: the seed is still on the board, and the
+  // dispatcher's own change landed.
+  let assert Ok(after) = dag.load(path)
+  assert list.map(after.nodes, fn(n) { n.id })
+    == ["seeded_meanwhile", "held", "other"]
+  let assert Ok(kept) = dag.get(after, "seeded_meanwhile")
+  assert kept.status == dag.Open
+  let assert Ok(recorded) = dag.get(after, "held")
+  assert recorded.status == dag.Proved
+
+  // And the caller is handed the merged board to adopt, so its NEXT write
+  // is not based on the stale copy either. Without this the second write
+  // reverts the first: the same bug one attempt later.
+  assert merged == after
+}
+
+pub fn save_node_writes_a_node_the_file_does_not_have_test() {
+  // A node held in memory but absent from the file on disk — the shape a
+  // `reopen` or a hand-repaired board can produce. `dag.update` replaces
+  // by id and adds nothing, so `save_node` must not silently drop the
+  // write and report success.
+  let path = scratch_dag("absent", Dag([node("a", [], dag.Open, dag.S)]))
+  let assert Error(msg) =
+    dag.save_node(node("never_seeded", [], dag.Open, dag.S), path)
+  assert string.contains(msg, "never_seeded")
+}

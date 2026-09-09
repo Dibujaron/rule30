@@ -202,6 +202,49 @@ pub fn save(dag: Dag, path: String) -> Result(Nil, String) {
   |> result.map_error(fn(e) { simplifile.describe_error(e) })
 }
 
+/// Write one node into the DAG on disk, re-reading the file immediately
+/// before the write so a node another writer added since this process
+/// loaded survives.
+///
+/// This is the whole difference between the two boards. `blueprint/bugs.json`
+/// is load-modify-save per event, so the window in which a concurrent writer
+/// can be clobbered is milliseconds; `blueprint/dag.json` was load-once-per-run
+/// and written back whole at every attempt end, so the window was the entire
+/// run. A captain seeding a node in between lost it — silently, with no
+/// conflict and no error, and the next `git add -A` committed the loss under
+/// a message saying the pipeline worked. That happened on 2026-09-08 (board:
+/// `a-captain-seeding-during-a-live-run-loses-the-node-silently`).
+///
+/// A writer changing one node has no reason to write the other hundred, which
+/// is the whole fix: a captain seeding a NEW node and a dispatcher recording
+/// an attempt on an EXISTING one do not collide at all. Two writers editing
+/// the SAME node still lose to whoever writes last, and no re-read can fix
+/// that — it is not the case that lost work.
+///
+/// The returned `Dag` is the merged board and the caller adopts it, so the
+/// next write is not based on the stale copy either. Without that, the second
+/// write of a run reverts what the first one preserved.
+///
+/// A node absent from the file is refused rather than added, because `update`
+/// replaces by id and adds nothing: writing a node the board does not have
+/// would otherwise report success having saved nothing.
+pub fn save_node(node: Node, path: String) -> Result(Dag, String) {
+  use fresh <- result.try(load(path))
+  use _ <- result.try(
+    get(fresh, node.id)
+    |> result.replace_error(
+      "`"
+      <> node.id
+      <> "` is not in `"
+      <> path
+      <> "`, so writing it would save nothing",
+    ),
+  )
+  let merged = update(fresh, node)
+  use _ <- result.try(save(merged, path))
+  Ok(merged)
+}
+
 /// Find the node with the given id.
 pub fn get(dag: Dag, id: String) -> Result(Node, Nil) {
   dag.nodes
