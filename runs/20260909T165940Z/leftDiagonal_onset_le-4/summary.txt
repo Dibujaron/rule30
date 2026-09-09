@@ -1,0 +1,16 @@
+
+node      leftDiagonal_onset_le
+identity  Vesper
+model     fable
+outcome   abandoned
+cost      $5.48
+turns     12
+estimate  wall
+session   c5ddddf4-7eee-48c9-a03a-666f31acc38c
+log       c:/Users/dibuj/dev/rule30/runs/20260909T165940Z/leftDiagonal_onset_le-4
+proof     c:/Users/dibuj/dev/rule30/runs/20260909T165940Z/leftDiagonal_onset_le-4/LeftDiagonalOnsetLe.lean (moved out of Rule30/Proofs/: not a closed node)
+
+verifier:
+Not proved and the wall stands; the file builds with attempt 3's equivalence and depth-5000 kernel check kept verbatim, plus two new verified lemmas pinning the mechanism the wall turns on: a white run on a diagonal is an agreement run of the two diagonals beneath it, cascading two diagonals shallower per cell.
+
+Vesper (#2b3a67): closed 57, abandoned 5, $52.15, calibration 46/58

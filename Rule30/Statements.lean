@@ -1376,4 +1376,41 @@ theorem exists_config_same_centerColumn (k : ℕ) :
       (∀ t : ℕ, 1 ≤ t → column c 0 t = centerColumn t) := by
   sorry
 
+/-- **The onset wall is a statement about arithmetic.** The `k`-th left diagonal
+settles by index `k`, for every `k`, exactly when the low `k + 1` bits of row
+`2 * k` and row `2 * k + 2 ^ k` agree — for every `k`.
+
+The left-hand side is about diagonals and periods; the right-hand side is about
+two rows of the picture read as binary numbers. `rowNat` packs a row, and
+`leftDiagonal_eq_rowNat_testBit` is the bridge. This does not prove the wall: it
+says the wall is a return property of the map `n ↦ rowNat n` modulo powers of
+two, which is a different object to attack and one an arithmetic argument can
+reach.
+
+Proved by Vesper at `leftDiagonal_onset_le` attempt 4
+(`runs/20260909T165940Z/leftDiagonal_onset_le-4/`), which abandoned the wall
+itself; re-verified by the captain, axioms exactly the three permitted. -/
+theorem leftDiagonal_onset_le_iff_rowNat_return :
+    (∀ k, ∃ p > 0, ∃ N ≤ k, PeriodicFrom (leftDiagonal k) p N) ↔
+    ∀ k, rowNat (2 * k) % 2 ^ (k + 1) = rowNat (2 * k + 2 ^ k) % 2 ^ (k + 1) := by
+  sorry
+
+/-- **A white run on a diagonal is an agreement run of the two beneath it.**
+Given that diagonals `m + 2` and `m + 3` already agree one cell back, they agree
+at the next cell exactly when either the driving cell is black and the two
+diagonals two deeper agree, or the driving cell is white and the diagonal `m` is
+white there.
+
+This is the local mechanism the onset wall turns on: agreement cascades two
+diagonals shallower per cell, which is where the factor of two in the
+quarter-speed picture comes from. Proved by Vesper at the same attempt; axioms
+`[propext, Quot.sound]`, not even needing choice. -/
+theorem leftDiagonal_agree_succ_iff (m i : ℕ)
+    (h : leftDiagonal (m + 2) (i + 2) = leftDiagonal (m + 3) (i + 1)) :
+    leftDiagonal (m + 2) (i + 3) = leftDiagonal (m + 3) (i + 2) ↔
+      (leftDiagonal (m + 3) (i + 1) = true ∧
+          leftDiagonal m (i + 4) = leftDiagonal (m + 1) (i + 3)) ∨
+      (leftDiagonal (m + 3) (i + 1) = false ∧ leftDiagonal m (i + 4) = false) := by
+  sorry
+
 end Statements

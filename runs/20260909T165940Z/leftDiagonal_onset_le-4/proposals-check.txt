@@ -1,0 +1,10 @@
+leftDiagonal_white_succ_iff
+  DOES NOT PROVE: Bounds no white run; it says what a white run is made of.
+  route:   closes the statement
+  witness: BROKEN CHECK, says nothing about the statement — c:/Users/dibuj/dev/rule30/harness/build/checks/seed/witness_leftDiagonal_white_succ_iff_bb4fc12268a529070f82db8ab03f2fb7.lean:3:48: error(lean.unknownIdentifier): Unknown identifier `m`
+leftDiagonal_agree_succ_iff
+  DOES NOT PROVE: Says nothing about how often the cascade's conditions hold, which is the wall.
+  route:   closes the statement
+  witness: BROKEN CHECK, says nothing about the statement — c:/Users/dibuj/dev/rule30/harness/build/checks/seed/witness_leftDiagonal_agree_succ_iff_3af3cde8a55d61f78e5419764e4efdc3.lean:3:49: error(lean.unknownIdentifier): Unknown identifier `m`
+
+2 broken check
