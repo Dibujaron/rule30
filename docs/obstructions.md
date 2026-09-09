@@ -832,3 +832,26 @@ at which the speed is `1/2`.
 
 **Recorded** 2026-09-09 by Rowan, from a computation run to settle Rosetta's
 number. Scripts under `explorer/halfcheck_*.cjs`.
+
+**Addendum, Rowan's reading rather than the computation's own claim, and it
+closes the route further than the entry above does.** Rule 30's diagonal
+periods are **powers of two** — that is the board's proved
+`rightDiagonal_periodicFrom_pow` on one side and the measured left-diagonal
+regimes `1, 2, 4, 8, 16, 32` on the other. The window in which the greedy
+speed runs below `1/2` is `p ≈ 38` to `p ≈ 52`, and **it contains no power of
+two**: 32 sits below it and 64 above. The measured excesses at the powers of
+two rule 30 can actually have are `+1.15e-3` at `p = 32`, `+0.04e-3 ± 0.02` at
+`p = 64` and `+0.01e-3 ± 0.03` at `p = 128` — all non-negative.
+
+So the environment argument does not merely fail at rule 30's current period.
+It fails at **every period rule 30 can ever have**, and the periods for which
+it would succeed are exactly the ones a power-of-two-period automaton cannot
+reach. `leftDiagonal_period_unbounded` is proved, so the periods do grow — and
+growing does not help, because they grow through the window rather than into
+it.
+
+This is a reading of the table above, not a separate measurement, and the
+right way to falsify it is to measure `c(p)` at `p = 64` and `p = 128` with a
+sem well under `1e-5` rather than the `2`–`3e-5` the sweep used. If either
+comes back negative at that precision the addendum is wrong and the route
+reopens at large depth.
