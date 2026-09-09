@@ -1,0 +1,793 @@
+ELSEVIER Physica D 103 (1997)169-189 PHYSiCA Computational mechanics of cellular automata: An
+example James E. Hanson a,,, James P. Crutchfield b, l a Santa Fe Institute, 1399 Hyde Park Rd.,
+Santa Fe. NM 85701, USA b Department of Physics. Univer~it 3, of California. Berkeley, CA 94720. USA
+Abstract We illustrate and extend the techniques of computational mechanics in explicating the
+structures that emerge in the spacetime behavior of elementary one-dimensional cellular automaton
+rule 54. The dominant regular domain of the cellular automation is identified and a domain filter is
+constructed to locate and classify defects in the domain. The primary particles are identified and a
+range of interparticle interactions is studied. The deterministic equation of motion of the filtered
+space-time behavior is derived. Filters of increasing sophistication are constructed for the
+efficient gathering of particle statistics and for the identification of higher-level defects,
+particle interactions, and secondary domains. We define the emergence time at which the space-time
+behavior condenses into configurations consisting only of domains, particles, and particle
+interactions. Taken together, these techniques serve as the basis for the investigation of pattern
+evolution and self-organization in this representative system. 1. Patterns and computation in
+cellular automata After more than a decade of extensive research, it has become a commonplace
+observation that onedimensional cellular automata (CA) exhibit a striking -- and often perplexing -
+diversity of spatio-temporal behavior. The early empirical categorization of spacelime patterns into
+four "classes" [1] - loosely based ,m an analogy with those found in continuous-state dynamical
+systems - has resisted numerous attempts .at formalization. In many CAs, it is immediately evident
+that the system self-organizes into some type of emergent pattern. In other CAs, the structure or
+even existence of an emergent pattern is less clear. The question that naturally arises therefore is
+how to char- * Corresponding author. Permanent address: IBM T.J. Watson Research Center, P.O. Box
+704, Yorktown Heights, NY 10598, USA. I E-maih chaos@gojira.berkeley.edu. acterize the
+spatio-temporal patterns that emerge during the CA's evolution. If such a characterization is
+possible, it can be used as a basis tbr numerical and analytical tools that discover, analyze, and
+filter patterns that emerge in CAs. In [2-5], such methods were developed under the general name of
+computational mechanics. Computational mechanics is a synthesis of nonlinear dynamics and
+computation theory, which characterizes patterns and structure occurring in natural processes by
+means of formal models of computation. Connections between CAs and computation theory have been an
+active area of research for some time [6-8]. One major theme of this research has centered around
+the problem of designing a CA to behave in some particular way, such as simulating a universal
+Turing machine [9], exhibiting particles and computing with them [10,11], performing reliable
+computations in the presence of noise [12], or 0167-2789/97/$17.()0 Copyright © 1997 Published by
+Elsevier Science B.V. All rights reserved PII $0167-2789(96)00259-X === page === 170 J.E. Hanson,
+J.P Crutchfield/Physica D 103 (1997) 169-189 a host of other tasks. Computational mechanics, in
+contrast, approaches CAs more from the perspective of physical science. Rather than trying to
+engineer a CA rule table and construct an initial condition to satisfy some predefined criterion,
+computational mechanics attempts to discover and characterize the typical patterns occurring in a
+given CA. 2 In a welldefined sense, each CA specifies the local space-time equations of motion of a
+model universe, and computational mechanics is addressed to the question: What are the "physical
+laws" and structures that emerge in the space-time behavior? A distinction must be made here between
+"patterns" and "configurations". Throughout this article, a pattern is considered to be a set or
+ensemble of configurations sharing some common spatial structure. Pattern dynamics then concerns the
+evolution of sets of similar configurations, rather than of some particular configuration
+exemplifying the pattern. If the collection of all patterns is thought of as a pattern space in
+which each distinct pattern is a point, then pattern dynamics is the evolution of points in that
+space. In many CAs, there are a few important patterns that dominate and organize the behavior of
+the system as a whole. These important patterns form a pattern basis i.e., a set of fundamental
+components in terms of which all patterns in the system are analyzed [2]. The purpose of this
+article is to illustrate the techniques of computational mechanics in a familiar setting. For this
+reason we have selected for investigation an elementary CA rule that has received attention in the
+past as one of the most interesting and "complex", and whose phenomenology has been at least
+partially described already [ 14]. As we will see, computational mechanics can place those results
+in a more general amd more rigorous context, as well as opening avenues of further investigation. In
+selecting elementary CA 54 to investigate, therefore, we do not focus primarily on the results
+themselves, but on the methods of obtaining them. This will facilitate a comparison by 2
+Computational mechanics is useful, however, for determining how computations are implemented in CAs;
+e.g. see the analysis of evolved CAs in 113]. the reader of the methods of computational mechanics
+with its alternatives. In Section 2 we define CAs and the essential elements of computation theory,
+section 3 outlines the central concepts of regular domain, domain filtering, and particle
+identification in arbitrary CAs. Following this general review, Section 4 describes the fundamental
+domain in ECA 54, constructs its domain filter, shows characteristic filtered and unfiltered
+space-time diagrams, and derives the deterministic rule governing the time-evolution filtered
+space-time behavior. Sections 5-7 describe the primary particles observed in the filtered data,
+investigate the basic particle interactions, present numerical data on particle statistics, and
+begin the investigation of "higher-order" structures emerging out of the description of the system
+in terms of the fundamental particles. 2. Cellular automata and computation theory 2.1. Cellular
+automata To fix notation, we briefly recall the definition of a CA. The configuration of the CA at
+time t, denoted st, consists of a one-dimensional array or lattice of sites {i = 0 ..... N - 1 }
+with values s[ chosen from a finite alphabet .A = {0, 1 ..... k - 1}, so st c .A N. The local
+site-update function (a operating on neighborhoods O~ = sti-r ... sti+r of radius r is written St+ 1
+The list of all neighborhoods 0 and their corresponding outputs 4~(0) is the CA's lookup table. The
+global update operator ci9 : .AN ~ .AN applies 4, in parallel to all neighborhoods in the lattice;
+the CA's equation of motion is denoted st+l = ~(st). For finite N, it is also necessary to specify
+the behavior at the edges of the array. In the following, we will always use periodic boundary
+conditions. The pattern dynamics of a CA is investigated in terms of the CA ensemble evolution
+operator, denoted by 4. For any set £t = {st } of configurations (or strings embedded in
+configurations), the iterate £t+1 = ~£t is given by £,+1 = [q~(s,):s, c £t/. (1) === page === .I.E.
+Hanson, J.P. Crutchfield/Physica D 103 (1997) 169-189 171 The elementary cellular automata (ECAs)
+have k = 2, r = 1. For reference, we list the lookup table of the ECA 54, the rule under
+consideration here: qS(r/) = {0, r/ E {111,110,011,000}, 1, r/E {101, 100,010, 001}. (2) 2.2.
+Computation theory Before proceeding to the discussion of domains and domain filtering, it is
+necessary to review some rudiments of the theory of computation [15]. We will primarily be concerned
+with two varieties of finite state machine: finite automata (FAs) and finite state transducers
+(FSTs). We will refer to both FAs and FSTs by the generic term machine. An FA consists of a finite
+set of states and a transition function specifying directed paths between states. Any state may be a
+start state an accept state, or both. Initially the machine is "in" one of its start states. During
+operation, it reads symbols one by one from some data source such as a CA configuration - or
+alternatively, it may generate symbols internally - and uses those symbols to make transitions from
+state to state according to the transition function. The structure of an FA is perhaps best
+understood by reference to its graph. The graph of an FA represents its states as nodes and its
+transitions as edges labeled with symbols in the alphabet .A. An allowed path in the graph is a
+connected sequence of edges that begins at a start state and ends on an accept state. Each such path
+is associated with a sequence of symbols (a word) consisting of the labels on the successive edges
+traversed. For any given word co, if there exists an allowed path corresponding to that word, then
+the FA is said to accept ~o. If there is no such path, the FA rejects co. The set of all words
+accepted by a given FA is the language accepted by that FA. The class of languages accepted by FAs
+is called the class of regular languages. The FA accepting a regular language 12 is denoted by M(£).
+FSTs are a variation of FAs in which the edge labels consist of two parts: an input symbol and an
+output string of some length (including length 0). Each path in the graph of an FST is associated
+with a sequence of input symbols (the input string) and a sequence of outputs. During operation, the
+input string is read in the same way as in FAs; but in addition, the outputs are concatenated to
+construct an output string. In this way, an FST implements a particular mapping from strings to
+strings. The simple summary is that FAs represent sets, while FSTs represent functions. An important
+subclass of FAs is the class of regular processes. A regular process accepts a regular language with
+the following properties: (i) subword closure: all subwords of all words accepted by the language
+are themselves accepted; (ii) dangler-free: for every word co c £, there is at least one symbol s 6
+.A such that cos is also in E; and (iii) the empty set (i.e., a string of zero length) is accepted.
+Each of these properties is reflected in the structure of the regular process itself. In particular,
+subword closure requires that all states be accept states and that from a start state there is a
+branching structure of states and edges devoted to synchronization (or phase-locking) of the machine
+to the underlying pattern. In the process graph of a regular process all states are both start and
+accept states, and the synchronization states and edges are absorbed into the machine proper. Finite
+state machines are appropriate for investigating pattern dynamics of CAs for a number of reasons,
+among which we may note the following: (i) FAs encompass the full range of behavior types from
+periodic to complex to random; (ii) characterization of patterns using FAs makes possible a
+definition of pattern complexity which is both natural and computable in practice; (iii) ensemble
+evolution in the space of regular languages is closed under the CA rule; (iv) the CA update rule is
+itself an FST; and (v) automated inference techniques exist for reconstructing FAs from experimental
+data [ 16,17]. Another advantage of using FAs is that the pattern dynamics of any CA, as represented
+by a time sequence of FAs, can be explicitly calculated. If a pattern £t is a regular language, then
+its iterate £t+t = PEt is a regular language as well, by point (iii) above. More importantly,
+however, M(/~t+l) can be explicitly constructed by means of the "finite machine evolution" (FME)
+operator defined in [2]. The FME operator makes it possible to trace the time evolution of any
+pattern representable by an FA, even when that === page === 172 J.E. Hanson, J.P.
+Crutchfield/Physica D 103 (1997) 169-189 pattern subsumes an infinite number of words - as is
+usually the case. 3. Domains, filters, and particles 3.1. Domains Of fundamental importance in the
+pattern dynamics of CAs is the regular domain introduced in [2]. Informally, a regular domain is a
+spatially and temporally homogeneous pattern describable by an FA - where "homogeneous" is to be
+understood in the sense of having the same regularities. It is a precise formulation of the rather
+vaguely defined term "domain" in physics that is generally used to denote some spatio-temporal
+region in which "things are basically the same". Wellknown examples include ferromagnetic domains,
+in which all spins are oriented in the same direction, and convection cells in Rayleigh-Brnard fluid
+flows at the first onset of instability, where a domain is a region of parallel rolls. Besides
+characterizing emergent spatial structures, the regular domains of a CA are fixed or periodic points
+in pattern space, and as such play an important role in the qualitative analysis of the system's
+dynamics. Having outlined a few necessary ideas in Section 2, we can now quote the precise
+definition of a regular domain from Ref. [2], as follows. A regular domain A of a CA ¥ is a process
+language representing a set of configurations, with the following two properties: (i) temporal
+invariance or periodicity: A is mapped onto itself by the dyanmic, i.e., ~PA = A for some finite
+period p; and (ii) spatial homogeneity: the process graph of each temporal phase of A is strongly
+connected. The latter is a form of spatial translation invariance and is similar to statistical
+stationarity or ergodicity of the spatial pattern. In the analysis of CAs, the identification of
+domains begins with inference of FAs from examples of the CA's behavior i.e., the discovery of
+patterns in space-time data. In simple cases this can be done by inspection. More complex patterns,
+and especially patterns containing embedded disorder, usually require the automatic inference
+technique of e-machine recostruction [16]. The inferred FAs represent hypotheses or approximations
+of the imporant emergent patterns in the system. Once such a pattern has been tentatively
+identified, its temporal behavior can be analytically examined using the FME operator. In
+particular, it can be tested for invariance or periodicity by direct comparison of M(£) and M(~E),
+where the latter is constructed using the FME operator. Similarly, to test for temporal period p,
+the FME operator is applied p times to construct M(~P/~), which is then compared with M(E). If the
+pattern is temporally invariant or periodic, and if the process graph of its finite automaton is
+strongly connected (i.e., it is spatially homogeneous), then the pattern is a domain. The FME
+operator, comparison of FAs, and testing for connectivity are fully automated. In this way one can
+rigorously prove whether any given FA is a domain of any given CA. If the discovered pattern
+consists of spatially periodic repetitions of a basic local configuration, then temporal invariance
+or periodicity of the language can be established by following the evolution of a sample
+configuration. But for patterns containing aperiodic words, which are quite common in CA behavior,
+no finite set of examples can be used to deduce behavior of the language as a whole. In such a case,
+the FME operator is essential. 3.2. Filters Having established the existence of one or more domains
+for a given CA, a domain transducer (or domain filter) is constructed using a procedure outlined in
+[4]. A domain filter is an FST that implements a mapping from arbitrary configurations to strings in
+which sites participating in domains and domain walls are flagged with distinct symbols. A domain
+wall (or defect) is defined as follows. We consider a domain A and a finite string 09 = zs such that
+z c A, s ~ ..4, and w ~A. Then s is a wall of domain A. We will also refer to a group of closely
+interacting walls as a defect. The domain filter scans sites in a spatial configuration in a
+particular direction (by convention, from left to right), reading each successive symbol of the
+configuration and writing a symbol identifying the === page === J.E. Hanson, J.P Crutchfield/Physica
+D 103 (1997) 169-189 site by the type of domain or defect. In this way 0 it classifies each site of
+a configuration according to which domain or defect it is participating in. In general, the
+transducer must read a number of input symbols before any output can be written, in order to gather
+enough information to unambiguously identify the pattern; this is called synchronization. When the
+transducer encounters a defect, it must resynchronize, t The way in which it resynchronizes is built
+into the filter by construction, but in effect it is equivalent to backing up a sufficient number of
+sites and starting over. 173 3 3. Particles Even though the domain pattern is temporally invariant
+or periodic, a pattern consisting of a defect separating two domains need not be. For example, a
+certain type of defect may spontaneously decay into a number of defects of other types, may spawn an
+everspreading region of interacting defects, or may even disappear completely. If the pattern
+domain-defectdomain is itself temporally invariant or periodic, and if the width of the defect never
+exceeds some fixed maximum, then the defect is called a particle. This htst term will be used here
+in a specific sense to mean a spatially localized, temporally invariant or periodic boundary
+separating two adjacent regular domains. qhe domain-particle~lomain pattern is itself a regular
+language. Its FA consits of a copy of the FA for each domain, with additional states and edges
+connecting the first domain A i to the second, A j. Note also that although the
+domain-particle-domain pattern is temporally invariant or periodic, it is not itself a domain, since
+it is not spatially homogeneous: it is not possible t,) reach any state in A i from any state in A
+j. Applying the domain filter to each spatial configuration in the space-time diagram of a CA
+produces the jSltered space-time diagram. The filtered space-time diagram presents the temporal
+evolution of embedded particles against the identified domain "background". From this filtered
+behavior, the particle equations of motion and the interactions between particles can be formulated.
+What emerges is a hierarchical description of the system in which the fundamental patterns 99 0 i 99
+Fig. 1. Space-time diagram of ECA 54, starting from an arbitrary initial condition. Boundary
+conditions are periodic. White squares are cells with value s~ = 0; black squares are cells with s~=
+1. - the domains - serve as a background upon which particles evolve with their own properties. 4.
+The primary domain of ECA 54 3 4.1. The domain Fig. 1 shows a typical space-time diagram of ECA 54,
+starting from an arbitrary initial condition on a lattice of 100 cells and iterating for 100 time
+steps with periodic boundary conditions. Cells with value s[ = 0 are printed as white squares; cells
+with s~ = 1 are black squares. The question computational mechanics poses is this: Is there some
+pattern or collection of patterns into which ECA 54 self-organizes? In particular, does ECA 54 have
+a regular domain? The answer is yes. We therefore begin the analysis of ECA 54 by describing its
+most important regular domain. Since it is spatio-temporally periodic (and its period is small), the
+basic pattern is not difficult to discover by visual inspection. Before showing that this 3 Some of
+the material in Sections 4 and 5 originally appeared in [51. === page === 174 J.E. Hanson, J.P.
+Crutchfield/Physica D 103 (1997) 169-189 nun nun nun ¥ ¥ ¥ l nun nun nn ¥ ¥ ¥ Inn nun nun Fig. 2. A
+protion of Fig. 1 showing the domain A54. Note the spatial phase shift of two cells every two
+iterations. pattern satisfies the requirements of a regular domain, let us first describe it is some
+detail. Fig. 2 shows a space-time diagram of ECA 54's primary regular domain A54. The domain
+configurations are spatio-temporally periodic, with periodicity 4 in both space and time. Note,
+however, that the same pattern is repeated after two iterations, spatially shifted by two cells. The
+pattern of the top row, and every second row following, is given by the expression (0001)*, denoting
+any number of repetitions of the basic string 0001. Similarly, the second row and every alternate
+subsequent row are examples of the pattern (1110)*. We can easily express this domain pattern as an
+FA M(A54). The process graph of M(A54) is shown in Fig. 3. The graph consists of two disconnected
+components, A A (at left) and As, which accept the patterns (0001)* and (1110)*, respectively. Each
+component consists of four states, represented by circles, and four labeled edges. All states have
+inscribed circles and squares, indicating start and accept states, respectively. Each state is a
+distinct spatio-temporal phase of the domain and has been assigned a label in {a ..... h} for
+comparison with other machines below. The spatial periodicity of configurations in A54 is evident in
+the fact that each component consists of a single loop of edges without branching. The temporal
+periodicity of the patterns is schematically indicated by the dotted lines showing the effect of the
+CA ensemble evolution operator ~/'54. In this representation, we have explicity discarded all
+information about the way in which an individual configuration lines up under its parent. The words
+in the language A54 are configurations (or parts of configurations) of the CA. We can think of the
+machine M(A54) as scanning the CA lattice from left to right, reading symbols in sequence, and using
+each symbol to move from state to state by taking the edge with the corresponding label. So long as
+the input string is in A54 , it is always possible to make such a transition. When a symbol
+inconsistent with A54 is encountered, no corresponding transition exists, so the machine must stop
+operation; the input string is not recognized by M(A54). (An alternate version of M(A54) would have
+an extra state into which the machine is driven by each input symbol inconsistent with A54. This
+state would have self-loops on both 0 and 1, but would not be an accept state. In this way, all
+strings would be recognized, but those not in A54 would be rejected.) The proof that A54 is a
+regular domain is extremely simple. Nevertheless, for definiteness we express the result in the
+following proposition. Proposition 1. The regular language A54 is a domain of ECA 54 with temporal
+period two. Proof The two temporal phases of A54 satisfy the two conditions of a period-two domain:
+(1) qb54A a = AB and (P54AA = AB. Recall that q~54 is the ensemble evolution operator for ECA 54,
+which iterates each configuration in the language AA or AB. Explicit construction of M(q~54AA) and
+M(qb4AB) using the FME operator shows that they are identical to M(As) and M(AA), respectively.
+Alternatively, because all configurations in both A A and A8 are spatially periodic, their temporal
+behavior can be inferred from the evolution of a single configuration; see for example Fig. 2. 0 ?
+Fig. 3. Process graph of ECA 54's domain A54. The component on the left is AA; on the right is A B.
+As the dotted lines indicate, they are mapped onto one another by the CA ensemble evolution
+operator, q~54. In this and all following graphs of machines, inscribed circles and squares denote
+start and accept states, respectively. === page === J.E. Hanson, J.P. Crutchfield/Physica D 103
+(1997) 169-189 175 (2) The process graph of each temporal phase is strongly connected; this is true
+by inspection of Fig. 3. [] A54 is temporally periodic in two distinct senses. Considered as a set,
+A54 has temporal period 2, as the FME operator verifies, and as indicated by the two disconnected
+components representing the two temporal phases of the domain. The evolution of a particular domain
+configuration, on the other hand, has temporal period 4, as can be seen in Fig. 2. These two
+distinct types of temporal periodicity give us an opportunity to introduce the space-time machine
+(or path automation) into our set of computational-mechanical tools. A space-time machine is a
+finite state machine allowed to scan the CA space-time data by means of either space-like or
+time-like moves. In the simplest version, space-like moves are restricted to one spatial direction
+only; a space-like move is therefore identical to the move made by the (spatial) domain machine
+M(A54) above. Similarly, time-like moves are made only forard in time. Starting from space-time cell
+(i, t) with value s~, a space-like move consists of reading the symbol s~ +l and making the
+corresponding space-like transition in the machine, which is indicated by the sabscript s. That is,
+one follows the transition labeled either 0~ or Is, if s~ +l = 0 or s~ +1 = 1, respectively. A
+time-like move consists of reading symbol st+i I and making the corresponding time-like transition,
+labeled ~ith subscript t. In this way, the original binary alphabet A = {0, 1} has been expanded to
+{0s, 0t, Is, it}. q~hus, the input alphabet for the space-time machine consists of symbols with
+space-time path information. The process graph of MsT(A54), the space-time machine for ECA 54's
+domain, is shown in Fig. 4. For clarity, we have omitted the states devoted to synchronization.
+Symbols with subscripts s and t represent s~te values encountered on a move to the right (spacelike)
+or forward in time (time-like), respectively. Note that the two components of A54, AA and A8 are
+preserved unchanged as square loops of states connected by space-like edges. The additional
+information in MST(A54) is found in the time-like edges between the two components. MsT(A54) gives a
+complete characterization of the spatio-temporal pattern identified by Fig. 4. The process graph of
+MsT(A54), the space-time machine for A54. States are labled to correspond to those in the (purely
+spatial) domain machine M(A54) in Fig. 3. Subscripts s and t on the edge labels represent spacelike
+and time-like moves, respectively. Thus, the label 0s represents a symbol 0 encountered on a
+space-like move. States and edges devoted to synchronization are not shown. the domain, including
+both the temporal periodicity 4 of the configurations and the temporal periodicity 2 of the pattern.
+A fuller description of the ideas underlying space-time machines, including methods of inferring
+space-time machines from data and of constructing space-time filters, must wait for presentation
+elsewhere. 4.2. Domain filtering According to the sequence outlined in Section 3, our next step
+after finding the domain is to construct the corresponding domain filter. In doing so, we pass on
+from the spatio-temporal description of the domain (i.e., MsT(A54) of Fig. 4) and return to a purely
+spatial representation of the domain (i.e., M(A54) of Fig. 3). The domain filter T04 , as
+constructed from A54 by the prescription in [4], is shown in Fig. 5. T¡4 is an FST that takes as
+input any word s ~ A* and parses it into a sequence of domain and wall labels. In this way, it
+recognizes the structures implicit in the spatial configuration $. Two different types of state are
+shown in Fig. 5. States without inscribed labels are synchronization states, devoted to processing
+the first few symbols in s. The machine starts in the state with the double circle at the top of the
+figure, === page === 176 J.E. Hanson, J.P Crutchfield/Physica D 103 (1997) 169-189 Fig. 5. ECA 54's
+domain filter T¡4,~ which maps sites in the domain to 0 and each defect to a unique output in {1
+..... 8}. Labeled machine states correspond to the domain states of Fig. 3. then moves along edges
+according to the input symbols. The first few input symbols serve to synchronize the machine to the
+underlying pattern, driving it from the start state of total ignorance into one of the recurrent
+states. The edges are labeled Sin ISout for input (raw configuration) and output (filtered) symbols,
+respectively. Note, however, that during synchronization the machine produces no output, which is
+signified by putting Sout ---- ~.. During synchronization, the transducer has yet to read a
+sufficient amount of information to unambiguously distinguish the domain components and the several
+wall types. Once the machine has synchronized, every site read is either in a domain or is a wall.
+At this point, the transducer is in the recurrent part of the graph, where it remains for the rest
+of its operation. For comparision, asymptotic states in Fig. 5 are given labels corresponding to the
+states of the domain machine M(A54). Edges corresponding to sites in the domain are printed in bold
+lines and all have output symbol 0. Walls are printed in lighter lines, and have output symbols in
+the alphabet {1 ..... 8}. Note that each defect edge has a unique output symbol. O-v- ~.~'~ ~- &i "
+~, , 0 i 99 Fig. 6. Space-time data of Fig. 1, filtered with the domain transducer T04 of Fig. 5.
+White cells correspond to sites participating in A54; black cells, to sites with values s[ ¥ {1
+..... 8}. Applying T¡4 to the raw space-time data of Fig. 1, we obtained the filtered picture shown
+in Fig. 6. The domain transducer T¡4 assigns a unique symbol to each type of wall; for clarity in
+Fig. 6, however, we have plotted all eight wall types as black squares. In making the filtered plot,
+the transducer traversed the lattice from left to right, using the periodic boundary conditions to
+wrap around at the end in order to classify the first few sites, i.e., to classify those used for
+synchronization. If we were to change the outputs of domain edges from 0 to l, and label each defect
+edge with the symbol 0, then T¡4 would implement the same mapping as the transformation function in
+[14], As its form indicates, F assigns 0 or 1 to each length 4 subsequence in the spatial
+configuration depending on whether the number of 1 s in the subsequence is even or odd. Its
+simplicity takes advantage of the facts that (i) all length 4 words in A54 have an odd number of ls;
+and (ii) all other length 4 words contain defects. Note that F introduces a spatial shift Ai = --4
+in the === page === J.E. Hanson, J.P. Crutchfield/Physica D 103 (1997) 169-189 177 output by writing
+its output over the first symbol in the word, rather than the last. Unlike Eq. (3), however, T¡4 was
+constructed by a prescription that applies to any domain language - not just that oi" ECA 54.
+Additionally, T¡4 does more than just flag locations of defects; it also performs important
+classification of defect type, which we will exploit in the following sections. For example, the
+pattern of wall symbols {1 ..... 8} in the filter's output offers sufficient information for
+automatic identification of the particles visually evident in Fig. 6. This is the subject of Section
+5. 4 3. Equation of motion of the filtered behavior One question that naturally arises at this point
+is whether the filtered space-time behavior, like that shown in Fig. 6, is itself consistent with
+some deterministic equation of motion. That is, does there exist a mapping ~54 such that T04[~54(s)]
+= q~54[T¡4(s)] for all CA configurations s? We know that in the case of ECA 18 and in the case of
+arbitrary filtered CA, this is not true. in the former, the filtered behavior is described by a
+stochastic equation of motion for diffusive annihilating particles [3]. In the latter, the resulting
+filtered space-time behavior often can be described only by a strictly more computationally complex
+class of spatial processes called cellular transducers [ 18]. The alphabet of the hypothetical
+mapping ~54 is ,,l: = {0 ..... 8}. The set of initial conditions over which ~54 is defined is not
+(A')*, however; rather, i~ is the set of possible outputs of T o - its output 54 l, mgua,~e, denoted
+by 0 [T54]out. Of course, [T¡a]out C (A')*. By definition, for all CA configurations s c A*, me
+filtered string z = ~s)4(s) is in [T¡4]out. ^ To establish the existence of 4~54, we must first
+prove the following: lemma 2. On CA lattices with periodic boundary conditions, the domain filter
+T¡4 is invertible except on strings without defects. That is, for every filtered 0 ¥ string z c
+([T54]out -0 ), there exists exactly one conliguration s c (.4* - A54) such that z = T¡4(s). On
+strings without defects, i.e., for z 6 0", T ¡ is 8 to 1 54 ' Fig. 7. Graph of the finite state
+transducer Q¡ 4 implementing the inverse of the domain filter T ¡ 54" Proof We show invertibility of
+T ¡ by constructing 54 its inverse, denoted by Q¡ 4. In essence, this is done by simply reversing
+the order of the edge labels on the graph of T ¡ i.e., replacing label xtv with vlx; 54' - - this
+converts input symbols into output symbols, and vice versa. The states devoted to synchronization
+are removed and a new synchronization structure, determined by the remaining asymptotic part of the
+machine, is substituted in their place. Fig. 7 shows the resulting transducer. The transducer starts
+out in its synchronization state and remains there until the first nonzero input (i.e., filtered)
+symbol is encountered. That symbol synchronizes it to the input string, and it begins writing output
+(i.e., unfiltered) symbols. At the end of the lattice, the filter wraps around the periodic boundary
+and continues generating output until the first nonzero input is encountered, i.e., it goes back and
+writes outputs for the portion of the filtered data originally read prior to synchronization. The
+constraint that at least one defect is present ensures that the transducer will synchronize before
+wrapping around. Note that Q¡ 4 is deterministic; i.e., for each input symbol z. c .4', there is at
+most one edge with matching input label leaving each state of Q¡ 4. This means that each filtered
+string z containing one or more defects, which === page === 178 J.E. Hanson, J.P Crutchfield/Physica
+D 103 (1997) 169-189 by assumption is in the set ([T¡4]out - 0"), is mapped to exactly one
+unfiltered configuration $ ~ (.4* - A54). If z c 0", then there is no defect by which Q¡ 4 can
+synchronize. The unfiltered configuration can be any of the eight length-N domain configurations. []
+Using Lemma 2, we can define the mapping that takes a filtered string z t at time t and generates
+its iterate zt+l, as follows. If there is a nonzero symbol in zt, we first apply the inverse domain
+filter to generate st = Q¡4(zt), then apply the CA rule to generate $t+J = q554(st), then convert
+back to the filtered string Zt+l = T04(St+l). If Zt consists of all 0s, then necessarily the
+unfiltered string st is in A54; since A54 is a domain, $t+l c A54 as well, implying that zt+l
+consists of all 0s. Finally, even though qb54 need only 0 be defined over the set [T54]out, we may
+trivially extend it over all of (.4')* by mapping every string not in [T~)54]out to all 0s. The net
+result is summarized in the following proposition. Proposition 3. Let {st: t = 0 ..... k - 1} be a
+time sequence of spatial configurations generated by ECA 54 on a finite lattice of N sites with
+periodic boundary conditions, starting from arbitrary initial condition So. Let {zt = T04(St): t : 0
+..... k - 1} be the time sequence of filtered strings constructed from {st }. Then the zt evolve
+according to the deterministic equation of motion { T~54 (q354 [Q¡4 (zt)]), : zt c [T¡4]out- 0", (4)
+zt+i ~54(zt) = O N, otherwise. Proof Using a simple variation of machine composition [2], it is
+straightforward to construct the FST for ~54. Since Q¡4, ~54 and T~54 are all deterministic, so is
+~54. This means that the filtered space-time dynamics is governed by an effective equation of motion
+that is itself deterministic. The FST for ~54 is given in Appendix A. [] In general, it is always
+possible to construct the inverse of an FST; however, that transducer may be nondeterministic, i.e.,
+there may be more than one edge with a given input symbol leaving a given state. The inverse of a
+transducer T is nondeterministic if T has at least one state in which the same output symbol is
+assigned to more that one edge leaving that state. This can happen, for example, for filters of
+disordered domains, which have nonzero spatial entropy density. Since the disordered domain from
+which the filter was constructed contains states with branching edges, the filter itself contains
+states in which more than one input is mapped to the domain output symbol. Since this occurs in the
+recurrent portions of the filter, there will be states with more than one incoming edge. In turn, if
+the labels of these incoming edges have the same output symbol, then the inverted transducer will be
+nondeterministic. When the domain configurations are spatially periodic, as is the case in ECA 54,
+there are no such branches, and the domain filter is invertible. Since all CA rules are
+deterministic by definition, and since all domain filters are deterministic by construction, whether
+~ is deterministic depends solely on whether the inverse domain filter is deterministic. As we noted
+above, this is the case for any spatially periodic domain, but not for disordered domains (see for
+example the analysis of ECA 18 in [2]). Thus we arrive at the following generaliztion of Proposition
+3. Observation. For any spatially periodic domain in any CA, the space-time dynamics of the domain
+filter output is governed by a deterministic equation of motion. We end this section by stating a
+question that we will not answer here. ~54 is deterministic, but is it a CA? That is, can ~54 be
+expressed in a finite radius lookup table? 5. Particles and their interactions 5.1. The fundamental
+particles A visual inspection of Fig. 6 indicates that there are three particularly common types of
+wall structure in the filtered data: a stationary pattern with temporal period 4 and width
+fluctuating from 1 to 3 to 5 cells; a stationary pattern with temporal period 4 and width 2 or 4
+cells; and an isolated defect surrounded by 0s, === page === C~ ¥ ¥ nn IIIII ¥ nmu III¥ InI ¥ ¥ n
+mnnmIm ¥ IIU III ¥ III ¥ ¥ J.E. Hanson, J.P. Crutchfield/Physica D 103 (1997) 169-189 ~1 + [IPillll
+Illll] I[MII [[]1 (a) (b) Fig. 8. Basic wall structures ("fundamental particles") in spacet~me
+patterns of ECA 54: (a) unfiltered space-time diagrams of the three types of particle ~,/3, and y
+described in the text; (b) filtered diagrams of the same data, produced by T¡ 4. Domain symbols are
+white cells. All defects are shown in black, with tile defect symbol inscribed in white. The
+temporal phases of tile particles, chosen by convention, are printed algonside the filtered strings.
+moving to the left or right with speed c = 4-1 site per iteration. Fig. 8 shows raw and filtered
+plots for each of these three structures, which satisfy the definition of particle given in Section
+3. They are assigned the flames ~,/3, and y, respectively. As the figure illustrates, each particle
+shows temporal as well as spatial structure. We have therefore assigned a temporal phase to each
+particle, which is printed beside the filtered strings. Comparison of the filtered space-time
+signatures of these particles indicates that a single defect edge in the domain filter may
+participate in the detection of more than one particle. For example, the edges with defect output
+symbols 8 and 4 are used during both ot and/3 particle detection, defect outputs 5 and 1 are in all
+three 179 particles, and defect outputs 2 and 6 are in both/3 and y particles. Consistent with this
+observation, we note that one interpretation of the/3 particle is that phases /31 and/32 are a pair
+of colliding particles (y+ + y-). In this interpretation, /30 spontaneously decays into the pair (yc
++, Y0) separated by two domain sites and directed back toward each other. This is seen as the
+diagonally placed defect symbols (5, 2) and (1,6), respectively, in the filtered diagram. These then
+collide to create a/33. A similar interpretation can be made for c~. This interpretation illustrates
+a notable tact about particles as we have defined them: A particle may be composed of interacting
+subunits that, in isolation, are themselves particles in their own right. The analogy to atomic
+physics is obvious here. More interestingly, in certain cases particles may line up to form "bound
+state" patterns that satisfy the definition of a regular domain. We will discuss some examples of
+this in Section 6. The general motto of filter construction is, whenever a structure is discovered,
+filter it out. Once we have identified particles {or,/3, y +, F- }, we construct a new filter tuned
+especially for them. This can be done by direct modification of the domain filter machine, but a
+more practical and instructive alternative is to construct a particle filter T~4 that operates on
+the output of the domain filter T ¡ classifying sequences of filtered 54' symbols by particle type.
+In doing so, we are moving up one level in a hierarchical analysis of the system. At the domain
+filter level, all that was recognized was the domain; defects were classified only as deviations
+from the domain pattern. The particle filter T 1 further 54 recognizes some of these deviations as
+being particles. Each filter performs the same basic type of operation to its input data: it
+recognizes and filters particular structures, highlighting still-undiscovered patterns as deviations
+from these structures. In the following discussion, T I is first constructed to recognize the three
+54 fundamental particles, and then modified to recognize strings arising in interactions between
+pairs of particles as well. In constructing T l 54, we will consider a particle to be well defined
+only if it is bounded on both sides by at least one domain cell; this prevents misidentification ===
+page === 180 ,I.E. Hanson, J.P. Crutchfield/Physica D 103 (1997) 169-189 of very long strings of
+adjacent defects as sequences of adjacent panicles. Each cell identified by T¡4 as part of the
+domain is assigned output symbol 0 by T~4 as well, thus preserving the domain filter's recognition
+of the domain structure. Each defect cell participating in a particle of a given type is mapped to a
+given output symbol, i.e., to one of the symbols {u, fi, F +, F-}. Defect cells that do not
+correspond to any of the fundamental particles are left unchanged; that is, the symbol in ..4' = {1
+..... 8} is copied to the filter output. This will allow us to examine the output of T~4 for new, as
+yet unrecognized, structure. ECA 54's panicles are made up of a finite number of short strings.
+Comparison of the particles' filtered strings (Fig. 8) shows that, for example, the string 08880
+should be classified as an ot particle, while the string 0880 corresponds to particle ft. On reading
+the partial input 08, therefore, the particle filter must defer output until the string may be
+unambiguously classified. This effectively builds a queue of finite depth into the filter. Output is
+deferred until an isolated particle is recognized (or ruled out), then written as a string in a
+single transducer transition. There are 12 strings occurring in all phases of the fundamental
+particles. Each of these is built into the structure of the particle filter in the same way. 5.2.
+Fundamental particle interactions Having identified the different particle types, we may now
+investigate the various interactions among them. For example, near the bottom of Fig. 1 one sees
+that the collision of a F + and a V- creates a single ft. All told, there are five possible
+interactions between pairs of particles. Figs. 9(a)-(e) show the filtered space-times diagrams of
+all five, which are also summarized in Table 1. Perhaps the most obvious feature of Fig. 9 is that
+all two-particle interactions ultimately result in patterns containing only the domain and the
+fundamental particles. Interactions (a) and (b) show the effect of a collision of a y with an u. In
+both cases, the original particles persist, though with spatial and temporal phase shifts, and a new
+pair of ys is created. As Figs. 9(a) and (b) show, new strings not corresponding Table 1 Fundamental
+interactions among ECA 54's particles (a) u+y---+ y-+a+2F + (b) F ++u~2y-+u+V + (c) fl + y- ~ y+ (d)
+F+ + fl ~ F- (e) y+ + ?,- --+ I3 (13 y++ot+y-~ y-+u+y + (g) y+ + fl + F- -+ O Interactions (a), (b)
+and (g) induce a spatio-temporal shift in the incident particles, as discussed in the text. Note
+that the spatial arrangement of input and output particles is respected by the interaction notation.
+0 denotes no particles. Fig. 9. Filtered space-time diagrams of the fundamental interactions among
+ECA 54's fundamental particles, as listed in Table 1: (a)-(e) are two-particle collisions; (f) and
+(g) are three-particle collisons. Filtering was done with the first version of particle filter T~4
+described in the text. The domain is shown as white, the particles {u, r, F +, F } are shown in
+black. Defects not corresponding to any of the particles are shown in black and have the
+corresponding T04 output symbols inscribed in white. === page === J.E. Hanson, J.P.
+Crutchfield/Physica D 103 (1997) 169-189 181 to any fundamental particle are generated during a few
+iterations immediately following the collission, but before long these have condensed back into
+particles. Interaction (a) induces a net spatial shift of Ai = -- 1 and a net temporal phase shift
+of At = + 1 in the ot particle, and a space-time shift of (Ai, At) = (+l, 0) in the original y-.
+Interaction (b) shifts the ot by (Ai, At) = (~-1, +1) and the original y+ by (Ai, At) = (--1,0). If
+we neglect for the moment the different values of the defect cells, we see that interactions (a) and
+(b) are spatial reflections of each other. Interactions (c) and (d) show the results of a collision
+between a fl and a y. The interaction occurs in a single time step, as indicated by the fact that no
+new nonparticle strings are generated. Note that these two interactions are also spatial reflections
+of each other. Interaction (e) shows the collision of two Vs. Again, the interaction takes place in
+a single time step. This interaction is itself spatially symmetric. Generally here, and unlike
+several of the interactions found in the q~sync CA of Ref. [19], there is no dependence of the
+twoparticle interactions on their relative internal phases. Besides the five two-particle
+collisions, Figs. 9(f) and (g) and Table 1 show two simple three-particle collisions. Both of these
+interactions are spatially symmetric. Interaction (f) consists of a pair of incoming s colliding
+simultaneously with an a. All three particles survive the collision. The ot undergoes a shift of (
+~i, At) = (0, +2); the incoming ),s are both shifed by (Ai, At) = (0,--1). Note that the new
+filtered s~rings occurring during the interaction are also found in the two-particle u-y collisions
+(a) and (b). Finally, interaction (g) shows the annihilation of a/3 by simultaneous collision with
+two incoming Vs. One advantage of constructing the particle filter T~4 as described in Section 5.1
+is that it is now easy to modify it to recognize interactions among particles as well. There are
+eight new strings arising in twoparticle interactions, all occurring immediately after an ~-),
+collision. We can include these strings in T 1 54 in the same way as the original particles' strings
+were included, assigning the output symbol 8 to all defects in strings unique to ot-y to indicate
+the intermediate bound state during the particle interaction. Generally, these modifications take
+the form of adding more states 010 010 G "% ............ v' I ~.," t" Other states"~. ..... -'
+,not.s .ow. ..j YI ' 8,x ¥ 18 IX ',... ~o¡¡o, o 8Mx "....x..) ? o<!= ¡o=.¡ ¡¡o,¡ Fig. 10. A portion
+of the graph of particle filter T14, which maps domain cells to 0, cells in the fundamental
+particles to output symbols {c~,/3, F +, V-} and strings occurring in pairwise a-y interactions to &
+All other defects are left changed, since they do not correspond to recognized structures. The input
+label Z "t denotes all input symbols not found on other edges leaving a given state. Edges
+terminating on broken circles actually reconnect to the indicated state at the top of the machine;
+they have been displayed in this way for clarity. Note that the number of output symbols in an edge
+lable varies from zero (indicated by X) to four. Not shown are the other seven edges leaving state
+O, corresponding to input symbols {I ..... 7}. Each of these edges leads to a different group of
+states and edges similar to the one shown. and edges to T~4 by a procedure that is readily
+automated. The net result is our second and final version of T~4, a portion of which is shown in
+Fig. 10. Output 0 indicates a cell in the domain, outputs {oe,/3, F +, y } indicate defect cells
+making up the fundamental particles, output 3 indicates defect cells in a-F interactions, and
+outputs { 1 ..... 8} indicate defect cells not corresponding to any recognized structure. T~4
+operates on output strings of T04 in the same way that T04 operates on raw configurations. The
+machine is initially in the state with the double === page === 182 J.E. Hanson, J.P.
+Crutchfield/Physica D 103 (1997) 169-189 circle. Once it reads a domain symbol (0), it synchronizes
+to state O, which indicates that the next defect encountered is isolated from any defects to its
+left. From state O lead eight edges, one for each of the outputs of the domain filter. Each of these
+edges in turn leads to a branching sequence of states and edges that eventually writes as output one
+of the particles and resets to state O, or flags an unrecognized defect configuration and resets to
+state X. In Fig. 10, this structure is fully indicated only for the edge with input label 8; each of
+the other edges leaving state O leads to a similar structure. 5.3. Statistics and completeness of
+the particle-level description The filters T¡4 and T~4 embody a description of ECA 54's information
+processing structure in terms of the domain A54, particles {u, fl, y+, y-}, and the interactions in
+Table 1. We can now apply this pair of filters to space-time data generated by ECA 54, in order to
+investigate the extent to which this "particlelevel" description is complete. One simple way of
+doing this is to measure the frequency of occurrence of each of T~4's output symbols as a function
+of time. If the frequency unrecognized defects (T~4 outputs { 1 ..... 8}) decays to zero in finite
+time, or if the ratio of unrecognized defects to particles vanishes asymptotically, then no
+asymptotic structures not describable in the particle-level vocabulary exist. The conclusion then
+would be that the particle-level description is complete. Fig. 11 shows the fraction of cells in a
+CA lattice of size N = 106 which TI4 classified as particles {or, ,8, y+y-}, as fundamental
+interactions {8}, or as unrecognized defects {1 ..... 8}, plotted versus time for the first 50
+iterations of a random initial condition. The fraction of cells in the domain, not shown in the
+figure, increases monotonically from an initial value of 0.4996. The curves for y+ and yoverlay each
+other almost exactly. Unrecognized defects 2 and 6 start with the same initial fraction and
+disappear on the first iteration; defects 1, 3, 5, and 7 all have equal intital fractions that
+vanish by iteration 10. The fractions of defect types 4 and 8 do not vanish, though they are 0.1 | ,
+. | i | i I 6 {1,3,5,7} ...... .. i: O¡l! ~, o , o , 0 I 50 Fig. 11. Fraction of the CA lattice
+devoted to the fundamental particles (or,/3, F +, F-) to u-y interactions (b), and to unrecognized
+defects {1 ..... 8} versus time. significantly lower than all of the particle frequencies. Unless
+they decay to zero faster than the particle frequencies, this is an evidence that the
+"particle-level" description, as captured by T~4, is incomplete. Unfortunately, the frequencies of
+defects 4 and 8 remain within a few orders of magnitude of the particle frequencies out to time t ~
+106, and show no sign of vanishing faster than the particle frequencies. As we will discuss in
+Section 6, these two defect types occur together, and are created by certain types of multiparticle
+interactions usually involving as. Fig. 11 also indicates two epochs of ECA 54's time evolution. For
+the first few iterations, the system is self-organizing from a random initial configuration into a
+system of particles (and defects 4 and 8). This process is reflected in the wild fluctuations in
+particle fractions and in the gradual increase in us. It is notable that these apparent fluctuations
+at early times are not due to statistical variation in the random initial condition. We repeated the
+experiment several times using different random initial configurations and different lattices sizes,
+and the same "fluctuations" were repeated almost exactly - even down to the size and position of the
+oscillations in ot frequency. The only discernible discrepancies between the experiments were slight
+differences in the size of the oscillations in 3s, 4s, and 8s, starting at about === page === J.E.
+Hanson, J.P. Crutchfield/Physica D 103 (1997) 169-189 183 t = 10 and gradually disappearing
+thereafter. As the figure shows, by about r ~ 25 this initial condensation into domains and
+particles has been replaced by a slow, smooth decrease in all particle fractions, hich continues
+indefinitely. We may, therefore, consider r as an emergence time for the domain/particle slructures.
+To measure the asymptotic behavior of the system, be could simply continue the above experiment for
+much longer. However, to illustrate the flexibility of our filtering scheme, we will instead make a
+simple modification to the particle filter and count the exact number of each type of particle at
+each time. This modification consists of changing the output string for each temporal phase of each
+particle to contain only one nonzero symbol, while maintaining proper spatial locations.
+Unrecognized defects are handled in the same way as in T~4. The resulting machine, denoted by T54,
+writes a single nonzero value at the center of each particle, regardless of its width. This makes
+counting particles just a matter of counting symbols in the filter output. Fig. 12 shows the number
+of particles and a-), interactions versus time plotted on a log-log scale, for the same experiment
+but longer times as in Fig. 11. Numerical studies in [14] have indicated that at very long times the
+number of as and 8s decreases very slowly according to a power law [N(a) + N(6)] ~ t-', with a =
+0.15. Our experiments on lattices of size N = 10 a, I0 5, and 10 6 show the same a-frequency curves
+in all cases, with a long-time decay N(a) ~ t a having rate a = 0.10 4- 0.01. As Fig. 12 shows,
+however, this long-time scaling regime sets in extremely gradually with a slow downturn beginning at
+about t ~ 16000. By about t ~ 2 x 105 , the downturn is completed and the a-frequency curve follows
+its longtime power law decay. One experiment on lattice size N = 104 was allowed to evolve for t = 2
+x 108 iterations: no systematic deviation from this functional form was observed. The fact that
+chaning the lattice s~ze had no effect on the shape of the a-frequency curve shows that the onset of
+the scaling regime is not due to finite-size effects. Another statistical measure of the system's
+global behavior is given by the fraction f(A54) of sites that 17 log(N) 11 i I i ct "¡.I w 0 Ioglt)
+22 Fig. 12. Number of particles {or,/~, V +, ?, } and u-?/ interactions 3 versus time. The lattice
+size is N = [06. Logarithms are base 2. The dashed line shows the measured power law decay at long
+times. are in the domain. After the initial emergence time, f(A54) shows a very slow monotonic
+increase toward a value of 1.0, which corresponds to a configuration entirely free of defects or
+particles. In the scaling regime, f(A54) increases as a power law with exponent a --- 0.007 +
+0.0005. A further modification of the particle filter provides us with a valuable tool for data
+visualization on large space-time scales. Noting that the as are the longestlived of the fundamental
+particles, we construct an "atracker," denoted by T 3 which traces the evolution 54' of as to the
+exclusion of all other structures. This is accomplished as follows. First we change the particle
+filter output to map all ¢~s and ?/s to the domain symbol 0. Then we modify the output on each input
+corresponding to an a or an oe-?' interaction so that a single nonzero symbol ( 1 ) is written, in
+the same way as in T~4. Unrecognized detects are all mapped to a third symbol (2). In this way,
+space-time data filtered with T ¡ and T 3 show a single 1 in the central cell 54 54 of each a,
+blocks of 2s on the relatively rare unrecognized defects, and 0s in all other cells. This effects a
+vast reduction in the amount of information in the space-time diagram. Fig. 13 shows two space-time
+diagrams of a random initial configuration on lattice of 1000 cells, evolving === page === (a) 0 999
+9999 0 p o g 0 - t (b) 9999 184 i 7A~gt\! J.E. Hanson, J.P Crutchfield/Physica D 103 (1997) 169-189
+0 999 Fig. 13. Substantially larger space-time diagrams of ECA 54; each diagram contains 107
+space-time cells. (a) Unfiltered space-time diagram. (b) Same space-time diagram filtered with the
+or-tracker described in the text. These figures are raster files taken directly from a moderate
+resolution computer screen, with an image resolution that is considerably coarser than the cell
+size. The importance of domain filtering lbr visualization is especially obvious here. The filtering
+effects a data compression ratio of about 103. for a total of 10000 time steps. Each diagram covers
+a rather large number of space-time cells - 107. It is interesting to note that even a PostScript
+rendered 8.5" ! 11" page contains only about 107 resolvable dots. At the top of Fig. 13 is the
+unfiltered space-time data, below which is the output of the a-tracker applied to the unfiltered
+data. Filtered output symbols 1 and 2 are both shown in black. Both plots are raster files taken
+directly from the computer screen, with an image resolution considerably coarser than the cell size:
+a single pixel covers approximately three spatial cells and 33 time steps. Because of this, the
+unfiltered data appear as a wash of randomly distributed pixels. The filtered plot, on the other
+hand, clearly shows the longlived as moving against a white background. The effective dynamics at
+this level is of stable ot particles apparently undergoing a sort of statistical "repulsion"
+mediated by the hidden ys. This is somewhat analogous to Brownian motion of the ot particles. At
+early times, we see a few annihilative collisions between adjacent ors that draw too close to each
+other. These collisons are the cause of the decay in the number of as observed in Fig. 12. After
+this transient period, the number of as in Fig. 13 remains constant and they remain roughly
+equidistant as they wander about within a close neighborhood. If we were to continue tracking the
+evolution of the system, we would see occasional ot--~ collisions occur at increasingly long
+intervals, until finite lattice size effects came into play. 6. Secondary structures Besides the
+primary domain and fundamental particles, ECA 54 supports a large number of secondary structures,
+some having the domain and particles as building blocks, some not describable at the domain/particle
+level. This section presents a gallery of a few of these. Our goal at present is not to effect an
+exhaustive description of patterns arising in ECA 54, but rather to show how the computational
+mechanics analysis of the system facilitates their discovery and description. ECA 54 possesses a
+number of regular domains other than A04 . The simplest of these is the language 0", consisting of
+all blocks of consecutive 0s. This language is obviously a domain of all CAs that map the all-zeros
+neighborhood I1 = 0...0 to 0. But in ECA 54, as in most such CAs, 0* is unstable. Other easily
+identified domains in ECA 54 consist of multiple isolated particles of a single type separated by
+domain regions - for example, the pattern consisting of === page === J.E. Hanson, J.P.
+Crutchfield/Physica D 103 (1997) 169-189 185 (.) (b) (c) raw filtered Fig. 14. Unfiltered and
+filterd space-time diagrams of a few o( ECA 54's other domains: (a) an unstable domain; (b) a domain
+consisting of alternating ors and /~s; (c) a domain of "'pseudo-~s" in which every block of nonzero
+filtered cells is either part of an ~ or is a string occurring in an ~-y interaction. In the
+filtered plots, domain cells are white, particles are black and nonparticle defects are black with T
+¡ output symbol. 54 isolated y ~- particles moving against a background of A 0 is a domain. Using
+notation borrowed from regu- 54 lar expressions, we may write this domain language as (A64 + y+)*.
+Other similar domains include (A54 + ~/-)*, (A54 + u)*, (A54 +/3)*, and (A54 + ot + fl)*. This last
+should be understood to mean patterns containing both isolated ~s and isolated fls; both types of
+particle may coexist without interacting because they have the same velocity (zero). All these
+domains are unstable to perturbations introducing other types of particle with different velocities.
+Fig. 14(a) shows a space-time plot of a domain with configurations having spatial period 4 and
+temporal period 2. The domain itself is period 1. This domain is unstable: its boundaries always
+grow inward with speed c = 1 site per iteration. Initial conditions having spatial regions in this
+domain are responsible for the initial nonzero fractions of unrecognized defect types { 1, 3, 5, 7}
+shown in Fig. 11. The fast decay in those fractions is due to this domain's instability. A more
+complex, and perhaps also more interesting, domain consisting of alternating ots and fls is shown in
+Fig. 14(b). Domain configurations have spatial period 9 and temporal period 4. This example again
+points out the inherent duality between domains and particles. In certain cases, particles may
+coalesce to form domains. The raw configurations can be interpreted in two ways, as the context of
+analysis requires. This is similar to raw filtered Fig. 15. Raw (a) and filtered (b) space-time
+diagrams of lhe gamma gun. The gamma gun arises t~om the decay of the unstable domain shown in Fig.
+14(bL the case of the/3 particle, which could be interpreted as a single entity or as the bound
+state of two Vs. Fig. 14(c) shows another unstable domain, in this case consisting of strings
+occuring in the ~ particle and in ot-y interactions. The spatial period is 8. The temporal period of
+configurations is 6, but that of the pattern is 3. The "gamma gun" (called a "radiating particle" in
+[14]), shown in Fig. 15, is a periodic particle formed by the decay of the domain of Fig. 14(c).
+When that domain is bounded on both sides by regions of A54, the two boundaries gradually approach
+each other while emitting ys that propagate out into the A.s4 regions. If the number of repetitions
+of the basic domain string is even (e.g., filtered string ... 0(53108880)"0... with n even), then
+the ultimate collision of the two approaching boundaries results in a configuration in the domain
+A54, i.e., the secondary domain disappears completely. If the number of repetitions of the basic
+string is odd, the ultimate result is the gamma gun. Vestiges of the vansihed domain can still be
+seen in the gamma gun's space-time signature. For example, in the eighth row of Fig. 15, the gamma
+gun's filtered spatial string is ... 053108880 .... identical to one period of the basic domain
+string noted above. Finally, we return to our consideration of previously unrecognized defect types
+4 and 8. By construction, === page === 186 J.E. Hanson, J.P. CrutchfieM/Physica D 103 (1997) 16~189
+T~4 classifies short blocks of 4s and 8s as follows: blocks of length 1 are u-y interactions, blocks
+of length 2 are fl particles, and blocks of length 3 are u particles. This means that unrecognized
+4s and 8s can occur in only two cases: (i) isolated blocks of length 4 or greater; or (ii) adjacent
+to other defect types (i.e., not isolated). The particle frequency statistics discussed in the last
+section show that all other unrecognized defect types vanish in the first few iterations. Therefore,
+only case (i) is possible at intermediate to long times. Application of the inverse domain filter Q¡
+4 to long blocks of 4s and 8s shows that they, respectively, correspond to long blocks of 0s and 1 s
+in the unfiltered behavior. These can arise in a number of ways, the most common of which is when a
+pair of incoming parallel ys collides with an u particle, i.e., y+ + y+ + u or u Ö y + y-. Before
+the outcome of the first collision has precipitated into isolated particles, the second ), hits the
+interaction region, resulting in a block of 8s. Another way in which blocks of 8s arise is when two
+or more adjacent us with the same temporal phase are pushed into each other by incoming ys. From the
+mapping ~54 for filtered configurations, or alternatively from the CA rule ~P54, we see that a block
+ofn 8s bounded by one or more 0s at each end is mapped onto a block of n 4s. Blocks of 4s shrink
+over time, though at alternate time steps they also emit short lived ys in the form of isolated ls
+0'-) and 5s (y+). The general pattern is shown in Fig. 16. There are four possible outcomes, based
+on the initial length n of the block of 8s. If n mod 4 = 0, then !n iterations later the filtered
+string will be... 050010 .... which maps to a fl particle by the y+-ycollision shown in Fig. 9(e).
+If n mod4 ---- 1, then !n iterations later the filtered string will be ... 0504010 .... which
+corresponds to an u particle with temporal phase u i, as indicated in Fig. 8(b). If n mod 4 = 2,
+then In iterations later the Fig. 16. Evolution of long blocks of 4s and 8s in the domain filter
+output. filtered string will be ...05044010 .... corresponding to the 3-particle collision V + + fl
++ yshown in Fig. 9(g), which results in the mutual annihilation of all three particles. Finally, if
+n mod 4 = 3, then I n iterations later the filtered string will be ... 050444010 .... which is
+identical to the three-particle collison V + + u + yshown in Fig. 9(f), and results in the three
+particles T + u + y+. Differentiating among these four possible outcomes for classification and
+filtering is done by calculating n mod 4 and remembering the location of the block's beginning. The
+latter requires adding a queue of unlimited depth to the particle filter. This means that a complete
+description of the pattern dynamics of ECA 54, whatever else it may entail, requires at least a
+computational model including a queue, i.e., a more sophisticated model class than finite state
+machines. 7. Particle physics of ECA 54 This article has described a number of properties of
+elementary CA rule 54 - some new, some already known - using the unified, general-purpose framework
+of computational mechanics. As such, it presents a case for the utility of that framework, by
+showing how otherwise disparate calculations and results can be brought together under a single set
+of techniques, and by presenting new results that would be otherwise inaccessible, or at best ad
+hoc. The analysis of ECA 54's patterns and pattern dynamics began with the identification of its
+most important computationally homogeneous pattern, the regular domain A54. From this basic building
+block or "pattern basis", a domain filter was constructed to factor out spatio-temporal regions
+conforming to the domain patterns, locating and highlighting exactly those space-time cells at which
+defects in the pattern occur. The resulting filtered space-time data were found to be described by
+the iteration of a deterministic mapping. A second-level particle filter was constructed to
+automatically classify the important particles or coherent structures existing at the boundaries of
+domain regions. Straightfoward modifications to the particle filter enable it to recognize and ===
+page === J.E. Hanson, J.P Crutchfield/Physica D 103 (1997) 169-189 classify patterns of all
+fundamental interactions, and ultimately of all but an exponentially small fraction of asymptotic
+spatio-temporal behavior. In describing A54, we were also able to introduce the space-time machine,
+an important extension to the techniques of computational mechanics, and present as an example the
+space-time machine corresponding to ECA 54's fundamental domain. Clearly the ideas underlying the
+space-time machine and its relatives deserve extensive treatment; this must out of necessity be
+presented elsewhere. We conclude by elaborating on a point made in the introduction: computational
+mechanics, in contrast with much work concerning CA and computation, takes a distinctly naturalistic
+stance. Each CA rule may be regarded as a specification of the microscopic equations of motion of a
+model universe. That is, the CA lookup table directly determines only the local space-time rules of
+cell interaction and cell modification. Confronted with the behavior that appears within such a
+universe over long temporal and spatial scales, computational mechanics attempts to answer the
+questions, what are the emergent structures? and what are the emergent physical laws governing their
+interactions? The result here of our computational mechanics analysis was a near-complete
+particle-level description of ECA 54's space-time behavior. The emergent structures were the regular
+domain - a sort of vacuum state - and the fundamental particles - excitations above that ground
+state. The laws were expressed in terms of the particle interactions and their properties, including
+the statistical features of the short and long term behavior. The collection of these behavioral
+components constitutes the "physics" of ECA 54's universe. More concretely, we showed that the
+space-time behavior condenses relatively quickly into lhese structures by the emergence time r.
+Every site in configurations generated beyond that time participates in one of the identified
+structures. There may be, however, compound structures built up out of the fundamental ones. As was
+seen in the particle decay statistics, for example, at around 16000 iteralions a scaling regime sets
+in, described by the power law decay in a particles. Presumably, this new level 187 of organization
+is associated with the appearance of some new mechanism that removes these particles systematically.
+Note. Refs. [2-5,17,18] are available via the World Wide Web from the Computational Mechanics
+Archive, http://www.santafe.edu/projects/Comp- Mech. Refs. [13,19] are available from the Evolving
+Cellular Automata archive, http://www.santafe.edu/ projects/evca. Acknowledgements This research was
+supported at the Santa Fe Institute under the Adaptive Computation and External Faculty Programs and
+under NSF grant IRI-9320200, DOE grant DE-FG03-94ER25231, and NASA-Ames grant NCC2-840. At the
+University of California, Berkeley, it was supported under AFOSR contract 91-0293 and ONR contract
+N00014-95-0524. Appendix A. Deterministic equation of motion of the particle-level model In this
+appendix, we give the FST for the mapping qb54 defined in Eq. (4), that takes the filtered string z
+t = W~54(St) and maps it to the filtered string zt+l = T~54(St+l) ~--- W¡4(~54($t)). The alphabet of
+q~54 is ,A p = {0- 8}, though the mapping is defined only over the set [T~54]out, i.e., the set of
+possible outputs of the domain filter. For this reason, most states in M(q~54) are lacking edges for
+many of the input symbols in A'. The mcachine will be specified by its transition table, which lists
+each state and its transitions in the following format: > .state [SinlSout] ~ dest [SinlSout] ~
+dest..., where Sin is the input symbol, Sout the output, and dest the destination state, of the
+given transition. Optional prefixes > and ¥ indicate that the state is a start state and/or accept
+state, respectively. Transitions are listed in order of input symbol. Transitions with no outputs
+are indicated by Sour = ~. === page === 188 The start state of M(~54) (state 0) has a self-loop on
+input 0, corresponding to a domain input symbol, and eight other edges for the eight different
+defect types. Once a nonzero input is read, the machine uses the next six input symbols to
+synchronize, finally passing down into its recurrent part, consisting of accept states {45 .....
+64}, where it begins writing output symbols. On reaching the end of the CA lattice, the machine
+remains in its current state and wraps around to the beginning of the lattice, where it produces
+outputs for the input symbols read during synchronization. If the machine is still in state 0 at the
+end of the lattice, then an output string zt+t = O N is written. J.E. Hanson, J.P
+Crutchfield/Physica D 103 (1997) 169-189 >0 [01kl~0 [llZ]~l [2lk] --~ 2 [31~.] ~ 3 [4lk] --~ 4 [51k[
+~ 5 [6lk] --~ 6 [71~.] ~ 7 [8IX] ~ 8 1 [0rZ] ~ 9 [71k] ~ 10 2 [01k] --+ 11 [61k] ~ 12 3 [01k]--+ 12
+[llk]~ 11 4 [01k] --~ 13 [41k] ~ 14 5 [01k] ~ 14 [31,~] ---> 13 6 [01k]~ 15 [2lk]~ 16 7 [01,~] --~
+16 [51Z] ~ 15 8 [01k]--~ 10 [81k]~9 9 [01,~]~ 17 [81k]~ 18 10 [0[k]--+ 19 [5lk] ~ 20 11 [01k] ~ 18
+[71k] ---> 17 12 [01Z]~20 [21k]~ 19 13 [01k] --> 21 [Ilk[ ~ 22 14 [01k] ~ 23 [4[)~] ~ 24 15 [01k]
+---> 24 [31k] --~ 23 16 [01~.] ---> 22 [61)~] --~ 21 17 [01k]~25 [5[k]~26 18 [01~.] --~ 27 [81k] --~
+28 19 [0l,k] ~ 29 [61~.] --~ 30 20 [0lk] ~ 31 [31k] -+ 32 21 [0IZ]---> 26 [21~.] ~ 25 22 [01)~] --->
+28 [71Z] ---> 27 23 [01Z] ---> 30 [Ilk[ --> 31 24 [01Z] ---> 32 [41k] ~ 34 25 [01k]---> 33 [6IZ]
+---> 34 26 [01k] ~ 35 [31Z] ~ 36 27 [0IX[ ~ 37 [5IX[ ~ 38 28 [0l,k] --~ 39 [81x] ~ 40 29 [01L] ~ 40
+[71k] ~ 39 30 [0[k] ---> 41 [21k] ~ 42 31 [0IZ] --~ 43 [41~.] ---> 44 32 [0[k] --+ 34 [lik] ~ 33 33
+[01k]~45 [71k]~46 34 [01k]--+ 47 [2lk]-+ 48 35 [01k] --~ 49 [41k] ---> 50 36 [01~.] --~ 51 [Ilk[
+---> 52 37 [01k]--~ 53 [61;~] --~ 54 38 [01k]~55 [31k]~56 39 [01k]~57 [5lk1~58 40 [0lk] --~ 59 [81k]
+~ 60 41 [01k] --~ 61 [31k] ~ 62 42 [01k] ---> 52 [61k] ~ 51 43 [0lk] --~ 54 [Ilk[ --+ 53 44 [0]k]
+--~ 63 [41k] ---> 64 ,45 [010] ~ 59 [8101--~ 60 ,46 [013] ---> 57 [5[3] ~ 58 ,47 [0[0] ---> 61 [3181
+---> 62 ,48 [010]--~ 52 [618] ~ 51 ,49 [010] ~ 54 [116] ---> 53 ,50 [013] ---> 63 [410] ~ 64 ,51
+[018] ~ 47 [218] ~ 48 ,52 [015] ---> 45 [715] ~ 46 ,53 [0101 ~ 45 [7101 ~ 46 ,54 [010] ---> 47 [210]
+---> 48 ,55 [012] ~ 49 [410] ~ 50 ,56 [010] ---> 51 [117] ---> 52 ,57 [010] --~ 53 [611[ ~ 54 ,58
+[0[0] ~ 55 [311] ~ 56 *59 [OlO] ---> 57 [5101 ~ 58 *60 [014] ~ 59 [814] ~ 60 ,61 [010] ~ 49 [415]
+--> 50 *62 [018] ~ 51 [110] ~ 52 *63 [011] ~ 54 [110] ~ 53 *64 [0[0]--~ 63 [414 ]~ 64 References [1]
+S. Wolfram, Universality and complexity in cellular automata. Physica D 10 (1984) 1. [2] J.E. Hanson
+and J.P. Crutchfield, The attractor-basin portrait of a cellular automaton, J. Stat. Phys. 66 (1992)
+1415. === page === J.E. Hanson, J.P. Crutchfield/Physica D 103 (1997) 169-189 189 13] J.P.
+Crutchfield and J.E. Hanson, Attractor vicinity decay for a cellular automaton, Chaos 3 (1993) 215.
+14] J.P. Crutchfield and J.E. Hanson, Trubulent pattern bases for cellular automata, Physica D 69
+(1993) 279. 15] J.E. Hanson, Computational mechanics of cellular automata, Ph.D. Thesis, University
+of California, Berkeley (1993). Published by University Microfilms, Ann Arbor, MI. 161 S. Wolfram,
+Computation theory of cellular automata, Commun. Math. Phys. 96 (1984) 15. [7] M.G. Nordahl, Formal
+languages and finite cellular automata, Complex Systems 3 (1989) 63. I81 K. Culik II, L.P. Hurd and
+S. Yu, Computation theoretic aspects of cellular automata, Physica D 45 (1990) 357. 191 K. Lindgren
+and M. Nordahl, Universal computation in simple one-dimensional cellular automata, Complex Systems 4
+(1990) 299. 10] K. Steiglitz, I. Kamal and A. Watson, Embedding computation in one-dimensional
+automata by phase coding solitons, IEEE Trans. Comput. 37 (1988) 138-144. I 1 ] Y. Aizawa, I.
+Nishikawa and K. Kaneko, Soliton turbulence in one-dimensional cellular automata, Physica D 45
+(1990) 307-327. [12] P. Gacs, Nonergodic one-dimensional media and reliable computation,
+Contemporary Mathematics 41 (1985) 125. [131 J.E Crutchfield and M. Mitchell, The evolution of
+emergent computation, Proc. Natl. Acad. Sci. 92 (23) (1995). [14] N. Boccara, J. Nasser and M.
+Roger, Particlelike structures and their interactions in spatio-temporal patterns generated by
+one-dimenersional deterministic cellular automaton rules, Phys. Rev. A 44 (1991) 866. [15] J.E.
+Hopcroft and J.D. Ullman, Introduction to Automata Theory, Languages, and Computation
+(Addison-Wesley, Reading, MA, 1979). [16] J.E Crutchfield and K. Young, Inferring statistical
+complexity, Phys. Rev. Lett. 63 (1989) 105. [17] J.E Crutchfield, The calculi of emergence:
+Computation, dynamics, and induction, Physica D 75 (1994) 11-54. [18] J.E Crutchfield,
+Unreconstructible at any radius, Phys. Lett. A 171 (1992)52-60. I19] R. Das, J.E Crutchfield, M.
+Mitchell and J.E. Hanson, Evolving globally synchronized cellular automata, in: Proc. 6th Int. Conf.
+on Genetic Algorithms, ed. L.J. Eshelman (Morgan Kaufmann, San Mateo, CA, 1995). === page === 

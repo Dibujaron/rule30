@@ -1,0 +1,27 @@
+ensemble of p-periodic rule 30 backgrounds: budget 4.00e+9 word-ops per p, 64 random orbits each (burn-in 4096)
+  p =   28 (64 orbits x 2232143 diagonals, 5127 ms): diagonals 142857152, mean gap 1.009891, speed 0.5024606, excess 2.461e-3, sem 2.762e-5, z = 89.09
+  p =   30 (64 orbits x 2083333 diagonals, 5184 ms): diagonals 133333312, mean gap 1.007113, speed 0.5017720, excess 1.772e-3, sem 3.102e-5, z = 57.12
+  p =   31 (64 orbits x 2016129 diagonals, 5087 ms): diagonals 129032256, mean gap 1.005654, speed 0.5014095, excess 1.410e-3, sem 3.017e-5, z = 46.72
+  p =   32 (64 orbits x 1953125 diagonals, 5088 ms): diagonals 125000000, mean gap 1.004595, speed 0.5011462, excess 1.146e-3, sem 3.210e-5, z = 35.70
+  p =   33 (64 orbits x 1893939 diagonals, 5075 ms): diagonals 121212096, mean gap 1.003192, speed 0.5007968, excess 7.968e-4, sem 3.240e-5, z = 24.60
+  p =   34 (64 orbits x 1838235 diagonals, 5049 ms): diagonals 117647040, mean gap 1.002315, speed 0.5005780, excess 5.780e-4, sem 2.857e-5, z = 20.23
+  p =   35 (64 orbits x 1785714 diagonals, 5012 ms): diagonals 114285696, mean gap 1.001504, speed 0.5003758, excess 3.758e-4, sem 3.128e-5, z = 12.02
+  p =   36 (64 orbits x 1736111 diagonals, 4956 ms): diagonals 111111104, mean gap 1.000608, speed 0.5001519, excess 1.519e-4, sem 3.264e-5, z = 4.65
+  p =   38 (64 orbits x 1644737 diagonals, 4828 ms): diagonals 105263168, mean gap 0.999497, speed 0.4998743, excess -1.257e-4, sem 4.116e-5, z = -3.05
+
+excess vs 1/p:
+  p=  28  excess 2.461e-3  sem 2.762e-5  p*excess 0.0689  sqrt(p)*excess 0.01302
+  p=  30  excess 1.772e-3  sem 3.102e-5  p*excess 0.0532  sqrt(p)*excess 0.00971
+  p=  31  excess 1.410e-3  sem 3.017e-5  p*excess 0.0437  sqrt(p)*excess 0.00785
+  p=  32  excess 1.146e-3  sem 3.210e-5  p*excess 0.0367  sqrt(p)*excess 0.00648
+  p=  33  excess 7.968e-4  sem 3.240e-5  p*excess 0.0263  sqrt(p)*excess 0.00458
+  p=  34  excess 5.780e-4  sem 2.857e-5  p*excess 0.0197  sqrt(p)*excess 0.00337
+  p=  35  excess 3.758e-4  sem 3.128e-5  p*excess 0.0132  sqrt(p)*excess 0.00222
+  p=  36  excess 1.519e-4  sem 3.264e-5  p*excess 0.0055  sqrt(p)*excess 0.00091
+  p=  38  excess -1.257e-4  sem 4.116e-5  p*excess -0.0048  sqrt(p)*excess -0.00077
+
+controls:
+  IID fair bits: diagonals 200000000, mean gap 1.000114, speed 0.5000285, excess 2.851e-5 (sem ~ 2.500e-5)
+  INDEP random period-16 words: diagonals 39999419, mean gap 0.999836, speed 0.4999589, excess -4.107e-5 (sem ~ 5.590e-5); predicted mean gap 1 - 2^-(p-1) = 0.999969482
+  INDEP random period-32 words: diagonals 40000000, mean gap 0.999878, speed 0.4999696, excess -3.039e-5 (sem ~ 5.590e-5); predicted mean gap 1 - 2^-(p-1) = 1.000000000
+  INDEP random period-64 words: diagonals 40000000, mean gap 0.999881, speed 0.4999701, excess -2.986e-5 (sem ~ 5.590e-5); predicted mean gap 1 - 2^-(p-1) = 1.000000000

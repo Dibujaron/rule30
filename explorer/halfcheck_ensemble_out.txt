@@ -1,0 +1,21 @@
+ensemble of p-periodic rule 30 backgrounds: budget 2.00e+9 word-ops per p, 64 random orbits each (burn-in 4096)
+  p =    8 (62 orbits x 3906250 diagonals, 2462 ms): diagonals 242187500, mean gap 1.048836, speed 0.5119179, excess 1.192e-2, sem 3.340e-3, z = 3.57
+  p =   16 (1 orbits x 1953125 diagonals, 4317 ms): diagonals 1953125, mean gap 1.012234, speed 0.5030400, excess 3.040e-3, sem NaN, z = NaN
+  p =   32 (64 orbits x 976563 diagonals, 2472 ms): diagonals 62500032, mean gap 1.004679, speed 0.5011671, excess 1.167e-3, sem 4.900e-5, z = 23.82
+  p =   64 (64 orbits x 488281 diagonals, 2414 ms): diagonals 31249984, mean gap 1.000277, speed 0.5000692, excess 6.920e-5, sem 6.248e-5, z = 1.11
+  p =  128 (64 orbits x 244141 diagonals, 2048 ms): diagonals 15625024, mean gap 1.000289, speed 0.5000723, excess 7.229e-5, sem 9.948e-5, z = 0.73
+  p =  256 (64 orbits x 122070 diagonals, 1866 ms): diagonals 7812480, mean gap 0.999523, speed 0.4998808, excess -1.192e-4, sem 1.230e-4, z = -0.97
+
+excess vs 1/p:
+  p=   8  excess 1.192e-2  sem 3.340e-3  p*excess 0.0953  sqrt(p)*excess 0.03371  (788 escapes)
+  p=  16  excess 3.040e-3  sem NaN  p*excess 0.0486  sqrt(p)*excess 0.01216  (2534 escapes)
+  p=  32  excess 1.167e-3  sem 4.900e-5  p*excess 0.0373  sqrt(p)*excess 0.00660
+  p=  64  excess 6.920e-5  sem 6.248e-5  p*excess 0.0044  sqrt(p)*excess 0.00055
+  p= 128  excess 7.229e-5  sem 9.948e-5  p*excess 0.0093  sqrt(p)*excess 0.00082
+  p= 256  excess -1.192e-4  sem 1.230e-4  p*excess -0.0305  sqrt(p)*excess -0.00191
+
+controls:
+  IID fair bits: diagonals 200000000, mean gap 1.000114, speed 0.5000285, excess 2.851e-5 (sem ~ 2.500e-5)
+  INDEP random period-16 words: diagonals 39999419, mean gap 0.999836, speed 0.4999589, excess -4.107e-5 (sem ~ 5.590e-5); predicted mean gap 1 - 2^-(p-1) = 0.999969482
+  INDEP random period-32 words: diagonals 40000000, mean gap 0.999878, speed 0.4999696, excess -3.039e-5 (sem ~ 5.590e-5); predicted mean gap 1 - 2^-(p-1) = 1.000000000
+  INDEP random period-64 words: diagonals 40000000, mean gap 0.999881, speed 0.4999701, excess -2.986e-5 (sem ~ 5.590e-5); predicted mean gap 1 - 2^-(p-1) = 1.000000000

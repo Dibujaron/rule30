@@ -1,0 +1,26 @@
+p = 32 regime: walked diagonals 87869..1420878967 (1420791099 of them, 40848 ms)
+  first eventually-white diagonal past 87866: k = 1420878968
+  speed over the WHOLE regime: 0.5011284  (excess 1.128e-3, steps 2848009510)
+  k=100087869: cumulative speed 0.5010557
+  k=200087869: cumulative speed 0.5011185
+  k=300087869: cumulative speed 0.5011289
+  k=400087869: cumulative speed 0.5011205
+  k=500087869: cumulative speed 0.5011209
+  k=600087869: cumulative speed 0.5011280
+  k=700087869: cumulative speed 0.5011286
+  k=800087869: cumulative speed 0.5011350
+  k=900087869: cumulative speed 0.5011384
+  k=1000087869: cumulative speed 0.5011375
+  k=1100087869: cumulative speed 0.5011355
+  k=1200087869: cumulative speed 0.5011310
+  k=1300087869: cumulative speed 0.5011256
+  k=1400087869: cumulative speed 0.5011278
+  S_1420878967 has weight 20 over its period 32 -> the next word has period 32
+
+branch 0 (C(0) = 0; wrap-consistent: true; period 32):
+  diagonals 30000000, mean gap 1.004279, speed 0.5010676, excess 1.068e-3
+  blocks of 1000000: n=30, sd 4.029e-4, sem 7.356e-5, z = 14.51
+
+branch 1 (C(0) = 1; wrap-consistent: true; period 32):
+  diagonals 30000000, mean gap 1.004364, speed 0.5010885, excess 1.089e-3
+  blocks of 1000000: n=30, sd 2.776e-4, sem 5.068e-5, z = 21.48

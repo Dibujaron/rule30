@@ -1,0 +1,13 @@
+ensemble of p-periodic rule 30 backgrounds: budget 1.60e+10 word-ops per p, 256 random orbits each (burn-in 4096)
+  p =   64 (256 orbits x 976563 diagonals, 19589 ms): diagonals 250000128, mean gap 1.000177, speed 0.5000442, excess 4.418e-5, sem 2.088e-5, z = 2.12
+  p =  128 (256 orbits x 488281 diagonals, 16553 ms): diagonals 124999936, mean gap 1.000050, speed 0.5000125, excess 1.253e-5, sem 3.063e-5, z = 0.41
+
+excess vs 1/p:
+  p=  64  excess 4.418e-5  sem 2.088e-5  p*excess 0.0028  sqrt(p)*excess 0.00035
+  p= 128  excess 1.253e-5  sem 3.063e-5  p*excess 0.0016  sqrt(p)*excess 0.00014
+
+controls:
+  IID fair bits: diagonals 200000000, mean gap 1.000114, speed 0.5000285, excess 2.851e-5 (sem ~ 2.500e-5)
+  INDEP random period-16 words: diagonals 39999419, mean gap 0.999836, speed 0.4999589, excess -4.107e-5 (sem ~ 5.590e-5); predicted mean gap 1 - 2^-(p-1) = 0.999969482
+  INDEP random period-32 words: diagonals 40000000, mean gap 0.999878, speed 0.4999696, excess -3.039e-5 (sem ~ 5.590e-5); predicted mean gap 1 - 2^-(p-1) = 1.000000000
+  INDEP random period-64 words: diagonals 40000000, mean gap 0.999881, speed 0.4999701, excess -2.986e-5 (sem ~ 5.590e-5); predicted mean gap 1 - 2^-(p-1) = 1.000000000
