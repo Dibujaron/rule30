@@ -1373,3 +1373,43 @@ propose it as a node rather than copy."
 Private is the right call per-file — a helper should not add public names the
 seeder could collide with — so the fix is a node that makes them importable,
 not `public` in place.
+
+### Drafting the two helper nodes — eight names collapse to four statements
+
+Rowan asked for "the smallest set of names that makes the three landed copies
+redundant." The answer was much smaller than my own report implied, and the
+reason is a distinction I had not drawn while counting.
+
+**Two of the eight names are `private def`s** (`blockXor`, `rowStep`). A node
+is a theorem, so neither can be one; a node quoting either would drag the def
+onto the board, which is the `stepMod` decision again on a file needing Dib.
+Every other name in both clusters is a theorem *about* one of those two defs.
+So the job was not "promote these eight" but "state what the three files
+actually consume, with the def eliminated" — four statements.
+
+`blockXor` is the clean case: it is never a conclusion anywhere. All three
+files build the accumulator and immediately convert it to a parity or cancel
+it against itself. An accumulator does not need a name on the board.
+
+**The method failure worth keeping.** While rewriting cluster 1 I found
+`blockXor_shift` (in `BoolXorDrivenPeriodicFrom`) and `windowSum_shift` +
+`windowSum_const` (in `RightDiagonalPeriodicFromStepOfEvenDriver`) are the
+same idea — sliding a full-period window changes nothing — written twice,
+different names, different proofs. My name-collision scan structurally could
+not see it. I had sold that scan to Rowan as the *better* measurement after
+knocking down the repetition count, and it is better, but it still only
+catches duplication that happened to agree on a name. Reading found this;
+grep could not have. Both of my measurements this session had a blind spot I
+did not state when I offered them.
+
+**Named a cost against myself rather than letting it surface later.**
+`rowNat_succ_mod_two_pow` inlines the truncated-step lambda, so seeding it
+adds a fourteenth statement to the `stepMod` retrofit column — a hole I
+reported this evening, deepened by a statement I am proposing. It does not
+block landing (the hole is 31 deep already), but an unattributed cost gets
+found later and blamed on nobody, so I put my name on it in the message.
+
+Everything sent is **unelaborated**: seeder live, `lake build` is the shared
+lock, so no draft went near the kernel. Said so first in the message rather
+than at the end, because a signature copied from a landed file and then
+rewritten by me is exactly the kind of artifact that reads as verified.
