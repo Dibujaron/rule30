@@ -855,3 +855,57 @@ right way to falsify it is to measure `c(p)` at `p = 64` and `p = 128` with a
 sem well under `1e-5` rather than the `2`–`3e-5` the sweep used. If either
 comes back negative at that precision the addendum is wrong and the route
 reopens at large depth.
+
+## The reachable-set bound cannot be proved from "the background is a rule 30 picture": an explicit witness
+
+Alidade's computational-mechanics sighting produced the best number this
+project has had on the damage front: feeding the kernel-proved survival law
+(`explorer/alidade_scratch_survival.lean`, three theorems, axioms `[propext]`
+alone) together with the advance law into the reachable-set dynamic programme
+gives a leftward speed of **0.4531** on rule 30's real background — below the
+`1/2` that `leftDiagonal_onset_le` needs, where the advance law alone gives
+`0.5013`. Alidade said plainly that this is a measurement of a deterministic
+walk and not a theorem, and named what would make it one: the DP's state lives
+in a finite set whatever the background does, so the worst-case speed is a
+**maximum mean cycle** of a finite weighted automaton, computable exactly, and
+the question is whether that cycle is below `1/2` when backgrounds are
+constrained to be rule 30 pictures.
+
+**It is not, and the witness is explicit.** The period-3 ring of length 12
+seeded by `010011111000` is a genuine rule 30 evolution — the rule holds on
+every row of its cycle, and it has no eventually-white left diagonal, so it is
+an admissible background by the DP's own conditions. Run the DP against it and
+`min R` moves left at **0.5715** over 20,000 rows: 11,430 advances, 8,570
+stays, **zero retreats**. The length-4 ring seeded by `1000` gives exactly
+`0.500000` (15,000 advances, 5,000 retreats, cycle length 8). Both are at or
+above the target.
+
+So the constraint set "the background is a rule 30 picture" is **too weak to
+carry the bound**. The 0.4531 is a real property of rule 30's *settled words*
+specifically, not of rule 30 pictures in general, and any proof must use
+something the settled region has that a periodic ring does not. Alidade's
+fourth control — a random ring evolved under rule 30 giving 0.45292 — was read
+as evidence that the property is general; it is evidence that the property is
+*typical*, which is a different and weaker thing, and the witness above is the
+atypical case that breaks it.
+
+**The witness is the Table 6.2 configuration.** `010011111000` is the rotation
+by 3 of `000010011111`, which is the unique length-12 necklace of minimal
+temporal period 3 under rule 30 — the object identified while adjudicating
+Talus's C3 enumeration, whose novelty was correctly refused as a routine table
+continuation a few hours earlier. The enumeration was not novel and it was not
+useless: it produced the counterexample that killed this route. Verified
+independently here (orbit `010011111000 → 111110000100 → 100001001111 →`
+itself; rotation confirmed at shift 3).
+
+**What survives, and it is not nothing.** The survival law is kernel-proved and
+stands. The 0.4531 measurement stands as a measurement. What dies is the
+specific route from one to the other, and it dies for a reason sharp enough to
+aim the next attempt: the missing ingredient is whatever distinguishes the
+settled words from an arbitrary rule 30 periodic background. The settled words'
+periods are powers of two; the witness ring has period 3.
+
+**Recorded** 2026-09-09 by Rowan. The computation was cut off by an expired
+login while verifying its own witnesses, and the verdict here is recovered from
+the scripts it left — `explorer/mmc_verify.cjs` and siblings — re-run and
+independently checked, not from its report, which never arrived.
