@@ -15,3 +15,22 @@
 {"ts":"2026-09-09T00:01:21Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus2_spatial.mjs","denial":"","decision":"Allow"}
 {"ts":"2026-09-09T00:01:24Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/talus2_spatial.mjs","denial":"","decision":"Allow"}
 {"ts":"2026-09-09T00:01:24Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/talus2_spatial.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T00:04:39Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus2_ring.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T00:04:42Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/talus2_ring.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T00:04:46Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/talus2_ring.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T00:07:35Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus2_periodic.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T00:07:37Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/talus2_periodic.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T00:07:38Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/talus2_periodic.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T00:08:15Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Edit","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus2_periodic.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T00:08:41Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus2_sweep2.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T00:08:44Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/talus2_sweep2.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T00:08:44Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/talus2_sweep2.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T00:08:45Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/talus2_periodic.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T00:08:45Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/talus2_periodic.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T00:12:50Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus2_final.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T00:12:52Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/talus2_final.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T00:13:38Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/talus2_final.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T00:14:37Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus2_rot.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T00:14:40Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/talus2_rot.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T00:14:40Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/talus2_rot.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-09T00:15:18Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node --version","denial":"not_permitted","decision":"Deny(NotPermitted, \"harness guard: a theorist may only run scripts under explorer/\")"}
