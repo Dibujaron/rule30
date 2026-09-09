@@ -119,6 +119,7 @@ import Rule30.Proofs.Rule30NeOfLeftNe
 import Rule30.Proofs.Rule30RunBoundary
 import Rule30.Proofs.Rule30Translate
 import Rule30.Proofs.SidewaysInverse
+import Rule30.Proofs.StepModIterateTwoMul
 import Rule30.Proofs.StepModPreperiodLeOfLe11
 import Rule30.Proofs.StepTwoMul
 import Rule30.Proofs.StripEventuallyPeriodic

@@ -1,0 +1,16 @@
+
+node      stepMod_iterate_two_mul
+identity  Vesper
+model     sonnet
+outcome   proved
+cost      $1.09
+turns     15
+estimate  M
+session   329913b2-7724-4a67-b00e-c0e89d8b1ff8
+log       c:/Users/dibuj/dev/rule30/runs/20260909T213817Z/stepMod_iterate_two_mul-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Vesper (#2b3a67): closed 67, abandoned 5, $60.02, calibration 55/68
