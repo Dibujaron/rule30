@@ -1,0 +1,16 @@
+
+node      leftDiagonal_onset_le
+identity  Selvage
+model     fable
+outcome   rate_limited
+cost      $0.00
+turns     1
+estimate  L
+session   098252f3-9471-47b4-9307-eac66e192e02
+log       c:/Users/dibuj/dev/rule30/runs/20260909T174534Z/leftDiagonal_onset_le-7
+proof     -
+
+verifier:
+the five-hour window is rate limiting; resume session 098252f3-9471-47b4-9307-eac66e192e02
+
+Selvage (#3a6ea5): closed 9, abandoned 4, $20.31, calibration 6/10

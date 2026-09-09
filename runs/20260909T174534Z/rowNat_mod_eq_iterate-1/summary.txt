@@ -1,0 +1,16 @@
+
+node      rowNat_mod_eq_iterate
+identity  Vesper
+model     sonnet
+outcome   proved
+cost      $0.96
+turns     13
+estimate  M
+session   9ddc1705-ebea-4999-b787-e13cb44d7510
+log       c:/Users/dibuj/dev/rule30/runs/20260909T174534Z/rowNat_mod_eq_iterate-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Vesper (#2b3a67): closed 61, abandoned 5, $55.43, calibration 50/62

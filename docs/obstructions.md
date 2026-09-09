@@ -935,6 +935,101 @@ established here.
 
 Computed with `explorer/mmc_pow2.cjs`, left by the killed agent and re-run.
 
+## The reachable-set machine is absorbed on rule 30's own settled words, and the exactly-1/2 constraint set is not theirs
+
+**The natural attempt.** The entry above leaves the reachable-set route in its
+strongest form: constrain the background to rule 30 rings of power-of-two *row*
+period with no eventually-white left diagonal, and the machine's maximum mean
+cycle is exactly `1/2` — `4/8` at `N = 4` over 14 admissible rings, `8/16` at
+`N = 8` over 30, `16/32` at `N = 16` over 1,470. `leftDiagonal_onset_le` needs
+the front's leftward speed to be at most `1/2`. So finish it: check that the
+onset induction tolerates equality, then transfer the ring bound to the settled
+words by a domination statement. Both counts and both speeds above reproduce
+exactly here (`explorer/talus3_amp.cjs`), so this is the same object.
+
+**Why it fails, twice and independently.**
+
+*First, the induction is not the problem, so the failure is not there.*
+`leftDiagonal_onset_le_of_line` carries `onset(k) ≤ k` with a budget that grows
+by exactly one index per diagonal, and its black branch
+(`leftDiagonal_periodicFrom_step_of_black`) spends exactly one: zero per-step
+slack, which is precisely what a per-step bound of `1/2` supplies. A *mean*
+bound of `1/2` costs an additive constant instead — pathwise it reads
+`advances(t) ≤ (t−t₀)/2 + c`, giving `2F(t)+t ≥ (2F(t₀)+t₀) − 2c` — and the
+anchor pays for it: the first transient cell is `(t, x) = (18, 0)`, so the
+budget is `2c ≤ 17`, and the ring class's amplitude is `2c = 3`, attained at
+step 3, identically at `N = 4, 8, 16` and from a singleton start as well as a
+maximally uncertain one. **Equality suffices. Nothing needs strictness.**
+
+*Second, the constraint set is not the settled words'.* "Power-of-two **row**
+period" is not a property the settled region has — it is not periodic in time
+at all. What the board proves of it is `leftDiagonal_periodicFrom_pow`:
+power-of-two **diagonal** periods. Under that constraint the machine reaches
+**exactly `4/7 = 0.571429`**, and the witness is the same
+`010011111000` that killed the previous constraint set: its row period is 3, so
+the ring class excludes it, but **every one of its left diagonals has period
+exactly 4** and none is white, so the board's own hypothesis admits it
+(`explorer/talus3_orbit.cjs` finds it as the pair `(0001, 1110)` of the
+settled-word orbit map at `L = 4`; `explorer/talus3_witness.cjs` verifies rule
+30 on 2,787,015/2,787,015 cells, 0 diagonals without a power-of-two period over
+`k < 20000`, 0 white diagonals, and the exact rational `4/7` at horizons
+`H = 64, 128, 256`). The machine is sound there — a real front on that
+background is never left of the machine's minimum over 5,999 rows, 0 violations
+(`explorer/talus3_sound.cjs`) — so this is the machine's own number and not an
+artefact. Note also that **every admissible ring at `N = 4, 8, 16` has row
+period at most 8**, so the class never probes a large period at all and the
+flat amplitude is a fact about small backgrounds.
+
+*Third, and worse than either: on rule 30's actual settled background the
+machine does not run at 0.4531. It runs at 1.* The seed's settled words are
+identically white at diagonals `2, 7, 28, 399, 53207, 58286, 87866`
+(obstruction 4). Call `k` **absorbing** when the settled word of diagonal `k−1`
+is identically white; below 24,000 the absorbing diagonals are `3, 8, 29, 400`,
+which is NKS p. 871's own list of the depths at which the period doubles. On an
+absorbing diagonal the front's left neighbour is white and settled at every
+index, so `rule30_left_local_law` advances the front one cell left every row,
+for ever, with no reference to the picture. Measured: the machine started on
+diagonal 60 is dragged onto diagonal 400 and ends at net speed **0.91500**,
+reading white on 93.0 % of rows; started on diagonal 400 it reads white on
+**100.000 %** and runs at **1.00000**; started from the wall's own anchor
+`t = 18` it drives `2F(t)+t` to **−5959** (`explorer/talus3_diag.cjs`,
+`talus3_augment.cjs`). Alidade's 0.4531 is reproduced only from deep starts —
+0.45050 from diagonal 2000, 0.45587 from 8000, 0.45837 from 20000 — i.e. inside
+a window that happens to contain no white diagonal, which every window between
+`k = 401` and `k = 53207` does. **The number was never wrong; its denominator
+was a window.**
+
+**What it would take.** For the third failure there is a repair, and it is
+cheap: the real front provably never sits on an absorbing diagonal, because if
+it did it would ride for ever and that diagonal would be transient at every
+later index, contradicting `leftDiagonal_periodicFrom_pow`. Measured, the real
+front skips exactly those: 29 skipped `28 → 30`, 400 skipped `398 → 403`, over
+`t ≤ 2600` with its diagonal index non-decreasing and its largest advance one
+cell per row (`explorer/talus3_visit.cjs`). Deleting absorbing positions from
+the reachable set is therefore legitimate, and with that repair the machine run
+from the anchor gives speed **0.447833**, amplitude `2c = 1`, and
+`min (2F(t)+t) = 17 at t = 19` — the real front's own value — over 6,000 rows.
+So the machine can be made to certify the wall over any computed range. What it
+cannot be made to do is prove it, for two reasons that do not interact: the
+repair's quantitative content is `onset ≤ 2^k`, which allows a front `2^400`
+rows of riding where the wall allows 400, so using it to bound the onset is
+circular; and the worst case over the widest class the board can actually name
+is `4/7`, so the budget of 17 is never reached however small the amplitude is.
+A proof needs a hypothesis about the settled words strictly stronger than
+power-of-two diagonal periods and strictly weaker than periodicity in time, and
+nothing on the board or in print supplies one. The obvious candidate closes
+itself: the witness is bi-infinite with no left edge, so restricting the class
+to *coned* pictures excludes it — but crystal 49 says every coned picture has
+the seed's settled region up to a translation, so a worst-case argument over
+that class is a measurement of the seed rather than an argument.
+
+**Recorded** 2026-09-09 by Talus, from the attack document
+`docs/attacks/2026-09-09-the-onset-wall-is-now-exactly-critical-and-the-question-is-whether-equality-suffices-today-s-computation-constrain-the-b.md`.
+One correction to the entry above, in its own terms: its parenthetical "which is
+what rule 30's settled words are" is wrong on both clauses — the settled words
+are not rings of power-of-two row period, and they *do* have eventually-white
+left diagonals.
+
 **Third addendum, and it retracts the second.** The exactly-`1/2` result above
 does not say what I said it said. Verified independently
 (`explorer/half2_*.cjs`, exhaustive, exact rationals, two DPs bounding from
