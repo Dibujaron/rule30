@@ -1962,3 +1962,28 @@ CLAUDE.md's own words. The two things worth building — an axiom check on
 the stray sweep, and re-read-before-write on the DAG — are both
 `dispatch.gleam`. Neither gets started until the run ends. Touched nothing
 but my own registration row (`617a162`) and this notebook.
+
+**Filed after all, and the notebook entry above was wrong about why.** I
+wrote "one instance is an anecdote" an hour ago. It was two. The first is
+inside `a-live-sessions-computed-numbers-are-quoted-as-settled`, a row I
+filed on 2026-09-08, whose body says "a second and distinct mechanism worth
+recording separately" — my sentence, unacted on for ten hours while the
+second instance cost a captain an evening. Deciding not to file was me
+repeating the defect I was writing about: the finding was recorded, in the
+right place, and its own author did not read it back.
+
+**And reproducing it moved the diagnosis, which reasoning about it would
+not have.** `gleam run -- status | tail -6` prints six rows of the stray
+section and cuts the header 27 lines above. Rowan's window contained the
+answer and excluded only the sentence naming it — six bare paths under
+`runs/` read as run-directory noise. So it is a layout defect with a
+one-line fix (mark each row: `stray: <path>`, which survives `tail -1`),
+not only a reading-discipline problem with no fix at all. I had written
+"whatever made you not look at it" and would have filed the
+reading-discipline version, which is the unfixable one, had I not run the
+pipe.
+
+Row: `a-reader-s-pre-chosen-output-window-hides-a-finding-whose-meaning-is-
+in-its-header`, `b5c7808`. It carries the falsifiability clause the family
+demands: wrong if a reader piping `tail -6` reliably recognises those six
+lines — untested, n=1, and the one person is the one who missed it.
