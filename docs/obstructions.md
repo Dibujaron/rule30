@@ -656,3 +656,104 @@ right-diagonal periodicity is citing the wrong one.
 **Recorded** 2026-09-08 by Rowan, from a computation run to settle Portage's
 handed-on question. Scripts under `explorer/nucleus_*.cjs` (`.cjs` because the
 repo's `package.json` sets `"type": "module"`).
+
+## Classifying the good boundaries: the finite criterion is vacuous and the sweep that would replace it is not convergent
+
+**The natural attempt.** Call an eventually periodic `b` *good* when `X_b` — the
+configuration white at every `x ≥ 1` at time 0 with centre column `b`, unique by
+crystal 40 — has an eventually periodic column other than column 0. Obstruction 9
+shows both kinds exist (`b ≡ 1` good, `b = (10)^∞` bad), so the natural next move
+is a criterion: sweep the words of each period with the engine, read off which are
+good, and look for the pattern. Two structures invite it. Goodness collapses to a
+single sequence — by the sandwich lemma and `evolve_period_sub_one`, `b` is good
+iff column −1 is eventually periodic, and `sideways_inverse` at the origin makes
+column −1 a pointwise function `b(t+1) XOR (b(t) OR col₁(t))`, so the black times
+of `b` are periodic for free and everything rests on **column 1 read at the white
+times of `b`**. And goodness has an exact structural meaning: `b` good forces every
+column `x ≤ 0` periodic with one common period and onset (`evolve_period_sub`),
+hence by crystal 24 the row is eventually spatially periodic leftward, so the left
+half of a good `X_b` is exactly a rule 30 orbit on a finite ring. Measured: for
+`b = 1 0^9`, `1110011000` and `1000` the ring reproduces columns 0 … −39 of the
+real picture over 600 rows, 0 of 24,000 cells wrong (`explorer/talus2_ring.mjs`).
+So a good `b` must be the centre column of a configuration `C` with `F^q(C) = C`,
+and those are enumerable outright.
+
+**Why it fails.** Both halves fail, and each is measured.
+
+*The finite criterion is vacuous where it can be checked.* The configurations
+fixed by `F^L` are exactly the cycles of the leftward window map on `2^{2L}`
+states (crystal 24 made precise: `F^L` is left-permutive with radius `L`, so
+`C(j)` is forced by the `2L` cells to its right), so the complete list is
+computable — `explorer/talus2_periodic.mjs`, exhaustive to `L = 10`, reproducing
+Wolfram 1986 Table 6.2 word for word at `L = 1, 3, 4` (`0`, `01`; `000011111001`;
+`0000001`, `0000111`, `0010011`, `0111111`) and extending it; spatial periods
+`1,2,5,15,25` at `L = 5`, `1,2,12,84` at `L = 6`, `1,2,15` at `L = 7`,
+`1,2,4,7,80` at `L = 8`, `1,2,12,15,135` at `L = 9`, `1,2,5,15,25,30,90,155` at
+`L = 10`; samples kernel-checked in `explorer/talus2_scratch_rings.lean`, axioms
+`propext`. But the resulting necessary condition confines almost nothing: all 6
+words of minimal period exactly 3, all 12 of minimal period exactly 4 and all 30
+of minimal period exactly 5 are centre columns of temporally periodic
+configurations, so at those periods it excludes nothing — while the good words
+number 5 of 8, 14 of 16 and 2 of 32.
+The converse is outright false — of 55 ring traces built independently and used as
+boundaries, only 14 were good at `T = 2·10^4`, and the smallest failure survives a
+proper depth: the ring `00111` of size 5 and cycle length 5 has five phase traces
+`01011, 01101, 10101, 10110, 11010`, all bad at `T = 1.6·10^6` with 3,444–3,561
+distinct factors of length 32. The reason is the base case: `X_b` has a *white*
+right half, and nothing makes it compatible with the ring at the origin.
+
+*The sweep is not convergent at any depth reached here.* Verdicts overturn as the
+depth grows, in both directions, repeatedly. At `T = 3·10^3` the class of
+`1010000111` had that word good and its nine rotations bad; at `T = 3·10^4` the
+verdicts inverted exactly; at `T = 4·10^5` all ten are bad. `b = 1111010000` is
+good at `T = 3·10^4`, with a period confirmed over the last 3,750 terms of the
+restricted sequence, and bad at `T = 4·10^5` with 3,459 distinct factors of length
+32. Onsets are the reason and they are large: within the single rotation class of
+`1101011000` at period 10, all eight members are good with period 5 and onsets
+running from 12,156 to **280,976 rows** (`explorer/talus2_splits.mjs`), and in the
+class of `1001101000` nine members settle by 15,195 while the tenth settles at
+**798,077** (`explorer/talus2_class10.mjs`). So the depth a period-10 word needs
+is not predicted even by the other nine words in its own rotation class. No
+statistic of `b` survives either: the family `(0^k)101` is bad, bad, bad, bad, bad,
+good, bad, good, good, good, good for `k = 0..10`, and `1 0^7`, `1 0^9` are good
+while `1 0^8` is bad. So "sweep and look for the pattern" produces a table whose
+entries are not yet claims, and a criterion fitted to it would be fitted to noise.
+
+**What it would take.** Not a deeper sweep — the depth needed is not bounded by
+anything measured, and a period holding over 3,750 consecutive terms was shown
+here to break later. What is needed is the comparison the enumeration now makes
+possible: given the explicit space-time periodic `C` whose centre column is `b`,
+decide whether `X_b`'s column 1 agrees with `C`'s at the white times of `b`. Both
+sides are now closed-form objects, one of them periodic by construction, which was
+not true before. The hard step is visible and small: the base case at row 0, where
+`X_b`'s white right half meets the ring at the origin — cell `(1,0)` of the ring's
+configuration reads `ρ(1)` where `X_b` reads white, so they agree iff `ρ(0)` is
+black or `ρ(1)` is white. Relatedly, sub-question (b), whether the good set is
+closed under rotation, is *not* settled: the proved link covers only `b(0)` white
+(then row 1 of `X_b` **is** `X_{σb}`), and at a black start the two configurations
+share a centre column but differ in their right halves, so relating them is a left
+damage front question, which crystals A3 says is not available. No counterexample
+survives: 260 rotation classes at `p ≤ 10` show no split, one class at `p = 10`
+was never examined, and the single candidate that looked decisive —
+`1010001001`, bad at `10^6` rows while its nine siblings were good — is **good at
+`2.5·10^6` with onset 798,077 rows**, fifty-two times its siblings'. That word is
+the sharpest calibration this topic has: it says a bad verdict below `10^6` rows
+is worth nothing here, and it gives the diagnostic that separates the two cases.
+`1010001001` at `10^6` had 525 distinct factors of length 32; a boundary that is
+genuinely bad has thousands with near-maximal growth — the phase traces of the
+size-5 ring have 3,444–3,561 at length 32 and over `10^5` at length 128 at
+`1.6·10^6` (`explorer/talus2_recheck.mjs`). **A low but growing factor count means
+"has not settled yet", not "never settles".**
+
+Where a next session should work is the realizability gap itself, at the two
+smallest rings, where both sides are finite and known: the size-7 ring of temporal
+period 4, which *is* realized (14 of the 16 boundaries of period 4 are good and
+their left halves are that ring), and the size-5 ring of temporal period 5, which
+is *not* (all five of its phase traces are bad at `1.6·10^6`, and only 2 of the 32
+boundaries of period 5 are good). Adjacent periods, same construction, opposite
+outcomes, and the hard step is one cell: at row 0 the ring's configuration reads
+`ρ(1)` where `X_b` reads white, so they agree iff `ρ(0)` is black or `ρ(1)` is
+white.
+
+**Recorded** 2026-09-08 by Talus, from the attack document
+`docs/attacks/2026-09-08-classify-the-good-boundaries-your-own-c4-next-topic-and-the-only-place-left-on-this-board-where-a-positive-criterion-can.md`.

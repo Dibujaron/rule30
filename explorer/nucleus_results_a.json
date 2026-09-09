@@ -1,0 +1,48 @@
+{
+  "adding": {
+    "name": "adding machine (odometer)",
+    "contracting": true,
+    "nucleus": [
+      "0(0,0)",
+      "1(0,1)|0(1,1)",
+      "1(1,0)|0(1,1)"
+    ],
+    "size": 3,
+    "n": 2,
+    "upper": 3
+  },
+  "grigorchuk": {
+    "name": "Grigorchuk group",
+    "contracting": true,
+    "nucleus": [
+      "0(0,0)",
+      "0(1,2)|0(1,1)|0(3,4)|1(1,1)|0(3,0)",
+      "0(1,2)|1(3,3)|0(1,4)|0(3,3)|0(3,0)",
+      "0(1,2)|1(3,3)|0(3,4)|0(3,3)|0(1,0)",
+      "1(1,1)|0(1,1)"
+    ],
+    "size": 5,
+    "n": 2,
+    "upper": 5
+  },
+  "lamplighter": {
+    "name": "lamplighter (negative control)",
+    "contracting": false,
+    "sizes": [
+      5,
+      14,
+      76,
+      472
+    ]
+  },
+  "rule30": {
+    "name": "RULE 30 right-edge automaton",
+    "contracting": false,
+    "sizes": [
+      7,
+      25,
+      214,
+      4095
+    ]
+  }
+}
