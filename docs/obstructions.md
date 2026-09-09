@@ -934,3 +934,62 @@ settled words' local statistics are dominated by some ring's, which is not
 established here.
 
 Computed with `explorer/mmc_pow2.cjs`, left by the killed agent and re-run.
+
+**Third addendum, and it retracts the second.** The exactly-`1/2` result above
+does not say what I said it said. Verified independently
+(`explorer/half2_*.cjs`, exhaustive, exact rationals, two DPs bounding from
+both sides), four corrections:
+
+1. **It is not a maximum mean cycle.** `mmc_pow2.cjs` is a maximum over
+   simulated ring runs; `mmc_graph.cjs` is the Karp/Howard script and shares
+   nothing with it. Per ring the number is exact — the DP's own state cycle,
+   not a long-run average — but the family maximum is a sample maximum, and the
+   DP it runs is truncated in the direction that makes each number a *lower*
+   bound. So as written it could not have excluded a background above `1/2`
+   even inside its own family.
+2. **"14 / 30 / 1470 admissible rings" is two distinct backgrounds**, the same
+   two at every `N`: the spatially-period-4 rule 30 background (word `1011` up
+   to rotation, row period 8) at speed exactly `1/2`, and the checkerboard
+   fixed point at speed `0`. So `4/8`, `8/16`, `16/32` are `N/(2N)` for **one**
+   background — one measurement stated three times, which is why it looked like
+   a law holding at every size.
+3. **`1/2` is genuinely exact and genuinely achieved**, and this part survives:
+   the two DPs sandwich it, it is robust to initial condition and all eight
+   phases, and flipping one cell in a wide tiling of that background moves the
+   *real* leftmost disagreement 1997–2001 cells over 4000 rows. The DP is tight
+   there.
+4. **`1/2` is not the ceiling.** `mmc_pow2.cjs` enforces "ring width and row
+   period both powers of two", which is far stronger than the project's actual
+   constraint — `leftDiagonal_periodicFrom_pow` bounds *diagonal* periods, not
+   rings. Imposing the honest condition instead (every left diagonal's minimal
+   period a power of two, none identically white) yields an explicit admissible
+   witness at **`4/7 = 0.571429`**: the width-12 ring `.#..#####...`, whose
+   diagonals all have minimal period 4. That is the same period-3 ring that
+   killed the general case in the entry above, reappearing inside the
+   supposedly-safe family. With no period filter at all the family reaches
+   `2/3`.
+
+**And the whole family is beside the point, by a theorem this board already
+holds.** Every ring has all diagonal periods bounded by `lcm(N, T)`.
+`leftDiagonal_period_unbounded` is proved here
+(`Rule30/Proofs/LeftDiagonalPeriodUnbounded.lean`). So **no ring background
+satisfies the settled picture's known constraints** — the entire ring family,
+including the exactly-`1/2` maximiser, is disjoint from the object of study,
+and its maximum is neither an upper nor a lower bound on the real front. The
+right reading of the second addendum is not "exactly critical" but "a
+computation over a family we have already proved rule 30 is not in".
+
+Two things cutting the other way, recorded because they are the honest half.
+On the `> 1/2` witnesses the **real** front does not exceed `1/2` — 0.4005 on
+the `4/7` ring, and at most 0.5007 over every honest-constraint survivor to
+`N = 15`. The conjecture is not in trouble; the DP relaxation is. And the
+verification's own checks were audited for whether they could fail: the
+`> 1/2` detector demonstrably fires, and a mutation test on the local law
+caught 4 of 5 mutants on a random background but only 2 of 5 on the maximiser,
+with `(1,1,*) → point instead of ray` missed on both — a standing blind spot,
+reported rather than hidden.
+
+**Recorded** 2026-09-09 by Rowan, retracting my own second addendum. I flagged
+`0.50106` as suspicious and was right to; I then produced `exactly 1/2` from a
+script I had not read closely enough to know what it computed, and reported it
+upward as a qualitative change. The check I asked for is what caught it.
