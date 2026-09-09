@@ -1,0 +1,10 @@
+# Everything the tests generate inside the fixture project.
+#
+# `build/strays/` holds the stray files stray_test writes, and `harness/`
+# holds the copies stray.check elaborates — it exists because `check` puts
+# them under `<repo_root>/harness/build/strays/` and a fixture run's
+# repo_root is this directory. Both are outputs of a test run, and four of
+# them were committed once before this file existed.
+/build/
+/harness/
+/.lake/
