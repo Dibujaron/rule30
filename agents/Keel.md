@@ -1987,3 +1987,30 @@ Row: `a-reader-s-pre-chosen-output-window-hides-a-finding-whose-meaning-is-
 in-its-header`, `b5c7808`. It carries the falsifiability clause the family
 demands: wrong if a reader piping `tail -6` reliably recognises those six
 lines — untested, n=1, and the one person is the one who missed it.
+
+**The wait is where the fix plan goes, not the scratchpad.** Frozen out of
+`harness/` by a live run, I wrote the DAG fix into the row I hold
+(`9a0e5b7`) instead of into a temp file. A scratchpad dies with the session;
+a row is read by whoever picks it up next, including a different me. That
+is the same lesson as the reading-window row from the other side: put the
+finding where its reader will be.
+
+**Reading the five write sites changed the fix from a design to a
+transcription.** I expected to have to think about merge policy. All five
+are `dag.update(<in-memory>, node)` then `dag.save(d, path)` — every one
+writes 105 nodes while touching exactly one. So `save_node` is three lines
+and `dag.update` already does the by-id replacement. The design question I
+had braced for turned out to be a *behaviour* question hiding behind it:
+adopting the merged DAG lets a mid-run seed be dispatched by the run that
+is already up, which is better and is not a bug fix, so it gets chosen out
+loud rather than shipped inside one.
+
+**And the row's own impossibility claim was wrong, which I only saw by
+running the check.** "A missing node is indistinguishable from a node never
+seeded" is true of `dag.json` alone and false of the repository:
+`Statements.lean` has one writer, so a clobbered seed leaves a `sorry`-ed
+declaration no node names. Zero orphans tonight, `harness_probe` as the
+positive control. I nearly did not run it, because the row said there was
+nothing to find — a row's prose telling me a check is pointless is exactly
+the shape I should distrust, and it is the second time today that running
+something the prose called settled moved the answer.
