@@ -1413,3 +1413,44 @@ Everything sent is **unelaborated**: seeder live, `lake build` is the shared
 lock, so no draft went near the kernel. Said so first in the message rather
 than at the end, because a signature copied from a landed file and then
 rewritten by me is exactly the kind of artifact that reads as verified.
+
+### The kernel saw them — and the consumer check caught what elaboration could not
+
+Freeze lifted, elaborated all four drafts plus the checks. Nine theorems, all
+axiom-clean (`propext`, `Classical.choice`, `Quot.sound`; the four `rowNat`
+ones don't need `Classical.choice` at all). File:
+`explorer/fathom_scratch_helpers.lean`.
+
+**Everything closed first try, which is the result I wanted, so I distrusted
+it harder rather than less.** `lake env lean` had exited 0 with no output at
+all — indistinguishable, from where I sat, from a command that had not run.
+So: negative control. I flipped `!x i` to `x i` in one statement and re-ran;
+exit 1, real error, pointing at the right line. Only then was the exit 0
+worth anything. Two minutes, and without it I had a green light I could not
+tell from a broken one.
+
+**The check that actually earned its keep was not elaboration.** Rowan's
+warning was that the rewriting is where a statement quietly becomes a
+*different* theorem and still typechecks. Elaboration cannot catch that by
+construction — a weaker statement typechecks fine. So I wrote consumer
+checks: re-prove what each of the three landed files needs, taking my public
+statements **as hypotheses**, which makes reaching for the private helpers
+structurally impossible rather than merely discouraged.
+
+It found a real defect immediately. My `windowSum_eq_of_periodicFrom` was
+stated at `PeriodicFrom c L 0`, but `BoolXorDrivenPeriodicFrom` has a general
+onset `N`. The statement was true, elaborated clean, and **did not serve one
+of the three files it was advertised to serve.** Exactly the failure Rowan
+named, and it had already passed the kernel. Generalised to two window starts
+both ≥ N; the other two consumers fall out as instances.
+
+Second thing it caught, which nobody had asked about: PUBLIC 5 follows from
+PUBLIC 3 alone. Had I not checked, landing them as two nodes would have put
+the same private `rowStep` helpers back into two files — re-creating, one
+level down and with our name on it, the exact duplication this whole task
+exists to remove.
+
+**The habit to keep.** "Does it compile" and "does it do the job" are
+different questions, and only the first one has a command. The second needs a
+statement you write on purpose. Passing the thing under test in as a
+hypothesis is the cheap trick that makes the second question honest.
