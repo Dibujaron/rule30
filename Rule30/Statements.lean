@@ -1534,4 +1534,38 @@ theorem leftDiagonal_onset_le_iff_stepMod_return :
             (1 % 2 ^ (k + 1)) := by
   sorry
 
+/-- **The damage front's equation of motion.** Two configurations that agree
+just left of `i` and differ at `i` — the shape of the leftmost disagreement
+between two rule 30 pictures — have successors whose disagreement at `i` is
+determined exactly: it is the complement of the background's next cell, XORed
+with a correction that fires only where the background is black and the two
+pictures already differ one further right.
+
+This is the local law the whole damage-front programme rests on, and it says
+the front's survival is decided by three cells. Kernel-proved by Alidade
+(connector, 2026-09-09) in `explorer/alidade_scratch_survival.lean` with axioms
+`[propext]` — not even `Quot.sound`. -/
+theorem front_survival (c d : Config) (i : ℤ)
+    (hl : c (i - 1) = d (i - 1)) (hc : c i = ! d i) :
+    xor (rule30 c i) (rule30 d i)
+      = xor (! d (i + 1)) (d i && xor (c (i + 1)) (d (i + 1))) := by
+  sorry
+
+/-- **Where the background is white, the front simply advances.** With the same
+front shape and a white background cell, the correction term vanishes and the
+disagreement propagates as the complement of the background's next cell. -/
+theorem front_survival_of_white (c d : Config) (i : ℤ)
+    (hl : c (i - 1) = d (i - 1)) (hc : c i = ! d i) (h0 : d i = false) :
+    xor (rule30 c i) (rule30 d i) = ! d (i + 1) := by
+  sorry
+
+/-- **A leading block of length one gives the same conclusion, whatever the
+background does.** If the two pictures agree again one cell to the right, the
+correction term vanishes for a different reason and the front advances
+regardless of the background's colour. -/
+theorem front_survival_of_agree (c d : Config) (i : ℤ)
+    (hl : c (i - 1) = d (i - 1)) (hc : c i = ! d i) (h1 : c (i + 1) = d (i + 1)) :
+    xor (rule30 c i) (rule30 d i) = ! d (i + 1) := by
+  sorry
+
 end Statements
