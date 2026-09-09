@@ -1180,3 +1180,63 @@ their drivers (obstruction 6's skipped diagonals). No mechanism is known.
 
 **Recorded** 2026-09-09 by Talus, from the attack document
 `docs/attacks/2026-09-09-two-unexplained-numbers-from-today-s-kernel-checks-and-they-are-the-first-things-on-this-board-that-look-like-structure.md`.
+
+## The T-map's collapse is what triangularity alone predicts; the rigidity is the real finding
+
+Vernier's T-function sighting reported that `T_n(r) = (4r XOR (2r OR r)) mod
+2^n` — rule 30's row map on `n` bits — has a functional graph whose image
+"collapses to 114 states" after "1.26 n" steps, with "attractor `O(n)`, depth
+`O(n)`", and recorded in its graveyard that "no probabilistic null is available
+for anything about `T`'s graph". Verified independently
+(`explorer/collapse_*.cjs`): the document's own tables are correct and more
+careful than its handoff paragraphs, and three of those four claims do not
+survive.
+
+**`114` is `|A(31)|` and nothing more** — 122 at `n = 32`, 3386 at `n = 420`.
+Exhaustive to `n = 35` by two independent methods, then exact to `n = 520` by
+lifting (`T` is triangular, so a cyclic state mod `2^n` reduces to one mod
+`2^(n-1)`).
+
+**"attractor is `O(n)`" is false as stated, by this project's own theorem.**
+The attractor grows as `|A(n)| = |A(n-1)| + maxCycle(n)`, and `maxCycle` is
+unbounded — that is the proved `leftDiagonal_period_unbounded`. So `|A(n)|` is
+`Θ(n · P(n))`, and `|A(n)|/n` is 3.68 at `n = 31` and 8.06 at `n = 420`.
+Handing a Černý connector "the attractor is `O(n)`" sends it after a theorem
+that is false.
+
+**Depth `O(n)` survives strongly** to `n = 420` — linear beats `n log n` and
+`n^1.1` on fit, and `√(2^n)` is off by orders of magnitude. But `1.26` is
+`maxTail(31)/31`: the fitted slope over `n = 32..420` is `1.29`, the ratio band
+is `[0.889, 1.571]`, and it peaks at `1.571` at `n = 49`. Locally the slope is
+`1.03` over `n = 23..32` and `1.78` over `n = 33..64`, so a slope fitted from
+Vernier's range is simply wrong. The bound `2(n-1)` holds with no violation to
+`n = 420`, but its tightest margin is `1.247` at `n = 49`, not the `1.6`
+advertised.
+
+**And the graveyard entry is backwards: a probabilistic null does exist, and
+under it the collapse is unremarkable.** The right null is not a random map but
+a **random triangular map** — bit `i` a random function of bits `0..i`. At
+`n = 18`, exhaustive over all `2^n` states: a fully random map has median
+maxTail 845 and median attractor 673; a random *triangular* map has median
+maxTail **17** and median attractor **20**, both `Θ(n)`. Rule 30 sits at 22 and
+54 — *above* those medians. Among all 256 elementary CAs read as T-functions,
+every one has maxTail ≤ 47 at `n = 18`, 245 of 256 satisfy `2(n-1)`, and rule
+30 ranks 41st by depth and 93rd by attractor — the 84th percentile, not an
+outlier. The random-map baselines were checked against theory (median 673
+cyclic points against `√(πN/2) = 642`), so the measurement is trustworthy.
+
+**What is genuinely non-routine, after the null model, is not the linearity but
+the rigidity.** `|A(n)| − |A(n-1)| = maxCycle(n)` holds **exactly, with zero
+exceptions over `n = 2..520`**, with the increment doubling precisely at
+`n = 4, 9, 30, 401`. A random triangular map's attractor sizes are ragged — 8
+to 246 across draws at `n = 22`. That exact arithmetic law is the thing worth
+handing a theorist. And the slope change at `n = 401` is an **independent
+confirmation of NKS p. 871's fourth doubling position, 400, arrived at from the
+T-function side** rather than from the diagonals.
+
+**Recorded** 2026-09-09 by Rowan. Commissioned because "a striking constant
+measured at one `n`" is this project's most repeated error and one such
+constant had been refuted an hour earlier; the check found the same shape
+again. The verification states one thing it took on faith: that
+`T(r) = 4r XOR (2r OR r)` is rule 30's row map, from Vernier's kernel checks,
+not re-derived.
