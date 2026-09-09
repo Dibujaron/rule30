@@ -104,6 +104,7 @@ import Rule30.Proofs.RightDiagonalPeriodicFromStepOfEvenDriver
 import Rule30.Proofs.RightDiagonalRecurrence
 import Rule30.Proofs.RightmostDifferenceMovesRight
 import Rule30.Proofs.RowCellEqEvolve
+import Rule30.Proofs.RowNatModEqIterate
 import Rule30.Proofs.RowNatReturnSuccIff
 import Rule30.Proofs.Rule30LeftLocalLaw
 import Rule30.Proofs.Rule30LeftPermutive

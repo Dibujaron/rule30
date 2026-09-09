@@ -1,0 +1,7 @@
+
+leftDiagonal_onset_le             Selvage  fable   rate_limited      $0.00   1 turns
+rowNat_mod_eq_iterate             Vesper   sonnet  proved            $0.96   13 turns
+centerColumn_run_boundary         Cadence  haiku   budget_exhausted  $0.81   2 turns
+
+3 attempt(s), 1 closed, $1.78 in all
+halted: rate limit reached at leftDiagonal_onset_le; nothing more was started

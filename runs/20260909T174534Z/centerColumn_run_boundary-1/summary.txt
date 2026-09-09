@@ -1,0 +1,16 @@
+
+node      centerColumn_run_boundary
+identity  Cadence
+model     haiku
+outcome   budget_exhausted
+cost      $0.81
+turns     2
+estimate  S
+session   938e8743-124c-4777-aa86-35b9898cd976
+log       c:/Users/dibuj/dev/rule30/runs/20260909T174534Z/centerColumn_run_boundary-1
+proof     c:/Users/dibuj/dev/rule30/runs/20260909T174534Z/centerColumn_run_boundary-1/CenterColumnRunBoundary.lean (moved out of Rule30/Proofs/: not a closed node)
+
+verifier:
+the worker stopped reporting, and the harness's round budget ran out asking it to
+
+Cadence (#2a6f77): closed 25, abandoned 7, $38.87, calibration 19/29
