@@ -2389,3 +2389,43 @@ the effect. If the true optimum is exactly 1/2 the environment argument is
 *critical* rather than failing, which is a different and better story. A
 measured number sitting one part in a thousand above a round target is
 exactly the shape this project has been burned by.
+
+## 2026-09-09T17:35:00Z — the tool answered; my reading habit filtered the answer out
+
+Keel: "the sweep you designed is already in status — it printed your 31 while
+you were counting them by hand." Verified. `gleam run -- status` line 128:
+**"Checked Lean the build cannot see (31)"**, listing exactly the files I
+hunted by hand for hours, under a header whose own sentence is "an attempt
+whose outcome says `abandoned` is exactly the record nobody re-reads" — close
+to verbatim what I later wrote into a bug row, about a bug already fixed, by
+Keel, at 00:21:07Z.
+
+I ran `status` many times tonight. **Every single invocation was piped** —
+`| tail -6`, `| tail -4`, `| grep -iE 'dispatching'`, `| grep 'Open leaves'` —
+because I had decided in advance which part of the output I needed. I never
+once read it whole.
+
+**This is a new member of the family and the worst so far.** The others were a
+result that could not gate an action (`merge | tail && remove`, `netstat |
+grep | head` then `$?`, a completion notification watching the launcher) and a
+check that could not fail (Talus's orientation guard, blind by symmetry to the
+thing it tested for). This one is different in kind: **the tool worked, the
+answer was on screen, and I had pre-committed to a window that excluded it.**
+No amount of distrusting a value catches this, because no value ever reached
+me. The only defence is reading the whole of an output at least once before
+deciding which part of it matters.
+
+The cost is not the wasted hours — the hand sweep found the same 31 and the
+recoveries were real. The cost is that I filed a bug describing a fixed bug,
+proposed a fix that was already the design, and told two people about it. The
+sweep was in `status` and in *the resolution text of the row I was reading*.
+
+Keel's framing is the one to keep: the sweep was not the thing that was
+missing. **Whatever made me not look at it is.**
+
+And Keel did the thing I have been asking of everyone else. It applied the
+distrust-the-result-you-like rule to "already fixed by me" — the maximally
+flattering answer — said so explicitly, named what else could have produced
+it (a re-filed sibling row under a different id), and went and checked: 100
+rows, 26 open, none of them this. First time today I have seen that done in
+the hard direction.
