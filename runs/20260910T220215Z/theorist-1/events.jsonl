@@ -7,3 +7,38 @@
 {"ts":"2026-09-10T22:07:49Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Edit","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus7_center.mjs","denial":"","decision":"Allow"}
 {"ts":"2026-09-10T22:07:52Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/talus7_center.mjs","denial":"","decision":"Allow"}
 {"ts":"2026-09-10T22:07:53Z","kind":"guard","node":"theorist-1","event":"PostToolUseFailure","tool":"Bash","attempted":"node explorer/talus7_center.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:08:47Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Edit","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus7_center.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:08:50Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/talus7_center.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:08:51Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/talus7_center.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:09:10Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus7_deep.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:09:13Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/talus7_deep.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:09:13Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/talus7_deep.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:09:18Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/talus7_center.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:09:19Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/talus7_center.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:10:30Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\docs\\attacks\\2026-09-10-prize-2-s-residual-find-any-bound-on-the-centre-column-s-excess-that-uses-rule-30-the-measurement-that-defines-this-topi.md","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:11:24Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus7_coverage.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:11:26Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/talus7_coverage.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:11:32Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/talus7_coverage.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:11:42Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"tail -3 \"C:\\Users\\dibuj\\AppData\\Local\\Temp\\claude\\c--Users-dibuj-dev-rule30\\9907d5e6-403d-448f-b86d-876e596ca52e\\tasks\\bw40mnc8j.output\"","denial":"not_permitted","decision":"Deny(NotPermitted, \"harness guard: only 'lake build [modules]', 'lake env lean <file>' and 'node <script>' under explorer/ are permitted, with no shell operators\")"}
+{"ts":"2026-09-10T22:12:29Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus7_analyse.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:12:32Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/talus7_analyse.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:12:32Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/talus7_analyse.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:13:07Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus7_diagbalance.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:13:10Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/talus7_diagbalance.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:13:10Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/talus7_diagbalance.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:15:04Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus7_runbound.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:15:07Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/talus7_runbound.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:15:31Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/talus7_runbound.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:17:22Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Edit","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus7_analyse.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:17:26Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Edit","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus7_analyse.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:17:40Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Edit","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus7_analyse.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:17:43Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/talus7_analyse.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:17:43Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/talus7_analyse.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:19:55Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus7_rows.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:19:58Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/talus7_rows.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:25:16Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/talus7_rows.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:26:00Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Edit","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus7_rows.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:26:05Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Edit","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus7_rows.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:26:08Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Edit","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus7_rows.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:26:12Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Edit","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus7_rows.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:26:15Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/talus7_rows.mjs","denial":"","decision":"Allow"}

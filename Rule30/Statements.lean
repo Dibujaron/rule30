@@ -2464,4 +2464,96 @@ theorem rowStep_forced_advance_at_most_two :
     rowStep 11 % 2 ^ 5 ≠ rowStep 15 % 2 ^ 5 := by
   sorry
 
+/-- **An alternating block left of the origin shrinks by one per step.** If
+the cells at `0, -1, …, -(L+1)` alternate black-white starting black, then
+after one step the cells at `0, …, -L` do.
+
+Proposed by Seeder (2026-09-10). The engine of the black-run correspondence
+below.
+
+DOES NOT PROVE: unconditional and true of every configuration; one unfolding
+of the local rule under an alternating hypothesis. -/
+theorem rule30_alternating_step (X : Config) (L : ℕ)
+    (h : ∀ j < L + 2, X (-(j : ℤ)) = decide (j % 2 = 0)) :
+    ∀ j < L + 1, rule30 X (-(j : ℤ)) = decide (j % 2 = 0) := by
+  sorry
+
+/-- **A deep alternating block makes a long black run in the centre column.**
+If the cells at `0, …, -L` alternate at time `t`, the centre column is black
+at `t, t+1, …, t+L`.
+
+Proposed by Seeder (2026-09-10). One half of the correspondence.
+
+DOES NOT PROVE: unconditional. It says a deep alternating block *forces* a
+long run, not that either occurs. -/
+theorem column_black_run_of_alternating (X : Config) (t L : ℕ)
+    (h : ∀ j < L + 1, column X (-(j : ℤ)) t = decide (j % 2 = 0))
+    (s : ℕ) (hs : s ≤ L) : column X 0 (t + s) = true := by
+  sorry
+
+/-- **A long black run forces a deep alternating block.** If the centre column
+is black at `t, …, t+L`, the cells at `0, …, -L` alternate at time `t`.
+
+Proposed by Seeder (2026-09-10). The converse half, and together with the
+above it makes **black runs and alternating depth the same measurement** read
+in two directions — one along time at the origin, one across space to the
+left.
+
+DOES NOT PROVE: unconditional, and it moves a question rather than answering
+one. Whether either object occurs at arbitrary size is exactly what is open. -/
+theorem column_alternating_of_black_run (X : Config) (t L : ℕ)
+    (h : ∀ s ≤ L, column X 0 (t + s) = true)
+    (j : ℕ) (hj : j ≤ L) : column X (-(j : ℤ)) t = decide (j % 2 = 0) := by
+  sorry
+
+/-- **A maximal alternating block shrinks by exactly one, staying maximal.**
+If the block alternates to depth `L` and fails at `L+1`, then at the next step
+it alternates to depth `L-1` and fails at `L`.
+
+Proposed by Seeder (2026-09-10). The sharp form: the block does not merely
+shrink, it shrinks by one and keeps its edge.
+
+DOES NOT PROVE: unconditional, and nothing about how such blocks arise. -/
+theorem column_alternating_shrink (X : Config) (t L : ℕ)
+    (h : ∀ j < L + 1, column X (-(j : ℤ)) t = decide (j % 2 = 0))
+    (hmax : column X (-((L : ℕ) + 1 : ℤ)) t ≠ decide ((L + 1) % 2 = 0)) :
+    (∀ j < L, column X (-(j : ℤ)) (t + 1) = decide (j % 2 = 0))
+      ∧ column X (-(L : ℤ)) (t + 1) ≠ decide (L % 2 = 0) := by
+  sorry
+
+/-- **Arbitrarily long black runs would prove Prize 1.** If the centre column
+contains black runs of every length, arbitrarily late, it is not eventually
+periodic.
+
+Proposed by Seeder (2026-09-10); route verified.
+
+DOES NOT PROVE: **the implication is trivial and true of any `Bool`
+sequence** — an eventually periodic sequence has runs bounded by its period,
+so unbounded runs refute periodicity in one line. A mathematician would not
+call this a result. What it buys is a *restatement* of P1 as a question about
+run lengths, which is measurable where P1 is not: the longest run seen so far
+is 16 identical cells at `M = 22711`. Whether the runs are unbounded is open
+and is not known to be easier than P1. -/
+theorem centerColumn_not_isEventuallyPeriodic_of_long_black_runs
+    (h : ∀ k N : ℕ, ∃ t, N ≤ t ∧ ∀ s < k, centerColumn (t + s) = true) :
+    ¬ IsEventuallyPeriodic centerColumn := by
+  sorry
+
+/-- **Arbitrarily deep alternating blocks would prove Prize 1.** If, at
+arbitrarily late times, the cells left of the origin alternate to every depth,
+the centre column is not eventually periodic.
+
+Proposed by Seeder (2026-09-10). The same sufficient condition read across
+space instead of along time, via the correspondence above.
+
+DOES NOT PROVE: it inherits the triviality of the implication it composes
+with, and it moves P1 to a question about a spatial pattern without any
+evidence that the spatial question is easier. Its value is that the
+alternating block is a *local, checkable* object where "the centre column is
+aperiodic" is not. -/
+theorem centerColumn_not_isEventuallyPeriodic_of_deep_alternating
+    (h : ∀ k N : ℕ, ∃ t, N ≤ t ∧ ∀ j < k, evolve t (-(j : ℤ)) = decide (j % 2 = 0)) :
+    ¬ IsEventuallyPeriodic centerColumn := by
+  sorry
+
 end Statements

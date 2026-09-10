@@ -24,14 +24,16 @@ const OUT = new URL('./talus7_center.bin', import.meta.url);
 
 /** Centre column to depth n, word-packed low-end row map. */
 export function centerPacked(n) {
-  const WORDS = ((n + 34) >> 5) + 2;
+  const WORDS = (n >> 5) + 3;
   const r = new Uint32Array(WORDS);
   r[0] = 1; // rowNat 0 = 1
   const out = new Uint8Array(n);
   for (let t = 0; t < n; t++) {
     out[t] = (r[t >> 5] >>> (t & 31)) & 1;
-    // one step, words 0 .. limit
-    const limit = Math.min(WORDS - 1, ((t + 3) >> 5) + 1);
+    // One step, words 0 .. limit. A word may only be brought into the window
+    // while it is still genuinely zero -- row t occupies bits 0 .. 2t, so word
+    // j is all zero until t = 16j, and (t>>4)+1 first reaches j at t = 16j-16.
+    const limit = Math.min(WORDS - 1, (t >> 4) + 1);
     let prev = 0;
     for (let j = 0; j <= limit; j++) {
       const cur = r[j];

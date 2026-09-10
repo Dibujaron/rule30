@@ -1,0 +1,53 @@
+
+seeder    Seeder
+model     opus
+region    (whole board)
+ended     finished — the seeder reported its proposal written; that is its claim about the file, and the check below is the only adjudication
+ceilings  80 turns, $12.0
+cost      $7.60
+turns     37
+session   0378baba-64bd-4ae5-abeb-2080c2451762
+log       c:/Users/dibuj/dev/rule30/runs/20260910T220756Z/seed-1
+proposal  c:/Users/dibuj/dev/rule30/blueprint/proposals/next.json
+
+Six nodes proposed under the P1 frontier wall, all routes and witnesses verified from the proposal file's own bytes: the centre column's black runs are exactly the depth of rule 30's alternating fixed point left of the origin, giving a sufficient condition for Prize 1 stated in words-in-rows vocabulary rather than about any column.
+
+check of c:/Users/dibuj/dev/rule30/blueprint/proposals/next.json:
+rule30_alternating_step
+  DOES NOT PROVE: Says nothing about the centre column on its own, and nothing about any prize. It is the engine of column_black_run_of_alternating and column_alternating_shrink and has no other purpose.
+  WARNING: the statement mixes ℕ and ℤ or uses absolute value — found a term ascribed to ℤ or ℝ. Provers spent their budgets cycling on casts (two of the three exhaustions on 2026-09-07); the captain's rule in docs/prover-cookbook.md prefers a statement in ℕ, with an absolute value over casts written as two ℕ inequalities.
+  under:   centerColumn_other_isEventuallyPeriodic_of_center
+  route:   DOES NOT CLOSE — c:/Users/dibuj/dev/rule30/harness/build/checks/seed/rule30_alternating_step_9e04bc7f173b394339f51f5ff851c215.lean:17:5: error: unknown tactic
+  witness: unchecked — no witness supplied
+column_black_run_of_alternating
+  DOES NOT PROVE: Not a prize node on its own. It is one half of the correspondence 'black run of the centre column = depth of the alternating background'; the converse is column_alternating_of_black_run.
+  WARNING: the statement mixes ℕ and ℤ or uses absolute value — found a term ascribed to ℤ or ℝ. Provers spent their budgets cycling on casts (two of the three exhaustions on 2026-09-07); the captain's rule in docs/prover-cookbook.md prefers a statement in ℕ, with an absolute value over casts written as two ℕ inequalities.
+  under:   centerColumn_other_isEventuallyPeriodic_of_center
+  route:   DOES NOT CLOSE — c:/Users/dibuj/dev/rule30/harness/build/checks/seed/column_black_run_of_alternating_866dff6ed4b6cee3ae3aa6abc81dfe20.lean:1:0: error: object file 'C:\Users\dibuj\dev\rule30\.lake\build\lib\lean\Rule30\Proofs\Rule30AlternatingStep.olean' of module Rule30.Proofs.Rule30AlternatingStep does not exist
+  witness: PLACEHOLDER, refused without running — names nothing from the statement: (List.range 7).all (fun t => (List.range 5).all (fun j => ((List.range (j + 1)).all (fun s => evolve (t + s) 0) == (List.range (j + 1)).all (fun i => evolve t (-(i : ℤ)) == decide (i % 2 = 0)))))
+column_alternating_of_black_run
+  DOES NOT PROVE: Not a prize node on its own; the pair with column_black_run_of_alternating is the vocabulary the two P1 nodes below are stated in. As mathematics this is very small -- it is two lines from Wolfram 1986's classification of rule 30's fixed points, which is already crystal 22 -- and I found no statement of it in the held sources, so call it project-internal shading into known, not novel.
+  WARNING: the statement mixes ℕ and ℤ or uses absolute value — found a term ascribed to ℤ or ℝ. Provers spent their budgets cycling on casts (two of the three exhaustions on 2026-09-07); the captain's rule in docs/prover-cookbook.md prefers a statement in ℕ, with an absolute value over casts written as two ℕ inequalities.
+  under:   centerColumn_other_isEventuallyPeriodic_of_center
+  route:   DOES NOT CLOSE — c:/Users/dibuj/dev/rule30/harness/build/checks/seed/column_alternating_of_black_run_a7d5940b83a4e263750b6dc5996e80d8.lean:27:48: error: unknown tactic
+  witness: PLACEHOLDER, refused without running — names nothing from the statement: (List.range 7).all (fun t => (List.range 5).all (fun j => ((List.range (j + 1)).all (fun s => evolve (t + s) 0) == (List.range (j + 1)).all (fun i => evolve t (-(i : ℤ)) == decide (i % 2 = 0)))))
+column_alternating_shrink
+  DOES NOT PROVE: Proves no prize. It constrains where the hypothesis of centerColumn_not_isEventuallyPeriodic_of_deep_alternating could possibly be established, and does not establish it.
+  WARNING: the statement mixes ℕ and ℤ or uses absolute value — found a term ascribed to ℤ or ℝ. Provers spent their budgets cycling on casts (two of the three exhaustions on 2026-09-07); the captain's rule in docs/prover-cookbook.md prefers a statement in ℕ, with an absolute value over casts written as two ℕ inequalities.
+  under:   centerColumn_other_isEventuallyPeriodic_of_center
+  route:   DOES NOT CLOSE — c:/Users/dibuj/dev/rule30/harness/build/checks/seed/column_alternating_shrink_04922f48ea324add2bdaeb58513c0357.lean:1:0: error: object file 'C:\Users\dibuj\dev\rule30\.lake\build\lib\lean\Rule30\Proofs\Rule30AlternatingStep.olean' of module Rule30.Proofs.Rule30AlternatingStep does not exist
+  witness: unchecked — no witness supplied
+centerColumn_not_isEventuallyPeriodic_of_long_black_runs
+  DOES NOT PROVE: Does not prove Prize 1: its hypothesis is unproved and is strictly STRONGER than the conclusion, so nothing can be read back from P1 to it -- Thue-Morse is aperiodic with no run longer than two. The measured black runs of the seed's centre column grow like log2 of the depth (histogram 1996, 968, 504, 257, 120, 58, 34, 16, 4, 3 over 3,960 rows, an exact coin), so the hypothesis is very probably true and no computation can establish it.
+  under:   centerColumn_other_isEventuallyPeriodic_of_center
+  route:   closes the statement
+  witness: unchecked — no witness supplied
+centerColumn_not_isEventuallyPeriodic_of_deep_alternating
+  DOES NOT PROVE: DOES NOT PROVE PRIZE 1, and cannot be converted into a proof of it: the hypothesis is unproved and is strictly stronger than the conclusion (an aperiodic sequence may have bounded runs). The OR-to-XOR filter (crystals item 66) was run rather than assumed, in explorer/altrun_xor.mjs over 4,000 rows: rule 30 reaches alternating depth 9 and is still at 7 in its last quarter; rule 150 has a centre column that is black at every one of 4,000 rows and NEVER exceeds alternating depth 4; rule 90's depth is 0 in its last quarter. So the black-run-equals-alternating-depth correspondence this node rests on is false for both XOR rules -- rule 150 has unbounded runs with a bounded depth -- and the argument is not one that survives replacing OR by XOR. That is the filter passing, and it is the OR in `left XOR (centre OR right)` doing the work in two places: swallowing the right neighbour at a black origin, and turning rule 30 at position -1 into a plain negation. No naive witness for the hypothesis: it is about depths beyond any computable range, and a finite check would be `unchecked` rather than a pass.
+  WARNING: the statement mixes ℕ and ℤ or uses absolute value — found a term ascribed to ℤ or ℝ. Provers spent their budgets cycling on casts (two of the three exhaustions on 2026-09-07); the captain's rule in docs/prover-cookbook.md prefers a statement in ℕ, with an absolute value over casts written as two ℕ inequalities.
+  under:   centerColumn_other_isEventuallyPeriodic_of_center
+  route:   DOES NOT CLOSE — c:/Users/dibuj/dev/rule30/harness/build/checks/seed/centerColumn_not_isEventuallyPeriodic_of_deep_alternating_1f7373136a14e3a41fa236b4d7257265.lean:1:0: error: object file 'C:\Users\dibuj\dev\rule30\.lake\build\lib\lean\Rule30\Proofs\ColumnBlackRunOfAlternating.olean' of module Rule30.Proofs.ColumnBlackRunOfAlternating does not exist
+  witness: unchecked — no witness supplied
+
+2 placeholder, 4 unchecked, 5 with a cast warning
+
