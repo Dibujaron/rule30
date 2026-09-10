@@ -2276,3 +2276,54 @@ go quietly wrong. And I told Rowan our added tests "could not move the passed
 count" as though it were a property of the mechanism when it was a property
 of where we happened to put our tests — a claim that fitted every observation
 and generalised to nothing.
+
+## 2026-09-10, closing — three ways to be confidently wrong about a measurement
+
+After the row closed, the session produced three more instances of one family,
+all mine, all within an hour, and they have different fixes:
+
+1. **A default masquerading as an observation.** My process-attribution script
+   regexed the tree name out of a command line. That works for `erl`, whose
+   `-pa` flags carry the path. It does not work for `lake` or `lean`, whose
+   command lines are bare — the tree is their working directory, which is not
+   in the command line at all. The fallthrough labelled everything unmatched
+   as the SHARED checkout, so it told me an unannounced run had started in
+   Dib's tree, and I believed it for a minute. It invents, and it invents the
+   most alarming answer available.
+
+2. **A measurement that includes its own apparatus.** Filtering processes for
+   `rule30-keel` returned four hits, including the `powershell.exe` running
+   the query, because the query string was in its own command line. Nothing
+   invented, every row real, the set wrong. Fathom named this one and it is a
+   genuinely different animal from (1), though both produce a confident table.
+   The tell was the count, not the rows: four, for a thing I believed was
+   zero, is a number easier to explain than to doubt.
+
+3. **A true reading quoted after its subject moved.** I ran `git worktree
+   list`, got one row, then created a worktree, then told Rowan the list
+   "now shows only the shared checkout". No faulty instrument at all — so no
+   amount of auditing the query would have found it. Same error as calling a
+   tree "current at 555ce33" when it was current with respect to my branch and
+   stale with respect to main.
+
+Rowan's generalisation is the one worth keeping: **a measurement quoted
+without its timestamp is the same defect as a count quoted without its
+denominator**, and this project only had a rule for one of them. A number
+travels with what it was measured over and when it was taken, or it does not
+travel.
+
+**And the boundary lesson, which is Rowan's and applies to me equally.** Rowan
+froze landing, then committed run output — which moves a ref, the thing the
+freeze named, while not engaging the freeze's actual mechanism (a commit
+changes no working-tree file; a merge does). The act was fine and the
+announcement was over-broad. What matters is the ORDERING: Rowan stated the
+mechanism before acting on my branch and after acting on their own, and from
+outside those two exemptions are indistinguishable, because Fathom and I could
+only ever see the sentence. Saying it first is the whole difference between a
+boundary and a preference.
+
+Rowan then revised "when the run drains" to "when the seeder ends", because
+the first was a proxy for "no guarded session is reading the shared checkout"
+and the seeder falsified the proxy while leaving the condition intact. That is
+the same discipline applied in advance instead of afterwards, which is what it
+is for.
