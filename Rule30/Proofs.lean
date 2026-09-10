@@ -24,6 +24,7 @@ import Rule30.Proofs.CenterColumnDensityLeOne
 import Rule30.Proofs.CenterColumnDensityNonneg
 import Rule30.Proofs.CenterColumnDensitySucc
 import Rule30.Proofs.CenterColumnDensityTendstoHalfIffExcess
+import Rule30.Proofs.CenterColumnEqRowNatTestBit
 import Rule30.Proofs.CenterColumnExcessInterpolate
 import Rule30.Proofs.CenterColumnNotEventuallyPeriodicOfAnyOther
 import Rule30.Proofs.CenterColumnNotEventuallyPeriodicOfRight
@@ -75,6 +76,7 @@ import Rule30.Proofs.LeftDiagonalEqRowNatTestBit
 import Rule30.Proofs.LeftDiagonalMulPowEqSettledCenter
 import Rule30.Proofs.LeftDiagonalOnsetLeIffRowNatReturn
 import Rule30.Proofs.LeftDiagonalOnsetLeIffStepModReturn
+import Rule30.Proofs.LeftDiagonalOnsetLeOfBlackLadder
 import Rule30.Proofs.LeftDiagonalOnsetLeOfLe5000
 import Rule30.Proofs.LeftDiagonalOnsetLeOfLine
 import Rule30.Proofs.LeftDiagonalOnsetLeOfStepModPreperiod
@@ -99,6 +101,7 @@ import Rule30.Proofs.NotEvolvePeriodAdjacent
 import Rule30.Proofs.NotIsEventuallyPeriodicAdjacent
 import Rule30.Proofs.NotIsEventuallyPeriodicPair
 import Rule30.Proofs.PeriodicFromMul
+import Rule30.Proofs.PeriodicFromTransPeriod
 import Rule30.Proofs.RightDiagonalAntiperiodicOfOddDriver
 import Rule30.Proofs.RightDiagonalDriverFlipIffWhite
 import Rule30.Proofs.RightDiagonalFirstFailure

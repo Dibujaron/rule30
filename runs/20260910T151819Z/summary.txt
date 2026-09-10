@@ -1,0 +1,8 @@
+
+centerColumn_eq_rowNat_testBit    Cadence  haiku   proved            $0.23   8 turns
+periodicFrom_trans_period         Vesper   haiku   budget_exhausted  $1.08   41 turns
+leftDiagonal_onset_le_of_black_ladderCadence  sonnet  proved            $1.30   19 turns
+periodicFrom_trans_period         Vesper   sonnet  proved            $0.88   10 turns
+leftDiagonal_not_both_eventually_whiteSelvage  haiku   budget_exhausted  $0.92   41 turns
+
+5 attempt(s), 3 closed, $4.40 in all
