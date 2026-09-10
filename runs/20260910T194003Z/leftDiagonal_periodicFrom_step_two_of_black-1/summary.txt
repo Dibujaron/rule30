@@ -1,0 +1,16 @@
+
+node      leftDiagonal_periodicFrom_step_two_of_black
+identity  Selvage
+model     sonnet
+outcome   proved
+cost      $0.80
+turns     11
+estimate  M
+session   7399efe9-f8a1-4447-915c-bb456b973acd
+log       c:/Users/dibuj/dev/rule30/runs/20260910T194003Z/leftDiagonal_periodicFrom_step_two_of_black-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Selvage (#3a6ea5): closed 13, abandoned 5, $26.46, calibration 9/13

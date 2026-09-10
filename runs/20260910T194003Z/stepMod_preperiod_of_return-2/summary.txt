@@ -1,0 +1,16 @@
+
+node      stepMod_preperiod_of_return
+identity  Cadence
+model     sonnet
+outcome   proved
+cost      $0.69
+turns     8
+estimate  S
+session   016f39f7-6826-40d8-b7aa-ac9b860a5b4b
+log       c:/Users/dibuj/dev/rule30/runs/20260910T194003Z/stepMod_preperiod_of_return-2
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Cadence (#2a6f77): closed 33, abandoned 10, $54.48, calibration 24/33

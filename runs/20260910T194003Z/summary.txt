@@ -1,0 +1,9 @@
+
+leftDiagonal_periodicFrom_step_two_of_blackSelvage  sonnet  proved            $0.80   11 turns
+leftDiagonal_periodicFrom_of_rowNat_agree_anyVesper   haiku   proved            $1.02   41 turns  (salvaged: the worker did not close this; its proof file did)
+rowNat_return_succ_two            Selvage  sonnet  proved            $0.80   10 turns
+stepMod_preperiod_of_return       Cadence  haiku   budget_exhausted  $0.91   41 turns
+stepMod_preperiod_of_return       Cadence  sonnet  proved            $0.69   8 turns
+stepMod_preperiod_of_odd          Vesper   sonnet  proved            $1.09   14 turns
+
+6 attempt(s), 5 closed, $5.31 in all

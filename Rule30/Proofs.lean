@@ -88,9 +88,11 @@ import Rule30.Proofs.LeftDiagonalPeriodLeOfWhiteCount
 import Rule30.Proofs.LeftDiagonalPeriodUnbounded
 import Rule30.Proofs.LeftDiagonalPeriodUnboundedLe
 import Rule30.Proofs.LeftDiagonalPeriodicFromOfRowNatAgree
+import Rule30.Proofs.LeftDiagonalPeriodicFromOfRowNatAgreeAny
 import Rule30.Proofs.LeftDiagonalPeriodicFromPow
 import Rule30.Proofs.LeftDiagonalPeriodicFromStep
 import Rule30.Proofs.LeftDiagonalPeriodicFromStepOfBlack
+import Rule30.Proofs.LeftDiagonalPeriodicFromStepTwoOfBlack
 import Rule30.Proofs.LeftDiagonalRecurrence
 import Rule30.Proofs.LeftDiagonalShiftOfWhite
 import Rule30.Proofs.LeftDiagonalStepOfWhiteParity
@@ -122,6 +124,7 @@ import Rule30.Proofs.RowCellEqEvolve
 import Rule30.Proofs.RowNatAgreeForward
 import Rule30.Proofs.RowNatModEqIterate
 import Rule30.Proofs.RowNatReturnSuccIff
+import Rule30.Proofs.RowNatReturnSuccTwo
 import Rule30.Proofs.RowNatTestBitZero
 import Rule30.Proofs.Rule30LeftLocalLaw
 import Rule30.Proofs.Rule30LeftPermutive
@@ -131,6 +134,8 @@ import Rule30.Proofs.Rule30Translate
 import Rule30.Proofs.SidewaysInverse
 import Rule30.Proofs.StepModIterateTwoMul
 import Rule30.Proofs.StepModPreperiodLeOfLe11
+import Rule30.Proofs.StepModPreperiodOfOdd
+import Rule30.Proofs.StepModPreperiodOfReturn
 import Rule30.Proofs.StepTwoMul
 import Rule30.Proofs.StripEventuallyPeriodic
 import Rule30.Proofs.StripSucc

@@ -1,0 +1,16 @@
+
+node      stepMod_preperiod_of_odd
+identity  Vesper
+model     sonnet
+outcome   proved
+cost      $1.09
+turns     14
+estimate  M
+session   73e3f8eb-4a97-4d59-a766-f7c1cad6a4da
+log       c:/Users/dibuj/dev/rule30/runs/20260910T194003Z/stepMod_preperiod_of_odd-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Vesper (#2b3a67): closed 73, abandoned 8, $75.42, calibration 60/72

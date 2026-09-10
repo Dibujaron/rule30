@@ -1,0 +1,17 @@
+
+node      stepMod_preperiod_of_return
+identity  Cadence
+model     haiku
+outcome   budget_exhausted
+cost      $0.91
+turns     41
+estimate  S
+session   548968d9-ae09-4995-88b3-35e0ff4484fd
+log       c:/Users/dibuj/dev/rule30/runs/20260910T194003Z/stepMod_preperiod_of_return-1
+proof     c:/Users/dibuj/dev/rule30/runs/20260910T194003Z/stepMod_preperiod_of_return-1/StepModPreperiodOfReturn.lean (moved out of Rule30/Proofs/: not a closed node)
+
+verifier:
+the CLI ended the session at the CLI's turn ceiling (40 turns): {"duration_api_ms":306233,"stop_reason":"tool_use","session_id":"548968d9-ae09-4995-88b3-35e0ff4484fd","total_cost_usd":0.9133180000000002,"usage":{"input_tokens":322,"cache_creation_input_tokens":132075,"cache_read_input_tokens":4932870,"output_tokens":30835,"output_tokens_details":{"thinking_tokens":9709},"server_tool_use":{"web_search_requests":0,"web_fetch_requests":0},"service_tier":"standard","cache_creation":{"ephemeral_1h_input_tokens":132075,"ephemeral_5m_input_tokens":0},"inference_geo":"not_available","iterations":[{"input_tokens":8,"output_tokens":1233,"cache_read_input_tokens":149534,"cache_creation_input_tokens":923,"cache_creation":{"ephemeral_5m_input_tokens":0,"ephemeral_1h_input_tokens":923},"type":"message"}],"speed":"standard"},"modelUsage":{"claude-haiku-4-5-20251001":{"inputTokens":1606,"outputTokens":30855,"cacheReadInputTokens":4932870,"cacheCreationInputTokens":132075,"webSearchRequests":0,"costUSD":0.9133180000000002,"contextWindow":200000,"maxOutputTokens":32
+… (clipped; the full text is in events.jsonl)
+
+Cadence (#2a6f77): closed 32, abandoned 10, $53.79, calibration 23/32

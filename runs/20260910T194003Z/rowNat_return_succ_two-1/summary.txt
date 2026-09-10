@@ -1,0 +1,16 @@
+
+node      rowNat_return_succ_two
+identity  Selvage
+model     sonnet
+outcome   proved
+cost      $0.80
+turns     10
+estimate  M
+session   521490ef-8ecd-41e8-98d7-2acec58499a5
+log       c:/Users/dibuj/dev/rule30/runs/20260910T194003Z/rowNat_return_succ_two-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Selvage (#3a6ea5): closed 14, abandoned 5, $27.26, calibration 10/14
