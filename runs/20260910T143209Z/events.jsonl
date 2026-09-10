@@ -1,0 +1,7 @@
+{"ts":"2026-09-10T14:32:24Z","kind":"statement_gate","node":"leftDiagonal_onset_le","result":"resolves","statement":"Statements.leftDiagonal_onset_le : ∀ (k : ℕ), ∃ p > 0, ∃ N ≤ k, PeriodicFrom (leftDiagonal k) p N"}
+{"ts":"2026-09-10T14:32:24Z","kind":"dispatch","node":"leftDiagonal_onset_le","identity":"Vesper","model":"fable","reason":"open leaf; unblocks 0; research node at its top rung, attempt 7 there","max_turns":120,"max_budget_usd":20.0,"log":"c:/Users/dibuj/dev/rule30/runs/20260910T143209Z/leftDiagonal_onset_le-12"}
+{"ts":"2026-09-10T14:44:58Z","kind":"stray","file":"runs/20260910T143209Z/leftDiagonal_onset_le-12/LeftDiagonalOnsetLe.lean","verdict":"clean"}
+{"ts":"2026-09-10T14:45:24Z","kind":"stray","file":"explorer/fathom_scratch_helpers.lean","verdict":"broken"}
+{"ts":"2026-09-10T14:45:40Z","kind":"stray","file":"explorer/seed_scratch_ladder.lean","verdict":"broken"}
+{"ts":"2026-09-10T14:45:58Z","kind":"stray","file":"explorer/seed_scratch_routes.lean","verdict":"broken"}
+{"ts":"2026-09-10T14:45:58Z","kind":"stray","file":"explorer/seed_scratch_witness.lean","verdict":"no_theorems"}

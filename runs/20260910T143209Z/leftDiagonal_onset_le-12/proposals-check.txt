@@ -1,0 +1,6 @@
+periodicFrom_trans_period
+  DOES NOT PROVE: Says nothing about rule 30 or about any onset being small; it only makes the onset a well-defined quantity.
+  route:   closes the statement
+  witness: unchecked — no witness supplied
+
+1 unchecked
