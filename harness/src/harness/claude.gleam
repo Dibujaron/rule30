@@ -8,6 +8,7 @@
 
 import gleam/dynamic.{type Dynamic}
 import gleam/dynamic/decode
+import gleam/int
 import gleam/json
 import gleam/list
 import gleam/option.{type Option, None, Some}
@@ -59,9 +60,17 @@ pub type Event {
   /// `error_max_budget_usd` for `--max-budget-usd`. Kept as the raw string
   /// rather than parsed here, because the CLI has more subtypes than the
   /// harness has names for, and a result must decode whatever it says.
+  /// `stop_reason` is the CLI's word for why the model stopped, and it is
+  /// the field that separates endings `subtype` folds together. A refused
+  /// request arrives as `subtype: "success"` with `is_error: true` and
+  /// `stop_reason: "refusal"`; a session limit arrives as `subtype:
+  /// "success"` with `is_error: true` and `stop_reason: "stop_sequence"`.
+  /// Read from the same event the loop already decodes — this is not new
+  /// evidence, it is evidence that was one field away and not looked at.
   TurnResult(
     session_id: String,
     subtype: Option(String),
+    stop_reason: Option(String),
     is_error: Bool,
     total_cost_usd: Float,
     num_turns: Int,
@@ -180,6 +189,16 @@ pub fn kill(session: Session) -> Nil {
   port_close(session.port)
 }
 
+/// A JSON number, whichever way it was written. JSON has one number type
+/// and a serialiser is free to write a whole value as `1` rather than `1.0`,
+/// so a field that is conceptually a fraction arrives as an integer whenever
+/// it lands exactly on one. `decode.float` alone rejects that, and every
+/// field here that means "how full is this window" hits it precisely at the
+/// full and empty ends.
+fn json_number() -> decode.Decoder(Float) {
+  decode.one_of(decode.float, [decode.int |> decode.map(int.to_float)])
+}
+
 pub fn parse_event(line: String) -> Event {
   case json.parse(line, event_decoder(line)) {
     Ok(event) -> event
@@ -208,14 +227,36 @@ fn event_decoder(raw: String) -> decode.Decoder(Event) {
     "assistant" -> decode.success(Assistant(raw))
     "user" -> decode.success(User(raw))
     "rate_limit_event" -> {
-      use utilization <- decode.subfield(
+      // Read as a JSON number, not as a float, and optional rather than
+      // required — for the same reason `status` below is optional, which was
+      // written down here and then not applied to these two.
+      //
+      // **A full window sends `1`, not `1.0`.** JSON has one number type and
+      // the CLI serialises a whole number bare, so the one reading that means
+      // *this window is closed* is the one reading `decode.float` rejects.
+      // And `subfield` is required, so the rejection was never a misread
+      // field: the whole decode failed, `parse_event` fell back to `Other`,
+      // `hit_ceiling` never saw a `RateLimit`, and the attempt ran on to the
+      // CLI's error result and was filed `budget_exhausted` against the
+      // node's ladder. Measured over the 774 rate-limit events under `runs/`
+      // on 2026-09-10: six carried an integer at this field, and exactly one
+      // of those had a status other than `allowed*` — `column_settledConfig_eq-1`
+      // in run 20260907T210826Z, which is the attempt that paid for it.
+      //
+      // The defaults keep a shape change from costing the signal rather than
+      // the field. `status` is the authority in `hit_ceiling` and it now
+      // survives a missing `five_hour` block, where before either field going
+      // absent took the whole event with it.
+      use utilization <- decode.then(decode.optionally_at(
         ["rate_limit_info", "unifiedWindows", "five_hour", "utilization"],
-        decode.float,
-      )
-      use resets_at <- decode.subfield(
+        0.0,
+        json_number(),
+      ))
+      use resets_at <- decode.then(decode.optionally_at(
         ["rate_limit_info", "unifiedWindows", "five_hour", "resetsAt"],
+        0,
         decode.int,
-      )
+      ))
       // Optional, not required: `subfield` here would make a status-less
       // event fail the whole decode and fall back to `Other` in
       // `parse_event`, silently dropping the rate-limit signal altogether —
@@ -246,8 +287,25 @@ fn event_decoder(raw: String) -> decode.Decoder(Event) {
         None,
         decode.optional(decode.string),
       )
+      use stop_reason <- decode.optional_field(
+        "stop_reason",
+        None,
+        decode.optional(decode.string),
+      )
       use is_error <- decode.field("is_error", decode.bool)
-      use total_cost_usd <- decode.field("total_cost_usd", decode.float)
+      // `json_number` for the same reason as the window's utilization: a
+      // free session, or one whose cost rounds to a whole number of dollars,
+      // would arrive as a bare integer and take the entire result event down
+      // with it — and a result that fails to decode is worse here than
+      // anywhere else, because the loop is waiting for exactly this event and
+      // would sit until the turn timeout. Never yet observed in `runs/`;
+      // fixed with its neighbour rather than left to be found the expensive
+      // way.
+      use total_cost_usd <- decode.then(decode.optionally_at(
+        ["total_cost_usd"],
+        0.0,
+        json_number(),
+      ))
       use num_turns <- decode.field("num_turns", decode.int)
       use structured_output <- decode.optional_field(
         "structured_output",
@@ -257,6 +315,7 @@ fn event_decoder(raw: String) -> decode.Decoder(Event) {
       decode.success(TurnResult(
         session_id:,
         subtype:,
+        stop_reason:,
         is_error:,
         total_cost_usd:,
         num_turns:,
@@ -296,6 +355,40 @@ pub fn assistant_text(raw: String) -> String {
 /// ends the session in error (`error_max_budget_usd`, for one), when it
 /// carries no `structured_output` at all and the call is the only copy of
 /// the report.
+/// The refusal category named by a `system` / `model_refusal_no_fallback`
+/// event among `events`, if one is there.
+///
+/// That event carries the only word anyone can act on — `reasoning_extraction`
+/// on the 2026-09-08 connector refusal — and it has no variant of its own, so
+/// it arrives as `Other` and is read back out of the raw line here. The
+/// result event's `stop_reason` is what decides that a refusal happened; this
+/// only says what it was called, and a refusal with no such event is still a
+/// refusal.
+pub fn refusal_category(events: List(Event)) -> Option(String) {
+  let decoder = {
+    use kind <- decode.field("type", decode.string)
+    use subtype <- decode.field("subtype", decode.string)
+    case kind, subtype {
+      "system", "model_refusal_no_fallback" -> {
+        use category <- decode.field("api_refusal_category", decode.string)
+        decode.success(Some(category))
+      }
+      _, _ -> decode.success(None)
+    }
+  }
+  list.fold(events, None, fn(found, event) {
+    case found {
+      Some(_) -> found
+      None ->
+        case event {
+          Other(raw) ->
+            json.parse(raw, decoder) |> result.unwrap(None)
+          _ -> None
+        }
+    }
+  })
+}
+
 pub fn structured_output_call(raw: String) -> Option(Dynamic) {
   let decoder = {
     use blocks <- decode.subfield(

@@ -1068,6 +1068,7 @@ pub fn end_word(
     worker.BudgetExhausted(worker.Rounds), _ -> "budget_exhausted: rounds"
     worker.BudgetExhausted(worker.Unknown(_)), _ -> "budget_exhausted: cli"
     worker.RateLimited, _ -> "rate_limited"
+    worker.Refused(_), _ -> "refused"
   }
 }
 
@@ -1107,6 +1108,10 @@ pub fn ended_words(
     worker.BudgetExhausted(ceiling), _ ->
       "stopped at " <> worker.ceiling_words(cfg, ceiling)
     worker.RateLimited, _ -> "rate limited"
+    worker.Refused(category), _ ->
+      "refused by the API ("
+      <> category
+      <> ") — nothing was attempted, so this says nothing about the topic; the same brief on a different model is the move, not the same brief later"
   }
 }
 

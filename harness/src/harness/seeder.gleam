@@ -374,5 +374,9 @@ fn ended_words(cfg: config.Config, end: worker.End) -> String {
     worker.BudgetExhausted(ceiling) ->
       "stopped at " <> worker.ceiling_words(cfg, ceiling)
     worker.RateLimited -> "rate limited"
+    worker.Refused(category) ->
+      "refused by the API ("
+      <> category
+      <> ") — nothing was attempted, and the same brief on a different model is the move"
   }
 }

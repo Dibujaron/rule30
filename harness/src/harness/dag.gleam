@@ -32,13 +32,28 @@ pub type Size {
 
 /// How one dispatch attempt at a node ended.
 ///
-/// Every constructor but the last is a claim about the worker or the node.
-/// `HarnessFailed` is a claim about the harness: the attempt happened and
-/// tells you nothing about the node, because something on the harness's
-/// side of the trust boundary broke it. It is the one outcome that neither
-/// spends a rung of the model ladder (`dispatch.failed_attempts`) nor scores
-/// the identity's calibration (`roster.scorecard`). `dispatch.attribute`
-/// is where an attempt earns it, and lists the signals that count.
+/// Every constructor but the last two is a claim about the worker or the
+/// node. `HarnessFailed` is a claim about the harness: the attempt happened
+/// and tells you nothing about the node, because something on the harness's
+/// side of the trust boundary broke it. `Refused` is a claim about neither:
+/// the API declined the request, so no work was attempted at all.
+///
+/// Those two are the outcomes that neither spend a rung of the model ladder
+/// (`dispatch.failed_attempts`) nor score the identity's calibration
+/// (`roster.scorecard`). `dispatch.attribute` is where an attempt earns
+/// `HarnessFailed`, and lists the signals that count.
+///
+/// `Refused` is separate from `HarnessFailed` rather than folded into it
+/// because the two want opposite responses. A harness failure is a bug to
+/// fix and the same dispatch will work once it is fixed. A refusal is a
+/// property of the model against this brief, not of the harness and not of
+/// the node: retrying the identical brief at a higher rung cannot help and
+/// will spend two more attempts proving it, while the *same* brief on a
+/// different model may go straight through — which is what happened on
+/// 2026-09-08, when a connector brief refused on fable and ran on opus
+/// minutes later. A role whose default model refuses looks exactly like a
+/// broken brief until someone pays to find out otherwise, so this has to be
+/// a word in the summary and not only a line in the log.
 pub type Outcome {
   Closed
   GaveUp
@@ -47,6 +62,7 @@ pub type Outcome {
   RateLimited
   TimedOut
   HarnessFailed
+  Refused
 }
 
 /// A record of one Claude Code session dispatched at a node.
@@ -440,6 +456,7 @@ pub fn outcome_to_string(o: Outcome) -> String {
     RateLimited -> "rate_limited"
     TimedOut -> "timed_out"
     HarnessFailed -> "harness_failed"
+    Refused -> "refused"
   }
 }
 
@@ -452,6 +469,7 @@ fn outcome_from_string(s: String) -> Result(Outcome, Nil) {
     "rate_limited" -> Ok(RateLimited)
     "timed_out" -> Ok(TimedOut)
     "harness_failed" -> Ok(HarnessFailed)
+    "refused" -> Ok(Refused)
     _ -> Error(Nil)
   }
 }

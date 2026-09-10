@@ -642,6 +642,39 @@ pub fn a_rate_limit_event_with_no_status_still_decodes_test() {
   assert five_hour_utilization == 0.97
 }
 
+/// The rejected `rate_limit_event` from run 20260907T210826Z, byte-exact,
+/// two events before the result that ended `column_settledConfig_eq`.
+///
+/// **A full window reports `utilization` as the JSON integer `1`.** Every
+/// other value the CLI has been seen to send is fractional and arrives as a
+/// JSON float, so `decode.float` on this path is right for every reading
+/// except the only one that means the window is closed. And the failure is
+/// not a misread field: `subfield` is required, so the whole decode fails,
+/// `parse_event` falls back to `Other`, and `hit_ceiling` never sees a
+/// `RateLimit` at all. The attempt runs on to the CLI's error result and is
+/// filed `budget_exhausted` against the node's ladder, which is what happened
+/// to this one.
+///
+/// The hazard was already named one field below, on `status`, and guarded
+/// there with `optionally_at`. These two subfields were left required.
+pub fn a_full_window_reports_utilization_as_an_integer_test() {
+  let line =
+    "{\"type\":\"rate_limit_event\",\"rate_limit_info\":{\"status\":\"rejected\",\"resetsAt\":1788824400,\"rateLimitType\":\"five_hour\",\"overageStatus\":\"rejected\",\"overageDisabledReason\":\"org_level_disabled\",\"isUsingOverage\":false,\"unifiedWindows\":{\"five_hour\":{\"utilization\":1,\"resetsAt\":1788824400},\"seven_day\":{\"utilization\":0.43,\"resetsAt\":1788980400}}},\"uuid\":\"6ae44d71-3ebf-450c-81e6-5c5586c06b8a\",\"session_id\":\"17d8c3ba-1aae-4b45-9044-4d6965fdccc4\"}"
+  let assert claude.RateLimit(five_hour_utilization:, status:, ..) =
+    claude.parse_event(line)
+  assert five_hour_utilization == 1.0
+  assert status == "rejected"
+}
+
+/// The consequence of the above, stated where it bit: a closed window has to
+/// reach `hit_ceiling` as a closed window. This is the assertion the
+/// attempt's outcome actually depended on.
+pub fn a_full_window_is_a_closed_window_test() {
+  let line =
+    "{\"type\":\"rate_limit_event\",\"rate_limit_info\":{\"status\":\"rejected\",\"resetsAt\":1788824400,\"rateLimitType\":\"five_hour\",\"overageStatus\":\"rejected\",\"overageDisabledReason\":\"org_level_disabled\",\"isUsingOverage\":false,\"unifiedWindows\":{\"five_hour\":{\"utilization\":1,\"resetsAt\":1788824400},\"seven_day\":{\"utilization\":0.43,\"resetsAt\":1788980400}}},\"uuid\":\"6ae44d71-3ebf-450c-81e6-5c5586c06b8a\",\"session_id\":\"17d8c3ba-1aae-4b45-9044-4d6965fdccc4\"}"
+  assert worker.hit_ceiling([claude.parse_event(line)], 0.9) == True
+}
+
 // --- the result's subtype -------------------------------------------------------
 
 /// The last line of run 20260907T175146Z's `theorist-1/events.jsonl`, less

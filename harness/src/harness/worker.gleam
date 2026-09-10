@@ -671,6 +671,15 @@ pub type End {
   BudgetExhausted(ceiling: Ceiling)
   /// The five-hour window is rate limiting: a pause, not a verdict.
   RateLimited
+  /// The API declined the request. `category` is the CLI's own word for why,
+  /// carried verbatim, and is often the only actionable thing in the record.
+  ///
+  /// Not a verdict about the node and not a ceiling: no work was attempted,
+  /// so there is nothing here to read as difficulty. It is nearest to
+  /// `RateLimited` in that both are refusals to run rather than failures to
+  /// prove, and unlike a rate limit it will not pass with time — the same
+  /// brief on a different model is the move, not the same brief later.
+  Refused(category: String)
 }
 
 /// Which ceiling a `BudgetExhausted` session stopped at. Three are known by
@@ -691,6 +700,32 @@ pub type Ceiling {
   /// The CLI ended the session with a result subtype this loop has no name
   /// for, carried verbatim — or with none at all, carried as `""`.
   Unknown(subtype: String)
+}
+
+/// Did the API refuse this request, and if so what did it call the reason.
+///
+/// `stop_reason` on the result is the discriminator, and it is the whole
+/// test: a refusal reaches the loop as `subtype: "success"` with `is_error`
+/// set, which is exactly the shape of a CLI ceiling ending, and the only
+/// field that separates them is this one. On 2026-09-08 a connector session
+/// was refused at turn one and the summary read "a CLI ending this harness
+/// has no name for (result subtype `success`)", with `"stop_reason":
+/// "refusal"` sitting on the same event the loop had already decoded.
+///
+/// The category comes from the `model_refusal_no_fallback` system event
+/// earlier in the same turn when there is one, because `reasoning_extraction`
+/// is the actionable half and the result event does not carry it. When there
+/// is no such event the refusal still stands on `stop_reason` alone — the
+/// category is a nicety and the refusal is not.
+fn refusal_of(
+  stop_reason: Option(String),
+  seen: List(claude.Event),
+) -> Option(String) {
+  case stop_reason {
+    Some("refusal") ->
+      Some(option.unwrap(claude.refusal_category(seen), "no category given"))
+    _ -> None
+  }
 }
 
 /// The ceiling a CLI error result names. The CLI's `subtype` is the only
@@ -895,6 +930,7 @@ fn recorded(end: End) -> dag.Outcome {
     TimedOut -> dag.TimedOut
     BudgetExhausted(_) -> dag.BudgetExhausted
     RateLimited -> dag.RateLimited
+    Refused(_) -> dag.Refused
   }
 }
 
@@ -1051,6 +1087,7 @@ fn turn_loop(t: Loop(r)) -> #(Tally, Ending(r)) {
         claude.TurnResult(
           session_id:,
           subtype:,
+          stop_reason:,
           is_error:,
           total_cost_usd:,
           num_turns:,
@@ -1062,15 +1099,36 @@ fn turn_loop(t: Loop(r)) -> #(Tally, Ending(r)) {
             Some(dyn) -> t.role.decode(dyn) |> option.from_result
             None -> recover_report(t, seen)
           }
-          case t.rate_limited, is_error {
+          case t.rate_limited, refusal_of(stop_reason, seen), is_error {
             // Park the attempt rather than losing it: a rate limit is a
             // pause, and the session id is how a later run resumes.
-            True, _ -> t.role.park(t, report)
+            True, _, _ -> t.role.park(t, report)
+            // A refusal is read before the ceiling, because it arrives
+            // wearing the ceiling's clothes: `subtype` is `success` and
+            // `is_error` is set, which is indistinguishable from a CLI
+            // ending until `stop_reason` is looked at. Ranked below the
+            // rate limit for the same reason the rate limit outranks
+            // everything: a pause loses nothing, and a refusal at least
+            // costs no rung either.
+            False, Some(category), _ -> #(
+              t.tally,
+              Ending(
+                Refused(category),
+                "the API refused the request ("
+                  <> category
+                  <> "). No work was attempted, so this says nothing about "
+                  <> "the node; the same brief on a different model is the "
+                  <> "move, not the same brief later: "
+                  <> clip(raw, 1000),
+                report,
+                False,
+              ),
+            )
             // The CLI ended it, and its `subtype` says at which ceiling.
             // The notes name the ceiling first and carry the CLI's own
             // line after it, so a reader of the attempt gets the answer
             // before the evidence.
-            False, True -> {
+            False, None, True -> {
               let ceiling = ceiling_of(subtype)
               #(
                 t.tally,
@@ -1085,7 +1143,7 @@ fn turn_loop(t: Loop(r)) -> #(Tally, Ending(r)) {
                 ),
               )
             }
-            False, False -> t.role.act(t, report)
+            False, None, False -> t.role.act(t, report)
           }
         }
         _ -> turn_loop(t)
@@ -1159,13 +1217,7 @@ fn act_on(
   report: Option(Report),
 ) -> #(Tally, Ending(Report)) {
   case report {
-    None ->
-      nudge(
-        t,
-        report,
-        "Your turn carried no structured report. End every turn with the report the harness asked for.",
-        "the worker stopped reporting, and the harness's round budget ran out asking it to",
-      )
+    None -> unreported(deps, node, t)
     Some(r) ->
       case r.outcome {
         "proved" -> adjudicate(deps, node, t, r)
@@ -1232,6 +1284,84 @@ pub fn parked(
       False,
     ),
   )
+}
+
+/// A turn that carried no report. Ask the file before asking the worker.
+///
+/// **The nudge loop assumes the missing thing is the work, and sometimes only
+/// the report is missing.** On 2026-09-09 Cadence wrote a complete, sorry-free
+/// proof of `centerColumn_run_boundary`, never called `StructuredOutput`, and
+/// then told the nudge five times over that it had — verbatim, "I've already
+/// called StructuredOutput at the end of my previous response". Its claim
+/// about the proof was true and its claim about the report was not, and
+/// nudging cannot tell those apart because it is asking the party that is
+/// already confidently wrong. The attempt was filed `budget_exhausted`, the
+/// finished proof was moved to a directory nothing reads, and the node was
+/// re-proved from scratch by a second persona 46 seconds later for a second
+/// $0.81.
+///
+/// So the verifier is asked first, and it is the same verifier that closes
+/// any other node — `type_of%` against the seeded statement plus the axiom
+/// check, through `deps.verify`. That is deliberate and it is the whole
+/// safety of this path: *a file being present is not the test*. If the bar
+/// were "a proof file exists", this would become the way a confidently-wrong
+/// worker closes a node with a file that merely elaborates. The bar is the
+/// bar every closed node already had to clear.
+///
+/// A node closed here has no worker report, so `Ending` carries `None` and
+/// the attempt is recorded `reported: False`: no notebook entry, no journal
+/// entry, no re-pricing scored against the identity's calibration. That is
+/// the honest record. The worker did the work and did not describe it, and
+/// inventing a description for it would be the same failure this function
+/// exists to catch, one level up.
+fn unreported(
+  deps: Deps,
+  node: dag.Node,
+  t: Loop(Report),
+) -> #(Tally, Ending(Report)) {
+  let #(verdict, text) = judge(deps, node, t)
+  case verify.is_verified(verdict) {
+    True -> {
+      log.event(t.l, "unreported_proof_adopted", [
+        #("node", json.string(node.id)),
+        #(
+          "reason",
+          json.string(
+            "the turn carried no report, and the proof file verified against "
+            <> "the seeded statement with clean axioms; closed without a report",
+          ),
+        ),
+      ])
+      let statement = case verdict {
+        verify.Verified(statement:, ..) -> statement
+        _ -> ""
+      }
+      let written = deps.annotate(node, statement)
+      log.event(t.l, "annotate", [
+        #("node", json.string(node.id)),
+        #("statement", json.string(statement)),
+        #("written", json.bool(result.is_ok(written))),
+        #("reason", json.string(result.unwrap_error(written, ""))),
+      ])
+      #(
+        t.tally,
+        Ending(
+          Finished,
+          "the worker never reported, and its proof file verified: "
+            <> clip(text, 2000),
+          None,
+          False,
+        ),
+      )
+    }
+    False ->
+      nudge(
+        t,
+        None,
+        "Your turn carried no structured report. End every turn with the report the harness asked for.",
+        "the worker stopped reporting, and the harness's round budget ran out asking it to",
+      )
+  }
 }
 
 /// The worker claims a proof. Run the verifier; a failing verdict goes

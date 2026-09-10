@@ -252,7 +252,9 @@ pub fn for_seeder(cfg: Config) -> Config {
 /// one would escalate the ladder for free and, at an ordinary `L` node,
 /// spend a rung the node never got. A `HarnessFailed` attempt is not a
 /// verdict on anything: the harness broke it, and escalating on it would
-/// manufacture the very evidence of difficulty it does not carry.
+/// manufacture the very evidence of difficulty it does not carry. A
+/// `Refused` attempt carries even less: the API declined the request, so no
+/// work was attempted at all.
 pub fn failed_attempts(node: dag.Node) -> Int {
   list.count(node.attempts, fn(a) { burns_a_rung(a.outcome) })
 }
@@ -261,11 +263,18 @@ pub fn failed_attempts(node: dag.Node) -> Int {
 pub fn burns_a_rung(o: dag.Outcome) -> Bool {
   case o {
     dag.GaveUp | dag.BudgetExhausted -> True
+    // `Refused` joins the four for the strongest reason on the list: not
+    // that the evidence is weak but that there is none, because nothing ran.
+    // And escalating is the one response that cannot work — a refusal is the
+    // model's answer to this brief, not a shortfall of capability, so the
+    // identical brief a rung up refuses again and the ladder pays twice to
+    // learn it.
     dag.Closed
     | dag.Reduced
     | dag.RateLimited
     | dag.TimedOut
-    | dag.HarnessFailed -> False
+    | dag.HarnessFailed
+    | dag.Refused -> False
   }
 }
 
