@@ -2064,4 +2064,92 @@ theorem leftDiagonal_period_le_iff_rowNat_period :
         ∃ T, rowNat T % 2 ^ n = rowNat (T + p) % 2 ^ n) := by
   sorry
 
+/-- **The black count splits at any cut.** The count over `M + k` cells is the
+count over the first `M` plus the count over the `k` that follow.
+
+Proposed by Seeder (2026-09-10). Supply for a localisation argument rather
+than a step of one: it is the additivity every "balance at cut points"
+argument needs before it can say anything.
+
+DOES NOT PROVE: nothing about rule 30 — true of any `Bool` sequence. -/
+theorem centerColumnCount_block (M k : ℕ) :
+    ((Finset.range (M + k)).filter fun n => centerColumn n = true).card =
+      ((Finset.range M).filter fun n => centerColumn n = true).card
+        + ((Finset.range k).filter fun j => centerColumn (M + j) = true).card := by
+  sorry
+
+/-- **The black count in the packed row model.** The number of black centre
+cells below `N`, counted by running the truncated row map instead of the
+automaton.
+
+Proposed by Seeder (2026-09-10); witness holds over `t < 10`. The counting
+half of the dictionary `centerColumn_eq_rowNat_testBit` opens, and it is what
+makes any count about the centre column computable at all — the automaton
+gives out near row 18.
+
+DOES NOT PROVE: a change of vocabulary and nothing more; it says nothing about
+the value of the count. Crystal 69 records why the packed-row tools the board
+already holds do not carry over on their own: they settle a *fixed* bit index
+and this is the moving one, bit `n` at time `n`, which outruns the settling
+front measured at about `1.25 n`. -/
+theorem centerColumnCount_eq_stepMod_count (N : ℕ) :
+    ((Finset.range N).filter fun n => centerColumn n = true).card =
+      ((Finset.range N).filter fun n =>
+        ((stepMod (n + 1))^[n] (1 % 2 ^ (n + 1))).testBit n = true).card := by
+  sorry
+
+/-- **The balance conjecture with the casts taken out.** Prize 2 holds exactly
+when, for every `d`, the black count is eventually within `N / d` of `N / 2` —
+written as two `ℕ` inequalities instead of an absolute value over casts.
+
+The working form of `centerColumn_density_tendsto_half_iff_excess`, which is
+proved and states the same thing with `∀ ε : ℝ` and
+`|2 * (card : ℝ) - (N : ℝ)| ≤ ε * (N : ℝ)`. That shape is the one
+`docs/prover-cookbook.md` warns about by name: two of the three budget
+exhaustions on 2026-09-07 were provers cycling on casts. Here the real numbers
+survive only on the prize side of the iff, where they must, because that side
+has to match `Rule30.Prize.centerColumn_density_tendsto_half` character for
+character.
+
+Proposed by Seeder (2026-09-10).
+
+DOES NOT PROVE: it is a restatement of the prize, not a step towards it, and
+it is true of any `Bool` sequence in the centre column's place. No finite
+witness is possible — both sides quantify over all large `N`. -/
+theorem centerColumn_density_tendsto_half_iff_excess_nat :
+    Filter.Tendsto centerColumnDensity Filter.atTop (nhds (1 / 2 : ℝ)) ↔
+      ∀ d : ℕ, 0 < d → ∃ N₀ : ℕ, ∀ N ≥ N₀,
+        2 * d * ((Finset.range N).filter fun n => centerColumn n = true).card ≤ d * N + N ∧
+          d * N ≤ 2 * d * ((Finset.range N).filter fun n => centerColumn n = true).card + N := by
+  sorry
+
+/-- **Balance at sparse cut points is enough.** If for every `d` there are
+arbitrarily late cuts `M ≤ N` with `N - M` small compared to `N`, at which the
+count is balanced, then Prize 2 follows.
+
+The localisation node: it says the balance only has to be checked on a thin
+set of `N`, because the tail between a cut and `N` cannot move the density.
+Proposed by Seeder (2026-09-10).
+
+DOES NOT PROVE: it does not prove the prize, and the hypothesis is not known
+for the centre column; it is true of any `Bool` sequence, and at `M = N` it
+degenerates to the excess bound itself, so its whole content is that the cut
+may be sparse.
+
+**A neighbouring formulation is measured DEAD and must not be proposed**:
+"every block of some fixed length `L` is balanced to `L / d`" is unsatisfiable
+for the centre column, because long runs keep appearing — at `L = 16` a block
+of 16 identical cells occurs at `M = 22711`, worst block excess `1.0000`
+(`explorer/tessera2_blocks.mjs`, `N = 400000`). Sparse cuts survive that;
+uniform blocks do not. -/
+theorem centerColumn_density_tendsto_half_of_nearby_cuts
+    (h : ∀ d : ℕ, 0 < d → ∃ N₀ : ℕ, ∀ N ≥ N₀, ∃ M ≤ N,
+      d * (N - M) ≤ N ∧
+        2 * d * ((Finset.range M).filter fun n => centerColumn n = true).card
+            ≤ d * M + M ∧
+          d * M
+            ≤ 2 * d * ((Finset.range M).filter fun n => centerColumn n = true).card + M) :
+    Filter.Tendsto centerColumnDensity Filter.atTop (nhds (1 / 2 : ℝ)) := by
+  sorry
+
 end Statements

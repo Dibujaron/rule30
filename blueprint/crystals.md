@@ -896,12 +896,18 @@ in another coat, and would sit beside it, not under it.
     provable-looking, and what it buys is a closed door with a sign on it —
     so the next session does not rediscover Kopra and ask why not `w = 1`.
 
-69. **The bridge to the centre column is built, proved, and load-bearing for
-    nothing — and the reason is one moved index.** `centerColumn t =
-    bit_t (rowNat t)` is closed (`centerColumn_eq_rowNat_testBit`), sits under
-    the P1 wall, and on 2026-09-10 had **zero dependents**. Meanwhile 18
-    packed-row nodes exist and *every* consumer of them is under a
-    left-diagonal wall. Measured, not guessed.
+69. **The centre column outruns the settling front, permanently, by a constant
+    factor — so every settling argument is ruled out in advance.** This is an
+    OBSTRUCTION, and it replaces an earlier framing of mine that called
+    `centerColumn_eq_rowNat_testBit` "the bridge to P1, built and uncrossed".
+    That was wrong three ways and Dib caught it: the node's own docstring says
+    it is "supply rather than insight ... every hard thing about the centre
+    column survives it unchanged", so it is a dictionary entry and not
+    infrastructure; its zero dependents were unremarkable because it had been
+    proved five hours earlier, a true number quoted with an unstated
+    denominator; and calling the emptiness neglect contradicted the very
+    mechanism below, which says nothing *can* cross with the tools the board
+    holds. What follows is the part that was worth keeping.
 
     **Why the machinery does not simply carry over, stated as the obstruction
     it is.** Both objects are bits of the same orbit, and that is exactly what
@@ -927,12 +933,24 @@ in another coat, and would sit beside it, not under it.
     residual in the language the board has actually built, and it is a better
     target than any restatement of the wall.
 
-    Rowan, captain, 2026-09-10, from the dependency graph rather than from
-    reading. **Consequence for a seeder:** a packed-row lemma stated about a
-    fixed bit index is left-edge work however it is filed; a packed-row lemma
-    that says anything about `bit_t (rowNat t)` — the diagonal read — is P1
-    work. Prefer the second. Vocabulary-neutral lemmas about `rowStep`,
-    `stepMod` and `PeriodicFrom` serve both and are always worth having.
+    **What this does NOT say.** It is not a claim that the packed row is a dead
+    end for P1 — the opposite. Crystal 60 restates the whole P1 residual in it
+    with no automaton, and that remains the most promising vocabulary the board
+    has. What the ratio rules out is one FAMILY of argument inside it.
+
+    **Consequence for a seeder, stated as a fence rather than an invitation.**
+    Do not propose a settling, preperiod, agreement-front or onset-style bound
+    and expect it to reach the centre column: the ratio defeats all of them
+    before the details matter, and that is cheap to check before a session is
+    spent. A packed-row lemma about a *fixed* bit index is left-edge work
+    however it is filed. What P1 needs from this vocabulary is a statement
+    about the *transient* dynamics, or about the diagonal read
+    `bit_t (rowNat t)` directly, and the board has neither. Vocabulary-neutral
+    lemmas about `rowStep`, `stepMod` and `PeriodicFrom` serve both edges and
+    are always worth having.
+
+    Rowan, captain, 2026-09-10, from the dependency graph and the measured
+    settling rate rather than from reading.
 
 70. **Move the wall to the right edge, where there are no transients.** The
     left side's index `0` sits *inside* a transient band, which is why every

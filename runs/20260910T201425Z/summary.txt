@@ -1,0 +1,36 @@
+
+seeder    Seeder
+model     opus
+region    P2
+ended     finished — the seeder reported its proposal written; that is its claim about the file, and the check below is the only adjudication
+ceilings  80 turns, $12.0
+cost      $8.59
+turns     51
+session   768593d3-a7f7-43d1-a919-4ef6b4c735ed
+log       c:/Users/dibuj/dev/rule30/runs/20260910T201425Z/seed-1
+proposal  c:/Users/dibuj/dev/rule30/blueprint/proposals/next.json
+
+Four P2 proposals written and verified from their own bytes: the prize restated in ℕ, the localisation node that concludes the prize from balance at sparse cut points, the count in the packed-row vocabulary, and the block-count identity underneath them.
+
+check of c:/Users/dibuj/dev/rule30/blueprint/proposals/next.json:
+centerColumn_density_tendsto_half_iff_excess_nat
+  DOES NOT PROVE: Proves nothing about rule 30 — it is true of any Bool sequence in the centre column's place, and it is a restatement of the prize, not a step towards it. No finite witness is possible: both sides quantify over all large N.
+  WARNING: the statement mixes ℕ and ℤ or uses absolute value — found a term ascribed to ℤ or ℝ. Provers spent their budgets cycling on casts (two of the three exhaustions on 2026-09-07); the captain's rule in docs/prover-cookbook.md prefers a statement in ℕ, with an absolute value over casts written as two ℕ inequalities.
+  route:   closes the statement
+  witness: unchecked — no witness supplied
+centerColumn_density_tendsto_half_of_nearby_cuts
+  DOES NOT PROVE: It does not prove the prize, and the hypothesis is not known for the centre column. It is true of any Bool sequence, and at M = N it degenerates to the excess bound itself, so its whole content is that the cut may be sparse. A neighbouring formulation is measured DEAD and must not be proposed: 'every block of some fixed length L is balanced to L / d' is unsatisfiable for the centre column, because long runs keep appearing — at L = 16 a block of 16 identical cells occurs at M = 22711, worst block excess 1.0000 (explorer/tessera2_blocks.mjs, N = 400000). No finite witness is possible.
+  WARNING: the statement mixes ℕ and ℤ or uses absolute value — found a term ascribed to ℤ or ℝ. Provers spent their budgets cycling on casts (two of the three exhaustions on 2026-09-07); the captain's rule in docs/prover-cookbook.md prefers a statement in ℕ, with an absolute value over casts written as two ℕ inequalities.
+  route:   closes the statement
+  witness: unchecked — no witness supplied
+centerColumnCount_eq_stepMod_count
+  DOES NOT PROVE: A change of vocabulary and nothing more: it says nothing about the value of the count. Crystal 69 records why the packed-row tools the board already holds do not simply carry over — they settle a FIXED bit index and this is the moving one, bit n at time n, which outruns the settling front (measured at about 1.25 n).
+  route:   closes the statement
+  witness: holds over t < 10
+centerColumnCount_block
+  DOES NOT PROVE: Says nothing about rule 30 — true of any Bool sequence. It is supply for a localisation argument, not a step of one.
+  route:   closes the statement
+  witness: holds over M < 6 and k < 5, so every centre cell read has t < 10
+
+2 unchecked, 2 holds, 2 with a cast warning
+
