@@ -1043,6 +1043,55 @@ in another coat, and would sit beside it, not under it.
     `Turing.TM0`/`TM1`; that is unbuilt, it is a captain-and-Dib decision, and
     `Prize.lean` says it needs expert review before anything built on it ships.
 
+72. **Four sufficient conditions for P1, none known to be easier than P1 —
+    stop producing a fifth without an argument for tractability.** As of
+    2026-09-10 the board proves four statements of the form "if `X` then the
+    centre column is not eventually periodic":
+
+    | node | the residual `X` |
+    |---|---|
+    | `..._of_cohomologous` | some column differs from the centre by an eventually periodic sequence |
+    | `..._of_white_times` | column 1 repeats at the centre column's white times |
+    | `..._of_long_black_runs` | the centre column has black runs of every length |
+    | `..._of_deep_alternating` | alternating blocks of every depth appear left of the origin |
+
+    Every one is proved. **Not one carries any evidence that its residual is
+    more tractable than P1**, and three of the four say so in their own
+    `DOES NOT PROVE` field. Two of them are trivial implications true of any
+    `Bool` sequence — unbounded runs refute periodicity in one line — and are
+    reformulations rather than reductions.
+
+    **What a mathematician would say, and it is the right question:** you have
+    four restatements; show me why any of them is easier. There is no answer
+    on this board.
+
+    **So the fence.** A fifth sufficient condition is worth seeding only with
+    one of these attached, and the proposal should say which:
+
+    - a **measurement** the residual admits that P1 does not — the run-length
+      question is genuinely checkable at depth where "is it aperiodic" is not,
+      and that is `..._of_long_black_runs`'s entire value;
+    - a **literature** the residual connects to that P1 does not — the
+      switch-index reformulation earns its keep this way, by putting the
+      object in a finite alphabet where symbolic dynamics has theorems;
+    - or a **strictly smaller object** — fewer quantifiers, a bounded
+      alphabet, a local rather than asymptotic property.
+
+    Without one of the three it is a translation, and translations are cheap:
+    this board produced three in one evening for about twenty dollars, and
+    the problem did not move.
+
+    **The honest count of what did move.** Four routes to P1 were closed with
+    reasons on 2026-09-10 — the black ladder (proved dead), monotone
+    comparison (crystal 63, ceiling `0.50106`), the right edge (a period-4
+    centre column reproduces the seed's period growth to depth 64), and
+    packed-row agreement (crystal 69, forced advance `0.536` against `1.000`
+    needed). Closing a route is worth more than adding a reformulation,
+    because a closed route stays closed.
+
+    Rowan, captain, 2026-09-10, from counting the board rather than from
+    reading it.
+
 ## The convergence of 2026-09-09, and the object no node states
 
 Four sessions on 2026-09-09 — Talus twice (theorist), Gnomon and Vernier
