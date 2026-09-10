@@ -1,0 +1,38 @@
+
+seeder    Seeder
+model     opus
+region    (whole board)
+ended     finished — the seeder reported its proposal written; that is its claim about the file, and the check below is the only adjudication
+ceilings  80 turns, $12.0
+cost      $7.73
+turns     62
+session   c12fcf44-1d69-422d-9c3b-06df432f54dc
+log       c:/Users/dibuj/dev/rule30/runs/20260910T163620Z/seed-1
+proposal  c:/Users/dibuj/dev/rule30/blueprint/proposals/next.json
+
+Four blocks proposed under leftDiagonal_onset_le, re-pointing it into the packed-row vocabulary after proving and measuring that the black-ladder route the wall's own description recommends cannot yield it.
+
+check of c:/Users/dibuj/dev/rule30/blueprint/proposals/next.json:
+leftDiagonal_onset_le_not_of_black_ladder
+  DOES NOT PROVE: Does not say leftDiagonal_onset_le_of_black_ladder is useless. It says only that the block cannot yield the wall's `∃ N ≤ k` directly, because its conclusion's onset IS the ladder's own N k; a proof that uses the block and then improves the onset by other means is untouched. It says nothing about whether the wall is true — the measured onsets are at most k/2 for every k ≤ 722 and the wall is believed. It bears on no prize conjecture: this is the left edge of the cone, where periodicity is already proved.
+  under:   leftDiagonal_onset_le
+  route:   DOES NOT CLOSE — c:/Users/dibuj/dev/rule30/harness/build/checks/seed/leftDiagonal_onset_le_not_of_black_ladder_0e2acbaa0541134ca3402706fc117dfb.lean:6:60: error: unsolved goals
+  witness: holds over j < 10 — diagonal 3 read to depth 12, which is the crux the proof instantiates (white at odd indices, black at even)
+leftDiagonal_periodicFrom_of_rowNat_agree
+  DOES NOT PROVE: Says nothing about whether such a congruence exists at large k; that is the wall itself, and what remains after this node is a lower bound on where the width-(k+1) truncated orbit of 1 first returns. The shift p must be allowed to vary with k and this statement does: no single p serves every k, because leftDiagonal_period_unbounded is proved and crystal 57 gives each uniform constant's exact expiry (16 dies at k = 87867). Not a prize conjecture; the left edge only.
+  under:   leftDiagonal_onset_le
+  route:   DOES NOT CLOSE — c:/Users/dibuj/dev/rule30/harness/build/checks/seed/leftDiagonal_periodicFrom_of_rowNat_agree_9a8dc1384e5d3e2cfe878ee912f9ae3c.lean:7:85: error: unsolved goals
+  witness: holds over k < 7, T ≤ 2k, p < 9, conclusion read at 12 successive indices — entirely in the packed row model, so no 3^t cost and no depth wall
+rowNat_agree_forward
+  DOES NOT PROVE: Pure bookkeeping about a deterministic map on finitely many states; there is no automaton content and no bound on anything. It says agreement is never lost, not that it is ever gained — gaining a bit is rowNat_return_succ_iff, already closed, and how often that succeeds is the wall.
+  under:   leftDiagonal_onset_le
+  route:   DOES NOT CLOSE — c:/Users/dibuj/dev/rule30/harness/build/checks/seed/rowNat_agree_forward_ab79d72703c4726ed76dae752da2a7dc.lean:5:49: error: unsolved goals
+  witness: holds over T < 30, n < 6, p < 6, d < 10 — 10,800 instances of the implication, in the packed row model, so no 3^t cost
+rowNat_testBit_zero
+  DOES NOT PROVE: Supply, not insight — a change of notation for a fact the board closed long ago, provable in three lines from two closed nodes. It bears on no prize conjecture, and it gives no bound on any onset or period.
+  under:   leftDiagonal_onset_le
+  route:   DOES NOT CLOSE — c:/Users/dibuj/dev/rule30/harness/build/checks/seed/rowNat_testBit_zero_0f23578070ea4bd61e532e621e082836.lean:4:69: error: unsolved goals
+  witness: holds over t < 300 — packed row model, no 3^t cost
+
+4 holds
+
