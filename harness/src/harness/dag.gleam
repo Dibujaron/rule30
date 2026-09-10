@@ -82,6 +82,7 @@ pub type Attempt {
     outcome: Outcome,
     estimate: Size,
     reported: Bool,
+    salvaged: Bool,
     cost_usd: Float,
     turns: Int,
     notes: String,
@@ -516,6 +517,10 @@ fn attempt_decoder() -> decode.Decoder(Attempt) {
   // a report — the only outcomes on the board then were `proved` ones — so
   // `True` is the honest default, and it keeps their calibration unchanged.
   use reported <- decode.optional_field("reported", True, decode.bool)
+  // Absent on every attempt recorded before salvage existed, and `False` is
+  // the honest default for them: the harness could not have closed a node by
+  // reading its artifact before it knew how to.
+  use salvaged <- decode.optional_field("salvaged", False, decode.bool)
   use cost_usd <- decode.field("cost_usd", decode.float)
   use turns <- decode.field("turns", decode.int)
   use notes <- decode.field("notes", decode.string)
@@ -528,6 +533,7 @@ fn attempt_decoder() -> decode.Decoder(Attempt) {
     outcome:,
     estimate:,
     reported:,
+    salvaged:,
     cost_usd:,
     turns:,
     notes:,
@@ -607,20 +613,38 @@ fn dag_decoder() -> decode.Decoder(Dag) {
   decode.success(Dag(nodes:))
 }
 
+/// `salvaged` is written only when it is true, the way `research` is on a
+/// node: an ordinary attempt carries no key, so the hand-written board and
+/// every attempt recorded before salvage existed round-trip unchanged.
+///
+/// It is written at all because it is the difference between "the worker
+/// proved it" and "the worker gave up and the kernel disagreed", and a
+/// reader who sees `proved` on an attempt whose worker said `abandoned`,
+/// with nothing on the record saying why, will reconstruct a wrong story
+/// about that node.
 fn attempt_to_json(attempt: Attempt) -> json.Json {
-  json.object([
-    #("identity", json.string(attempt.identity)),
-    #("session_id", json.string(attempt.session_id)),
-    #("model", json.string(attempt.model)),
-    #("started", json.string(attempt.started)),
-    #("ended", json.string(attempt.ended)),
-    #("outcome", json.string(outcome_to_string(attempt.outcome))),
-    #("estimate", json.string(size_to_string(attempt.estimate))),
-    #("reported", json.bool(attempt.reported)),
-    #("cost_usd", json.float(attempt.cost_usd)),
-    #("turns", json.int(attempt.turns)),
-    #("notes", json.string(attempt.notes)),
-  ])
+  let salvaged = case attempt.salvaged {
+    True -> [#("salvaged", json.bool(True))]
+    False -> []
+  }
+  json.object(
+    list.flatten([
+      [
+        #("identity", json.string(attempt.identity)),
+        #("session_id", json.string(attempt.session_id)),
+        #("model", json.string(attempt.model)),
+        #("started", json.string(attempt.started)),
+        #("ended", json.string(attempt.ended)),
+        #("outcome", json.string(outcome_to_string(attempt.outcome))),
+        #("estimate", json.string(size_to_string(attempt.estimate))),
+        #("reported", json.bool(attempt.reported)),
+        #("cost_usd", json.float(attempt.cost_usd)),
+        #("turns", json.int(attempt.turns)),
+        #("notes", json.string(attempt.notes)),
+      ],
+      salvaged,
+    ]),
+  )
 }
 
 /// `object`, `under` and `research` are written only when they say

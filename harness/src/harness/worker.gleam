@@ -928,6 +928,7 @@ fn failed_attempt(
     outcome: dag.TimedOut,
     estimate: node.size,
     reported: False,
+    salvaged: False,
     cost_usd: 0.0,
     turns: 0,
     notes: reason,
@@ -978,6 +979,11 @@ fn run_session(
         _, _ -> node.size
       },
       reported: option.is_some(ending.report) && !ending.salvaged,
+      // Onto the board, where a human reads it. `proved` on an attempt whose
+      // worker reported `abandoned` is a true record and a confusing one, and
+      // a reader given no reason for it will reconstruct a wrong story about
+      // the node.
+      salvaged: ending.salvaged,
       cost_usd: tally.cost_usd,
       turns: tally.turns,
       notes: ending.notes,

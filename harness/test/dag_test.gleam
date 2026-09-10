@@ -67,6 +67,7 @@ pub fn round_trip_json_test() {
             outcome: dag.GaveUp,
             estimate: dag.L,
             reported: True,
+            salvaged: False,
             cost_usd: 0.5,
             turns: 7,
             notes: "stuck on abs",
@@ -318,7 +319,10 @@ pub fn save_node_keeps_a_node_another_writer_added_test() {
   let path =
     scratch_dag(
       "concurrent",
-      Dag([node("held", [], dag.Open, dag.M), node("other", [], dag.Open, dag.S)]),
+      Dag([
+        node("held", [], dag.Open, dag.M),
+        node("other", [], dag.Open, dag.S),
+      ]),
     )
   // The dispatcher's copy, loaded at the start of the run.
   let assert Ok(stale) = dag.load(path)
@@ -357,4 +361,44 @@ pub fn save_node_writes_a_node_the_file_does_not_have_test() {
   let assert Error(msg) =
     dag.save_node(node("never_seeded", [], dag.Open, dag.S), path)
   assert string.contains(msg, "never_seeded")
+}
+
+/// A salvaged attempt says so on the board, and an ordinary one carries no
+/// key at all.
+///
+/// The key is written only when true, the way `research` is on a node, so
+/// every attempt recorded before salvage existed round-trips unchanged. It is
+/// written at all because `proved` on an attempt whose worker reported
+/// `abandoned` is a true record and a confusing one: a reader given no reason
+/// for it will reconstruct a wrong story about that node.
+pub fn a_salvaged_attempt_round_trips_and_an_ordinary_one_adds_no_key_test() {
+  let base =
+    Attempt(
+      identity: "X",
+      session_id: "s",
+      model: "haiku",
+      started: "t0",
+      ended: "t1",
+      outcome: dag.Closed,
+      estimate: dag.S,
+      reported: False,
+      salvaged: True,
+      cost_usd: 1.0,
+      turns: 4,
+      notes: "salvaged",
+    )
+  let node = Node(..node("n", [], dag.Proved, dag.S), attempts: [base])
+  let text = dag.encode(Dag([node]))
+  assert string.contains(text, "\"salvaged\":true")
+  let assert Ok(Dag([back])) = dag.decode(text)
+  let assert [a] = back.attempts
+  assert a.salvaged == True
+
+  // The ordinary case writes no key, and decodes to False.
+  let plain = Attempt(..base, salvaged: False)
+  let plain_text = dag.encode(Dag([Node(..node, attempts: [plain])]))
+  assert !string.contains(plain_text, "salvaged")
+  let assert Ok(Dag([plain_back])) = dag.decode(plain_text)
+  let assert [b] = plain_back.attempts
+  assert b.salvaged == False
 }

@@ -316,6 +316,7 @@ fn at_rung(
     outcome:,
     estimate:,
     reported: True,
+    salvaged: False,
     cost_usd: cost,
     turns: 3,
     notes: "",

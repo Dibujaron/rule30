@@ -884,6 +884,14 @@ fn run_summary(state: RunState) -> String {
       <> string.pad_end(roster.usd(f.attempt.cost_usd), 7, " ")
       <> int.to_string(f.attempt.turns)
       <> " turns"
+      // A salvaged close says so on its own row. `proved` beside a worker
+      // that reported `abandoned` is a true record and a confusing one, and
+      // this is the line a human actually reads after a run.
+      <> case f.attempt.salvaged {
+        True ->
+          "  (salvaged: the worker did not close this; its proof file did)"
+        False -> ""
+      }
     })
   let closed = list.count(finished, fn(f) { f.attempt.outcome == dag.Closed })
   let cost = list.fold(finished, 0.0, fn(acc, f) { acc +. f.attempt.cost_usd })
@@ -2329,7 +2337,14 @@ fn summary(
       "node      " <> node_id,
       "identity  " <> identity.name,
       "model     " <> attempt.model,
-      "outcome   " <> dag.outcome_to_string(attempt.outcome),
+      "outcome   "
+        <> dag.outcome_to_string(attempt.outcome)
+        <> case attempt.salvaged {
+        True ->
+          "  (salvaged — the session did not close this node; the harness "
+          <> "read its proof file and the verifier accepted it)"
+        False -> ""
+      },
       "cost      $" <> roster.usd(attempt.cost_usd),
       "turns     " <> int.to_string(attempt.turns),
       "estimate  " <> dag.size_to_string(attempt.estimate),

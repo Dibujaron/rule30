@@ -34,6 +34,7 @@ fn attempt(outcome: dag.Outcome) -> dag.Attempt {
     outcome:,
     estimate: dag.S,
     reported: True,
+    salvaged: False,
     cost_usd: 0.0,
     turns: 1,
     notes: "",

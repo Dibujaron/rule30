@@ -874,6 +874,7 @@ fn closed_node(
         outcome: dag.Closed,
         estimate: size,
         reported: True,
+        salvaged: False,
         cost_usd: cost,
         turns: 9,
         notes: "VERIFIED",

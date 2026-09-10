@@ -997,6 +997,7 @@ fn gave_up(who: String, model: String) -> dag.Attempt {
     outcome: dag.GaveUp,
     estimate: dag.S,
     reported: True,
+    salvaged: False,
     cost_usd: 0.0,
     turns: 1,
     notes: "",
