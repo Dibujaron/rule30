@@ -24,6 +24,7 @@ import harness/guard_event
 import harness/index
 import harness/lock
 import harness/log
+import harness/reach
 import harness/roster
 import harness/schedule.{type Plan}
 import harness/seed
@@ -1196,7 +1197,11 @@ pub fn status(cfg: config.Config) -> Result(String, String) {
     <> "\n\nOpen leaves, in dispatch order:\n"
     <> string.join(startable_lines, "\n")
     <> "\n\n"
-    <> stray_section(cfg),
+    <> stray_section(cfg)
+    <> "
+
+"
+    <> reach.section(cfg.repo_root),
   )
 }
 
