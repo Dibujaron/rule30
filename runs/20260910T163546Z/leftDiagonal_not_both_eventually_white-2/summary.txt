@@ -1,0 +1,16 @@
+
+node      leftDiagonal_not_both_eventually_white
+identity  Vesper
+model     sonnet
+outcome   proved
+cost      $1.36
+turns     14
+estimate  S
+session   8d15052b-4f1e-4d47-ac08-6f480a3f97bc
+log       c:/Users/dibuj/dev/rule30/runs/20260910T163546Z/leftDiagonal_not_both_eventually_white-2
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Vesper (#2b3a67): closed 69, abandoned 7, $69.91, calibration 57/69

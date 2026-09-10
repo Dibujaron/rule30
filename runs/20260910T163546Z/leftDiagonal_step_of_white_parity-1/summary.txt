@@ -1,0 +1,16 @@
+
+node      leftDiagonal_step_of_white_parity
+identity  Selvage
+model     opus
+outcome   proved
+cost      $2.90
+turns     22
+estimate  M
+session   397e871b-de54-4ec3-bf4c-5eedd89e30d9
+log       c:/Users/dibuj/dev/rule30/runs/20260910T163546Z/leftDiagonal_step_of_white_parity-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Selvage (#3a6ea5): closed 11, abandoned 5, $25.44, calibration 7/11

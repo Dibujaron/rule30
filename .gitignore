@@ -38,3 +38,4 @@ harness/test/tmp/
 # Plain-text copies of papers for theorist sessions to grep; not ours to redistribute.
 # The index docs/sources.md is committed; the texts are not.
 sources/
+erl_crash.dump

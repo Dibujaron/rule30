@@ -1,0 +1,16 @@
+
+node      leftDiagonal_period_le_of_white_count
+identity  Cadence
+model     opus
+outcome   proved
+cost      $2.14
+turns     12
+estimate  M
+session   9478942c-452e-4a07-b33c-7549f3d3ed0d
+log       c:/Users/dibuj/dev/rule30/runs/20260910T163546Z/leftDiagonal_period_le_of_white_count-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Cadence (#2a6f77): closed 31, abandoned 8, $51.21, calibration 23/31

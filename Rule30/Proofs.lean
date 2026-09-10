@@ -74,6 +74,7 @@ import Rule30.Proofs.LeftDiagonalBlackAfterWhite
 import Rule30.Proofs.LeftDiagonalComplAfterBlack
 import Rule30.Proofs.LeftDiagonalEqRowNatTestBit
 import Rule30.Proofs.LeftDiagonalMulPowEqSettledCenter
+import Rule30.Proofs.LeftDiagonalNotBothEventuallyWhite
 import Rule30.Proofs.LeftDiagonalOnsetLeIffRowNatReturn
 import Rule30.Proofs.LeftDiagonalOnsetLeIffStepModReturn
 import Rule30.Proofs.LeftDiagonalOnsetLeOfBlackLadder
@@ -82,6 +83,7 @@ import Rule30.Proofs.LeftDiagonalOnsetLeOfLine
 import Rule30.Proofs.LeftDiagonalOnsetLeOfStepModPreperiod
 import Rule30.Proofs.LeftDiagonalPairNeverEventuallyShifted
 import Rule30.Proofs.LeftDiagonalPeriodLeOfBlackBetween
+import Rule30.Proofs.LeftDiagonalPeriodLeOfWhiteCount
 import Rule30.Proofs.LeftDiagonalPeriodUnbounded
 import Rule30.Proofs.LeftDiagonalPeriodUnboundedLe
 import Rule30.Proofs.LeftDiagonalPeriodicFromPow
@@ -89,6 +91,7 @@ import Rule30.Proofs.LeftDiagonalPeriodicFromStep
 import Rule30.Proofs.LeftDiagonalPeriodicFromStepOfBlack
 import Rule30.Proofs.LeftDiagonalRecurrence
 import Rule30.Proofs.LeftDiagonalShiftOfWhite
+import Rule30.Proofs.LeftDiagonalStepOfWhiteParity
 import Rule30.Proofs.LeftDiagonalStepOnsetDichotomy
 import Rule30.Proofs.LeftDiagonalStepPeriodDichotomy
 import Rule30.Proofs.LeftDiagonalTransientFrontLaw

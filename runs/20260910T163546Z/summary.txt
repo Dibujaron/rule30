@@ -1,0 +1,6 @@
+
+leftDiagonal_period_le_of_white_countCadence  opus    proved            $2.14   12 turns
+leftDiagonal_not_both_eventually_whiteVesper   sonnet  proved            $1.36   14 turns
+leftDiagonal_step_of_white_parity Selvage  opus    proved            $2.90   22 turns
+
+3 attempt(s), 3 closed, $6.40 in all

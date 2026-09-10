@@ -310,3 +310,24 @@ White branch: called `leftDiagonal_step_onset_dichotomy m q (N m) h0 h1` directl
 One mechanical note: `suffices h : ∀ m, ...` needs a DIFFERENT bound-variable name than the theorem's own `k` (I used `m`), since the theorem signature already has `k` in scope when the tactic block starts — reusing `k` there would shadow it, which still typechecks in Lean 4 but reads as a mistake waiting to confuse a future editor of the file. Cheap to avoid, so I did.
 
 No cast/omega surprises here at all — this whole node is `PeriodicFrom`'s `∀ n ≥ N` unfolding plus `Nat.sub_add_cancel` and plain `omega`, no push_cast, no `ℤ` anywhere in the tactic script (the only `ℤ` is inside the base-case `show evolve (j+0) (-(j:ℤ)) = true`, copied verbatim from `leftDiagonal_periodicFrom_pow`'s own base case).
+
+## 2026-09-10T16:38:47Z — leftDiagonal_period_le_of_white_count (opus, proved)
+
+leftDiagonal_period_le_of_white_count (opus, proved, one real build): this is `leftDiagonal_period_le_of_black_between`'s proof with a second branch, and the fastest route is to open `Rule30/Proofs/LeftDiagonalPeriodLeOfBlackBetween.lean` and edit it in your head. Same `revert hstep; induction n` shape, same `⟨N, h0, h1⟩` base, same `rw [show m + (n+1) = m + n + 1 from by omega, show m + (n+1) + 1 = m + n + 2 from by omega]` index normalisation, same `absurd hb (by simp)` finish for the black/white contradiction. Only the dichotomy's *white* disjunct changes from "impossible" to "pay a doubling via leftDiagonal_periodicFrom_step".
+
+Structural point worth keeping: the black branch's contradiction and the black branch's *conclusion* come from two different lemmas that both split on whiteness. `hstep i` (the node's own hypothesis) is `(diagonal m+1+i is black arbitrarily far out) ∨ (w i < w (i+1))`; `leftDiagonal_step_period_dichotomy` is `(period survives) ∨ (diagonal m+n+1 white from M+1 on)`. In the branch where hstep gives blackness, you rcases the dichotomy too and kill ITS white disjunct with hstep's blackness at J = M+1. Do not try to make one rcases serve both — they are independent splits and nesting them is the whole proof.
+
+Two arithmetic helpers, stated once at the top over the fixed `q` and used in both branches (both close instantly, no name-hunting):
+  hpow  : ∀ a b, a ≤ b → 2^b * q = 2^(b-a) * (2^a * q)   -- `have h : b - a + a = b := by omega; rw [← mul_assoc, ← pow_add, h]`
+  hpow2 : ∀ a b, a+1 ≤ b → 2^b * q = 2^(b-a-1) * (2 * (2^a * q))  -- calc through `2^(b-a-1+1+a) * q`, then `rw [pow_add, pow_add, pow_one]; ring`
+The `rw [← mul_assoc, ← pow_add, h]` order matters: rewriting the exponent identity `b - a + a = b` LAST is what avoids the loop you get from `rw [show b = (b-a)+a from by omega]`, which rewrites the `b` inside `b - a` too. Both of these are shaped precisely to match `periodicFrom_mul`'s conclusion `PeriodicFrom f (m * p) N`, whose multiplier sits on the LEFT — state any period-lifting identity with the new factor leftmost or the `exact` will not line up.
+
+`w n < w (n+1)` feeds `hpow2`'s `a + 1 ≤ b` hypothesis directly with no coercion — Nat.lt IS Nat.le of the successor definitionally, so pass the `<` hypothesis unchanged.
+
+`0 < 2 ^ w n * q` from `hq : 0 < q`: `Nat.mul_pos (by positivity) hq`. Bare `positivity` on the whole product is not safe (it must find `0 < q` for a variable `q`); splitting the product and giving positivity only the power is. Avoids guessing between `Nat.pos_pow_of_pos` / `Nat.two_pow_pos` / `Nat.one_le_two_pow`, whose spellings vary across pins.
+
+Raising a `PeriodicFrom`'s onset is free and needs no lemma — it is `∀ n ≥ N`, so `fun j hj => h j (by omega)` covers it, and omega handles `M + 2^(w n)*q ≤ j → M ≤ j` treating the power as an opaque nonneg atom. Same trick with `le_trans (le_max_left M M') hj` when merging two onsets.
+
+Imports: Rule30.Basic, the three served proof modules, plus `Mathlib.Tactic.Ring` and `Mathlib.Tactic.Positivity` — `ring` is genuinely unavailable from Rule30.Basic alone (confirms the standing note), and here it is worth the line rather than trying to force the `pow_add` bookkeeping through omega, which cannot see through `2^x`.
+
+Self-inflicted, flagging so I do not repeat it: when writing a whole file in one shot, the closing tags of the write call can end up INSIDE the content. Lean reports it as `unexpected token '/'; expected term` at the last line — if a build fails only at the final line of a file you just wrote whole, read the tail before reading the proof.
