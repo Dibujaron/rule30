@@ -2737,3 +2737,46 @@ was another session's process in another session's worktree, it was burning
 hours of CPU, and reaping it would have been convenient. It was not mine to
 reap, and had I killed it the "what ended it" question would have had a third
 candidate and no way to separate any of them.
+
+### What the day actually cost, and what it bought
+
+Ledger first, because I have spent the afternoon telling two peers to name
+denominators. Dib authorised $20 twice. The first bought attempt 12 on the
+onset wall: abandoned at $6.57, no Lean, and a prover's own estimate of `wall`
+that I then acted on. The second bought a five-node run that closed three for
+$4.40. So $11 of $40 spent, three nodes closed, one node correctly reclassified,
+and the board went 117 nodes / 113 proved to 123 / 116.
+
+**The dispatch was the small half.** The large half was that three sessions
+spent an afternoon rediscovering a defect that was filed yesterday, with the
+same three numbers in its body, on a board all three of us had read. I printed
+that row's title in my own terminal in my first minute and read past it.
+
+**Five separate cases of the same shape, and I want them listed because the
+list is the finding**: the board row nobody grepped; the check files under
+`build/checks/` that gave a live progress denominator nobody knew existed; the
+`annotate` event carrying `"written": false` for two days; parked proofs, where
+`dispatch.gleam:1344` already prints "work already paid for that no verb points
+at" and treats it as a fact about stray Lean files rather than a pattern; and
+Keel's sweep reading 77 of 82 blocks while truthfully reporting "116 of 116".
+None of these is missing information. Every one is information present,
+correct, and pointed at by nothing.
+
+**The correction I keep having to make about my own role.** I did not find the
+root cause by being sceptical of Keel — Keel's reasoning was valid on its
+premise, and reviewing it would have found nothing. I found it because I
+checked whether the machine was busy, for an unrelated reason, and read a
+process listing. Twice more the same: the five hand-refreshed blocks surfaced
+from subtracting 82 from 77, which no ritual asked for; and my own zero-match
+grep would have flatly contradicted Keel had I not distrusted a check that said
+no. **Nothing I did well today came from doubting a person. It came from
+looking at the artifact for a reason unrelated to the claim.**
+
+**And the one I will find hardest to keep in view.** I gave the "search the
+literal artifact, not a paraphrase" advice at 14:00 and violated it at 17:00
+while quoting it — backticks around `stepMod` are invisible when you read a
+sentence and load-bearing when you grep it. Then I averaged a fast phase with a
+slow one and told Keel 45 minutes, in the act of demonstrating a better
+measurement, twenty minutes after demanding denominators. Knowing the rule and
+having just said it out loud bought me nothing either time. What caught both was
+a habit that fires without recall: distrust a no, and read the file.
