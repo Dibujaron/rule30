@@ -2869,3 +2869,95 @@ with the ordering attached: after the change, before anything else reads those
 files, because in between the Checked type block is confidently wrong and
 nothing in the build can tell. Which is today's shape again — a true sentence
 whose subject moved.
+
+## 2026-09-10T18:20:00Z — the onset tier, and the check I used all evening to say work was safe
+
+The wall came down as far as a wall can without being proved. Four statements
+landed, four proved, $5.30 across six attempts; board 123 of 127, zero open
+leaves, four walls. `leftDiagonal_onset_le_not_of_black_ladder` is now a
+theorem: any ladder meeting the closed block's own hypotheses has `N k > k` at
+every `k ≥ 3`, so no instance of that proved block reaches the onset wall. The
+wall's description had been recommending exactly that route since 2026-09-09,
+through twelve attempts and $51.80.
+
+**Three separate things tonight were true measurements of a subject that had
+moved, and I made the third one.**
+
+### The one I nearly filed a bug about
+
+At 18:15 I ran `git log --oneline --not --remotes`, got nothing, and was about
+to report the tree clean. Then `origin/main..HEAD` showed three unpushed
+commits. I checked four ways in one breath, saw form A print nothing while
+form C printed the merge and `git branch -r --contains` confirmed it was on no
+remote, and concluded `state.sh`'s highest-value section was structurally
+broken.
+
+It is not. `state.sh` uses `git rev-list --count "$branch" --not --remotes`
+with an explicit positive ref, which is correct. **The broken form was mine.**
+`git log --not --remotes` with no positive revision does not default to `HEAD`
+— supplying negated revisions suppresses that default — so it traverses
+nothing and prints nothing, always, for any repository in any state. I used it
+at least three times tonight to tell Dib that work was pushed.
+
+And by the time I went to prove the defect, the auto-push had moved
+`origin/main` to the merge, so every command I ran to demonstrate it returned
+0, correctly. **I had to reconstruct the finding from measurements taken
+before the subject moved, in order to discover that the finding was about my
+own instrument.** Two of the day's four failure modes stacked: a check whose
+denominator was empty, and a subject that moved between the observation and
+the demonstration.
+
+The rule that would have caught it in one step is the cheapest one available:
+a check that says "no" deserves the same distrust as one that says "yes". A
+zero from a command that can only ever return zero looks exactly like a clean
+tree.
+
+### Keel corrected me and was right
+
+I told Keel that `HARNESS_REPO_ROOT` could not explain a cold worktree passing,
+with `lean_fixture.gleam:14-17` quoted — "the path is derived from where the
+runner started and never from `HARNESS_REPO_ROOT`". True, and it does not
+reach the test that aborts. `statement_resolves` has **two** call sites in the
+suite: `verify_test` passes the fixture, and `run_test.gleam:486` goes through
+`dispatch.prove_one` → `statement_gate` → `statement_resolves(cfg.repo_root,
+…)`, where `repo_root` is deliberately not redirected. I generalised from the
+first to both, and told Keel to go and pay a Mathlib build I had priced at
+nothing.
+
+Twice tonight the person being corrected checked more carefully than the
+person correcting. That only works because neither of us has been treating a
+correction as something to survive, and it is worth more than either
+correction.
+
+### What falls out, and it is bigger than either row
+
+CLAUDE.md's suite bullet says `gleam test` from a worktree "needs no
+`HARNESS_REPO_ROOT` … and is never required". On what Keel established that is
+false, and false in the expensive direction: a framework agent following the
+file exactly, in the worktree the same file prescribes, starts a from-scratch
+Mathlib build and then reads a healthy pass line over a suite that lost half
+its tests. Not a stale doc — **an instruction that causes the failure.** Put
+to Dib rather than edited.
+
+Keel's structural fix is right and is the highest-value thing left: give
+`prove_one` an injectable twin the way `run` has `run_with`, so the test stubs
+the gate like its eight siblings and no Lean is invoked from a worktree at all.
+The variable and the CLAUDE.md sentence both stop being needed rather than
+being corrected, and three rows close together.
+
+### Two smaller things worth keeping
+
+**I mispriced the seeder's report and then mispriced my own review.** All four
+routes were reported `DOES NOT CLOSE`; all four close. The cause was Keel's
+open row about `check_source` doubling a route's indentation, and I found it
+by searching the board for the symptom *after* re-deriving all four proofs by
+hand. Searching first is the rule and I broke it while holding the exact error
+string the row contains. The detour bought one thing — the pointwise
+strengthening of the negative — and that was luck, not process.
+
+**Sizes keep coming in over.** I sized `leftDiagonal_periodicFrom_of_rowNat_agree`
+M; Cadence closed it in nine turns and said S. Third time today a node landed
+under the size I gave it. I am systematically pricing difficulty above what the
+provers find, and the two routeless nodes this morning were the same error in a
+different coat: absence of a route is evidence about the seeder's confidence,
+not about the node.
