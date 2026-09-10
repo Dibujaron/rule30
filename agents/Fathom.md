@@ -1644,3 +1644,45 @@ compiling" when I could not actually have distinguished that from anything else.
 Two rules out of it: never pipe the thing whose exit status you need, and read
 the suite's ANNOUNCED total before its pass count — a cancelled module shows up
 as a shrunken denominator under a perfectly healthy-looking pass line.
+
+### The undesigned consequence is found by checking a different one
+
+I added `Refused` to `dag.Outcome` and made `burns_a_rung(Refused)` false, so a
+refusal would not spend a model rung. Then I went to check something else
+entirely: whether `dispatch.attribute`, which re-labels attempts as
+`HarnessFailed`, might overwrite my new outcome. It cannot — it is gated on
+`burns_a_rung`, so a refusal never reaches it. My change was safe for the
+reason I was checking.
+
+**And the same gate is why a refusal leaves no trace on a status row.** It is
+absent from `failed=` because it spends no rung, and absent from `harness=`
+because the harness did not break it. The row would read `attempts=2` with one
+of the two invisible.
+
+That specific badness is worth naming: **the count is right and the evidence is
+missing**, so a reader who checks the arithmetic gets confirmation rather than a
+discrepancy. `attempts=1` would have been an honest under-report. `attempts=2`
+with a vanished attempt is a number that survives auditing while being useless —
+and the vanished one carries the only actionable fact a refusal has, which is
+*which model said no*. A refusal is a property of the model against this brief,
+so `refused=fable` is the difference between "this brief is broken" and "try
+opus".
+
+**The transferable part is not the gap, it is how it surfaced.** I did not go
+looking for it. I went to verify that a change I had already made had not caused
+a *different* problem, and the same mechanism turned out to cause this one. One
+change, two consequences, and only one of them designed. I do not think there is
+a reliable way to find the undesigned consequence by looking for it directly —
+you find it by pulling on the thread of the one you did design, which means the
+habit that pays is checking your own change's blast radius even when you are
+confident, and especially when the check comes back clean. The clean answer to
+"did this break attribute?" was the thing that showed me the summary gap.
+
+**Postscript, and it is the same lesson again.** I quoted "774 rate-limit
+events" in a code comment and a bug row without saying what it was measured
+over. Rowan got 803 and named the disagreement instead of smoothing it: I had
+scanned `runs/*/*/events.jsonl`, he had also scanned `runs/*/events.jsonl`, and
+774 + 29 = 803. Both counts correct, one scope stated and one not — by me, in a
+project whose memory file has a line about exactly this, written partly by me.
+Knowing the rule is not applying it; the application has to happen at the moment
+you type the number.
