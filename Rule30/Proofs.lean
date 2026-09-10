@@ -83,6 +83,7 @@ import Rule30.Proofs.LeftDiagonalOnsetLeOfLe5000
 import Rule30.Proofs.LeftDiagonalOnsetLeOfLine
 import Rule30.Proofs.LeftDiagonalOnsetLeOfStepModPreperiod
 import Rule30.Proofs.LeftDiagonalPairNeverEventuallyShifted
+import Rule30.Proofs.LeftDiagonalPeriodLeIffRowNatPeriod
 import Rule30.Proofs.LeftDiagonalPeriodLeOfBlackBetween
 import Rule30.Proofs.LeftDiagonalPeriodLeOfWhiteCount
 import Rule30.Proofs.LeftDiagonalPeriodUnbounded
@@ -107,6 +108,7 @@ import Rule30.Proofs.MinimalPeriodDvd
 import Rule30.Proofs.NotEvolvePeriodAdjacent
 import Rule30.Proofs.NotIsEventuallyPeriodicAdjacent
 import Rule30.Proofs.NotIsEventuallyPeriodicPair
+import Rule30.Proofs.PeriodicFromGcd
 import Rule30.Proofs.PeriodicFromMul
 import Rule30.Proofs.PeriodicFromTransPeriod
 import Rule30.Proofs.RightDiagonalAntiperiodicOfOddDriver
@@ -126,12 +128,16 @@ import Rule30.Proofs.RowNatModEqIterate
 import Rule30.Proofs.RowNatReturnSuccIff
 import Rule30.Proofs.RowNatReturnSuccTwo
 import Rule30.Proofs.RowNatTestBitZero
+import Rule30.Proofs.RowStepAgreeForward
+import Rule30.Proofs.RowStepAgreeSuccIff
+import Rule30.Proofs.RowStepAgreeSuccTwoIff
 import Rule30.Proofs.Rule30LeftLocalLaw
 import Rule30.Proofs.Rule30LeftPermutive
 import Rule30.Proofs.Rule30NeOfLeftNe
 import Rule30.Proofs.Rule30RunBoundary
 import Rule30.Proofs.Rule30Translate
 import Rule30.Proofs.SidewaysInverse
+import Rule30.Proofs.StepModIterateEqRowStepMod
 import Rule30.Proofs.StepModIterateTwoMul
 import Rule30.Proofs.StepModPreperiodLeOfLe11
 import Rule30.Proofs.StepModPreperiodOfOdd

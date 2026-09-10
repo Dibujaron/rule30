@@ -1,0 +1,16 @@
+
+node      rowStep_agree_forward
+identity  Vesper
+model     sonnet
+outcome   proved
+cost      $0.99
+turns     12
+estimate  S
+session   4713c6ae-7a7a-4a00-ac1e-2a4b650a9517
+log       c:/Users/dibuj/dev/rule30/runs/20260910T201421Z/rowStep_agree_forward-2
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Vesper (#2b3a67): closed 74, abandoned 9, $77.44, calibration 61/73

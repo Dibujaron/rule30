@@ -1,0 +1,16 @@
+
+node      periodicFrom_gcd
+identity  Selvage
+model     sonnet
+outcome   proved
+cost      $1.12
+turns     19
+estimate  M
+session   b03b0d7d-8407-4dba-a21d-47e9c17f2a48
+log       c:/Users/dibuj/dev/rule30/runs/20260910T201421Z/periodicFrom_gcd-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Selvage (#3a6ea5): closed 15, abandoned 5, $28.38, calibration 11/15

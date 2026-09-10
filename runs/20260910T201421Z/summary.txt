@@ -1,0 +1,10 @@
+
+stepMod_iterate_eq_rowStep_mod    Cadence  haiku   proved            $0.59   27 turns
+periodicFrom_gcd                  Selvage  sonnet  proved            $1.12   19 turns
+rowStep_agree_forward             Vesper   haiku   budget_exhausted  $1.02   41 turns
+rowStep_agree_succ_iff            Cadence  sonnet  proved            $0.79   13 turns
+rowStep_agree_forward             Vesper   sonnet  proved            $0.99   12 turns
+leftDiagonal_period_le_iff_rowNat_periodCadence  opus    proved            $2.36   7 turns
+rowStep_agree_succ_two_iff        Selvage  sonnet  proved            $1.20   14 turns
+
+7 attempt(s), 6 closed, $8.06 in all

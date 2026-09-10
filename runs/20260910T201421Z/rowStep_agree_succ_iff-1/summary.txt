@@ -1,0 +1,16 @@
+
+node      rowStep_agree_succ_iff
+identity  Cadence
+model     sonnet
+outcome   proved
+cost      $0.79
+turns     13
+estimate  S
+session   7e0d868f-9296-4b3e-903e-f6b42d8af981
+log       c:/Users/dibuj/dev/rule30/runs/20260910T201421Z/rowStep_agree_succ_iff-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Cadence (#2a6f77): closed 35, abandoned 10, $55.86, calibration 25/35

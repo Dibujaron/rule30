@@ -1,0 +1,36 @@
+{"ts":"2026-09-10T20:14:21Z","kind":"run","max_attempts":7,"concurrency":3}
+{"ts":"2026-09-10T20:14:37Z","kind":"statement_gate","node":"rowStep_agree_forward","result":"resolves","statement":"Statements.rowStep_agree_forward : ∀ (n t x y : ℕ),\n  x % 2 ^ n = y % 2 ^ n → rowStep^[t] x % 2 ^ n = rowStep^[t] y % 2 ^ n"}
+{"ts":"2026-09-10T20:14:37Z","kind":"dispatch","node":"rowStep_agree_forward","identity":"Vesper","model":"haiku","reason":"open leaf; unblocks 0; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4130,"log":"c:/Users/dibuj/dev/rule30/runs/20260910T201421Z/rowStep_agree_forward-1","in_flight":1}
+{"ts":"2026-09-10T20:14:46Z","kind":"statement_gate","node":"stepMod_iterate_eq_rowStep_mod","result":"resolves","statement":"Statements.stepMod_iterate_eq_rowStep_mod : ∀ (n t x : ℕ), (stepMod n)^[t] (x % 2 ^ n) = rowStep^[t] x % 2 ^ n"}
+{"ts":"2026-09-10T20:14:46Z","kind":"dispatch","node":"stepMod_iterate_eq_rowStep_mod","identity":"Cadence","model":"haiku","reason":"open leaf; unblocks 0; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4131,"log":"c:/Users/dibuj/dev/rule30/runs/20260910T201421Z/stepMod_iterate_eq_rowStep_mod-1","in_flight":2}
+{"ts":"2026-09-10T20:14:56Z","kind":"statement_gate","node":"periodicFrom_gcd","result":"resolves","statement":"Statements.periodicFrom_gcd : ∀ (f : ℕ → Bool) (p q N : ℕ),\n  PeriodicFrom f p N → PeriodicFrom f q N → PeriodicFrom f (p.gcd q) N"}
+{"ts":"2026-09-10T20:14:56Z","kind":"dispatch","node":"periodicFrom_gcd","identity":"Selvage","model":"sonnet","reason":"open leaf; unblocks 0; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4132,"log":"c:/Users/dibuj/dev/rule30/runs/20260910T201421Z/periodicFrom_gcd-1","in_flight":3}
+{"ts":"2026-09-10T20:18:28Z","kind":"index","node":"stepMod_iterate_eq_rowStep_mod","module":"Rule30.Proofs.StepModIterateEqRowStepMod","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-10T20:18:28Z","kind":"theorem_index","node":"stepMod_iterate_eq_rowStep_mod","file":"blueprint/index.md","outcome":"written"}
+{"ts":"2026-09-10T20:18:37Z","kind":"statement_gate","node":"rowStep_agree_succ_iff","result":"resolves","statement":"Statements.rowStep_agree_succ_iff : ∀ (n x y : ℕ),\n  x % 2 ^ (n + 1) = y % 2 ^ (n + 1) →\n    (rowStep x % 2 ^ (n + 2) = rowStep y % 2 ^ (n + 2) ↔ x.testBit n = true ∨ x % 2 ^ (n + 2) = y % 2 ^ (n + 2))"}
+{"ts":"2026-09-10T20:18:37Z","kind":"dispatch","node":"rowStep_agree_succ_iff","identity":"Cadence","model":"sonnet","reason":"open leaf; unblocks 0; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4133,"log":"c:/Users/dibuj/dev/rule30/runs/20260910T201421Z/rowStep_agree_succ_iff-1","in_flight":3}
+{"ts":"2026-09-10T20:19:23Z","kind":"index","node":"periodicFrom_gcd","module":"Rule30.Proofs.PeriodicFromGcd","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-10T20:19:23Z","kind":"theorem_index","node":"periodicFrom_gcd","file":"blueprint/index.md","outcome":"written"}
+{"ts":"2026-09-10T20:19:38Z","kind":"statement_gate","node":"rowStep_agree_succ_two_iff","result":"resolves","statement":"Statements.rowStep_agree_succ_two_iff : ∀ (n x y : ℕ),\n  x % 2 ^ (n + 1) = y % 2 ^ (n + 1) →\n    x.testBit n = true →\n      (rowStep x % 2 ^ (n + 3) = rowStep y % 2 ^ (n + 3) ↔\n        (x.testBit (n + 1) || x.testBit (n + 2)) = (y.testBit (n + 1) || y.testBit (n + 2)))"}
+{"ts":"2026-09-10T20:19:38Z","kind":"dispatch","node":"rowStep_agree_succ_two_iff","identity":"Selvage","model":"sonnet","reason":"open leaf; unblocks 0; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4134,"log":"c:/Users/dibuj/dev/rule30/runs/20260910T201421Z/rowStep_agree_succ_two_iff-1","in_flight":3}
+{"ts":"2026-09-10T20:20:32Z","kind":"statement_gate","node":"rowStep_agree_forward","result":"resolves","statement":"Statements.rowStep_agree_forward : ∀ (n t x y : ℕ),\n  x % 2 ^ n = y % 2 ^ n → rowStep^[t] x % 2 ^ n = rowStep^[t] y % 2 ^ n"}
+{"ts":"2026-09-10T20:20:32Z","kind":"dispatch","node":"rowStep_agree_forward","identity":"Vesper","model":"sonnet","reason":"open leaf; unblocks 0; ladder step 2","max_turns":40,"max_budget_usd":4.0,"port":4135,"log":"c:/Users/dibuj/dev/rule30/runs/20260910T201421Z/rowStep_agree_forward-2","in_flight":3}
+{"ts":"2026-09-10T20:20:32Z","kind":"index","node":"rowStep_agree_succ_iff","module":"Rule30.Proofs.RowStepAgreeSuccIff","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-10T20:20:32Z","kind":"theorem_index","node":"rowStep_agree_succ_iff","file":"blueprint/index.md","outcome":"written"}
+{"ts":"2026-09-10T20:20:42Z","kind":"statement_gate","node":"leftDiagonal_period_le_iff_rowNat_period","result":"resolves","statement":"Statements.leftDiagonal_period_le_iff_rowNat_period : (∀ (k : ℕ),\n    ∃ p, 0 < p ∧ p ≤ k + 1 ∧ ∃ N, PeriodicFrom (leftDiagonal k) p N) ↔\n  ∀ (n : ℕ), 0 < n → ∃ p, 0 < p ∧ p ≤ n ∧ ∃ T, rowNat T % 2 ^ n = rowNat (T + p) % 2 ^ n"}
+{"ts":"2026-09-10T20:20:42Z","kind":"dispatch","node":"leftDiagonal_period_le_iff_rowNat_period","identity":"Cadence","model":"opus","reason":"open leaf; unblocks 0; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4136,"log":"c:/Users/dibuj/dev/rule30/runs/20260910T201421Z/leftDiagonal_period_le_iff_rowNat_period-1","in_flight":3}
+{"ts":"2026-09-10T20:22:14Z","kind":"index","node":"rowStep_agree_forward","module":"Rule30.Proofs.RowStepAgreeForward","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-10T20:22:14Z","kind":"theorem_index","node":"rowStep_agree_forward","file":"blueprint/index.md","outcome":"written"}
+{"ts":"2026-09-10T20:25:18Z","kind":"index","node":"leftDiagonal_period_le_iff_rowNat_period","module":"Rule30.Proofs.LeftDiagonalPeriodLeIffRowNatPeriod","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-10T20:25:19Z","kind":"theorem_index","node":"leftDiagonal_period_le_iff_rowNat_period","file":"blueprint/index.md","outcome":"written"}
+{"ts":"2026-09-10T20:25:44Z","kind":"index","node":"rowStep_agree_succ_two_iff","module":"Rule30.Proofs.RowStepAgreeSuccTwoIff","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-10T20:25:44Z","kind":"theorem_index","node":"rowStep_agree_succ_two_iff","file":"blueprint/index.md","outcome":"written"}
+{"ts":"2026-09-10T20:25:50Z","kind":"stray","file":"runs/20260910T201421Z/rowStep_agree_forward-1/RowStepAgreeForward.lean","verdict":"broken"}
+{"ts":"2026-09-10T20:26:00Z","kind":"stray","file":"explorer/tessera2_scratch_nat.lean","verdict":"clean"}
+{"ts":"2026-09-10T20:26:09Z","kind":"stray","file":"explorer/tessera_check.lean","verdict":"clean"}
+{"ts":"2026-09-10T20:26:09Z","kind":"stray","file":"explorer/tessera_checkw.lean","verdict":"no_theorems"}
+{"ts":"2026-09-10T20:26:18Z","kind":"stray","file":"explorer/tessera_route.lean","verdict":"clean"}
+{"ts":"2026-09-10T20:26:28Z","kind":"stray","file":"explorer/tessera_route2.lean","verdict":"clean"}
+{"ts":"2026-09-10T20:26:37Z","kind":"stray","file":"explorer/tessera_route3.lean","verdict":"clean"}
+{"ts":"2026-09-10T20:26:46Z","kind":"stray","file":"explorer/tessera_route4.lean","verdict":"clean"}
+{"ts":"2026-09-10T20:26:46Z","kind":"stray","file":"explorer/tessera_witness.lean","verdict":"no_theorems"}
