@@ -1574,3 +1574,73 @@ instead of picking one. Every other finding here was downstream of that one
 decision. When two summaries of the same event differ on any detail, the
 disagreement is not the problem to resolve — it is the signal to stop reading
 summaries.
+
+## 2026-09-10 — a parse that succeeds on every input except the interesting one
+
+The three outcome-naming rows turned out to be three different bugs wearing one
+word, and two of the three were a parser that works on ordinary traffic and
+fails on the one value it exists to detect.
+
+**The decoder.** `claude.gleam` required `unifiedWindows.five_hour.utilization`
+as a `decode.float`. A full window reports utilization as the JSON integer `1`,
+not `1.0`. JSON has one number type, a serialiser writes a whole value bare, and
+`decode.float` rejects it — so the decode failed, and because `subfield` is
+required the failure took the entire event with it: `parse_event` fell back to
+`Other`, `hit_ceiling` never saw a `RateLimit`, and the attempt ran on to the
+CLI's error result and was scored against the node's ladder.
+
+The shape is the thing worth keeping. **The input that triggers the bug is
+produced by the very condition the code was written to detect.** So it cannot be
+caught by ordinary traffic, and every test anyone would naturally write uses the
+ordinary case. The existing tests beside mine use 0.94, 0.97, 0.99 — all
+fractional, all green, none of them capable of catching it. Keel hit the same
+shape the same afternoon from the other end: a `#check` parser that matches the
+theorem name on its line, and Lean puts the name alone on its line exactly when
+the signature is long enough to wrap. Rowan hit a third: a route checker that
+adds two spaces of indent, which breaks every pre-indented route except the one
+beginning `induction ... with`.
+
+Rowan's version of it is the sharpest and I want it written where I will find it
+again: **a check that is wrong some of the time is harder to detect than one
+that is wrong all of the time.** Failing everything gets caught in an hour. A
+mixture is indistinguishable from a checker doing its job.
+
+**My own number was wrong first, in this project's usual way.** I told Keel there
+were 21 integer utilizations in the corpus. True count, wrong denominator — the
+regex matched `utilization` in every window, and the decoder only reads
+`unifiedWindows.five_hour`. Scoped to the field actually decoded: 6 events, of
+which exactly 1 carried a status other than `allowed*`. One instance, not
+twenty-one. I caught it only because I went back to ask what the number was
+measured over, which is the habit and not an accident.
+
+**And the check that said "none".** Before that, I grepped `runs/` for
+`"utilization":[0-9]+` and got nothing, twice, across several patterns. Nothing
+is a comfortable answer and I nearly took it. The events store `raw` as an
+escaped JSON string, so the bytes on disk are `\"utilization\":1` and my pattern
+could never have matched. **Distrust a result you dislike as hard as one you
+like** is the rule I know; the harder half is that a *convenient* "no" — no
+instances, nothing to worry about — is the one that gets waved through.
+
+**The fix that would have been worse than the bug.** The obvious repair is "make
+it tolerate integers". `0` is an integer too, and there are 16 of those in the
+corpus against 5 ones. A decoder that tolerated integers without `status`
+remaining the authority would have parked every session that started with a
+fresh window — a much worse bug, and one that would have looked exactly like the
+rate limiter working. There is a test pinning each direction now, and the pair
+is the point: the full window parks, the empty one does not.
+
+**On the pickup path, and Rowan's caution on it.** Verifying a parked proof
+before nudging is right, but "a proof file is present" must mean *it verifies
+against the seeded statement with clean axioms*, never *a file exists*.
+Otherwise the path I built to catch a confidently-wrong worker becomes the door
+one walks through. The bar is the bar every closed node already clears, and the
+test that matters most is the negative one: an unreported turn whose file does
+not verify is nudged exactly as before.
+
+**Process note, learned off Keel rather than the hard way.** I ran `gleam test`
+piped through `grep | head`, which meant my exit code was grep's and my pipe
+closed early. Forty minutes of an empty output file read to me as "still
+compiling" when I could not actually have distinguished that from anything else.
+Two rules out of it: never pipe the thing whose exit status you need, and read
+the suite's ANNOUNCED total before its pass count — a cancelled module shows up
+as a shrunken denominator under a perfectly healthy-looking pass line.
