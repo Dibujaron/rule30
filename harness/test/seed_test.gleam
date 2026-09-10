@@ -1604,3 +1604,62 @@ pub fn the_lake_check_comes_before_the_proposal_decode_test() {
   assert string.contains(reason, ".lake")
   assert !string.contains(reason, "proposals\": [...]")
 }
+
+// --- a route's own indentation ------------------------------------------------
+
+/// A route written the natural way is ALREADY indented under its `by`, and
+/// `check_source` used to prepend two more spaces to the first line only.
+/// That put the first tactic at column 4 and the rest at column 2, so Lean
+/// opened the block at 4 and everything after it fell outside — reported as
+/// `unsolved goals`, which is indistinguishable from a genuinely open node.
+///
+/// Four real instances on 2026-09-10: a whole seeder pass reported all four
+/// of its routes as DOES NOT CLOSE. All four close. The captain who believed
+/// the report re-derived every one of them from scratch.
+pub fn check_source_normalises_a_pre_indented_route_test() {
+  let src =
+    seed.check_source(
+      "theorem foo : True := by",
+      seed.Route(tactics: "  intro k\n  simp", imports: []),
+    )
+  assert string.contains(src, "theorem foo : True := by\n  intro k\n  simp")
+}
+
+/// A route with no indentation of its own still gets some, so it sits under
+/// the `by` rather than at column 0.
+pub fn check_source_indents_a_flush_route_test() {
+  let src =
+    seed.check_source(
+      "theorem foo : True := by",
+      seed.Route(tactics: "intro k\nsimp", imports: []),
+    )
+  assert string.contains(src, "theorem foo : True := by\n  intro k\n  simp")
+}
+
+/// RELATIVE indentation inside the block is what Lean reads, so it must
+/// survive normalisation exactly — only the common margin moves.
+pub fn check_source_keeps_relative_indentation_test() {
+  let src =
+    seed.check_source(
+      "theorem foo : True := by",
+      seed.Route(
+        tactics: "    cases h with\n      | inl a => simp\n      | inr b => simp",
+        imports: [],
+      ),
+    )
+  assert string.contains(
+    src,
+    "theorem foo : True := by\n  cases h with\n    | inl a => simp\n    | inr b => simp",
+  )
+}
+
+/// A blank line inside a tactic block must not drag the common margin to
+/// zero, which would leave every other line over-indented relative to it.
+pub fn check_source_ignores_blank_lines_when_measuring_the_margin_test() {
+  let src =
+    seed.check_source(
+      "theorem foo : True := by",
+      seed.Route(tactics: "    intro k\n\n    simp", imports: []),
+    )
+  assert string.contains(src, "theorem foo : True := by\n  intro k\n\n  simp")
+}
