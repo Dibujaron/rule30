@@ -1963,4 +1963,105 @@ theorem leftDiagonal_periodicFrom_of_rowNat_agree_any (k p T : ℕ)
     PeriodicFrom (leftDiagonal k) p T := by
   sorry
 
+/-- **Agreement on the low bits survives the row map, for ever.** Two numbers
+agreeing modulo `2 ^ n` still agree modulo `2 ^ n` after any number of steps of
+`rowStep`.
+
+Proposed by Seeder (2026-09-10). The autonomy of the low bits at the level of
+the raw map, where `rowNat_agree_forward` says it about the seed's own orbit.
+Says nothing about `leftDiagonal` and nothing about `centerColumn`: it is a
+fact about `rowStep`, and every packed-row argument for either object uses it.
+
+DOES NOT PROVE: no bound on anything, and no prize conjecture. Agreement is
+never *lost*; whether it is ever *gained* is the content, and that is the
+wall. -/
+theorem rowStep_agree_forward (n t x y : ℕ) (h : x % 2 ^ n = y % 2 ^ n) :
+    rowStep^[t] x % 2 ^ n = rowStep^[t] y % 2 ^ n := by
+  sorry
+
+/-- **The truncated map and the real map agree.** Iterating `stepMod n` from a
+truncated start is the same as iterating `rowStep` and truncating at the end.
+
+Proposed by Seeder (2026-09-10). The bridge between the two packed-row
+vocabularies the board already uses, stated once instead of being re-derived
+inside each argument. Witness holds over `n < 9`, `t < 14`, `x < 40`, and
+dropping the truncation of the start returns false.
+
+DOES NOT PROVE: pure change of notation, no bound, no prize conjecture. -/
+theorem stepMod_iterate_eq_rowStep_mod (n t x : ℕ) :
+    (stepMod n)^[t] (x % 2 ^ n) = rowStep^[t] x % 2 ^ n := by
+  sorry
+
+/-- **One more bit of agreement, exactly when a black bit says so.** Two rows
+agreeing on their low `n + 1` bits have successors agreeing on their low
+`n + 2` bits precisely when bit `n` is black or they already agreed one bit
+wider.
+
+Proposed by Seeder (2026-09-10). The `rowStep`-level form of the closed
+`rowNat_return_succ_iff`, freed of the seed. Witness holds over `n < 6`,
+`x, y < 130`; reading the control bit at `n + 1` instead of `n` returns false.
+
+DOES NOT PROVE: it says when one level is free, not how often — and how often
+is exactly the open part. No prize conjecture. -/
+theorem rowStep_agree_succ_iff (n x y : ℕ) (h : x % 2 ^ (n + 1) = y % 2 ^ (n + 1)) :
+    rowStep x % 2 ^ (n + 2) = rowStep y % 2 ^ (n + 2) ↔
+      (x.testBit n = true ∨ x % 2 ^ (n + 2) = y % 2 ^ (n + 2)) := by
+  sorry
+
+/-- **Two bits at once, under a black control bit.** With bit `n` black, the
+successors agree two bits wider exactly when the `OR` of the next two bits
+matches.
+
+Proposed by Seeder (2026-09-10). The two-level law: it prices the levels a
+reset-only ladder gets for free, which is crystal 62's request at the level of
+the raw map. Witness holds over `n < 6`, `x, y < 130`, with 8,193 of 101,400
+pairs satisfying both hypotheses, so it is not vacuous — and the same
+expression with the two `OR`s replaced by `XOR`s returns false, which is
+crystal 66's filter run as a control.
+
+DOES NOT PROVE: no bound on anything and no prize conjecture. The measured
+slopes 2.473 and 1.317 are over 5000 steps at one shift on the seed's own
+rows and are not proved to persist; the black-control denominator here is not
+crystal 62's cascade denominator and the two should not be compared without
+saying so. -/
+theorem rowStep_agree_succ_two_iff (n x y : ℕ)
+    (h : x % 2 ^ (n + 1) = y % 2 ^ (n + 1)) (hb : x.testBit n = true) :
+    rowStep x % 2 ^ (n + 3) = rowStep y % 2 ^ (n + 3) ↔
+      (x.testBit (n + 1) || x.testBit (n + 2)) = (y.testBit (n + 1) || y.testBit (n + 2)) := by
+  sorry
+
+/-- **Two periods give their greatest common divisor.** A sequence periodic
+from `N` with periods `p` and `q` is periodic from `N` with period
+`gcd p q`.
+
+Proposed by Seeder (2026-09-10). Generic: about `PeriodicFrom` and nothing
+else, so it serves the centre column exactly as it serves a diagonal. The
+minimal-period machinery every bound on a period eventually wants.
+
+DOES NOT PROVE: no prize conjecture, and no bound on any particular period. -/
+theorem periodicFrom_gcd (f : ℕ → Bool) (p q N : ℕ)
+    (hpN : PeriodicFrom f p N) (hqN : PeriodicFrom f q N) :
+    PeriodicFrom f (Nat.gcd p q) N := by
+  sorry
+
+/-- **The period wall is an arithmetic statement about one integer orbit.**
+`leftDiagonal_period_le` holds exactly when, for every width `n`, the orbit of
+the seed's row returns modulo `2 ^ n` after at most `n` steps.
+
+Proposed by Seeder (2026-09-10). A change of vocabulary that removes the
+automaton: the left-hand side is about diagonals, the right-hand side is about
+`rowNat` alone.
+
+DOES NOT PROVE: proves neither wall and bounds nothing — both sides stay open.
+No witness on purpose, and the reason is stated: the left side quantifies over
+all `k` with two unbounded existentials inside, which no finite range
+expresses, and `leftDiagonal` is `evolve`, which gives out near `t = 18`. The
+arithmetic side alone was checked to `n = 700`, which is evidence about one
+side of an iff and is not evidence for the iff. -/
+theorem leftDiagonal_period_le_iff_rowNat_period :
+    (∀ k : ℕ, ∃ p, 0 < p ∧ p ≤ k + 1 ∧ ∃ N, PeriodicFrom (leftDiagonal k) p N) ↔
+      (∀ n : ℕ, 0 < n → ∃ p, 0 < p ∧ p ≤ n ∧
+        ∃ T, rowNat T % 2 ^ n = rowNat (T + p) % 2 ^ n) := by
+  sorry
+
 end Statements

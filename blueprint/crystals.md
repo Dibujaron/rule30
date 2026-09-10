@@ -896,6 +896,107 @@ in another coat, and would sit beside it, not under it.
     provable-looking, and what it buys is a closed door with a sign on it —
     so the next session does not rediscover Kopra and ask why not `w = 1`.
 
+69. **The bridge to the centre column is built, proved, and load-bearing for
+    nothing — and the reason is one moved index.** `centerColumn t =
+    bit_t (rowNat t)` is closed (`centerColumn_eq_rowNat_testBit`), sits under
+    the P1 wall, and on 2026-09-10 had **zero dependents**. Meanwhile 18
+    packed-row nodes exist and *every* consumer of them is under a
+    left-diagonal wall. Measured, not guessed.
+
+    **Why the machinery does not simply carry over, stated as the obstruction
+    it is.** Both objects are bits of the same orbit, and that is exactly what
+    makes the difference legible:
+
+        leftDiagonal k j  =  bit_k (rowNat (j + k))     -- bit index FIXED at k
+        centerColumn t    =  bit_t (rowNat t)           -- bit index MOVES with t
+
+    A diagonal reads a **fixed** bit of a moving row, so every tool the board
+    has built — `rowNat_agree_forward`, `rowStep_agree_forward`,
+    `stepMod_preperiod_of_return`, agreement fronts, preperiod bounds — is a
+    statement about the low `n` bits being eventually settled, and a fixed bit
+    eventually sits inside that settled region. The centre column reads bit `t`
+    at time `t`: it **outruns the front**. At time `t` it sits on diagonal `t`,
+    whose onset has not been reached, so no bound of the form "the low `n` bits
+    settle by time `f(n)`" touches it unless `f(n) < n`, and the measured
+    settling is about `1.25 n`.
+
+    So the packed row is the right vocabulary and the left-edge conclusions are
+    not the wrong work — they are the same work aimed at the tractable index.
+    **What P1 needs from this vocabulary is a statement about a diagonal read
+    of the orbit**, and the board has none. That is the sharpest form of the P1
+    residual in the language the board has actually built, and it is a better
+    target than any restatement of the wall.
+
+    Rowan, captain, 2026-09-10, from the dependency graph rather than from
+    reading. **Consequence for a seeder:** a packed-row lemma stated about a
+    fixed bit index is left-edge work however it is filed; a packed-row lemma
+    that says anything about `bit_t (rowNat t)` — the diagonal read — is P1
+    work. Prefer the second. Vocabulary-neutral lemmas about `rowStep`,
+    `stepMod` and `PeriodicFrom` serve both and are always worth having.
+
+70. **Move the wall to the right edge, where there are no transients.** The
+    left side's index `0` sits *inside* a transient band, which is why every
+    left-edge bound is about onsets and why the centre column escapes them all.
+    The right side has no transients at all: `centerColumn t = rightDiagonal
+    t 0`, and if `rightDiagonal t` is exactly periodic with a computable period
+    then the centre column is being read at index `0` of an exactly periodic
+    object. Portage's judgement, and it is a claim about position rather than
+    about difficulty: *"a strictly better position than every existing
+    obstruction, all of which are about the left side where index 0 is inside a
+    transient."*
+
+    The concrete request is `rightDiagonal_period_doubles_iff_odd_weight`: the
+    minimal period of `rightDiagonal k` is `2L` when `g_k(j) = rightDiagonal
+    (k-1) j || rightDiagonal (k-2) (j+1)` has odd weight over one period `L`,
+    and `L` otherwise. It survives 4,000,000 terms at 40 depths with 0
+    failures, so it is true or false for a reason no computation will find, and
+    the proof if it exists is two lines: a running XOR of a period-`L` word
+    closes after `L` steps iff the word has even weight, plus the observation
+    that `g_k` has period `L`. The board already holds the odd branch
+    (`rightDiagonal_antiperiodic_of_odd_driver`) and the even branch
+    (`rightDiagonal_periodicFrom_step_of_even_driver`) as claims about *a*
+    period; obstruction 7 is about *minimality*, which is what this needs.
+
+    **The one thing to check first, because it would kill the topic:** whether
+    the minimal period `P_k` is itself a wall. Nothing here bounds it below and
+    `2^(0.41 k)` is a measurement. Portage, connector, 2026-09-08,
+    `docs/connections/2026-09-08-profinite-dynamics-odometers-*.md`.
+    **Consequence for a seeder:** this is the P1 direction that is not the left
+    edge, and the board's right-diagonal region has six proved blocks and
+    nothing recent.
+
+71. **The board's first P3 direction, and it does not touch the broken prize
+    statement.** `Rule30/Prize.lean`'s P3 is *vacuous rather than open* — its
+    own text says so: `IsFaithfulCostModel` is opaque, so nobody can supply a
+    model satisfying the hypothesis and nobody can attack it. Do not seed
+    against `centerColumn_cost_at_least_linear`.
+
+    What can be seeded is irreducibility as a *mathematical* property, where no
+    machine model is needed. The claim:
+
+        for every `t >= 3`, the polynomial normal form of `evolveFrom c t 0`
+        in the variables `c(-t), ..., c(t)` over `F_2` has degree exactly
+        `2t - 1`, and its unique monomial of that degree is the product of
+        `c(x)` for `x` from `-t+2` to `t`.
+
+    Measured at every `t` from 3 to 11 by bit-sliced evaluation plus Möbius
+    transform, with rules 60, 90, 102 and 150 as controls returning degree 1.
+    One half is already on the board — `rule30_leftPermutive` makes `c(-t)`
+    appear linearly and only linearly — and the content is why `c(-t+1)` is
+    also absent from the top monomial. Provable by induction on `t`.
+
+    **Priced honestly, in the connector's own words: nothing towards Prize 1.**
+    It is a statement about the family and the seed is one point of it. Its
+    value is that it would be the board's first quantitative statement about
+    *how* nonlinear rule 30 is, in a region that has never had a node. Parallax,
+    connector, 2026-09-09,
+    `docs/connections/2026-09-09-algebraic-and-automatic-christol-*.md`.
+    **Consequence for a seeder:** P3 proposals go here, not at the cost model.
+    Making P3 genuinely attackable needs a concrete uniform machine model with
+    binary input encoding and step-counted cost, most plausibly on Mathlib's
+    `Turing.TM0`/`TM1`; that is unbuilt, it is a captain-and-Dib decision, and
+    `Prize.lean` says it needs expert review before anything built on it ships.
+
 ## The convergence of 2026-09-09, and the object no node states
 
 Four sessions on 2026-09-09 — Talus twice (theorist), Gnomon and Vernier

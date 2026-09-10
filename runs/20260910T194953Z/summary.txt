@@ -1,0 +1,44 @@
+
+seeder    Seeder
+model     opus
+region    (whole board)
+ended     finished — the seeder reported its proposal written; that is its claim about the file, and the check below is the only adjudication
+ceilings  80 turns, $12.0
+cost      $9.10
+turns     44
+session   e5ae4366-d127-46eb-9b72-10001b8fa76d
+log       c:/Users/dibuj/dev/rule30/runs/20260910T194953Z/seed-1
+proposal  c:/Users/dibuj/dev/rule30/blueprint/proposals/next.json
+
+Six nodes proposed under the two attackable walls — four building the all-starts packed-row frontier under leftDiagonal_onset_le (headed by the two-level law that prices the free levels a reset-only ladder cannot), two moving leftDiagonal_period_le into the same ℕ-only frame — with verified routes on five of the six and negative-controlled witnesses on five.
+
+check of c:/Users/dibuj/dev/rule30/blueprint/proposals/next.json:
+rowStep_agree_succ_two_iff
+  DOES NOT PROVE: Does not prove the onset wall and gives no bound on anything. It says when one level is free, not how often -- and how often is exactly the open part. The slopes 2.473 and 1.317 are measured over 5000 steps at one shift on the seed's own rows and are not proved to persist; the 'black control' denominator here is 'bit W(t)-1 of row t is black', which is a different measurement from crystal 62's cascade and its 0.4993, so the two numbers should not be compared without saying that.
+  under:   leftDiagonal_onset_le
+  route:   closes the statement
+  witness: holds over n < 6, x < 130, y < 130; 8193 of the 101400 pairs satisfy both hypotheses, so it is not vacuous. Ran true. The same expression with the two ORs replaced by XORs returns false, and with the hypothesis filter removed returns false.
+rowStep_agree_succ_iff
+  under:   leftDiagonal_onset_le
+  route:   closes the statement
+  witness: holds over n < 6, x < 130, y < 130, filtered on the hypothesis. Ran true. Reading the control bit at n+1 instead of n returns false.
+rowStep_agree_forward
+  under:   leftDiagonal_onset_le
+  route:   closes the statement
+  witness: holds over n < 7, t < 9, x < 60, y < 60, filtered on the hypothesis. Ran true. Claiming agreement one bit wider than the hypothesis gives returns false.
+stepMod_iterate_eq_rowStep_mod
+  under:   leftDiagonal_onset_le
+  route:   closes the statement
+  witness: holds over n < 9, t < 14, x < 40. Ran true. Dropping the truncation of the start returns false.
+periodicFrom_gcd
+  under:   leftDiagonal_period_le
+  route:   closes the statement
+  witness: holds over One concrete sequence, f n = (n % 6 < 3), all a, b < 12, both periods checked over n < 40. Ran true. The variant claiming a + 1 is a period returns false. This is a weak witness -- it tests one sequence, not the quantifier over f -- and it is offered as a sanity check, not as coverage.
+leftDiagonal_period_le_iff_rowNat_period
+  DOES NOT PROVE: Proves neither wall and bounds nothing. It is a change of vocabulary: it says the period wall and an arithmetic statement about one integer orbit are the same claim, and both remain open. It carries no witness on purpose -- the left-hand side is a quantifier over all k with two unbounded existentials inside it and is not checkable at any finite range, and leftDiagonal is evolve, which gives out near t = 18. The arithmetic side alone was checked to n = 700 and that is reported above as what it is, evidence about one side of an iff.
+  under:   leftDiagonal_period_le
+  route:   none claimed
+  witness: unchecked — no witness supplied
+
+1 unchecked, 5 holds
+
