@@ -363,6 +363,85 @@ fn rate_limit_line(utilization: Float, status: String) -> String {
   |> json.to_string
 }
 
+/// A `rate_limit_event` whose five-hour utilization is a bare JSON integer,
+/// which is what the CLI sends when the window is exactly full or exactly
+/// empty. `json.float(1.0)` would serialise `1.0` and could never reproduce
+/// this; the value has to be written as an integer to be the value that was
+/// actually received. Taken from run 20260907T210826Z, whose attempt was
+/// filed `budget_exhausted` because of it.
+fn rate_limit_line_integer(utilization: Int, status: String) -> String {
+  json.object([
+    #("type", json.string("rate_limit_event")),
+    #(
+      "rate_limit_info",
+      json.object([
+        #("status", json.string(status)),
+        #(
+          "unifiedWindows",
+          json.object([
+            #(
+              "five_hour",
+              json.object([
+                #("utilization", json.int(utilization)),
+                #("resetsAt", json.int(1_788_824_400)),
+              ]),
+            ),
+          ]),
+        ),
+      ]),
+    ),
+  ])
+  |> json.to_string
+}
+
+/// The `system` event that carries the refusal's category, from run
+/// 20260908T122952Z. It has no variant of its own and reaches the loop as
+/// `Other`; the category is the only actionable word in the whole record.
+fn refusal_system_line(category: String) -> String {
+  json.object([
+    #("type", json.string("system")),
+    #("subtype", json.string("model_refusal_no_fallback")),
+    #("original_model", json.string("claude-fable-5-1")),
+    #("api_refusal_category", json.string(category)),
+  ])
+  |> json.to_string
+}
+
+/// The `result` a refused request ends with: `subtype` is `success` and
+/// `is_error` is set — indistinguishable from a CLI ceiling ending — and
+/// `stop_reason` is the one field that says otherwise. Fields from the last
+/// result of run 20260908T122952Z.
+fn refusal_result_line(session_id: String) -> String {
+  json.object([
+    #("type", json.string("result")),
+    #("subtype", json.string("success")),
+    #("session_id", json.string(session_id)),
+    #("is_error", json.bool(True)),
+    #("stop_reason", json.string("refusal")),
+    #("terminal_reason", json.string("api_error")),
+    #("total_cost_usd", json.float(1.123819)),
+    #("num_turns", json.int(1)),
+  ])
+  |> json.to_string
+}
+
+/// A `result` that ends a turn cleanly and carries no report at all: no
+/// `structured_output`, and no `StructuredOutput` call in the turn for
+/// `recover_report` to fall back on. This is what Cadence's turns looked
+/// like on 2026-09-09 while it insisted it had reported.
+fn unreported_result_line(session_id: String) -> String {
+  json.object([
+    #("type", json.string("result")),
+    #("subtype", json.string("success")),
+    #("session_id", json.string(session_id)),
+    #("is_error", json.bool(False)),
+    #("stop_reason", json.string("end_turn")),
+    #("total_cost_usd", json.float(0.81)),
+    #("num_turns", json.int(2)),
+  ])
+  |> json.to_string
+}
+
 fn api_retry_line(error: String) -> String {
   json.object([
     #("type", json.string("system")),
@@ -903,4 +982,155 @@ pub fn every_line_the_harness_sends_is_logged_test() {
   assert string.contains(r.events, "\"kind\":\"sent\"")
   assert string.contains(r.events, "Prove it.")
   assert string.contains(r.events, "Fix the proof and report again.")
+}
+
+
+// --- endings the harness used to fold together ---------------------------------
+
+/// The full window, driven through the whole loop. This is the attempt from
+/// run 20260907T210826Z reproduced: a `rejected` status arriving two events
+/// before the result, which `hit_ceiling` has always been willing to read —
+/// and which never reached it, because the utilization beside it was the
+/// integer `1` and the decoder required a float, so the entire event was
+/// dropped to `Other`. The attempt then ran on to the CLI's error result and
+/// was scored against the node's ladder.
+pub fn a_full_window_parks_the_attempt_test() {
+  let r =
+    go(
+      scenario("rate-limit-integer-utilization", [
+        [
+          init_line("sess-full"),
+          rate_limit_line_integer(1, "rejected"),
+          error_result_line("sess-full", "success"),
+        ],
+      ]),
+    )
+  assert r.attempt.outcome == dag.RateLimited
+  assert r.attempt.session_id == "sess-full"
+}
+
+/// The empty window is the same shape and must NOT park: `0` is an integer
+/// too, so a decoder that merely tolerated integers without reading `status`
+/// would park every session that started with a fresh window. The status is
+/// the authority and this is what proves the fix reads it.
+pub fn an_empty_window_does_not_park_the_attempt_test() {
+  let r =
+    go(
+      scenario("rate-limit-integer-zero", [
+        [
+          init_line("sess-empty"),
+          rate_limit_line_integer(0, "allowed"),
+          result_line("sess-empty", False, "abandoned"),
+        ],
+      ]),
+    )
+  assert r.attempt.outcome == dag.GaveUp
+}
+
+/// A refusal is its own ending and not a ceiling. Before this, the same
+/// event produced `budget_exhausted` with the notes "a CLI ending this
+/// harness has no name for (result subtype `success`)" — while
+/// `stop_reason: "refusal"` sat on the event the loop had already decoded.
+pub fn an_api_refusal_is_its_own_ending_test() {
+  let r =
+    go(
+      scenario("api-refusal", [
+        [
+          init_line("sess-ref"),
+          refusal_system_line("reasoning_extraction"),
+          refusal_result_line("sess-ref"),
+        ],
+      ]),
+    )
+  assert r.attempt.outcome == dag.Refused
+  assert string.contains(r.attempt.notes, "reasoning_extraction")
+}
+
+/// A refusal must cost the node nothing. `burns_a_rung` is what the ladder
+/// reads, and a refusal that spent a rung would send the identical brief up
+/// a model it will refuse again.
+pub fn a_refusal_spends_no_rung_test() {
+  assert config.burns_a_rung(dag.Refused) == False
+}
+
+/// A refusal with no `model_refusal_no_fallback` event is still a refusal.
+/// The category is a nicety carried on a separate event; `stop_reason` on
+/// the result is the whole test.
+pub fn a_refusal_without_a_category_is_still_a_refusal_test() {
+  let r =
+    go(
+      scenario("api-refusal-no-category", [
+        [init_line("sess-ref2"), refusal_result_line("sess-ref2")],
+      ]),
+    )
+  assert r.attempt.outcome == dag.Refused
+}
+
+/// The finished proof nobody reported. Cadence wrote a complete proof of
+/// `centerColumn_run_boundary` on 2026-09-09, never called
+/// `StructuredOutput`, and told the nudge five times that it had. The work
+/// was done and only the report was missing, which nudging cannot detect and
+/// the verifier can.
+pub fn an_unreported_turn_whose_proof_verifies_closes_the_node_test() {
+  let r =
+    go(
+      Scenario(
+        ..scenario("unreported-proof-verifies", [
+          [init_line("sess-un"), unreported_result_line("sess-un")],
+        ]),
+        verdicts: [verify.Verified(
+            axioms: ["propext"],
+            statement: "theorem scripted : True",
+            output: "ok",
+          )],
+      ),
+    )
+  assert r.attempt.outcome == dag.Closed
+  assert r.verify_calls == 1
+  assert string.contains(r.annotations, "theorem scripted : True")
+}
+
+/// And the node closed that way carries no report, because there was none.
+/// `reported: False` is what keeps the identity's calibration from scoring a
+/// re-pricing the worker never made; a synthesised report here would be the
+/// same invention this whole path exists to catch.
+pub fn an_adopted_proof_is_recorded_as_unreported_test() {
+  let r =
+    go(
+      Scenario(
+        ..scenario("unreported-proof-no-report", [
+          [init_line("sess-un2"), unreported_result_line("sess-un2")],
+        ]),
+        verdicts: [verify.Verified(
+            axioms: ["propext"],
+            statement: "theorem scripted : True",
+            output: "ok",
+          )],
+      ),
+    )
+  assert r.attempt.outcome == dag.Closed
+  assert r.attempt.reported == False
+  assert r.report == None
+}
+
+/// The other half, and the one that keeps this from being a loophole: an
+/// unreported turn whose file does NOT verify is nudged exactly as before.
+/// The bar is the verifier, never the presence of a file.
+pub fn an_unreported_turn_whose_proof_fails_is_still_nudged_test() {
+  let r =
+    go(
+      Scenario(
+        ..scenario("unreported-proof-fails", [
+          [init_line("sess-un3"), unreported_result_line("sess-un3")],
+          [unreported_result_line("sess-un3")],
+        ]),
+        verdicts: [
+          verify.BuildFailed(output: "no proof here"),
+          verify.BuildFailed(output: "still no proof here"),
+        ],
+        max_verify_rounds: 1,
+      ),
+    )
+  assert r.attempt.outcome == dag.BudgetExhausted
+  assert string.contains(r.attempt.notes, "stopped reporting")
 }
