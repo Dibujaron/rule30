@@ -2156,3 +2156,63 @@ concurrent seed. Rowan seeded six nodes into `dag.json` during a live attempt
 2026-09-08 — and all six survived the dispatcher's end-of-attempt write. My
 closure test was a fixture; this is the first time it has been exercised by an
 actual captain seeding into an actual run.
+
+## 2026-09-10, later — the number that agreed with itself three times
+
+The cold-worktree run reproduced the suite abort solo, on a quiet machine,
+with nothing else running: announced 607, **325 passed**, 3 failures, exit 1.
+A cold `harness/test/fixture-project/.lake` is sufficient on its own. All the
+turn-taking Fathom and I did around contention was good practice and was not
+the cause; I chased contention hardest and it was a red herring.
+
+The consequence is bigger than a slow test. CLAUDE.md tells every framework
+agent to work in a fresh worktree, and a fresh worktree has no fixture
+`.lake` — so **the project's documented workflow guarantees that the first
+suite run of every piece of framework work loses 282 of 607 tests**, and that
+first run is the one an agent uses to decide whether its change is safe. Both
+Fathom and I hit it today, independently, on our first runs, and both of us
+misread it.
+
+**Three identical numbers, and we read the agreement backwards.** 325 passed
+in my 620-suite, in Fathom's 617-suite, and in the cold 607-suite. Two of
+those we had already seen, and we both took the match as evidence *against* a
+load-sensitive cause — a load-sensitive fault should surely produce different
+numbers. It means the opposite. A deterministic abort point manufactures
+identical numbers, so agreement between measurements is only reassuring when
+the measurements *could have disagreed*. Ours could not. We were reading the
+instrument's rigidity as the world's.
+
+Fathom then decomposed it exactly: 322 tests in the modules sorting before
+`run_test`, plus the 3 inside it that run before the timeout fires. 325 is not
+an approximation of the mechanism, it is the mechanism.
+
+**And that exposed a claim of mine that fitted every observation and
+generalised to nothing.** I had told Rowan "our added tests all sort after the
+abort, which is why they moved the announced total and could not move the
+passed count." True of every run we had done. Stated as a property of the
+mechanism. It is a property of *where we happened to put our tests*.
+`reverify_test` sorts before `run_test`, so my own branch breaks it. The
+formulation that survives is
+
+    passed = 322 + (added tests sorting before run_test) + 3
+
+which predicts 325 on main, 327 on Fathom's branch and 336 on mine — two
+numbers nobody has seen. Both are recorded before either is run, and Fathom
+asked me to run theirs rather than running it themselves, on the grounds that
+a prediction confirmed by the person who did not make it is worth more. That
+is right and I would not have thought of it.
+
+The earlier version was not wrong about any observation. It was wrong about
+what generalised, which is harder to notice, because the evidence for it kept
+arriving.
+
+**Also today, in my own work:** I hard-coded the count "34" into four doc
+comments — a fact that goes false the moment anyone backfills — inside a
+change whose entire subject is records that quietly stop being true. And my
+process-attribution script had a fallthrough labelling unmatched processes as
+the shared checkout, so it told me an unannounced live run had started in
+Dib's tree. `lake` and `lean` carry no tree in their command line; only `erl`
+does. A default in a classifier is a lie with a confidence interval, and it
+invents the most alarming answer available rather than admitting it cannot
+tell. `undetermined` is the output nobody writes, because a table that says
+`undetermined` looks broken and a table that guesses looks like it works.
