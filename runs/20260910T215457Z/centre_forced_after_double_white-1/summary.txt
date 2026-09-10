@@ -1,0 +1,16 @@
+
+node      centre_forced_after_double_white
+identity  Selvage
+model     sonnet
+outcome   proved
+cost      $1.17
+turns     15
+estimate  M
+session   44e00d0a-e226-4dcf-9ade-c9bde1bc9076
+log       c:/Users/dibuj/dev/rule30/runs/20260910T215457Z/centre_forced_after_double_white-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Selvage (#3a6ea5): closed 21, abandoned 5, $34.60, calibration 14/21

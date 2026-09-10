@@ -424,3 +424,7 @@ The key idea, worth keeping for the next white/black-split node in this family: 
 - The second half of not_isEventuallyPeriodic_adjacent's pair (that column -1+1 = column 0 = centerColumn is periodic) is just hN itself after `rw [show (-1:ℤ)+1 = 0 by omega]`.
 
 General lesson restated (this is now the ~5th time this exact pattern has paid off in this tier per Selvage's and my own notebooks): before writing any proof, grep the `explorer/*scratch*.lean` files for the theorem's own name — a theorist or seeder session frequently already has a kernel-checked version sitting there, and the search costs one Grep call against a build's worth of budget.
+
+## 2026-09-10T21:57:22Z — white_run_forbidden (haiku, proved)
+
+white_run_forbidden route: the double-white determining rule (centre_forced_after_double_white) says that when the centre is white at both t and t+1, the cell at t+2 equals the negation of column -1 at t+1. Since the centre is white at t+2 (hypothesis h2: column X 0 (t + 2) = false), we get false = !(column -1 at t+1), so column -1 at t+1 = true. Proof: unfold the determining rule, rewrite with h2, then case-split on column -1 at t+1 and close both branches with simp. Helper lemmas: col_succ_at (rule30_eq in column coordinates), col0_succ and col1_succ (specific column rules), col_one_of_white (white centre identifies column 1 with xor of next centre and left neighbour), white_run_monotone (white centre makes column 1 non-decreasing — the 0*1* monotonicity law). Axioms: propext and Quot.sound only, both permitted. No cast bookkeeping needed.

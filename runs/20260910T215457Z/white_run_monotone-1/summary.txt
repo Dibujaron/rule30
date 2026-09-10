@@ -1,0 +1,16 @@
+
+node      white_run_monotone
+identity  Selvage
+model     haiku
+outcome   proved
+cost      $0.34
+turns     14
+estimate  S
+session   750952c1-e371-4ed1-bedd-630224fe4b9a
+log       c:/Users/dibuj/dev/rule30/runs/20260910T215457Z/white_run_monotone-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Selvage (#3a6ea5): closed 20, abandoned 5, $33.43, calibration 13/20

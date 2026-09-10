@@ -1,0 +1,16 @@
+
+node      col_one_of_white
+identity  Vesper
+model     haiku
+outcome   proved  (salvaged — the session did not close this node; the harness read its proof file and the verifier accepted it)
+cost      $0.63
+turns     21
+estimate  S
+session   cdf0b956-2c57-4503-9b03-ae2a14ebd1ee
+log       c:/Users/dibuj/dev/rule30/runs/20260910T215457Z/col_one_of_white-1
+proof     -
+
+verifier:
+the worker never reported, and its proof file verified: VERIFIED. Axioms: propext, Quot.sound
+
+Vesper (#2b3a67): closed 78, abandoned 9, $81.73, calibration 63/76

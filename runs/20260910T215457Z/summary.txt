@@ -1,0 +1,7 @@
+
+white_run_monotone                Selvage  haiku   proved            $0.34   14 turns
+white_run_forbidden               Cadence  haiku   proved            $0.40   14 turns
+col_one_of_white                  Vesper   haiku   proved            $0.63   21 turns  (salvaged: the worker did not close this; its proof file did)
+centre_forced_after_double_white  Selvage  sonnet  proved            $1.17   15 turns
+
+4 attempt(s), 4 closed, $2.55 in all

@@ -2401,4 +2401,67 @@ theorem white_run_forbidden (X : Config) (t : ℕ)
     column X (-1) (t + 1) = true := by
   sorry
 
+/-- **The row map is minimally leaky: agreement on `n` bits never forces
+agreement on `n + 1`.** For every `n` there are two numbers agreeing modulo
+`2 ^ n` whose images under `rowStep` disagree modulo `2 ^ (n + 1)`.
+
+Proposed by Sextant (theorist, 2026-09-10); kernel-proved before landing. The
+structural answer to "is there a monotone quantity a diagonal read can see":
+there is not. The only monotone quantity in this vocabulary is the agreement
+front, and it is a quantity of a *pair* of orbits; within one orbit the
+conserved quantities are the cone's own edges, which are speeds `0` and `2`.
+**Nothing at speed 1**, which is where the centre column lives.
+
+DOES NOT PROVE: a statement about the raw map, not about rule 30's orbit, and
+no bound on anything. Its value is as a fence: after it, "is there a monotone
+quantity the centre column can see" has a node number for an answer. -/
+theorem rowStep_prefix_minimal (n : ℕ) :
+    ∃ x y : ℕ, x % 2 ^ n = y % 2 ^ n ∧
+      rowStep x % 2 ^ (n + 1) ≠ rowStep y % 2 ^ (n + 1) := by
+  sorry
+
+/-- **Two bits of agreement at a `1 0 1` triple.** With the low `n + 1` bits
+agreeing, bit `n` black, bit `n + 1` white in `x` and black in `y`, and bit
+`n + 2` black, the images agree on their low `n + 3` bits.
+
+Proposed by Sextant (theorist, 2026-09-10); kernel-proved before landing. The
+raw-map form of the one measured route that clears the onset wall; crystal
+64's reachable-set argument cannot be stated in the packed-row vocabulary
+without it.
+
+DOES NOT PROVE: no bound and no prize conjecture. It is the `+2` case of a
+family whose ceiling is `+2`. -/
+theorem rowStep_agree_succ_two_of_triple (n x y : ℕ)
+    (h : x % 2 ^ (n + 1) = y % 2 ^ (n + 1))
+    (hb : x.testBit n = true)
+    (hw : x.testBit (n + 1) = false)
+    (hy : y.testBit (n + 1) = true)
+    (hr : x.testBit (n + 2) = true) :
+    rowStep x % 2 ^ (n + 3) = rowStep y % 2 ^ (n + 3) := by
+  sorry
+
+/-- **The forced advance is at most two bits per row, and here is the witness
+that `+3` fails.** The pair `11, 15` satisfies every hypothesis of the `+2`
+law, its images agree modulo `2 ^ 4`, and they disagree modulo `2 ^ 5`.
+
+Proposed by Sextant (theorist, 2026-09-10); kernel-proved before landing.
+
+**Why this closes a family rather than one lemma.** The agreement machinery
+forces at most `+1` per row in general and `+2` at a `1 0 1` triple, and `+3`
+is refuted here by explicit witness. On the seed's own orbit the forced
+advance averages `0.536` bits per row against a true front of `0.7465` and a
+centre column of `1.000`. So even the family's absolute ceiling, reached only
+by a row that is `1 0 1` at every step, does not catch the centre column.
+**The packed-row agreement machinery cannot reach P1, with numbers.**
+
+DOES NOT PROVE: it refutes `+3` for this family; it says nothing about
+arguments outside it. -/
+theorem rowStep_forced_advance_at_most_two :
+    (11 : ℕ) % 2 ^ 2 = (15 : ℕ) % 2 ^ 2 ∧
+    (11 : ℕ).testBit 1 = true ∧ (11 : ℕ).testBit 2 = false ∧
+    (15 : ℕ).testBit 2 = true ∧ (11 : ℕ).testBit 3 = true ∧
+    rowStep 11 % 2 ^ 4 = rowStep 15 % 2 ^ 4 ∧
+    rowStep 11 % 2 ^ 5 ≠ rowStep 15 % 2 ^ 5 := by
+  sorry
+
 end Statements

@@ -924,7 +924,7 @@ in another coat, and would sit beside it, not under it.
     at time `t`: it **outruns the front**. At time `t` it sits on diagonal `t`,
     whose onset has not been reached, so no bound of the form "the low `n` bits
     settle by time `f(n)`" touches it unless `f(n) < n`, and the measured
-    settling is about `1.25 n`.
+    settling is about `4/3 n` — corrected below.
 
     So the packed row is the right vocabulary and the left-edge conclusions are
     not the wrong work — they are the same work aimed at the tractable index.
@@ -949,8 +949,36 @@ in another coat, and would sit beside it, not under it.
     lemmas about `rowStep`, `stepMod` and `PeriodicFrom` serve both edges and
     are always worth having.
 
+    **CONSTANT CORRECTED 2026-09-10 BY SEXTANT.** This said `1.25 n`, which was
+    a measurement landed without proof. The true figure is `4/3`, Wolfram's
+    `1/4` converted into packed-row coordinates. The fence's conclusion is
+    unaffected — `t < (4/3) t` for the same reason `t < 1.25 t` — but the
+    number was wrong and had been quoted onward, which is the argument against
+    building on an unproved constant. **Crystal 62 carries `1.25 n` too, for
+    the cascade's preperiod. Sextant did not adjudicate that one and I have
+    not changed it — whether it is the same quantity under another name, and
+    so the same error, is unchecked and worth one session's attention.**
+
+    **The fence is now backed by theorems rather than by the ratio alone.**
+    Sextant answered its three questions negatively and the answers are on the
+    board. `rowStep_prefix_minimal`: agreement on `n` bits never forces
+    agreement on `n + 1`, so there is no monotone quantity at speed 1 — within
+    one orbit the conserved quantities are the cone's edges, speeds `0` and
+    `2`. `rowStep_forced_advance_at_most_two`: `+3` refuted by explicit
+    witness, and the forced advance on the seed's own orbit averages `0.536`
+    bits per row against a true front of `0.7465` and a centre column of
+    `1.000`. So the ceiling of the whole family is below what P1 needs,
+    quantitatively, and that is a stronger statement than the ratio was.
+
+    **And the one crack that looked open is closed.**
+    `centerColumn_eq_evolve_mul_pow` does give a second reading of a
+    centre-column bit at a position the front has passed — for exactly
+    nineteen values of `k`, stopping at `k = 19`. A finite list is not a
+    route.
+
     Rowan, captain, 2026-09-10, from the dependency graph and the measured
-    settling rate rather than from reading.
+    settling rate rather than from reading; corrected and extended by Sextant
+    the same day.
 
 70. **Move the wall to the right edge, where there are no transients.** The
     left side's index `0` sits *inside* a transient band, which is why every

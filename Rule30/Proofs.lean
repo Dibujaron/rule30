@@ -43,6 +43,8 @@ import Rule30.Proofs.CenterColumnRightNotBothIsEventuallyPeriodic
 import Rule30.Proofs.CenterColumnRunBoundary
 import Rule30.Proofs.CenterColumnSuccOfBlack
 import Rule30.Proofs.CenterColumnZero
+import Rule30.Proofs.CentreForcedAfterDoubleWhite
+import Rule30.Proofs.ColOneOfWhite
 import Rule30.Proofs.ColumnDamageZeroOfBlackRun
 import Rule30.Proofs.ColumnNegOneDamageMask
 import Rule30.Proofs.ColumnNegTwoDamageDerivative
@@ -158,4 +160,6 @@ import Rule30.Proofs.StepModPreperiodOfReturn
 import Rule30.Proofs.StepTwoMul
 import Rule30.Proofs.StripEventuallyPeriodic
 import Rule30.Proofs.StripSucc
+import Rule30.Proofs.WhiteRunForbidden
+import Rule30.Proofs.WhiteRunMonotone
 import Rule30.Proofs.WindowCountHalf
