@@ -1,0 +1,16 @@
+
+node      centerColumnCount_eq_stepMod_count
+identity  Marrow
+model     sonnet
+outcome   proved
+cost      $0.53
+turns     11
+estimate  S
+session   ffdc1738-2dfe-4ff3-a46c-73ae334ffd31
+log       c:/Users/dibuj/dev/rule30/runs/20260910T203537Z/centerColumnCount_eq_stepMod_count-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Marrow (#5c7a89): closed 2, abandoned 0, $1.47, calibration 1/2

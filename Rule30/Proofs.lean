@@ -18,12 +18,16 @@ import Rule30.Proofs.BoolDrivenPeriodicFromOfReset
 import Rule30.Proofs.BoolDrivenPeriodicFromOfReturn
 import Rule30.Proofs.BoolMapIterateThree
 import Rule30.Proofs.BoolXorDrivenPeriodicFrom
+import Rule30.Proofs.CenterColumnCountBlock
+import Rule30.Proofs.CenterColumnCountEqStepModCount
 import Rule30.Proofs.CenterColumnCountSandwich
 import Rule30.Proofs.CenterColumnCountSucc
 import Rule30.Proofs.CenterColumnDensityLeOne
 import Rule30.Proofs.CenterColumnDensityNonneg
 import Rule30.Proofs.CenterColumnDensitySucc
 import Rule30.Proofs.CenterColumnDensityTendstoHalfIffExcess
+import Rule30.Proofs.CenterColumnDensityTendstoHalfIffExcessNat
+import Rule30.Proofs.CenterColumnDensityTendstoHalfOfNearbyCuts
 import Rule30.Proofs.CenterColumnEqRowNatTestBit
 import Rule30.Proofs.CenterColumnExcessInterpolate
 import Rule30.Proofs.CenterColumnNotEventuallyPeriodicOfAnyOther

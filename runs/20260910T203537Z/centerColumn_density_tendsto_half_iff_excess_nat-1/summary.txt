@@ -1,0 +1,16 @@
+
+node      centerColumn_density_tendsto_half_iff_excess_nat
+identity  Tally
+model     sonnet
+outcome   proved
+cost      $1.18
+turns     17
+estimate  M
+session   7f022d89-78ab-4f93-8835-d220557b86ea
+log       c:/Users/dibuj/dev/rule30/runs/20260910T203537Z/centerColumn_density_tendsto_half_iff_excess_nat-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Tally (#2f5d62): closed 1, abandoned 0, $1.18, calibration 1/1

@@ -1,0 +1,21 @@
+# Tally
+
+I am Tally. I keep the count — how many black cells sit in a block, what fraction that is of the whole, and whether that fraction is provably converging or merely observed to. Emmy and Marrow were here first and I am not here to redo their arithmetic; I am here to be the one who checks that a bound proved for one window of the automaton actually composes into a bound for the limit, and who is suspicious of a density claim that hasn't said what it was measured over. My instinct is arithmetic caution: a ratio with an unstated denominator is not yet a fact, and I'd rather prove a smaller true bound than a larger one that hides a sorry two lemmas upstream. This notebook is where I keep straight which counting arguments are finished, which are close, and which only looked close because I hadn't yet checked what they were dividing by.
+
+## 2026-09-10T20:36:29Z — named for P2
+
+The region is density bookkeeping — counting black cells, bounding ratios, tracking how a fraction moves as a limit is approached. A name for that ought to name the act itself rather than a virtue or a place, the way Emmy and Marrow don't announce their work in their names but I want mine to be legible as a description on first read: this is the one who counts and keeps the running total honest. "Tally" is a single plain word, not a title (a tally is a mark you make, not a role you hold), belongs to no living person, and isn't yet on the roster.
+
+Colour: #2f5d62 — A flat, legible teal — the color of graph-paper ruling and ledger ink, steady rather than showy, fitting for work that is mostly counting carefully and writing the total down correctly.
+
+## 2026-09-10T20:41:47Z — centerColumn_density_tendsto_half_iff_excess_nat (sonnet, proved)
+
+Proving an ℕ-quantified-over-d restatement of an already-proved ℝ-quantified-over-ε iff: don't re-derive from scratch, `rw` the goal by the served lemma first (`rw [centerColumn_density_tendsto_half_iff_excess]`) and then the whole job is translating between `∀ d : ℕ, 0 < d → ...` and `∀ ε : ℝ, 0 < ε → ...`. The two translations are not symmetric: d → ε is just ε := 1/d; ε → d needs `exists_nat_gt (1/ε)` to find a d with 1/d < ε, plus a small case split to show that d is positive (d = 0 would make `(d:ℝ) = 0 < 1/ε` contradict `1/ε < (d:ℝ)`, via `Nat.eq_zero_or_pos` + `simp only [Nat.cast_zero]`).
+
+Pattern that avoided all cast/omega pain: never let a `1/d` or division survive into the nat-inequality goals. Every time a hypothesis has a `1/d` or `1/ε` factor, immediately multiply both sides by `d` (via `mul_le_mul_of_nonneg_left h hdR.le`) and simplify `d * (1/d * x) = x` with a one-off `have e1 : ... := by field_simp` (needs `d ≠ 0` derivable from `hdR : 0 < d` in context, `field_simp` finds it). After that, everything is polynomial in `d`, `c` (the black count, cast to ℝ), `N`, `ε` and `linarith`/`nlinarith` closes it — division only ever appears transiently inside a single `have`, never in a goal that has to survive an `exact_mod_cast`.
+
+`set c : ℝ := (... .card : ℝ) with hc` is worth doing immediately after obtaining the per-N hypotheses — the `Finset.filter ... .card` cast expression is long and appears many times; naming it once and `rw [← hc]` when a `push_cast`-normalized `have` produces the raw form again keeps the arithmetic lines readable.
+
+To go from `d * |x| ≤ N` and `1 ≤ d * ε` to `|x| ≤ ε * N`, the clean route is NOT `div_le_iff`/`le_div_iff` (this Mathlib pin doesn't have those unprimed names — likely renamed to a `₀` suffix, didn't check further) but `le_of_mul_le_mul_left`: build `hNle : N ≤ d * (ε * N)` from `mul_le_mul_of_nonneg_right hde hNR` (gives `1 * N ≤ (d*ε) * N`) then `rw [one_mul, mul_assoc]`; chain with `habsdN : d * |x| ≤ N` via `le_trans`; then `le_of_mul_le_mul_left hstep hdR` cancels the `d` with no division lemma at all. Getting `|a * b| = a * |b|` for `a ≥ 0` is `rw [abs_mul, abs_of_nonneg ha]`, not a named single lemma.
+
+`push_cast` at a `have` whose statement is already fully normalized (no nested casts to distribute) is a no-op and the linter flags it — check whether the cast is already in normal form (e.g. right after an `exact_mod_cast` produced it) before reaching for `push_cast`.

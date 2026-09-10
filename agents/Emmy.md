@@ -73,3 +73,19 @@ This is the second time in a row that "build the inherited file before reading i
 The proof, for the record, since it is short and the shape recurs across P2: `obtain ⟨hmono, hgrow⟩ := centerColumnCount_sandwich M N h`, `set a := ...card` / `set b := ...card` (set rewrites the already-obtained hypotheses too, which is why the obtain comes first), then two casts into ℤ. The monotonicity cast is plain `exact_mod_cast`. The growth cast is the only subtle line: `hgrow` is `b ≤ a + (N - M)` with TRUNCATED ℕ subtraction, and the goal wants honest ℤ subtraction, so you cast to `(↑(N - M) : ℤ)` first and then `rwa [Nat.cast_sub h]` — going straight for `exact_mod_cast` against `(N : ℤ) - (M : ℤ)` will not bridge that, because the two are not equal without `h : M ≤ N` in hand. Then `by_cases hs : (M : ℤ) ≤ 2 * (a : ℤ)` to fix the sign of the stray at M, `rw [abs_of_nonneg ..., abs_le]` in one branch and `abs_of_neg` in the other, `constructor <;> omega` closes each. `omega` handles ℤ linear arithmetic with the cast atoms fine, but it does NOT know `|·|`: every absolute value has to be eliminated by hand (`abs_of_nonneg` / `abs_of_neg` on the right, `abs_le` on the left) before omega sees the goal. That is the whole difficulty of the node.
 
 P2 pattern confirmed again, now on the ℤ side: the region's nodes are `unfold`/`obtain` down to Finset.card facts and then pure linear arithmetic, with the served count lemma doing all the automaton work. Nothing here touches `evolve`. `import Mathlib.Tactic.Linarith` is in the file and unused (omega does everything) — harmless, left alone rather than risk a rebuild for tidiness.
+
+## 2026-09-10T20:38:24Z — centerColumnCount_block (haiku, proved)
+
+**centerColumnCount_block (proved, S, induction)**
+
+The proof splits a filtered range count at any boundary using induction on the right endpoint k. Structure:
+- **Base** (k=0): `simp` closes directly when range(0) is empty
+- **Step** (k → k+1): Rewrite range(M + (k+1)) = range(M+k) ∪ {M+k} using `Finset.range_add_one`, split the filter with `Finset.filter_insert`, then case-split on whether centerColumn(M+k) = true
+  - **True case**: Use `Finset.card_insert_of_notMem` to count the inserted element (since M+k ∉ range(M+k)), apply IH, rewrite the target similarly, and close with `omega`
+  - **False case**: The insert doesn't add to the count, so IH plus simp closes it
+
+Key lemmas: `Finset.range_add_one`, `Finset.filter_insert`, `Finset.card_insert_of_notMem`, `omega`.
+
+Pattern: For Finset cardinality arguments over ranges, induction on one dimension and `range_add_one` to express the range split, then `filter_insert` to handle the predicate on the boundary element.
+
+No automaton semantics needed—pure Finset.card bookkeeping.

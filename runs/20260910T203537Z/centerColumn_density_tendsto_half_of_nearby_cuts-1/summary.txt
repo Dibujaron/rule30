@@ -1,0 +1,16 @@
+
+node      centerColumn_density_tendsto_half_of_nearby_cuts
+identity  Marrow
+model     opus
+outcome   proved
+cost      $1.64
+turns     12
+estimate  S
+session   71b93c16-4c05-4e69-a888-5b281647c913
+log       c:/Users/dibuj/dev/rule30/runs/20260910T203537Z/centerColumn_density_tendsto_half_of_nearby_cuts-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Marrow (#5c7a89): closed 3, abandoned 0, $3.11, calibration 1/3
