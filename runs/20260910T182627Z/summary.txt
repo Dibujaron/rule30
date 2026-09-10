@@ -1,0 +1,43 @@
+
+seeder    Seeder
+model     opus
+region    (whole board)
+ended     finished — the seeder reported its proposal written; that is its claim about the file, and the check below is the only adjudication
+ceilings  80 turns, $12.0
+cost      $7.66
+turns     42
+session   4e0dd296-7273-48d9-93d7-595506b11e17
+log       c:/Users/dibuj/dev/rule30/runs/20260910T182627Z/seed-1
+proposal  c:/Users/dibuj/dev/rule30/blueprint/proposals/next.json
+
+Five nodes proposed under the two diagonal walls, all with routes verified by lake env lean and axiom-clean; the flagship pair prices the early settlings crystal 62 asks for, taking a measured ladder from the refuted 1.99 to 1.70 against a budget of 2.
+
+check of c:/Users/dibuj/dev/rule30/blueprint/proposals/next.json:
+leftDiagonal_periodicFrom_step_two_of_black
+  DOES NOT PROVE: Does not prove leftDiagonal_onset_le and does not bear on a prize conjecture — it is a claim about the left edge of the cone, where periodicity is already proved. It is one step rule and not a ladder: the ladder that would use it is deliberately not proposed, because a ladder's hypothesis shape is exactly what killed the previous one (leftDiagonal_onset_le_not_of_black_ladder), and 1.697 is a measured slope over 5000 levels, not a proof that the slope stays below 2. No witness is offered: the hypotheses are periodicity statements, which no finite range expresses, and reading leftDiagonal through evolve costs 3^(j+k), so a naive witness cannot reach index 18 where the first transient lives. The packed-row twin rowNat_return_succ_two carries the witness for the same mechanism instead.
+  under:   leftDiagonal_onset_le
+  route:   closes the statement
+  witness: unchecked — no witness supplied
+rowNat_return_succ_two
+  DOES NOT PROVE: Does not prove leftDiagonal_onset_le and does not bear on a prize conjecture. It is a sufficient condition, not a characterisation: the front also advances for reasons this rule does not name, and nothing here says how often the two black bits occur.
+  under:   leftDiagonal_onset_le
+  route:   closes the statement
+  witness: holds over T < 200, n < 40, at shift p = 16 — the real rows, read through rowNat rather than evolve, so it reaches far past row 18 where the first transient lives. Ran clean and returned true under lake env lean this session.
+leftDiagonal_periodicFrom_of_rowNat_agree_any
+  DOES NOT PROVE: Does not prove leftDiagonal_period_le and does not bear on a prize conjecture. It is a strict weakening of the landed leftDiagonal_periodicFrom_of_rowNat_agree in its conclusion (onset T, not k) in exchange for dropping a hypothesis; it is not stronger, and it says nothing about how small p can be taken.
+  under:   leftDiagonal_period_le
+  route:   closes the statement
+  witness: unchecked — no witness supplied
+stepMod_preperiod_of_return
+  DOES NOT PROVE: Does not prove leftDiagonal_onset_le and does not bear on a prize conjecture. It is pure iteration algebra about an arbitrary function's orbit — it says nothing whatever about rule 30, and it is the only node in this tier that would be equally true of any map at all.
+  under:   leftDiagonal_onset_le
+  route:   closes the statement
+  witness: unchecked — no witness supplied
+stepMod_preperiod_of_odd
+  DOES NOT PROVE: Does not prove leftDiagonal_onset_le and does not bear on a prize conjecture. It removes half the state space and leaves the hard half: the odd starts are where every measured worst case lives, so this is a reduction, not progress on the bound. B is a hypothesis, not a construction — the theorem is silent on whether any B with the wall's slope exists.
+  under:   leftDiagonal_onset_le
+  route:   closes the statement
+  witness: unchecked — no witness supplied
+
+4 unchecked, 1 holds
+

@@ -1,110 +1,78 @@
-// Seeder scratch, 2026-09-10.
+// Two provable step rules for the packed-row agreement front, and the ladder
+// they generate.  Crystal 62 refutes the reset-only ladder (slope 1.96 against
+// a budget of 2, and C_119 = 237 > 236).  This adds the second rule.
 //
-// `leftDiagonal_onset_le_of_black_ladder` is closed. Its ladder N is STRICTLY
-// increasing, so `N k <= k` forces `N 0 = 0` and `N k = k` for every k: exactly
-// one ladder is admissible. So the wall's residual through that block is the one
-// concrete sequence
+// Write r = rowNat T, s = rowNat (T+p), and suppose r = s mod 2^(n+1)
+// (bits 0..n agree -- the front is at level n).  Then bit b of the next row is
+//   bit(b-2) XOR (bit(b-1) OR bit b),
+// so:
+//   RESET   bit n of r black                        => bits 0..n+1 agree at T+1
+//   DOUBLE  bit n black AND bit (n+1) of BOTH black => bits 0..n+2 agree at T+1
+// The second holds because the two ORs are then both `true`, so bit n+2 of the
+// successor inherits from bit n, which already agreed.
 //
-//     for every k:  leftDiagonal (k+1) (k+1) = true
-//                   OR  diagonal k+1 is white from index k+1 on.
+// The ladder never consults the truth: it moves the front by the rules alone.
 //
-// This script measures it, in the packed-row model the board already has:
-//   rowNat 0 = 1, rowNat (t+1) = (4r) XOR ((2r) OR r)          (Basic.lean rowStep)
-//   leftDiagonal k j = bit k of rowNat (j + k)                  (landed lemma)
-//   centerColumn t   = bit t of rowNat t                        (landed lemma)
-//
-// Cross-checks first, so a null result cannot be the model being wrong.
-import { centerColumn as engineCenter, A051023_PREFIX } from './rule30.mjs'
+//   node explorer/seeder_ladder.mjs
 
-const K = 3000
+const LEVELS = 5000;
+const P = 16;
+const TMAX = LEVELS * 3 + 128;
 
-// A051023 prefix, read from the repo (explorer/verify.mjs checks the engine
-// against this same constant) rather than from anyone's memory.
-const A051023 = A051023_PREFIX.join('')
-
-function rows (n) {
-  const out = new Array(n + 1)
-  let r = 1n
-  out[0] = r
-  for (let t = 1; t <= n; t++) {
-    r = (4n * r) ^ ((2n * r) | r)
-    out[t] = r
-  }
-  return out
-}
-
-const bit = (r, i) => ((r >> BigInt(i)) & 1n) === 1n
-
-// We need rowNat up to index 2K+2 to read leftDiagonal (k+1) (k+1) for k <= K.
-const N = 2 * K + 4
-const R = rows(N)
-
-// --- check 1: centre column against the OEIS prefix -------------------------
-let center = ''
-for (let t = 0; t < A051023.length; t++) center += bit(R[t], t) ? '1' : '0'
-if (center !== A051023) {
-  console.error('MODEL WRONG: centre column disagrees with A051023')
-  console.error('  got  ' + center)
-  console.error('  want ' + A051023)
-  process.exit(1)
-}
-console.log('check 1 ok: centre column = A051023 prefix (' + A051023.length + ' terms)')
-
-// --- check 2: centre column against the independent BigInt engine ----------
+const WIDTH = BigInt(LEVELS + 8);
+const MOD = 1n << WIDTH;
+const rows = [];
 {
-  const eng = [...engineCenter(400)].join('')
-  let mine = ''
-  for (let t = 0; t < 400; t++) mine += bit(R[t], t) ? '1' : '0'
-  if (eng !== mine) {
-    console.error('MODEL WRONG: disagrees with explorer/rule30.mjs centerColumn')
-    for (let t = 0; t < 400; t++) if (eng[t] !== mine[t]) { console.error('  first at t=' + t); break }
-    process.exit(1)
+  let r = 1n;
+  for (let t = 0; t <= TMAX + P + 8; t++) { rows.push(r); r = ((4n * r) ^ ((2n * r) | r)) % MOD; }
+}
+const bit = (t, n) => ((rows[t] >> BigInt(n)) & 1n) === 1n;
+const agree = (t, n) => ((rows[t] ^ rows[t + P]) & ((1n << BigInt(n + 1)) - 1n)) === 0n;
+
+// sanity: the two rules really are sound against the truth
+let checked = 0, violations = 0;
+for (let T = 20; T < 3000; T++) {
+  for (let n = 0; n < 40; n++) {
+    if (!agree(T, n)) continue;
+    if (bit(T, n)) {
+      checked++;
+      if (!agree(T + 1, n + 1)) violations++;
+      if (bit(T, n + 1) && ((rows[T + P] >> BigInt(n + 1)) & 1n) === 1n) {
+        checked++;
+        if (!agree(T + 1, n + 2)) violations++;
+      }
+    }
   }
-  console.log('check 2 ok: centre column = explorer engine (400 terms)')
 }
+console.log(`rule soundness: ${checked} instances, ${violations} violations`);
 
-// --- check 3: the three edge diagonals, which the board has proved ---------
-// leftDiagonal 0 all black, 1 all black, 2 all white.
-for (let j = 0; j < 500; j++) {
-  if (!bit(R[j + 0], 0)) { console.error('MODEL WRONG: leftDiagonal 0 not black at ' + j); process.exit(1) }
-  if (!bit(R[j + 1], 1)) { console.error('MODEL WRONG: leftDiagonal 1 not black at ' + j); process.exit(1) }
-  if (bit(R[j + 2], 2)) { console.error('MODEL WRONG: leftDiagonal 2 not white at ' + j); process.exit(1) }
+// the ladder
+let t = 0, n = 0;
+while (!agree(t, 0)) t++;
+let doubles = 0, singles = 0, stalls = 0, stalled = [];
+const trace = [];
+while (n < LEVELS) {
+  // wait for the reset
+  let u = t;
+  while (u < t + 4000 && !bit(u, n)) u++;
+  if (u >= t + 4000) {
+    // level n's control diagonal is eventually white: crystal 45's white branch,
+    // onset moves one index and the period doubles.  Counted, not free.
+    stalls++; stalled.push(n); t = t + 1; n = n + 1;
+    if (n <= LEVELS) trace.push([n, t]);
+    continue;
+  }
+  const both = bit(u, n + 1) && ((rows[u + P] >> BigInt(n + 1)) & 1n) === 1n;
+  t = u + 1;
+  n += both ? 2 : 1;
+  if (both) doubles++; else singles++;
+  if (n <= LEVELS) trace.push([n, t]);
 }
-console.log('check 3 ok: left diagonals 0,1 black and 2 white to j=500')
-
-const D = (k, j) => bit(R[j + k], k)
-
-// --- the residual ----------------------------------------------------------
-// black witness at the forced index
-const blackFails = []
-for (let k = 0; k <= K; k++) if (!D(k + 1, k + 1)) blackFails.push(k)
-
-console.log('\n--- black branch: leftDiagonal (k+1) (k+1) for k <= ' + K + ' ---')
-console.log('failures: ' + blackFails.length + ' of ' + (K + 1))
-console.log('first 40 failing k: ' + blackFails.slice(0, 40).join(' '))
-
-// For each failing k, is diagonal k+1 white from index k+1 on (as far as we see)?
-// We can see diagonal k+1 out to index N-(k+1). Report the next black cell.
-console.log('\n--- for the failures, the next black cell of diagonal k+1 at/after k+1 ---')
-let unresolved = 0
-const gaps = []
-for (const k of blackFails.slice(0, 25)) {
-  const d = k + 1
-  let j = k + 1
-  const lim = N - d
-  while (j < lim && !D(d, j)) j++
-  if (j >= lim) { console.log('  k=' + k + '  diagonal ' + d + ': no black seen to index ' + lim); unresolved++ }
-  else console.log('  k=' + k + '  diagonal ' + d + ': next black at ' + j + '  (gap ' + (j - (k + 1)) + ')')
-}
-for (const k of blackFails) {
-  const d = k + 1
-  let j = k + 1
-  const lim = N - d
-  while (j < lim && !D(d, j)) j++
-  if (j < lim) gaps.push(j - (k + 1))
-}
-if (gaps.length) {
-  gaps.sort((a, b) => a - b)
-  console.log('\ngap stats over ' + gaps.length + ' failures: min ' + gaps[0] +
-    '  median ' + gaps[gaps.length >> 1] + '  max ' + gaps[gaps.length - 1])
-}
+console.log(`ladder: reached level ${n} at time ${t}  -> slope ${(t / n).toFixed(4)} (budget 2)`);
+console.log(`  double steps ${doubles}, single steps ${singles}, stalled at ${stalled.join(',') || 'never'}`);
+let worst = 0, worstN = 0;
+for (const [nn, tt] of trace) { if (tt - 2 * nn > worst) { worst = tt - 2 * nn; worstN = nn; } }
+console.log(`  worst excess of time over 2*level: ${worst} at level ${worstN}`);
+let ratio = 0, ratioN = 0;
+for (const [nn, tt] of trace) { if (nn > 4 && tt / nn > ratio) { ratio = tt / nn; ratioN = nn; } }
+console.log(`  worst ratio time/level: ${ratio.toFixed(4)} at level ${ratioN}`);
