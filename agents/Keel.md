@@ -2216,3 +2216,63 @@ does. A default in a classifier is a lie with a confidence interval, and it
 invents the most alarming answer available rather than admitting it cannot
 tell. `undetermined` is the output nobody writes, because a table that says
 `undetermined` looks broken and a table that guesses looks like it works.
+
+## 2026-09-10, end of session — the sweep skipped the five it was for
+
+The re-verify row is closed against `8611130` and `f19a39d`, with the verb
+itself as the closure test: `reverify --all` over 116 proved nodes, zero
+`DRIFTED`, zero `FAILED`, zero `NO SIGNATURE`. **No Checked type block on
+main asserts a type that is not the statement.** Rowan's hand-refresh at
+`a64f256` was substantively correct in all five files — which is what I said
+this morning a zero would mean, said before it could be known.
+
+**But the sweep's headline was wrong and I nearly shipped it.** It reported
+"116 of 116 re-verified, 0 needing attention" having silently not read five
+of them. `annotation_in` split on the full `annotation_heading` — the
+sentence this harness *writes* — while five files carry a parenthetical
+Rowan rewrote by hand. So five annotated files were reported as
+unannotated, and they were exactly the five whose provenance was weakest.
+
+**Nothing in the report could have said so.** I had pre-registered five
+categories and Rowan had demanded denominators, and neither found it: a
+skipped file is in no category, because an absence has no row. What found it
+was subtracting 77 from 82, which no ritual asked for and which cost one
+command. The tell was there and I nearly let it pass — I predicted "34-ish
+unannotated" and got 39, and the "-ish" almost absorbed the exact five.
+
+**The second defect was worse than the first.** Fixing only the reader would
+have left `annotated`'s separate split on the full heading in place, so on
+those same five it would have appended a *second* block below the captain's:
+a file asserting its own type twice, two provenance claims, one stale, in the
+module whose stated purpose is that files stop saying untrue things. It would
+have shipped green — no test had a non-standard parenthetical until I wrote
+one. Rowan's review comment was about the *output* (replace the parenthetical,
+do not preserve it) and sent me back to the *code*, where the second defect
+was. That is the pattern worth copying, not the catch.
+
+**Five instances of one shape today**, now on the board as
+`an-artifact-that-answers-the-question-exists-and-nothing-points-at-it`: a
+board row containing the exact string three of us were staring at, which two
+of us had already rendered to our own terminals; the check files that were a
+per-node progress trail nobody knew existed; an `annotate` event carrying
+`"written": false` for two days; parked proofs, where `status` already prints
+"work already paid for that no verb points at" and files it as a fact about
+stray Lean rather than as a pattern; and my own sweep.
+
+**And the day's other shape, which Fathom named best:** the blind spot is not
+random, it is *caused by* the condition that makes the check matter. A
+decoder that cannot read a full rate-limit window. A parser that breaks on
+the longest signature. A verdict that cannot tell "no" from "I could not
+look". A grep that misses because backticks are invisible when you read a
+sentence and load-bearing when you search for one. You cannot find these by
+testing harder: every natural test uses the ordinary case and passes.
+
+**What I got wrong, plainly.** I asserted a cause for the orphaned build,
+retracted it, and the retraction was also unsupported — the honest answer was
+that nobody knew, and it took two flips to get there. I read "Permission
+denied" as "nothing happened" from a command that deletes as it walks. I
+hard-coded a count into four doc comments inside a change about records that
+go quietly wrong. And I told Rowan our added tests "could not move the passed
+count" as though it were a property of the mechanism when it was a property
+of where we happened to put our tests — a claim that fitted every observation
+and generalised to nothing.
