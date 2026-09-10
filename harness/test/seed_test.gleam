@@ -916,6 +916,7 @@ fn brief() -> String {
     ],
     notes: [#("EvolveLeftEdge.lean", "**What this says.** The left edge is 1.")],
     crystals: Ok("# Seed crystals\n\nCandidate statements for future tiers."),
+    connections: [],
     explorer_readme: "the BigInt engine",
     proposal_path: "C:/r/blueprint/proposals/next.json",
     region: option.None,
@@ -942,6 +943,7 @@ fn two_region_brief(region: option.Option(String)) -> String {
     ],
     notes: [],
     crystals: Error(Nil),
+    connections: [],
     explorer_readme: "",
     proposal_path: "p",
     region:,
@@ -1001,6 +1003,7 @@ pub fn the_brief_says_when_nothing_is_open_test() {
       closed: [closed_node("a", dag.S, "haiku", 0.1)],
       notes: [],
       crystals: Error(Nil),
+      connections: [],
       explorer_readme: "",
       proposal_path: "p",
       region: option.None,
@@ -1027,6 +1030,7 @@ pub fn the_brief_says_when_the_literature_seeds_are_absent_test() {
       closed: [],
       notes: [],
       crystals: Error(Nil),
+      connections: [],
       explorer_readme: "",
       proposal_path: "p",
       region: option.None,
@@ -1368,6 +1372,7 @@ pub fn the_brief_derives_its_counts_rather_than_stating_them_test() {
       ],
       notes: [],
       crystals: Error(Nil),
+      connections: [],
       explorer_readme: "",
       proposal_path: "p",
       region: option.None,
@@ -1387,6 +1392,7 @@ pub fn the_brief_derives_its_counts_rather_than_stating_them_test() {
       ],
       notes: [],
       crystals: Error(Nil),
+      connections: [],
       explorer_readme: "",
       proposal_path: "p",
       region: option.None,
@@ -1460,6 +1466,7 @@ pub fn a_regional_brief_with_nothing_open_aims_at_the_prize_theorem_test() {
       ],
       notes: [],
       crystals: Error(Nil),
+      connections: [],
       explorer_readme: "",
       proposal_path: "p",
       region: option.Some("P2"),
@@ -1536,6 +1543,7 @@ pub fn costs_are_rendered_as_money_test() {
       closed: [closed_node("a", dag.M, "sonnet", 0.7975254000000002)],
       notes: [],
       crystals: Error(Nil),
+      connections: [],
       explorer_readme: "",
       proposal_path: "p",
       region: option.None,
@@ -1551,6 +1559,7 @@ pub fn a_small_cost_keeps_both_places_test() {
       closed: [closed_node("a", dag.S, "haiku", 0.0709461)],
       notes: [],
       crystals: Error(Nil),
+      connections: [],
       explorer_readme: "",
       proposal_path: "p",
       region: option.None,
@@ -1662,4 +1671,196 @@ pub fn check_source_ignores_blank_lines_when_measuring_the_margin_test() {
       seed.Route(tactics: "    intro k\n\n    simp", imports: []),
     )
   assert string.contains(src, "theorem foo : True := by\n  intro k\n\n  simp")
+}
+
+// --- connect documents reaching the seeder ------------------------------------
+
+/// A connect document, shaped like the real ones: a `# ` title, several `##`
+/// sections, and `## 5. What to hand the theorist` carrying the payload.
+fn connect_doc(title: String, section_five: String) -> String {
+  "# Sighting: "
+  <> title
+  <> "\n\n## 1. The problem, seen from outside\nlong prose\n\n"
+  <> "## 3. Connections\nmuch longer prose\n\n"
+  <> "## 5. What to hand the theorist\n\n"
+  <> section_five
+  <> "\n\n## 6. Next vantage\nsomething else\n"
+}
+
+fn with_connections(dir: String, docs: List(#(String, String))) -> Nil {
+  let _ = simplifile.create_directory_all(dir <> "/docs/connections")
+  list.each(docs, fn(d) {
+    let assert Ok(_) = simplifile.write(dir <> "/docs/connections/" <> d.0, d.1)
+    Nil
+  })
+}
+
+/// The payload is lifted verbatim and the full document is pointed at.
+///
+/// Not the whole document: on 2026-09-10 `docs/connections/` held 549 KB
+/// across twelve documents and was read by no brief at all. Their section 5s
+/// totalled 32.7 KB — six percent — which is what makes carrying every
+/// document's own conclusions affordable where carrying the documents is not.
+pub fn connections_carry_each_document_s_own_conclusions_test() {
+  let dir = "build/test-runs/seed/connections-payload"
+  let _ = simplifile.delete(dir)
+  with_connections(dir, [
+    #(
+      "2026-09-09-synchronizing-automata.md",
+      connect_doc(
+        "synchronizing automata",
+        "**Topic A — the cascade is exactly critical.** Falsify: the tail bound is not tight below n = 40, and the term a worker wants is `rho`.",
+      ),
+    ),
+  ])
+  let assert [c] = seed.connections(dir)
+  assert c.path == "docs/connections/2026-09-09-synchronizing-automata.md"
+  assert c.title == "Sighting: synchronizing automata"
+  assert c.complete
+  // Verbatim, and only section 5 — the prose above and below it stays out.
+  assert string.contains(c.payload, "the cascade is exactly critical")
+  assert !string.contains(c.payload, "much longer prose")
+  assert !string.contains(c.payload, "Next vantage")
+}
+
+/// An unfinished document is marked, not inlined.
+///
+/// `docs/connections/2026-09-09-the-census-of-aperiodicity-proofs-*.md` has a
+/// section 5 reading `*(being written)*` — 50 bytes where the others are two
+/// to four thousand. A connector session ended mid-document and nothing
+/// anywhere records that the document is incomplete, so a reader who opens it
+/// gets four good sections and an empty payload with no signal. Inlining that
+/// silently would produce a crystal that says nothing while looking like one.
+pub fn an_unfinished_connect_document_is_flagged_rather_than_inlined_test() {
+  let dir = "build/test-runs/seed/connections-stub"
+  let _ = simplifile.delete(dir)
+  with_connections(dir, [
+    #(
+      "2026-09-09-the-census.md",
+      connect_doc("the census", "*(being written)*"),
+    ),
+    #(
+      "2026-09-09-t-functions.md",
+      connect_doc(
+        "t-functions",
+        "**Topic A — the all-starts rho-tail bound.** Falsify: for every start the tail is under 2n, which the census would have to contradict explicitly to matter here at all.",
+      ),
+    ),
+  ])
+  // Found by path, not by position. These two sort as t-functions BEFORE
+  // the-census (`-` precedes `h`), which is not what the filenames look like
+  // they do — positional destructuring named them backwards and the test
+  // failed for a reason that had nothing to do with the code under test.
+  let cs = seed.connections(dir)
+  let assert Ok(census) =
+    list.find(cs, fn(c) { string.contains(c.path, "census") })
+  let assert Ok(tfun) =
+    list.find(cs, fn(c) { string.contains(c.path, "t-functions") })
+  assert census.complete == False
+  assert tfun.complete == True
+
+  let text =
+    seed.brief(
+      open: [],
+      closed: [],
+      notes: [],
+      crystals: Error(Nil),
+      connections: seed.connections(dir),
+      explorer_readme: "",
+      proposal_path: "p.json",
+      region: option.None,
+    )
+  // The finished one is carried; the unfinished one says so instead.
+  assert string.contains(text, "the all-starts rho-tail bound")
+  assert string.contains(text, "UNFINISHED")
+  assert !string.contains(text, "(being written)")
+}
+
+/// The brief names the section and points at the directory, so a seeder that
+/// wants more than the conclusions knows where to look.
+pub fn the_brief_points_at_the_full_connect_documents_test() {
+  let dir = "build/test-runs/seed/connections-pointer"
+  let _ = simplifile.delete(dir)
+  with_connections(dir, [
+    #(
+      "2026-09-08-profinite-dynamics.md",
+      connect_doc(
+        "profinite dynamics",
+        "**Topic 1.** The right side has no in-degree-one pair map below the wall, and that is the thing to falsify first.",
+      ),
+    ),
+  ])
+  let text =
+    seed.brief(
+      open: [],
+      closed: [],
+      notes: [],
+      crystals: Error(Nil),
+      connections: seed.connections(dir),
+      explorer_readme: "",
+      proposal_path: "p.json",
+      region: option.None,
+    )
+  assert string.contains(text, "docs/connections/")
+  assert string.contains(
+    text,
+    "docs/connections/2026-09-08-profinite-dynamics.md",
+  )
+  assert string.contains(text, "in-degree-one pair map")
+}
+
+/// A checkout with no connect documents says so, rather than contributing an
+/// empty heading that reads as "the connectors found nothing".
+pub fn no_connect_documents_says_so_test() {
+  let dir = "build/test-runs/seed/connections-absent"
+  let _ = simplifile.delete(dir)
+  let assert Ok(_) = simplifile.create_directory_all(dir)
+  assert seed.connections(dir) == []
+  let text =
+    seed.brief(
+      open: [],
+      closed: [],
+      notes: [],
+      crystals: Error(Nil),
+      connections: [],
+      explorer_readme: "",
+      proposal_path: "p.json",
+      region: option.None,
+    )
+  assert string.contains(text, "no docs/connections in this checkout")
+}
+
+/// The twelve real connect documents in this checkout, extracted by the same
+/// function the brief uses. Guards the extractor against the actual corpus
+/// rather than against fixtures shaped like it.
+pub fn the_real_connect_documents_extract_test() {
+  let cs = seed.connections("../")
+  // Twelve on 2026-09-10; this asserts the shape, not the count, so a
+  // thirteenth connector does not turn this red.
+  assert list.length(cs) >= 12
+  // The two signals, checked against the corpus rather than asserted: the
+  // finished documents are thousands of bytes and the stub is tens, so
+  // nothing real sits near the 80-byte floor where the heuristic could be
+  // wrong in either direction.
+  list.each(cs, fn(c) {
+    case c.complete {
+      True -> {
+        assert string.length(c.payload) > 1000
+      }
+      False -> {
+        assert string.length(c.payload) < 100
+      }
+    }
+  })
+  let complete = list.filter(cs, fn(c) { c.complete })
+  let stubs = list.filter(cs, fn(c) { !c.complete })
+  // Every finished document carries a real payload.
+  list.each(complete, fn(c) {
+    assert string.length(c.payload) > 200
+    assert string.starts_with(c.path, "docs/connections/")
+  })
+  // And the census document is the one that is not finished.
+  list.each(stubs, fn(c) {
+    assert string.contains(c.path, "census")
+  })
 }
