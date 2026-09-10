@@ -2556,4 +2556,30 @@ theorem centerColumn_not_isEventuallyPeriodic_of_deep_alternating
     ¬ IsEventuallyPeriodic centerColumn := by
   sorry
 
+/-- **A periodic centre column has short white runs.** If the centre column
+has period `p > 0` from `N`, every maximal white run beginning at or after `N`
+has length at most `p - 1`.
+
+Proposed by Groma (connector, 2026-09-10). Two lines from
+`centerColumn_not_eventually_constant`: a run of length `p` starting late
+would force the whole period white, and the column is black infinitely often.
+
+**Why this node exists, and it is a correction rather than an addition.** The
+switch-index reformulation was landed and reported — by me — as applying to
+the family `X_b` and *not* to the seed, on the grounds that rule 30's own
+centre column has long runs and nothing bounds them. That is true
+unconditionally and **irrelevant where the residual is actually stated**: the
+residual's hypothesis *is* eventual periodicity, and under that hypothesis the
+runs are bounded. So the finite alphabet is available on the seed exactly
+where it is needed.
+
+DOES NOT PROVE: the hypothesis is the negation of P1, so it is counterfactual
+and yields no measurement — nobody can exhibit such a `p`. It bounds the
+alphabet of an object nobody can construct. -/
+theorem centerColumn_white_run_le_period (p N : ℕ) (hp : 0 < p)
+    (hc : ∀ t ≥ N, centerColumn (t + p) = centerColumn t)
+    (t : ℕ) (ht : N ≤ t) (hrun : ∀ s < p, centerColumn (t + s) = false) :
+    False := by
+  sorry
+
 end Statements

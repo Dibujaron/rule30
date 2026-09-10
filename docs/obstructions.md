@@ -1588,3 +1588,112 @@ Scripts `explorer/sextant7_front.mjs`, `sextant7_deep.mjs`, `sextant7_forced.mjs
 `sextant7_scratch_axioms.lean` beside it as the demonstration that the check can
 fail — it runs the same proof with one bit of the forcing triple flipped and Lean
 rejects it at the line the flip breaks.
+
+## Prize 2's excess cannot be bounded through the half-line, and the run route is capped below the target
+
+**The natural attempt.** P2 has twelve proved nodes and ten of them are true of
+any `ℕ → Bool`, so the region wants one statement about the excess
+`E(N) = 2·count(N) − N` that a coin could fail. Three look available. *Localise:*
+`centerColumn_density_tendsto_half_of_nearby_cuts` says balance need only be
+checked at a thin set of cuts, so find a sparse set rule 30 supplies — the period
+doublings, the eventually-white left diagonals, the powers of two — where the
+excess is easier to control. *Determine:* the board's black-time law
+(`column_succ_of_black`) and Dioptra's white-time law
+(`centre_forced_after_double_white`) make `0.6885` of the centre column a
+function of column `−1`, measured over 200,000 rows, so ask what a count
+inherits from a determination. *Count runs:* bound some moment of the
+run-length distribution and read off a bound on the excess.
+
+**Why all three fail, and the third fails in principle.**
+
+*The sparse-cut route dies on the lemma's own hypothesis.* The lemma asks that
+**for every** `d` there be a cut `M ≤ N` with `d·(N − M) ≤ N`, i.e. a cut inside
+`[N(1 − 1/d), N]` for every `d` and all large `N`. That set must meet every
+multiplicative window and is therefore not sparse in any useful sense. Every
+rule-30-supplied set on the board is exponentially sparse and admits `d = 1` and
+no more: worst relative gap `0.99996` for the doublings `3, 8, 29, 400, 87867,
+2107985255`, `0.99994` for the whites `2, 7, 28, 399, 53207, 58286, 87866,
+1420878968`, `0.5` for the powers of two. Granting admissibility buys nothing
+either: at those cuts `|E|/√N` reaches `0.72`, `1.41`, `1.56` against a fair
+coin's `1.41`, `1.13`, `2.00` on the same sets to `N = 10^7`
+(`explorer/talus7_analyse.mjs`).
+
+*The determination route is vacuous by a theorem, not by a measurement.* Both
+forcing laws are stated for an **arbitrary** `Config`. Crystal 40 says every
+Bool sequence `b` is the centre column of a configuration white at every
+`x ≥ 1`, so both laws hold with `b` in place of the centre column, for every
+`b`: **any consequence of them alone is true of every Bool sequence and can
+bound nothing.** The law `c(t+1) = ¬L(t)` is in fact `sideways_inverse` at the
+origin read backwards — it *defines* column `−1` from columns `0` and `1`
+rather than restricting column `0`, and "`c(t+1) = ¬L(t)` holds exactly when
+`c(t) ∨ col₁(t)`" fails `0` of `199,999` times on the seed. The coverage figure
+is a coin's: `dens(c ∨ col₁)` is `0.7508` for the seed and `0.7495`, `0.7504`,
+`0.7523` for three fair-coin boundaries, while the black law's `0.5004` is the
+centre column's own density quoted back (`explorer/talus7_coverage.mjs`,
+`T = 200,000`). This is the **third** death of the shape obstruction 20 asked
+for: no statistic computable from the half-line separates the seed from an
+arbitrary boundary, and the family is statistically indistinguishable.
+
+*The run route is capped below the target.* Measured, the run-length
+distribution **is** geometric: at `N = 10^7` the means are `1.99878` and
+`2.00056` against `2`, `E[L²]` is `5.99340` and `6.00242` against `6`, and every
+per-length ratio from `1` to `12` lies in `[0.94, 1.03]`, a fair coin's own
+scatter. But the route would fail even if it worked: if every run below `N` had
+length at most `c·log N` there would be at least `N/(c log N)` runs, so the
+minority colour would occur at least `N/(2c log N)` times and
+`|E(N)| ≤ N(1 − 1/(c log N))`, which is **not** `o(N)`. Since the true longest
+run tracks `log₂ N` (22 white and 23 black below `10^7`), no sharpening of a run
+bound can reach P2.
+
+*And the excess itself is a coin at every statistic reached.* To `10^7` rows,
+`E = 4440 = 1.404√N`, minimum `−257` at `172,711`, maximum `4605`, first
+negative at `N = 127`, last non-positive at `195,112` — so it changes sign only
+170 times and is positive over the last 98% of the range. Those three look
+unlike a walk and are not: against **40 fair-coin draws of the same length**,
+`6`, `5` and `2` of `40` are at least as extreme, and the three are the arcsine
+law seen from three sides (`explorer/talus7_null.mjs`).
+
+**What it would take.** Something that uses the left cone, which is the only
+part of the picture the family does not share, exactly as for P1. The one thing
+the cone does give is a bound on the centre column's runs, and it is worth
+recording because it is the only quantitative rule-30 bound on `E(N)` anyone has
+produced: while the centre column is black, `column_succ_of_black` and
+`evolve_sub_one_eq_xor` force the checkerboard leftward one column per step, and
+`evolve_left_edge` with `evolve_left_second_diagonal` put two **adjacent** black
+cells at the cone edge, which a checkerboard cannot match. So a maximal black
+run beginning at time `a` has length at most `a`; run starts at most double;
+there are at least `log₂N − O(1)` maximal runs below `N`; and
+
+    |E(N)| ≤ N − log₂ N + O(1).
+
+Measured: the forced alternation fails `0` of `500,759` cells over every maximal
+black run below `10^6`, and `L ≤ a` has `0` violations in `500,570` maximal runs
+of either colour with `a ≥ 1`, tight at `a = 3` — the only run outside it being
+the seed's own opening `1,1` at `a = 0` (`explorer/talus7_runbound.mjs`; kernel
+`explorer/talus7_scratch_alternation.lean`, with `talus7_scratch_mutant.lean`
+beside it as the demonstration that the check can fail). The determination is
+Wolfram 1986 §7 lines 1118–1120 ("if the position 0 sequence consists solely of
+ones, then the whole triangle of sites is completely determined"); the
+identification of that triangle as `(10)^ℤ` and the run bound are not in print.
+The bound is worth `23` at `N = 10^7`.
+
+**One place the rule does bite, and it is the other marginal.** Rule 30's law is
+between horizontally adjacent cells, so it constrains a **row** count where it
+constrains no column count at all. Crystal 8's forbidden block gives
+`b(t+1) ≤ (2t+3) − (b(t) − ρ(t))` with `ρ(t)` the number of maximal black runs,
+and `ρ(t) ≤ (2t+1−b(t)) + 1`, hence `b(t+1) + 2b(t) ≤ 4t+5` and a triangle black
+density of at most `2/3 + O(1/T)` — better than the cone's `1`, which crystals
+29 says is all that is provable. Exactly, `b(t+1) = ρ(t) + 2·G₂(t) + 2` with
+`G₂` the interior white gaps of length `≥ 2`. Both hold with `0` failures over
+rows `1 … 299,999` and the inequality is tight at `t = 1`
+(`explorer/talus7_rows.mjs`). **Consequence for a seeder, and it is the honest
+summary of this entry:** a P2 proposal about the centre column that does not
+name the cone is refuted in advance by crystal 40, and the row marginal is where
+the automaton's local law actually has purchase.
+
+**Recorded** 2026-09-10 by Talus, from the attack document
+`docs/attacks/2026-09-10-prize-2-s-residual-find-any-bound-on-the-centre-column-s-excess-that-uses-rule-30-the-measurement-that-defines-this-topi.md`.
+Scripts `explorer/talus7_center.mjs`, `talus7_deep.mjs`, `talus7_analyse.mjs`,
+`talus7_coverage.mjs`, `talus7_runbound.mjs`, `talus7_rows.mjs`,
+`talus7_diagbalance.mjs`, `talus7_filter.mjs`, `talus7_null.mjs`,
+`talus7_pickrun.mjs`.

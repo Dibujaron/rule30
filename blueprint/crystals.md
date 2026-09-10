@@ -1071,9 +1071,12 @@ in another coat, and would sit beside it, not under it.
     - a **measurement** the residual admits that P1 does not — the run-length
       question is genuinely checkable at depth where "is it aperiodic" is not,
       and that is `..._of_long_black_runs`'s entire value;
-    - a **literature** the residual connects to that P1 does not — the
-      switch-index reformulation earns its keep this way, by putting the
-      object in a finite alphabet where symbolic dynamics has theorems;
+    - a **literature** the residual connects to that P1 does not. **The
+      switch-index reformulation was my example here and crystal 73
+      refutes it within the hour**: the finite alphabet is a change of
+      units, every low-complexity class is excluded by measurement, and
+      the criteria are undecidable as a class. An example of this clause
+      that survives contact is still wanted;
     - or a **strictly smaller object** — fewer quantifiers, a bounded
       alphabet, a local rather than asymptotic property.
 
@@ -1091,6 +1094,50 @@ in another coat, and would sit beside it, not under it.
 
     Rowan, captain, 2026-09-10, from counting the board rather than from
     reading it.
+
+73. **The finite alphabet is a change of units, and the one CA mechanism that
+    would have bounded the complexity is dead for rule 30.** Groma's switch-index
+    reading, and it is the negative the vantage was commissioned to find.
+
+    **The finite alphabet buys nothing for a proof.** On the hard boundaries the
+    integer reading and the bit reading are *the same sequence*; the alphabet
+    change is units, not structure. Every low-complexity structure class —
+    automatic, substitutive, Sturmian, linearly recurrent — is excluded by
+    measurement to `10^7` rows, and the criteria of that literature are
+    undecidable as a class, so no search of combinatorics on words will produce
+    one. **Do not commission that search.**
+
+    **Blocking words are dead by left-permutivity.** Chaining Kůrka's results
+    with the board's proved `rule30_leftPermutive`: rule 30 has **no `r`-blocking
+    word at any length**, hence no equicontinuous configuration, hence the one
+    mechanism in cellular-automaton theory that bounds a column subshift's
+    complexity *from above* never applies to it. This is the first thing a
+    symbolic-dynamics reader reaches for, and it is a two-line derivation that a
+    theorist can confirm or find a convention error in within the hour.
+
+    **The correction, and it is to me.** I reported the switch-index alphabet as
+    applying to the family `X_b` and *not* to the seed, because rule 30's runs
+    are long and unbounded. True unconditionally, and irrelevant: the residual's
+    hypothesis **is** eventual periodicity, and under that hypothesis every white
+    run is shorter than the period (`centerColumn_white_run_le_period`, two lines
+    from `centerColumn_not_eventually_constant`). The finite alphabet is
+    available on the seed exactly where it is needed. I stated the limitation
+    twice, confidently, and it was the wrong half of a conditional.
+
+    **What survives, and it passes crystal 72's fence on the third clause.** The
+    first-passage identity restates the residual as *"the leftmost black cell
+    right of the origin, read at the rows where the centre column turns white, is
+    eventually periodic"* — alphabet bounded by the maximum **gap** rather than
+    the maximum **run**, measured at `10` letters to 400,000 rows against runs
+    reaching `19`, growing like `log_4 t` on eight data points (stated as a
+    reading, not a law). A **strictly smaller object**, which is the one clause
+    of crystal 72 it needs to satisfy, and it is the only thing in that document
+    touching the residual itself. The four-case gap table behind it is already
+    `decide`-checked to `t < 60` with a non-vacuity guard and a failing mutant
+    beside it.
+
+    Groma, connector, 2026-09-10,
+    `docs/connections/2026-09-10-the-switch-index-sequence-*.md`. $31.24.
 
 ## The convergence of 2026-09-09, and the object no node states
 
