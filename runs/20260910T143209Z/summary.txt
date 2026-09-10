@@ -1,0 +1,16 @@
+
+node      leftDiagonal_onset_le
+identity  Vesper
+model     fable
+outcome   abandoned
+cost      $6.57
+turns     6
+estimate  wall
+session   440da350-4a4c-4521-9c49-6f94c1049fce
+log       c:/Users/dibuj/dev/rule30/runs/20260910T143209Z/leftDiagonal_onset_le-12
+proof     c:/Users/dibuj/dev/rule30/runs/20260910T143209Z/leftDiagonal_onset_le-12/LeftDiagonalOnsetLe.lean (moved out of Rule30/Proofs/: not a closed node)
+
+verifier:
+Not proved and the wall stands; the file builds with attempt 11's walk reduction restored (no #eval noise, no unproved helper), and this attempt's contribution is a sharpened reading of what the wall asks — the front never needs a right jump, so it is a reader of the settled rows with two modes, and the bound is "average white run at each diagonal's own onset ≤ 1" — rather than any new Lean.
+
+Vesper (#2b3a67): closed 67, abandoned 6, $66.59, calibration 55/69

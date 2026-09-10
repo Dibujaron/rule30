@@ -1629,4 +1629,128 @@ theorem stepMod_iterate_two_mul (n t s : ℕ) :
       = 2 * (stepMod n)^[t] s := by
   sorry
 
+/-- **The period doubles once per eventually-white diagonal, and by nothing
+else.** Carry two neighbouring left diagonals that share a period `q` from `N`
+on. Step inward `n` times; each step either leaves the period alone, or passes
+a diagonal that is white for ever and at most doubles it. So the period `n`
+diagonals in is `q` times two to the power of however many eventually-white
+diagonals were passed, counted by any nondecreasing `w`.
+
+This is the reduction half of `leftDiagonal_period_le`, and it is exactly
+`leftDiagonal_period_le_of_black_between` with the white diagonals permitted
+and paid for instead of forbidden. What it leaves open is the counting half:
+that at most `log2 (k+1)` of the first `k` diagonals are eventually white.
+
+Proposed by Seeder (2026-09-09); measured on the packed row model to `k = 400`,
+where the pair period rises exactly at the eventually-white diagonals
+`2, 7, 28, 399` and equals two to the power of their count, so the bound is
+attained and not merely respected. -/
+theorem leftDiagonal_period_le_of_white_count (m q N n : ℕ) (hq : 0 < q) (w : ℕ → ℕ)
+    (hw0 : w 0 = 0) (hmono : ∀ i, w i ≤ w (i + 1))
+    (hstep : ∀ i < n, (∀ J, ∃ j ≥ J, leftDiagonal (m + 1 + i) j = true) ∨ w i < w (i + 1))
+    (h0 : PeriodicFrom (leftDiagonal m) q N)
+    (h1 : PeriodicFrom (leftDiagonal (m + 1)) q N) :
+    ∃ M, PeriodicFrom (leftDiagonal (m + n)) (2 ^ w n * q) M ∧
+      PeriodicFrom (leftDiagonal (m + n + 1)) (2 ^ w n * q) M := by
+  sorry
+
+/-- **Past a white diagonal, the period doubles exactly when the parity is
+odd.** Once diagonal `m + 1` is white for ever, the recurrence loses a term and
+diagonal `m + 2` becomes a running XOR of diagonal `m`. One period of that
+driver flips it exactly when the period holds an odd number of black cells: even
+parity leaves the period at `q`, odd parity makes the diagonal antiperiodic, so
+its period is exactly `2q`.
+
+The board has the other half of this criterion already — a doubling *requires*
+an eventually-white predecessor. This says what a white predecessor actually
+does, which is what turns "at most one doubling per white diagonal" into an
+exact count. It is the argument of
+`rightDiagonal_antiperiodic_of_odd_driver` read on the other edge.
+
+Rowland (2006), Proposition 2 and Lemma 3, on the left edge. Proposed by Seeder
+(2026-09-09); the running-XOR identity was checked on 11,200 instances, a check
+that exists because the index alignment `N + j + 2` is the one thing here that
+can silently be off by one. -/
+theorem leftDiagonal_step_of_white_parity (m q N : ℕ) (hq : 0 < q)
+    (h0 : PeriodicFrom (leftDiagonal m) q N)
+    (hwhite : ∀ j ≥ N + 1, leftDiagonal (m + 1) j = false) :
+    (Even (∑ j ∈ Finset.range q, if leftDiagonal m (N + j + 2) = true then 1 else 0) →
+        PeriodicFrom (leftDiagonal (m + 2)) q N) ∧
+      (Odd (∑ j ∈ Finset.range q, if leftDiagonal m (N + j + 2) = true then 1 else 0) →
+        ∀ n ≥ N, leftDiagonal (m + 2) (n + q) = !leftDiagonal (m + 2) n) := by
+  sorry
+
+/-- **The onset wall, reduced to one sequence of witnesses.** Hand over, for
+each diagonal, a strictly increasing index at which the next diagonal is black —
+or else a certificate that the next diagonal is white from there on. That is
+enough to settle every diagonal `k` by its own `N k`. The black branch resets
+the next diagonal with the period unchanged; the white branch costs one index
+and doubles the period.
+
+`leftDiagonal_onset_le` then follows from any such ladder with `N k ≤ k`, and
+whether one exists is the wall. This is the shape eleven attempts on that wall
+kept rebuilding from scratch, stated once as a theorem.
+
+Proposed by Seeder (2026-09-09). Note what it does not give you: the greedy
+ladder that always takes the next black cell reaches `N k / k = 2` by `k = 2000`,
+where the truth is about `0.34 k`, because greedy cannot retreat and the real
+seam does. -/
+theorem leftDiagonal_onset_le_of_black_ladder (N : ℕ → ℕ)
+    (hmono : ∀ k, N k < N (k + 1))
+    (hwitness : ∀ k, leftDiagonal (k + 1) (N (k + 1)) = true ∨
+        ∀ j ≥ N k + 1, leftDiagonal (k + 1) j = false)
+    (k : ℕ) : ∃ p > 0, PeriodicFrom (leftDiagonal k) p (N k) := by
+  sorry
+
+/-- **No two eventually-white diagonals are adjacent.** If diagonal `k` and
+diagonal `k + 1` were both white for ever, so would be the pair one diagonal
+further out, and the descent ends at diagonals `0` and `1`, which are black
+everywhere.
+
+The first proved fact about the *set* of eventually-white diagonals rather than
+about one of its members. It improves the trivial count `k` to `k / 2`, which is
+nowhere near the `log2 (k+1)` the period wall needs — but it is what stops
+`leftDiagonal_period_le_of_white_count` from being read as permitting a white
+diagonal at every index.
+
+Proposed by Seeder (2026-09-09); the eventually-white diagonals below 400 are
+`2, 7, 28, 399`. -/
+theorem leftDiagonal_not_both_eventually_white (k : ℕ) :
+    ¬ ((∃ N, ∀ j ≥ N, leftDiagonal k j = false) ∧
+        ∃ M, ∀ j ≥ M, leftDiagonal (k + 1) j = false) := by
+  sorry
+
+/-- **A sequence with one period from `N` has all its periods from `N`.** If a
+sequence repeats with some positive period `p` from `N` on, then any other
+period it has anywhere it has from `N` on too, whatever onset that other period
+arrived with.
+
+Pure bookkeeping with no automaton in it, and harvested rather than invented: it
+has now been re-proved privately inside three separate pieces of work, because
+every argument that walks a ladder of diagonals has to put two periodicity facts
+with different onsets and different periods on a common footing, and this is the
+lemma that does it.
+
+Proposed by Seeder (2026-09-09). -/
+theorem periodicFrom_trans_period (f : ℕ → Bool) (p q N M : ℕ) (hp : 0 < p)
+    (hN : PeriodicFrom f p N) (hM : PeriodicFrom f q M) : PeriodicFrom f q N := by
+  sorry
+
+/-- **The centre column is one bit of the packed row.** The cell at the centre
+of row `t` is bit `t` of the number whose bits are row `t`.
+
+The dictionary edge P1's own object was missing. Six recent nodes are stated in
+the packed row model because the kernel can compute row 5000 there in a second,
+where reading the automaton directly gives out near row 18 — and the centre
+column had no such edge, so no fact about it could be settled by computation at
+all. Geometrically it also says the centre column is every diagonal read at
+index `0`.
+
+Proposed by Seeder (2026-09-09); checked against OEIS A051023 for `t < 41`.
+Supply rather than insight: it is a change of notation, every hard thing about
+the centre column survives it unchanged, and no computed prefix is a theorem
+about the limit. -/
+theorem centerColumn_eq_rowNat_testBit (t : ℕ) : centerColumn t = (rowNat t).testBit t := by
+  sorry
+
 end Statements
