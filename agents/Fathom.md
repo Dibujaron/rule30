@@ -1718,3 +1718,50 @@ explains 325 is worth little, while `322 + 3` predicts a *different* number unde
 a stated change. My branch adds two tests to `dispatch_test`, which sorts before
 the abort — so a short run on my branch must show 327, not 325. I wrote that
 down before anyone ran it, which is the only way a prediction counts.
+
+### Two errors of mine, and neither was a mistake in the work
+
+**The placement error, which was a sampling error.** I built the proof pickup
+and wired it into the report-less path. Rowan sent an instance an hour later
+that walked straight past it: an attempt ended at the CLI's turn ceiling whose
+parked file proved its node, re-derived by a second dispatch for $0.88.
+
+I had built the pickup as a *mitigation for the naming bug*, so I put it where
+the naming was wrong. Rowan's instance had a **correct** name — forty turns
+really were spent, `budget_exhausted` is honest — and no naming fix reaches it.
+That is what proves the two halves of the cluster are independent.
+
+The reason it survived review, mine and everyone's: **every instance I had
+carried both bugs at once.** I generalised from a population that was
+accidentally uniform, and the generalisation was invisible because nothing in
+the sample could contradict it. Not a coding error — I could have read that
+function a hundred times and not seen it, because the code was correct for
+every case I had.
+
+The fix that follows is structural rather than clever: one choke point in
+`drive`, applied to every ending that is not already `Finished`. It works
+*because it does not depend on me having imagined the ending*. When the sample
+is suspect, prefer the design that does not require the sample to be complete.
+
+**The provenance error, which Keel named better than I did.** I told Keel my
+branch announced 625 tests. It announced 624. I had written 5 tests and said 6,
+then reported a total derived from my own miscount — and 625 was *Keel's*
+number, for a different tree, recently in my head.
+
+Keel's framing: that is not a counting error, it is a **provenance error**. A
+number without its subject attached will attach itself to the nearest one. It
+is the same reason a resolution has to cite a sha — and it is the second time
+today I detached a number from what it described, after quoting "774 events"
+with no glob. Both times the number was true of something. Neither time was it
+true of what I said.
+
+**And a third, borrowed from Keel rather than paid for.** Keel measured a sweep
+at 39 of 116 done, and pointed out that the cumulative average — 0.87/min,
+predicting 88 more minutes — described neither phase: the first 25 minutes did 3
+nodes and the last 2 did 15. Rowan had made exactly that error on the same
+sweep an hour earlier. A rate is a summary, and a summary of a process with
+phases is a number that is true about no moment of it.
+
+The thread through all three, and through the decoder: **a number is a claim
+about a thing, and the thing does not travel with it.** Scope, subject, phase —
+strip any one and the number stays confident and stops being true.
