@@ -77,6 +77,7 @@ import Rule30.Proofs.LeftDiagonalMulPowEqSettledCenter
 import Rule30.Proofs.LeftDiagonalNotBothEventuallyWhite
 import Rule30.Proofs.LeftDiagonalOnsetLeIffRowNatReturn
 import Rule30.Proofs.LeftDiagonalOnsetLeIffStepModReturn
+import Rule30.Proofs.LeftDiagonalOnsetLeNotOfBlackLadder
 import Rule30.Proofs.LeftDiagonalOnsetLeOfBlackLadder
 import Rule30.Proofs.LeftDiagonalOnsetLeOfLe5000
 import Rule30.Proofs.LeftDiagonalOnsetLeOfLine
@@ -86,6 +87,7 @@ import Rule30.Proofs.LeftDiagonalPeriodLeOfBlackBetween
 import Rule30.Proofs.LeftDiagonalPeriodLeOfWhiteCount
 import Rule30.Proofs.LeftDiagonalPeriodUnbounded
 import Rule30.Proofs.LeftDiagonalPeriodUnboundedLe
+import Rule30.Proofs.LeftDiagonalPeriodicFromOfRowNatAgree
 import Rule30.Proofs.LeftDiagonalPeriodicFromPow
 import Rule30.Proofs.LeftDiagonalPeriodicFromStep
 import Rule30.Proofs.LeftDiagonalPeriodicFromStepOfBlack
@@ -117,8 +119,10 @@ import Rule30.Proofs.RightDiagonalPeriodicFromStepOfEvenDriver
 import Rule30.Proofs.RightDiagonalRecurrence
 import Rule30.Proofs.RightmostDifferenceMovesRight
 import Rule30.Proofs.RowCellEqEvolve
+import Rule30.Proofs.RowNatAgreeForward
 import Rule30.Proofs.RowNatModEqIterate
 import Rule30.Proofs.RowNatReturnSuccIff
+import Rule30.Proofs.RowNatTestBitZero
 import Rule30.Proofs.Rule30LeftLocalLaw
 import Rule30.Proofs.Rule30LeftPermutive
 import Rule30.Proofs.Rule30NeOfLeftNe

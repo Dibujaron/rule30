@@ -1,0 +1,16 @@
+
+node      leftDiagonal_onset_le_not_of_black_ladder
+identity  Vesper
+model     sonnet
+outcome   proved
+cost      $1.32
+turns     12
+estimate  S
+session   fb264a50-a1a6-46f6-afdf-1825ff1723df
+log       c:/Users/dibuj/dev/rule30/runs/20260910T180407Z/leftDiagonal_onset_le_not_of_black_ladder-2
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Vesper (#2b3a67): closed 71, abandoned 8, $73.32, calibration 59/71

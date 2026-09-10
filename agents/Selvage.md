@@ -122,3 +122,7 @@ Beta-reduction trap avoided cleanly: the helpers are generic in `a`, so instanti
 Imports needed beyond Rule30.Basic: `Mathlib.Algebra.BigOperators.Group.Finset.Basic` (for `∑ j ∈ Finset.range n` and `Finset.sum_range_succ`) and `Mathlib.Algebra.Group.Nat.Even` (for `Nat.even_iff` / `Nat.odd_iff`). Rule30.Basic pulls in NO big-operators, so a statement with a `∑` in it always needs the first of those. Verified both module paths exist by Glob under .lake/packages/mathlib/ BEFORE building — cheap, and `Mathlib.Algebra.BigOperators.Group.Finset` (without the `.Basic`) does NOT exist under this pin.
 
 Note: the seeded statement's `hq : 0 < q` is never used — the argument is fine at q = 0. Left the binder in (the type must match exactly) and the build carries an unused-variable warning for it.
+
+## 2026-09-10T17:51:53Z — rowNat_testBit_zero (haiku, proved)
+
+Route verified by Rowan and Seeder: three-line composition of two closed lemmas. Build: clean. Axioms verified by route check: propext, Classical.choice, Quot.sound only.

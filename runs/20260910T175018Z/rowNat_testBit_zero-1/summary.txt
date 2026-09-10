@@ -1,0 +1,16 @@
+
+node      rowNat_testBit_zero
+identity  Selvage
+model     haiku
+outcome   proved
+cost      $0.22
+turns     10
+estimate  S
+session   3290b08f-3092-4891-bea9-353048166521
+log       c:/Users/dibuj/dev/rule30/runs/20260910T175018Z/rowNat_testBit_zero-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Selvage (#3a6ea5): closed 12, abandoned 5, $25.66, calibration 8/12

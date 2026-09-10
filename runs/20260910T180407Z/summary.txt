@@ -1,0 +1,5 @@
+
+leftDiagonal_periodicFrom_of_rowNat_agreeCadence  sonnet  proved            $0.66   9 turns
+leftDiagonal_onset_le_not_of_black_ladderVesper   sonnet  proved            $1.32   12 turns
+
+2 attempt(s), 2 closed, $1.98 in all

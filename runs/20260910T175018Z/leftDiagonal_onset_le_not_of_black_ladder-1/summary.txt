@@ -1,0 +1,17 @@
+
+node      leftDiagonal_onset_le_not_of_black_ladder
+identity  Cadence
+model     haiku
+outcome   budget_exhausted
+cost      $1.01
+turns     41
+estimate  S
+session   cfd23de9-b08d-4026-8602-460870275141
+log       c:/Users/dibuj/dev/rule30/runs/20260910T175018Z/leftDiagonal_onset_le_not_of_black_ladder-1
+proof     c:/Users/dibuj/dev/rule30/runs/20260910T175018Z/leftDiagonal_onset_le_not_of_black_ladder-1/LeftDiagonalOnsetLeNotOfBlackLadder.lean (moved out of Rule30/Proofs/: not a closed node)
+
+verifier:
+the CLI ended the session at the CLI's turn ceiling (40 turns): {"duration_api_ms":351308,"stop_reason":"tool_use","session_id":"cfd23de9-b08d-4026-8602-460870275141","total_cost_usd":1.0073208,"usage":{"input_tokens":322,"cache_creation_input_tokens":146825,"cache_read_input_tokens":5297328,"output_tokens":36371,"output_tokens_details":{"thinking_tokens":10374},"server_tool_use":{"web_search_requests":0,"web_fetch_requests":0},"service_tier":"standard","cache_creation":{"ephemeral_1h_input_tokens":146825,"ephemeral_5m_input_tokens":0},"inference_geo":"not_available","iterations":[{"input_tokens":8,"output_tokens":110,"cache_read_input_tokens":164377,"cache_creation_input_tokens":830,"cache_creation":{"ephemeral_5m_input_tokens":0,"ephemeral_1h_input_tokens":830},"type":"message"}],"speed":"standard"},"modelUsage":{"claude-haiku-4-5-20251001":{"inputTokens":1963,"outputTokens":36395,"cacheReadInputTokens":5297328,"cacheCreationInputTokens":146825,"webSearchRequests":0,"costUSD":1.0073208,"contextWindow":200000,"maxOutputTokens":32000,"thinkingToken
+… (clipped; the full text is in events.jsonl)
+
+Cadence (#2a6f77): closed 31, abandoned 9, $52.22, calibration 23/31

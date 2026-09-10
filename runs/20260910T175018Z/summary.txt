@@ -1,0 +1,7 @@
+
+rowNat_testBit_zero               Selvage  haiku   proved            $0.22   10 turns
+rowNat_agree_forward              Vesper   haiku   budget_exhausted  $1.05   41 turns
+leftDiagonal_onset_le_not_of_black_ladderCadence  haiku   budget_exhausted  $1.01   41 turns
+rowNat_agree_forward              Vesper   sonnet  proved            $1.04   11 turns
+
+4 attempt(s), 2 closed, $3.32 in all
