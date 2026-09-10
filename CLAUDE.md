@@ -295,6 +295,48 @@ context. A framework agent's notebook is `agents/<Name>.md`, written by
 that agent directly — a framework agent is hand-started rather than
 dispatched, so no report ever writes it on their behalf.
 
+## Reporting a result: say what a mathematician would make of it, first
+
+**Every report of a result — to Dib, in a journal entry, in a commit message,
+in a notebook — states how interesting or useful a mathematician would find
+it, before describing what the result does.** Dib asked for this on
+2026-09-10 and the reason is in the request: it is his only metric for
+understanding, and it is the fix for a specific failure that had happened
+twice that evening.
+
+Four bands. Pick one and name it:
+
+| Band | What it means |
+|---|---|
+| **Nothing** | True of any `Bool` sequence, any map, any picture. A notation change. Routine analysis. A mathematician would use it without stating it. |
+| **Project-internal** | Closes a route, saves us money, removes a hazard. Says nothing new about rule 30. |
+| **Known** | A real fact about rule 30 that is already in the literature. Cite it. |
+| **Novel** | Past the documented frontier. Say so immediately, and say how small. |
+
+**The ordering is the whole point, not a formatting preference.** The failure
+this fixes is describing a result's *structural role* — "a bridge to P1", "a
+reduction of a prize conjecture" — because the structural role is the part
+that sounds like progress, and then never checking the content. Both times it
+happened the node carried a `DOES NOT PROVE` field saying exactly what it was
+not, both fields were correct, and one of them had been written by the same
+session an hour earlier. So this is a **reporting** failure, not a research
+one, and checking the mathematics harder catches neither instance. Naming the
+band first makes the omission impossible.
+
+Two habits that follow:
+
+- **Read the node's own disclaimer before writing the sentence.** It is
+  usually already right and already there. `DOES NOT PROVE` is the field where
+  the honest answer lives, which is the point of having it.
+- **A tier of green nodes is not a result.** `unblocks 0` on every node of a
+  passing tier is the tell, and it looks like a field being dutifully filled
+  in. Ask what the work was aimed *toward*, not only what it was measured
+  *over*.
+
+This applies to every identity — overseer, framework agent, prover, theorist,
+seeder, connector, Cairn — and it applies to good news hardest, because a
+result you like is the one whose band you are least inclined to check.
+
 ## Teaching contract
 
 Dib writes functional programming, mostly TypeScript, and is learning

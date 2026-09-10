@@ -1,0 +1,49 @@
+
+seeder    Seeder
+model     opus
+region    P1
+ended     finished — the seeder reported its proposal written; that is its claim about the file, and the check below is the only adjudication
+ceilings  80 turns, $12.0
+cost      $9.36
+turns     47
+session   b2d3ea49-b96e-4fbe-af41-bb7211cdfd07
+log       c:/Users/dibuj/dev/rule30/runs/20260910T204610Z/seed-1
+proposal  c:/Users/dibuj/dev/rule30/blueprint/proposals/next.json
+
+Six P1 nodes proposed and verified — a toolkit of consequences of a periodic centre column (the mask law, its derivative, the black-run shield), one right-side transfer principle, and the period-1 case of Prize 1 proved outright.
+
+check of c:/Users/dibuj/dev/rule30/blueprint/proposals/next.json:
+centerColumn_not_eventually_constant
+  DOES NOT PROVE: This is the period-1 case of Prize 1 and nothing more. It says nothing about any period above 1, and no induction on the period is implied or available — the two halves use completely different arguments and neither generalises. It is not a step toward either P1 wall.
+  route:   none claimed
+  witness: holds over t < 12 — a finite shadow only. Both colours occurring among the first twelve cells is a necessary consequence of the statement, so this catches a flipped quantifier or a swapped true/false; it is NOT evidence for the infinitary claim, which no finite range can carry.
+column_neg_one_damage_mask
+  DOES NOT PROVE: NOT a sufficient condition for the wall. It is unconditional and true of every pair of pictures, so it cannot by itself rule anything out; it is machinery a proof by contradiction would use, not an implication into the prize. It also says nothing about the white times, which is where the open part lives — it only says that at a white cell the mask is open.
+  under:   centerColumn_other_isEventuallyPeriodic_of_center
+  route:   none claimed
+  witness: holds over twelve deterministic 'noisy' rows v < 12, each against itself with position f in {1, 2} flipped, at every t < 9. Evaluated true by `lake env lean` at seed time (explorer/seeder_p1_final.lean). NON-VACUITY CHECKED: within this exact range the left-hand side is genuinely nonzero at (v, f, t) = (0, 2, 6), (5, 1, 8), (5, 2, 7) and (7, 2, 6), so the witness exercises the branch that carries the content. The seed itself will not do here — its white left cone means a difference planted at position d takes about 4d rows to creep back to column 1, and over initialConfig with d ≤ 4 and t < 12 both sides are identically zero (explorer/seeder_p1_witness2.lean). Independently: 0 failures in 76,711 hypothesis hits over 400 random configuration pairs, 2,241 of them with a nonzero left-hand side (explorer/seeder_p1_damage.mjs).
+column_neg_two_damage_derivative
+  DOES NOT PROVE: The cascade does NOT continue, and this is the honest limit of the statement rather than a gap in it. The same claim one column further left — that the disagreement at -3 is the discrete derivative of the disagreement at -2 — is measured FALSE: 418 failures in 35,795 hypothesis hits over random configuration pairs (explorer/seeder_p1_damage.mjs). The reason is visible in the proof: at column -2 the second input to the `||` is still the shared origin column, and at -3 it is not. So a prover should not expect an induction here, and a seeder should not propose one.
+  under:   centerColumn_other_isEventuallyPeriodic_of_center
+  route:   none claimed
+  witness: holds over the same twelve noisy rows v < 12, flip f in {1, 2}, every t < 9. Evaluated true by `lake env lean` at seed time (explorer/seeder_p1_final.lean). Non-vacuity: the column--1 disagreement is nonzero at four (v, f, t) inside this range, so the right-hand side is not identically false here. Independently: 0 failures in 76,711 hypothesis hits over 400 random configuration pairs, 4,398 of them with a nonzero left-hand side (explorer/seeder_p1_damage.mjs).
+column_damage_zero_of_black_run
+  DOES NOT PROVE: `i ≤ j` is exact, not an artefact of the proof: the next position along genuinely differs. Over random configuration pairs the two pictures differ at position -(j+1) in 17,596 of 311,892 hypothesis hits (explorer/seeder_p1_runshield.mjs), and 7 times inside the witness's own range (explorer/seeder_p1_live.lean). So there is no stronger version to reach for. This is a statement about black runs only and says nothing about the times between them, which is precisely the open part.
+  WARNING: the statement mixes ℕ and ℤ or uses absolute value — found a term ascribed to ℤ or ℝ. Provers spent their budgets cycling on casts (two of the three exhaustions on 2026-09-07); the captain's rule in docs/prover-cookbook.md prefers a statement in ℕ, with an absolute value over casts written as two ℕ inequalities.
+  under:   centerColumn_other_isEventuallyPeriodic_of_center
+  route:   none claimed
+  witness: holds over eight noisy rows v < 8, flip f in {1, 2}, run length j < 4, every t < 7. Evaluated true by `lake env lean` at seed time (explorer/seeder_p1_final.lean). NON-VACUITY CHECKED in this exact range: 167 hypothesis hits, of which 7 have the two pictures genuinely differing at position -(j+1) — so the range contains cases where the shield is exactly as wide as claimed and no wider, and the witness would catch an off-by-one in either direction. Independently: 0 failures in 311,892 hypothesis hits over 600 random configuration pairs, at j up to 12 (explorer/seeder_p1_runshield.mjs).
+centerColumn_periodic_damage_white
+  DOES NOT PROVE: The hypothesis is the negation of Prize 1, so nobody can exhibit a p and N satisfying it and the statement carries no witness — a finite range would only confirm that the hypothesis is unsatisfiable there, which is not what is claimed. It is NOT the wall and does not weaken it: it is one consequence a proof of the wall would derive, not a sufficient condition for it. Nothing here rules the hypothesis out; if it could, it would be the prize.
+  under:   centerColumn_other_isEventuallyPeriodic_of_center
+  route:   none claimed
+  witness: unchecked — no witness supplied
+centerColumn_eq_evolve_mul_pow
+  DOES NOT PROVE: This is infrastructure, not an attack: by itself it proves nothing about either wall, and it is a short consequence of two closed nodes. It also does not touch obstruction 69's ratio — the centre column still outruns the left-hand settling front, and this says nothing about that. Its value is that it is the first node putting the centre column anywhere but the origin.
+  WARNING: the statement mixes ℕ and ℤ or uses absolute value — found a term ascribed to ℤ or ℝ. Provers spent their budgets cycling on casts (two of the three exhaustions on 2026-09-07); the captain's rule in docs/prover-cookbook.md prefers a statement in ℕ, with an absolute value over casts written as two ℕ inequalities.
+  under:   centerColumn_other_isEventuallyPeriodic_of_center
+  route:   none claimed
+  witness: holds over the pairs (k, m) listed, so k ≤ 3 and m ≤ 3, the deepest being k = 3, m = 1 — cell 8 of row 11. Evaluated true by `lake env lean` at seed time (explorer/seeder_p1_final.lean). The list is explicit rather than a range because the cost is 3^(m * 2^k + k): k = 2, m = 3 is row 15 and already 14 million neighbour evaluations, and k = 3, m = 2 is row 19 and out of reach. Independently checked to k ≤ 6, m ≤ 4 — 35 pairs, 0 failures — with the array engine (explorer/seeder_p1_damage.mjs).
+
+1 unchecked, 5 holds, 2 with a cast warning
+
