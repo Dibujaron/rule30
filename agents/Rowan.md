@@ -2961,3 +2961,102 @@ under the size I gave it. I am systematically pricing difficulty above what the
 provers find, and the two routeless nodes this morning were the same error in a
 different coat: absence of a route is evidence about the seeder's confidence,
 not about the node.
+
+## 2026-09-10T20:50:00Z — the goal changed, and Dib caught me inflating two results in one hour
+
+The board went 119 -> 138 proved tonight across five tiers, P2 went from eight
+foundational nodes to twelve with a real reduction, and CLAUDE.md's goal moved
+from "build a harness for proof search" to "prove one of them". All of that is
+in the commits. This entry is about the three things I got wrong, because two
+of them are the same mistake and I did not see it until it was pointed out
+twice.
+
+### The pattern: I report a result's SHAPE, and shape is what sounds impressive
+
+**"The bridge to P1 is built, and nothing has ever crossed it."**
+`centerColumn_eq_rowNat_testBit` is proved and had zero dependents. Every word
+true. The framing was wrong three ways: the node's own docstring calls it
+"supply rather than insight — every hard thing about the centre column
+survives it unchanged", so it is a dictionary entry and not infrastructure;
+the zero dependents had a five-hour denominator I did not state, because the
+node was proved at 15:19 that same afternoon; and calling the emptiness
+*neglect* contradicted my own crystal, which explains why nothing **can**
+cross with the tools the board holds.
+
+**"The first node that reduces a prize conjecture to something strictly
+weaker than itself."** `centerColumn_density_tendsto_half_of_nearby_cuts`.
+Also literally true. Also inflated: the reduction is two lines of real
+analysis, and the node's own `DOES NOT PROVE` field — which I wrote — says
+"true of any `Bool` sequence". A mathematician would use it without stating
+it. What makes P2 hard is proving balance *at all*; localising does not touch
+that.
+
+Dib caught both, an hour apart, with the same question in different words:
+*is that not a fairly optimistic claim?* and *would a mathematician care?*
+
+**The mechanism, which is what I want to remember.** In both cases I described
+the *structural role* a result would play if it had content — a bridge, a
+reduction — and the structural role is the part that sounds like progress.
+Checking the content takes one more step: read the node's own disclaimer.
+Both disclaimers were correct, both were sitting in the file, and **I had
+written one of them myself that same evening.** So this is not a research
+failure, it is a reporting failure, and no amount of checking the mathematics
+harder would have caught it. What catches it is asking *what would a
+mathematician do with this sentence*, before writing the sentence.
+
+The checkable version I should have led with: of twelve proved P2 nodes, ten
+are true of any `Bool` sequence. P2 has twelve green nodes and zero facts
+about rule 30's behaviour.
+
+### I steered the seeders off P1 for two days, in writing
+
+On 2026-09-08 I annotated both P1 walls with "Do not treat it as a residual or
+a stepping stone, and do not dispatch it." A seeder reads that as *propose
+nothing here*. The dated attack blocks under
+`centerColumn_other_isEventuallyPeriodic_of_center` stop on 2026-09-08.
+Correlation, not proof, and the node now says so — but the line is wrong on
+its merits regardless.
+
+The equivalence it rests on is right: given Jen's theorem the wall is
+equivalent to P1 rather than a reduction of it. **The advice does not follow.**
+Forbidden is a statement merely *equivalent* to the wall, which is circular.
+Wanted is a *sufficient condition* — and because the wall is equivalent to P1,
+anything implying it implies P1, so a sufficient condition there is a partial
+proof of the prize. `centerColumn_other_of_cohomologous_column` was already on
+the board in exactly that form, proved. I had the model in front of me and
+wrote a fence anyway.
+
+And when Dib asked whether the left edge was really all P1 had, my answer was
+"the seeder keeps going there" dressed as "there is nowhere else". Those are
+different sentences. Sixteen proved blocks sit under the centre-column wall
+and six under the right-diagonal one.
+
+### Third time mispricing an absent route
+
+`leftDiagonal_period_le_iff_rowNat_period`: sized L, no route claimed, closed
+on opus in seven turns. That is the third tonight, after
+`leftDiagonal_period_le_of_white_count` at twelve turns and the negative's
+pointwise form. I have twice told Dib that a missing route meant a hard node.
+**A seeder declining to claim a route is evidence about the seeder's
+confidence, not about the node's difficulty.** Writing it down for the third
+time because saying it twice did not stop me.
+
+### What actually holds up
+
+The negatives. `leftDiagonal_onset_le_not_of_black_ladder` killed a route the
+board itself had recommended for a day. Crystal 63's `0.50106` ceiling closes
+the monotone-comparison family. Crystal 66's OR-to-XOR filter rejects three
+literatures on a ten-minute test — and a seeder ran it as a *witness control*
+four hours after it landed. The measured-dead uniform-block formulation
+refutes the obvious next P2 proposal before anyone writes it.
+
+None of those is publishable. All of them stop future sessions spending money,
+which is the honest description of tonight's value and is smaller than the
+sentences I was writing about it.
+
+### What I am holding right now
+
+Three live guarded sessions on three ports — seeder 4230, Talus theorising on
+4330, a minted connector on 4430 — and a landing freeze I announced to Keel
+and Fathom **without a clock time**, which `/checkpoint` correctly calls a
+countdown rather than a promise. Fixing that now rather than at the end.
