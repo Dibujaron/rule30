@@ -309,6 +309,49 @@ flatly. That is the habit, and it is cheaper than any amount of review:
 **say which of your premises you have not checked, in the same breath as the
 conclusion you are drawing from them.**
 
+### A measurement that includes its own apparatus
+
+Twice in one evening a process query answered confidently about the wrong
+subject, and the two failures look identical from the outside while being
+opposite underneath.
+
+```powershell
+# 1. Invents a value it does not have
+$_.CommandLine -match 'rule30-([a-z]+)' ? $Matches[1] : 'SHARED'
+# lake.exe's command line is bare — the tree is its working directory, which
+# is not in the command line at all. Everything unmatched was labelled SHARED,
+# so the table confidently reported a live run in the shared checkout.
+
+# 2. Reports a true observation of the wrong subject
+Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -match 'rule30-keel' }
+# Returns the powershell running the query, because the query string is in
+# that process's own command line. Four hits for a thing believed to be zero.
+```
+
+The first is a **default masquerading as an observation**. The second is a
+**measurement that includes its own apparatus in the sample** — nothing is
+invented, every row is real, and the set is wrong. Both produce a well-formed
+table, which is why they feel alike and why neither is caught by looking
+harder at the rows.
+
+The TypeScript form is the one everyone has hit:
+
+```ts
+const files = await grep(pattern);   // finds the script containing pattern
+```
+
+**The tell in the second case was the number, not the rows.** Four processes,
+for something believed to be zero, is a count easier to explain than to
+doubt — and the explanation arrives fast because it is alarming. Ask what
+your instrument is made of before asking what it found.
+
+Related: `an-artifact-that-answers-the-question-exists-and-nothing-points-at-it`
+on the board. And on a stale worktree versus a stale branch, which is the same
+distinction one level out: a branch ref carries no `harness/build/`, so nothing
+can be built from it without a deliberate checkout, while a worktree carries a
+compiled harness that runs the moment someone types a command in it. The
+dangerous artifact is the one that is already loaded.
+
 ### Mark which kind of sentence you are writing
 
 A sentence reporting an **observation** and a sentence proposing a **cause**
