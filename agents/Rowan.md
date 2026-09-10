@@ -2629,3 +2629,60 @@ with it. Worth noticing that both of tonight's bugs are the same animal from
 opposite ends: a seed that looks perfect and is not, and an attempt filed as a
 failure that parked sixteen kernel-clean theorems. Both are records that are
 well-formed, confident, and wrong, with nothing downstream able to tell.
+
+## 2026-09-10 — the checker was wrong, and it was wrong selectively
+
+I adjudicated the seeder's six proposals expecting to reject half of them. The
+harness's own route checker said three of four routes did not close. All four
+close. The checker was adding two spaces to the first tactic line, so the first
+tactic sat at column 4 and the rest at column 2, outside the block Lean had
+opened — one tactic ran and Lean said `unsolved goals` at the `by`.
+
+**I nearly did not look.** The check said no, and a check that says no feels
+like the check working. My own memory has the line about distrusting a result
+you dislike as hard as one you like, and the thing that actually made me look
+was smaller and more mechanical: three records disagreed. The seeder said its
+routes compiled, `seed check` said unsolved goals, and the stray sweep in
+`status` said the same file was `unchecked`. I did not resolve that by deciding
+which source was more credible. I ran the file. Exit 0. Then I reconstructed
+`check_source` by hand, both ways, and the broken one reproduced the harness's
+own `4:80` character for character.
+
+**The part worth keeping is that it fails selectively.** One route passes the
+broken checker, because it starts `induction ... with` and Lean tolerates the
+alternatives at the lower column. So the checker returns a *mixture* on a set of
+routes that all close — three no, one yes — and a mixture is exactly what a
+working checker looks like. Had it failed all four I would have suspected the
+harness in a minute. The partial failure is what let it survive, and I should
+generalise that rather than file it: **a check that is wrong some of the time is
+much harder to detect than one that is wrong all of the time**, because the
+successes launder the failures.
+
+**A seeder corrected its captain and was right.** I ranked five items for it and
+it killed my third by measuring the hypothesis: the conditional needed a
+constant bound on white runs, and the longest run grows like log2 of the sample,
+which is what a fair coin gives. No such constant exists; the node would have
+been vacuous. I want to notice that I had ranked it third without measuring it,
+and that the measurement was cheap.
+
+**What I verified rather than relayed, before landing:** four routes elaborate
+(exit 0 each), the seeder's scratch elaborates, thirteen cited dependency ids
+resolve, Statements.lean elaborates with the six added, and all six names
+resolve as `Statements.<name>` under `type_of%`. That last one failed on the
+first try and the failure was a stale `.olean` — the import reads the compiled
+module, not the source I had just edited. So the rebuild is *part* of the
+seeded-name check, not a step before it, and a captain who checks name
+resolution without rebuilding gets a false negative from the same family as the
+one above.
+
+**Attempt 12 came back `wall`.** Fable rung, $6.57 of $20, six turns, abandoned.
+The cost is the uninteresting number. The interesting one is that the prover's
+own size estimate was `wall` while the DAG still calls the node L — which is the
+open row about a captain having nowhere to put direct evidence of difficulty,
+arriving with evidence in hand.
+
+**And one thing confirmed rather than believed.** I seeded six nodes while that
+attempt was live — the exact shape that silently deleted a node on 2026-09-08 —
+and all six survived the dispatcher's end-of-attempt write. Keel's `save_node`
+fix had been tested against a fixture; this is the first time a real captain
+seeded into a real run. It held.
