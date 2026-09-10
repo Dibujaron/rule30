@@ -199,12 +199,33 @@ Three things that follow, each learned the hard way:
   where it should rest, which is how this checkout once sat on a feature
   branch until it was twenty commits behind `main` and three sessions
   were reading pre-landing harness code out of it.
-- **The suite never touches the live checkout.** Tests that run Lean do so
-  against `harness/test/fixture-project/`, a dependency-free Lean project
-  inside the tree that builds in seconds, so `gleam test` from a worktree
-  needs no `HARNESS_REPO_ROOT` and writes nothing outside its own tree; the
-  variable still redirects `config.load`'s paths for tests that read them
-  and is never required.
+- **Set `HARNESS_REPO_ROOT` when you run the suite from a worktree.** Point
+  it at the shared checkout:
+
+  ```
+  HARNESS_REPO_ROOT=C:/Users/dibuj/dev/rule30 gleam test
+  ```
+
+  Almost all of the suite is isolated — tests that run Lean use
+  `harness/test/fixture-project/`, a dependency-free project that builds in
+  about two seconds, whose path comes from where the runner started and
+  **never** from this variable. **One test is not.** `run_test` calls
+  `dispatch.prove_one`, which reaches `statement_resolves(cfg.repo_root, …)`,
+  and `run_test`'s fixture config deliberately leaves `repo_root` alone
+  because that is where `.lake` is. In a fresh worktree `repo_root` is the
+  worktree, the worktree has no `.lake`, and that one call starts **building
+  Mathlib from scratch** — hours, often outliving the suite that spawned it,
+  and slow enough to trip the eunit module abort that silently drops ~289
+  tests behind a pass line that still reads fine.
+
+  So this is a mitigation for a defect, not a preference, and it should stop
+  being necessary: `prove-one-has-no-injectable-twin-so-the-suite-shells-real-lean-from-whatever-tree-it-is-in`
+  on the board is the fix — give `prove_one` an injectable twin the way `run`
+  has `run_with`, and no Lean is invoked from a worktree at all. **Until that
+  lands, read the announced test total before the pass count**, from any tree.
+  This paragraph said the opposite until 2026-09-10 — that the variable was
+  "never required" — and two agents started from-scratch Mathlib builds doing
+  exactly what it told them.
 
 - **Review in proportion to the change; the suite is not the cost.**
   Measured on 2026-09-07: the whole suite is 503 tests in 48 seconds, half
