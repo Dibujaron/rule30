@@ -221,6 +221,14 @@
       "role": "framework",
       "started": "2026-09-09T23:16:00Z",
       "claude_session": "cf7b6167-608a-4878-9b8c-005da546136d"
+    },
+    {
+      "identity": "Rowan",
+      "session_name": "rule30-38",
+      "ref": "d5696e",
+      "role": "overseer",
+      "started": "2026-09-10T14:24:00Z",
+      "claude_session": "34c80e11-65ff-4b26-bf1f-85662de02029"
     }
   ]
 }
