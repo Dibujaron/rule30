@@ -7,9 +7,33 @@ harness worker session that got it appended to your system prompt.
 
 Formalizing Wolfram's Rule 30 cellular automaton in Lean 4, aimed at Wolfram's
 three Rule 30 Prize conjectures (aperiodicity, balance, irreducibility of the
-center column — see `docs/prize.md`). Proving the prizes is not expected;
-stating them precisely and building a working harness for agent-driven proof
-search is the actual deliverable.
+center column — see `docs/prize.md`).
+
+**The goal is now to prove one of them.** Until 2026-09-10 this section said
+proving the prizes was not expected and the harness was the deliverable. The
+harness works — it closes tiers unattended, verifies every proof locally, and
+turned seed → land → dispatch → seed twice in an evening — so that deliverable
+is done and the goal has moved. A node that does not bear on a prize
+conjecture now needs a reason, not merely a proof.
+
+**The failure mode this change exists to stop, measured on 2026-09-10.** Of
+132 nodes, 35 sat under the two left-diagonal walls, whose own descriptions
+say they do not bear on any prize conjecture — and those 35 had nine outward
+dependency edges, eight of them from one foundational lemma that predated all
+of the wall work. An evening's tiers all reported `unblocks 0`. Nothing was
+careless: **the seeder proposes what it can find routes for, routes exist
+where the mathematics is tractable, and the tractable region is the left edge
+precisely because periodicity is already proved there.** So the machine flows
+downhill, every individual step is correct, and downhill is away from the
+prize. Getting better at closing nodes makes this worse rather than better.
+
+Two consequences for anyone seeding or reviewing. **Ask what a proof of a
+prize would cite before asking whether a statement is provable** — a `DOES NOT
+PROVE` field that names a prize is the point of the field, and a tier where
+every entry disclaims all three is a tier to think again about. And **spread
+across P1, P2 and P3 rather than mining whichever one is currently yielding**;
+the regions have very different amounts of built ground, and the least-built
+one is not the least promising, it is the least tried.
 
 A Gleam program in `harness/` dispatches Claude Code CLI sessions ("workers")
 against a DAG of theorem statements (`blueprint/dag.json`), one node at a
