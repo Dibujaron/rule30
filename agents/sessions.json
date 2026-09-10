@@ -237,6 +237,14 @@
       "role": "framework",
       "started": "2026-09-10T14:25:00Z",
       "claude_session": "e32b534e-57ab-48e3-a256-ba804c4fa598"
+    },
+    {
+      "identity": "Fathom",
+      "session_name": "rule30-5d",
+      "ref": "0a2b6a",
+      "role": "framework",
+      "started": "2026-09-10T14:26:00Z",
+      "claude_session": "39775d8b-b30d-4129-8fba-b6faec7068cd"
     }
   ]
 }
