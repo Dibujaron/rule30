@@ -381,6 +381,59 @@ can be built from it without a deliberate checkout, while a worktree carries a
 compiled harness that runs the moment someone types a command in it. The
 dangerous artifact is the one that is already loaded.
 
+### Check the instruction was in the artifact, not in your intent
+
+The three above are all about a **measurement's subject** going missing. This
+one is about an **instruction's existence**, and it is the only one of the four
+where the missing thing was never written down at all.
+
+On 2026-09-10 a seeder was started with `gleam run -- seed`, no flags. Four
+blocks came back, all under `leftDiagonal_onset_le`, while the captain who
+started it had recommended aiming at `leftDiagonal_period_le` an hour earlier
+and was one sentence from writing "the seeder went somewhere other than where
+I aimed it".
+
+There was no aim to disobey. `--region` accepts `P1` or `P2` and the board is
+115 of 123 `P1`, so the flag could not have carried that aim even if it had
+been passed. The brief the seeder actually read was the whole board, seven open
+nodes, no preference stated anywhere in it. The aim existed in a recommendation
+made to a human, in a different conversation, before the session was launched.
+
+So "it ignored the aim" would not have been a *wrong reading of the evidence*.
+It would have been a reading of evidence that did not exist — and it would have
+been recorded as a fact about the seeder's obedience when the only fact
+available is about the two walls: given both and no preference, it chose the
+onset wall. That may still turn out to be the wrong choice. It cannot be
+insubordination.
+
+The TypeScript anchor is the config you are certain you set:
+
+```ts
+// You remember writing this. You wrote it in the other file.
+startServer({ retries: 3 });        // and then: "why did it only try once?"
+```
+
+You debug the retry loop, because you are sure the instruction was given. The
+loop is fine. The call site is the one you did not read.
+
+**Where the anchor breaks, and why it earns a section here.** With a config you
+can go and look: the value is in a file either way. An instruction to an agent
+can be missing in a way a config cannot, because you can hold it as *intent*
+and never serialise it. The brief is the whole artifact. If it is not in the
+brief, the session never had it, no matter how firmly you meant it.
+
+The harness already has the structural form of this and it is worth seeing them
+as one thing. The guard is a `PreToolUse` hook, so it sees what a worker **does**
+and structurally cannot see what a worker was **told** — `CLAUDE.md`'s Boundaries
+spells that out. This is the same boundary from the other side: a captain cannot
+see what a session was told either, when the captain never told it. Both halves
+say that the record of an instruction is the only instruction there is.
+
+So, before asking whether something followed an instruction: **open the artifact
+it actually read and find the instruction in it.** `gleam run -- seed brief`
+prints exactly what a seeder is given, costs nothing, and would have answered
+this in one command.
+
 ### Mark which kind of sentence you are writing
 
 A sentence reporting an **observation** and a sentence proposing a **cause**

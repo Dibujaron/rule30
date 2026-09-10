@@ -2780,3 +2780,92 @@ slow one and told Keel 45 minutes, in the act of demonstrating a better
 measurement, twenty minutes after demanding denominators. Knowing the rule and
 having just said it out loud bought me nothing either time. What caught both was
 a habit that fires without recall: distrust a no, and read the file.
+
+## 2026-09-10T16:50:00Z — the evening: three closes, and an accusation I nearly made against a session that was never given the order
+
+Dib asked for both halves at once — a seeding round and the three open leaves —
+and both halves worked. Three attempts, three closed, $6.40 of the $12 I had
+quoted. `leftDiagonal_not_both_eventually_white` finished what a previous
+attempt left one tactic short. The other two are the ones that matter:
+`leftDiagonal_period_le_of_white_count` was the reduction half of the period
+wall, and `leftDiagonal_step_of_white_parity` is Rowland's criterion for which
+white diagonals actually cash a doubling in. Board is 119 of 123, zero open
+leaves, four walls. The scheduler has nothing left to dispatch, which is a first.
+
+**My uncertainty was mispriced and I should say so plainly rather than bank the
+win.** I told Dib those two "carry no routes, so they're genuinely uncertain in a
+way today's three closes weren't". Cadence closed the L-sized routeless one in
+twelve turns for $2.14 and estimated it M afterwards. I was not wrong to flag
+the absence of a route — I was wrong about what that absence predicts. A seeder
+declining to claim a route is evidence about the seeder's confidence, not about
+the node's difficulty, and I had been reading it as the second.
+
+### The near-miss, which is the entry
+
+I was one sentence from writing that the seeder "went somewhere other than
+where I aimed it". All four blocks came back under `leftDiagonal_onset_le`; I
+had recommended the period wall to Dib an hour earlier.
+
+There was no aim. `--region` takes `P1` or `P2` and the board is 115 of 123
+`P1`, so the flag could not have carried it. The brief the seeder read was the
+whole board, seven open nodes, no preference anywhere in it. My aim lived in a
+recommendation I made to a human, in a different conversation, before the
+process existed.
+
+So "it ignored the aim" would not have been a wrong reading of the evidence. It
+would have been a reading of evidence that was never written down — and it
+would have gone into a commit message as a fact about the seeder's obedience,
+when the only fact available is about the two walls: given both and no
+preference, it chose the onset one. `gleam run -- seed brief` prints exactly
+what a seeder is given, costs nothing, and I had already run it once today.
+
+The general form, now in the glossary: **before asking whether something
+followed an instruction, open the artifact it read and find the instruction in
+it.** The harness has the structural half of this already — the guard is a
+`PreToolUse` hook, so it sees what a worker does and cannot see what a worker
+was told. This is the same boundary from the captain's side: I could not see
+what the seeder was told either, because I had not told it.
+
+That is four variants of one failure in one day, and mine is the only one where
+the missing thing was never written down at all. The other three were true
+measurements of a moved or mis-sampled subject.
+
+### The freeze, and being caught by it
+
+I announced "no fast-forward of main, no merge into the shared checkout, no
+moving refs" to Keel and Fathom. Then I committed the run's output, which moves
+a ref, and explained *afterwards* that a commit changes no working-tree file so
+the freeze's mechanism does not reach it.
+
+Keel's correction is right and worth keeping in the exact shape they gave it:
+the mechanism is on my side, the announcement is not. The act was fine; the
+sentence was over-broad and I did the thing it named. And the cost is not
+safety — it is that from outside, "exempt because the mechanism does not reach
+it" and "exempt because I judged it harmless" are indistinguishable, and I am
+the only one who can tell them apart. I had done this correctly forty minutes
+earlier for Keel's docs branch, saying the mechanism *before* the decision. I
+did it backwards for my own.
+
+**The ordering is the whole rule.** Mechanism first, then act. Said after, it is
+a justification; said before, it is a boundary. I also revised the boundary out
+loud when the seeder falsified my proxy — "when the run drains" was standing in
+for "when no guarded session is reading the shared checkout", and the seeder
+was still live after the run ended. Revising it aloud rather than deciding the
+seeder did not count is the same discipline applied in advance, and it is the
+one thing I got right in this pair.
+
+### What I left undone on purpose
+
+Four blocks proposed, all under the onset wall, all witnesses holding, no route
+closing. I landed none of it. The headline is a *negative* —
+`leftDiagonal_onset_le_not_of_black_ladder` says the route that wall's own
+description recommends cannot yield it — and a wall's description is what every
+future seeder and prover reads before they start. Right, it saves many wasted
+attempts; wrong, it steers all of them off the only path that works. That is
+not a summary-strength decision and a summary is all that exists.
+
+Keel handed over `reverify --all` for when that review does move a statement,
+with the ordering attached: after the change, before anything else reads those
+files, because in between the Checked type block is confidently wrong and
+nothing in the build can tell. Which is today's shape again — a true sentence
+whose subject moved.
