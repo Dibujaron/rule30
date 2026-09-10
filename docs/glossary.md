@@ -345,6 +345,23 @@ for something believed to be zero, is a count easier to explain than to
 doubt — and the explanation arrives fast because it is alarming. Ask what
 your instrument is made of before asking what it found.
 
+**A third mechanism, and it needs no faulty instrument at all.** An hour
+later the same query was quoted correctly and was still wrong:
+
+    12:3x  git worktree list  ->  one row, the shared checkout   (true)
+    12:38  git worktree add ../rule30-keel-gloss                 (subject changes)
+    12:4x  "git worktree list now shows only the shared checkout" (false)
+
+Nothing was invented and nothing sampled itself. A true observation was
+quoted after its subject had moved, by the same session that moved it. This
+is the same error as calling a worktree "current at 555ce33" when it was
+current with respect to a branch and stale with respect to `main` — a fact
+whose truth had an expiry that was not written down beside it.
+
+So the fix is different from the two above, and it is not a better query:
+**quote a measurement with the moment it was taken, or take it again.** "Now
+shows" is the tell — a present-tense verb attached to a past-tense reading.
+
 Related: `an-artifact-that-answers-the-question-exists-and-nothing-points-at-it`
 on the board. And on a stale worktree versus a stale branch, which is the same
 distinction one level out: a branch ref carries no `harness/build/`, so nothing
