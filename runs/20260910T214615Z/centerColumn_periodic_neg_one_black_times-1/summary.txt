@@ -1,0 +1,16 @@
+
+node      centerColumn_periodic_neg_one_black_times
+identity  Selvage
+model     sonnet
+outcome   proved
+cost      $0.62
+turns     7
+estimate  S
+session   52b46324-8d8d-4479-847d-4350adebb23e
+log       c:/Users/dibuj/dev/rule30/runs/20260910T214615Z/centerColumn_periodic_neg_one_black_times-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Selvage (#3a6ea5): closed 19, abandoned 5, $33.08, calibration 12/19

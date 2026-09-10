@@ -1,0 +1,16 @@
+
+node      centerColumn_not_isEventuallyPeriodic_of_white_times
+identity  Cadence
+model     sonnet
+outcome   proved
+cost      $1.73
+turns     25
+estimate  M
+session   3867f5c3-6c14-4228-ad4e-30e47374d3ea
+log       c:/Users/dibuj/dev/rule30/runs/20260910T214615Z/centerColumn_not_isEventuallyPeriodic_of_white_times-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Cadence (#2a6f77): closed 39, abandoned 10, $63.18, calibration 27/39

@@ -1,0 +1,16 @@
+
+node      column_one_succ_of_white
+identity  Vesper
+model     haiku
+outcome   proved
+cost      $0.86
+turns     32
+estimate  S
+session   b2ecfd2f-90f4-471b-be9b-09d17c5ede02
+log       c:/Users/dibuj/dev/rule30/runs/20260910T214615Z/column_one_succ_of_white-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Vesper (#2b3a67): closed 77, abandoned 9, $81.09, calibration 63/76

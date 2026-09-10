@@ -122,6 +122,35 @@ theorem rowNat_bitlength_le_120 :
     ∀ t : Fin 121, 2 ^ (2 * (t : ℕ)) ≤ rowNat t ∧ rowNat t < 2 ^ (2 * (t : ℕ) + 1) := by
   decide +kernel
 
+/-- **The autonomous prefix is minimal.**  `rowStep` carries information only
+upward through the bits, so the low `n` bits are a closed subsystem -- that is
+`stepMod`, and it is why every tool the board has settles a FIXED bit index.
+This says there is nothing smaller: for every `n`, two numbers agreeing on their
+low `n` bits can have successors that already differ at bit `n`.  Witness
+`x = 0`, `y = 2 ^ n`.
+
+Consequence, and the reason it is here: the only subsystems of the orbit closed
+under the dynamics are the bit-prefixes, so the unique one containing bit `t` is
+"bits `0 .. t`" entire.  A conserved or monotone quantity that constrains the
+centre column would have to be a quantity of that whole prefix -- and the
+prefix's own preperiod is measured at `4t/3`, past the row where the centre
+column reads it. -/
+theorem rowStep_prefix_minimal (n : ℕ) :
+    ∃ x y : ℕ, x % 2 ^ n = y % 2 ^ n ∧ rowStep x % 2 ^ (n + 1) ≠ rowStep y % 2 ^ (n + 1) := by
+  refine ⟨0, 2 ^ n, by simp, ?_⟩
+  have h0 : rowStep 0 = 0 := by simp [rowStep]
+  have hy : rowStep (2 ^ n) = 2 ^ (n + 2) ^^^ (2 ^ (n + 1) ||| 2 ^ n) := by
+    show 4 * 2 ^ n ^^^ (2 * 2 ^ n ||| 2 ^ n) = _
+    ring_nf
+  rw [h0, hy]
+  simp only [Nat.zero_mod, ne_eq]
+  intro hcon
+  have hbit : ((2 ^ (n + 2) ^^^ (2 ^ (n + 1) ||| 2 ^ n) : ℕ) % 2 ^ (n + 1)).testBit n = true := by
+    rw [Nat.testBit_mod_two_pow]
+    simp [Nat.testBit_xor, Nat.testBit_or]
+  rw [← hcon] at hbit
+  simp at hbit
+
 /-- The two moving reads, side by side, at the depths the kernel can reach.
 `centerColumn k` is bit `k` of row `k`; `centerColumn_eq_evolve_mul_pow` says it
 is also bit `2m·2^k + k` of row `m·2^k + k`.  Both are moving indices; the first
@@ -131,3 +160,9 @@ theorem centerColumn_reread_le :
       (rowNat ((m : ℕ) * 2 ^ (k : ℕ) + k)).testBit (2 * (m : ℕ) * 2 ^ (k : ℕ) + k)
         = (rowNat k).testBit k := by
   decide +kernel
+
+#print axioms rowStep_agree_succ_two_of_triple
+#print axioms rowStep_forced_advance_at_most_two
+#print axioms rowNat_bitlength_le_120
+#print axioms rowStep_prefix_minimal
+#print axioms centerColumn_reread_le

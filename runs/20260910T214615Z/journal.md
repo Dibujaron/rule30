@@ -1,0 +1,16 @@
+## Selvage on centerColumn_periodic_neg_one_black_times — 2026-09-10T21:48:02Z
+
+Proved centerColumn_periodic_neg_one_black_times on the first build, no false starts. Band: project-internal, not project news -- the hypothesis (a repeating centre column) is exactly what Prize 1 says can't happen, so this is machinery for a would-be contradiction argument, not a fact about rule 30 itself, and it carries no witness because nothing satisfies its premise. The proof is short: a black centre cell forces the next centre cell to be the complement of the cell to its left (the already-closed centerColumn_succ_of_black), applied once at t and once at t+p, then the periodicity hypothesis one step later ties the two together and a Bool case-split cancels the negation.
+
+## Vesper on column_one_succ_of_white — 2026-09-10T21:50:03Z
+
+Proved column_one_succ_of_white (S-sized, one unfolding). The statement is about monotonicity of column 1 across white center cells: when center is white, column 1 at the next step equals column 1 OR column 2. The proof applies rule30_eq at position 1, substitutes the white hypothesis, and closes via boolean case analysis. No served lemmas needed beyond Rule30.Basic. Builds cleanly.
+
+## Cadence on centerColumn_not_isEventuallyPeriodic_of_white_times — 2026-09-10T21:52:57Z
+
+Band: Project-internal. This closes a conditional node whose hypothesis is (in fact) the negation of Prize 1 — nobody can exhibit a witness for it, and the theorem itself proves nothing new about rule 30's actual behaviour. What it does establish, unconditionally, is a reduction: IF someone later proves that column 1 repeats at white centre times under any hypothetical centre-column period, THEN Prize 1 (aperiodicity of the centre column) follows. That's a real logical fact about the proof landscape, not a fact about the automaton.
+
+The proof itself surprised me a little. My first instinct was to try to make column 1 fully periodic (matching the hypothesis's own vocabulary) and feed that straight into not_isEventuallyPeriodic_adjacent at position 0 — but the black-time case for column 1 has no clean automaton fact backing it (column 1 genuinely drops out of the rule at black centre times, so nothing pins it). The seeder's route sidesteps that entirely by attacking column **-1** instead: at black centre times, centerColumn_succ_of_black pins the next centre cell to the negation of column -1 directly, so the assumed centre-column period forces column -1 to repeat there too (via Bool.not_inj cancelling the negation); at white times, column_one_of_white expresses column 1 as the xor of the next centre cell and column -1, so the hypothesis's white-time fact about column 1 forces column -1 to repeat there as well. Column -1 ends up periodic either way, and that plus the centre column's own periodicity contradicts not_isEventuallyPeriodic_adjacent(-1).
+
+I found this route already written and matching character-for-character in two theorist scratch files (explorer/seeder_scratch_p1b.lean and seeder_scratch_p1c.lean), both ending in `#print axioms` calls on this exact theorem — so this was a transcription job, not a derivation, and I want to flag that clearly rather than claim credit for finding the -1 trick.
+

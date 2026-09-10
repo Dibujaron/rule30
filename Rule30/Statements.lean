@@ -2332,4 +2332,73 @@ theorem centerColumn_not_isEventuallyPeriodic_of_white_times
     ¬ IsEventuallyPeriodic centerColumn := by
   sorry
 
+/-- **At a white centre cell, column 1 is determined by its two neighbours in
+time.** When the centre is white at `t`, column 1 at `t` is the `xor` of the
+centre at `t + 1` and column `-1` at `t`.
+
+Proposed by Dioptra (connector, 2026-09-10) from the cryptanalytic reading of
+rule 30; kernel-proved in `explorer/dioptra_scratch_whiterun.lean` on
+`[propext, Quot.sound]` before landing.
+
+DOES NOT PROVE: one unfolding of the local rule under a white centre, true of
+every configuration. It rules nothing out by itself. -/
+theorem col_one_of_white (X : Config) (t : ℕ) (h : column X 0 t = false) :
+    column X 1 t = xor (column X 0 (t + 1)) (column X (-1) t) := by
+  sorry
+
+/-- **Inside a white run of the centre column, column 1 never goes back.**
+If the centre is white at `t` and column 1 is black there, column 1 is black
+at `t + 1` too.
+
+Proposed by Dioptra (connector, 2026-09-10); kernel-proved before landing.
+This is the monotonicity that makes the *switch index* well defined: inside
+one maximal white run of the centre column, column 1 switches from white to
+black at most once, so the run carries a single integer rather than a word.
+
+DOES NOT PROVE: unconditional, and it says nothing about what happens at a
+black centre cell, where the monotonicity is gone. -/
+theorem white_run_monotone (X : Config) (t : ℕ) (h : column X 0 t = false)
+    (h1 : column X 1 t = true) : column X 1 (t + 1) = true := by
+  sorry
+
+/-- **Two white centre cells with a black neighbour force the third.** If the
+centre is white at `t` and `t + 1` and column `-1` is black at `t`, then the
+centre at `t + 2` is the complement of column `-1` at `t + 1`.
+
+Proposed by Dioptra (connector, 2026-09-10); kernel-proved before landing.
+**The white-time twin of the board's `column_succ_of_black`**, and the piece
+of that tier that is genuinely new: a second identity pinning the centre
+column to column `-1`. Measured over 200,000 rows, the black-time law alone
+determines `0.5004` of the centre column and this one adds `0.1251` on its
+own; iterated together they reach `0.6885`
+(`explorer/dioptra_coverage.mjs`, figures reproduced by the captain before
+landing).
+
+DOES NOT PROVE: it determines more of the column, not all of it, and `0.6885`
+is a measurement over one prefix rather than a theorem about the limit.
+Underneath it, the `0*1*` shape it exploits is Meier–Staffelbach (1991) and is
+**known**; what was not found in the literature is its statement as a forcing
+identity and the coverage figure, and that search was not exhaustive. -/
+theorem centre_forced_after_double_white (X : Config) (t : ℕ)
+    (h0 : column X 0 t = false) (h1 : column X 0 (t + 1) = false)
+    (hm : column X (-1) t = true) :
+    column X 0 (t + 2) = !(column X (-1) (t + 1)) := by
+  sorry
+
+/-- **Three white centre cells forbid a white neighbour in the middle.** If
+the centre is white at `t`, `t + 1` and `t + 2`, and column `-1` is black at
+`t`, then column `-1` is black at `t + 1`.
+
+Proposed by Dioptra (connector, 2026-09-10); kernel-proved before landing. The
+forbidden-block form of the law above.
+
+DOES NOT PROVE: a constraint on column `-1` during a white run, not a
+determination of it, and nothing about the runs' lengths or how often they
+occur. -/
+theorem white_run_forbidden (X : Config) (t : ℕ)
+    (h0 : column X 0 t = false) (h1 : column X 0 (t + 1) = false)
+    (h2 : column X 0 (t + 2) = false) (hm : column X (-1) t = true) :
+    column X (-1) (t + 1) = true := by
+  sorry
+
 end Statements

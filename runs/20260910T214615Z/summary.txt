@@ -1,0 +1,6 @@
+
+centerColumn_periodic_neg_one_black_timesSelvage  sonnet  proved            $0.62   7 turns
+column_one_succ_of_white          Vesper   haiku   proved            $0.86   32 turns
+centerColumn_not_isEventuallyPeriodic_of_white_timesCadence  sonnet  proved            $1.73   25 turns
+
+3 attempt(s), 3 closed, $3.21 in all

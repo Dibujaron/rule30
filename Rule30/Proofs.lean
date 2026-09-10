@@ -35,8 +35,10 @@ import Rule30.Proofs.CenterColumnNotEventuallyConstant
 import Rule30.Proofs.CenterColumnNotEventuallyPeriodicOfAnyOther
 import Rule30.Proofs.CenterColumnNotEventuallyPeriodicOfRight
 import Rule30.Proofs.CenterColumnNotIsEventuallyPeriodicOfCohomologous
+import Rule30.Proofs.CenterColumnNotIsEventuallyPeriodicOfWhiteTimes
 import Rule30.Proofs.CenterColumnOtherOfCohomologousColumn
 import Rule30.Proofs.CenterColumnPeriodicDamageWhite
+import Rule30.Proofs.CenterColumnPeriodicNegOneBlackTimes
 import Rule30.Proofs.CenterColumnRightNotBothIsEventuallyPeriodic
 import Rule30.Proofs.CenterColumnRunBoundary
 import Rule30.Proofs.CenterColumnSuccOfBlack
@@ -45,6 +47,7 @@ import Rule30.Proofs.ColumnDamageZeroOfBlackRun
 import Rule30.Proofs.ColumnNegOneDamageMask
 import Rule30.Proofs.ColumnNegTwoDamageDerivative
 import Rule30.Proofs.ColumnOneOfWhite
+import Rule30.Proofs.ColumnOneSuccOfWhite
 import Rule30.Proofs.ColumnSettledConfigEq
 import Rule30.Proofs.ColumnSuccOfBlack
 import Rule30.Proofs.ConfigEqOfRightAndColumn
