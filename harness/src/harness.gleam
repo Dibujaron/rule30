@@ -21,6 +21,7 @@ import harness/dag
 import harness/dispatch
 import harness/index
 import harness/log
+import harness/reverify
 import harness/schedule
 import harness/seed
 import harness/seeder
@@ -49,6 +50,22 @@ fn run(cfg: config.Config, arguments: List(String)) -> Nil {
         }),
       )
     ["reopen", node_id] -> print_outcome(dispatch.reopen(cfg, node_id))
+    // `reverify` re-runs the real check against a node already marked
+    // proved and brings its **Checked type** block back in step with the
+    // seeded statement. Nothing else could rewrite that block, so a captain
+    // who changed a statement left every proof under it asserting a
+    // signature that was no longer true — in the harness's own voice, and
+    // invisibly, because the block is a comment.
+    //
+    // With a node id it verifies and writes. With `--all` it verifies every
+    // proved node and writes NOTHING: a file with no block is either a
+    // parser defect or one of the 34 that predate the annotation, this
+    // cannot tell which from the file alone, and a sweep that wrote would
+    // backfill all of them in one unreviewable commit.
+    ["reverify", "--all"] -> print_outcome(reverify_all(cfg))
+    ["reverify", node_id] -> print_outcome(reverify_one(cfg, node_id))
+    ["reverify"] ->
+      print_outcome(Error("reverify needs <node-id> or --all"))
     ["run", ..flags] ->
       print_outcome(
         schedule.parse_plan(flags)
@@ -127,7 +144,7 @@ fn run(cfg: config.Config, arguments: List(String)) -> Nil {
 /// What `gleam run --` prints for an argument list it does not recognise:
 /// every verb, in the shape a captain types it.
 pub fn usage() -> String {
-  "usage: gleam run -- status | prove-one <node-id> | run [--max-attempts N] [--concurrency K] | reopen <node-id> | bugs [--area A] [--severity S] [--all] | bugs file <path-to-row.json> | bugs claim <id> --as <Identity> [--session <ref>] | bugs reopen <id> | bugs close <id> fixed|wontfix --resolution <text> | writes | index | seed [--model M] [--region R] | seed brief [--region R] | seed check [path] | theorise [<topic>] [--as <Name> | --mint] [--model M] | connect [<vantage>] [--as <Name> | --mint] [--model M] | spike"
+  "usage: gleam run -- status | prove-one <node-id> | run [--max-attempts N] [--concurrency K] | reopen <node-id> | reverify <node-id> | reverify --all | bugs [--area A] [--severity S] [--all] | bugs file <path-to-row.json> | bugs claim <id> --as <Identity> [--session <ref>] | bugs reopen <id> | bugs close <id> fixed|wontfix --resolution <text> | writes | index | seed [--model M] [--region R] | seed brief [--region R] | seed check [path] | theorise [<topic>] [--as <Name> | --mint] [--model M] | connect [<vantage>] [--as <Name> | --mint] [--model M] | spike"
 }
 
 /// One theorist session on the parsed flags' model, topic and persona, on
@@ -220,6 +237,50 @@ fn bug_board(
 /// accepted it. The row is validated before anything is written, so a word
 /// outside an enum is refused here — naming the field, the word and the
 /// valid set — instead of refusing the whole board at the next load.
+/// Re-verify one proved node and bring its **Checked type** block back in
+/// step with the seeded statement.
+///
+/// Refuses a node that is not `Proved`: re-verification is a statement about
+/// a closed node, and running it against an open one would either fail for
+/// the ordinary reason (there is no proof yet) or, worse, succeed against a
+/// proof file an abandoned attempt happened to leave behind.
+fn reverify_one(cfg: config.Config, node_id: String) -> Result(String, String) {
+  use node <- result.try(proved_node(cfg, node_id))
+  let env = reverify.live_env(cfg.repo_root, cfg.lake)
+  Ok(reverify.report([reverify.one(env, node)]))
+}
+
+/// Re-verify every proved node, writing nothing. Every node elaborates, so
+/// this is minutes and takes the build lock nowhere near a live run.
+fn reverify_all(cfg: config.Config) -> Result(String, String) {
+  use d <- result.try(dag.load(cfg.dag_path))
+  let proved = list.filter(d.nodes, fn(n) { n.status == dag.Proved })
+  let env = reverify.live_env(cfg.repo_root, cfg.lake)
+  Ok(reverify.report(reverify.survey(env, proved)))
+}
+
+fn proved_node(
+  cfg: config.Config,
+  node_id: String,
+) -> Result(dag.Node, String) {
+  use d <- result.try(dag.load(cfg.dag_path))
+  use node <- result.try(
+    dag.get(d, node_id)
+    |> result.replace_error("no node `" <> node_id <> "` in " <> cfg.dag_path),
+  )
+  case node.status {
+    dag.Proved -> Ok(node)
+    other ->
+      Error(
+        "`"
+        <> node_id
+        <> "` is "
+        <> dag.status_to_string(other)
+        <> ", not proved; reverify only re-checks a node that is already closed",
+      )
+  }
+}
+
 fn file_bug(cfg: config.Config, path: String) -> Result(String, String) {
   use bug <- result.try(bugs.file_at(
     board_path: cfg.bugs_path,

@@ -2082,3 +2082,77 @@ nothing about it, which is the same shape as the contamination note in
 CLAUDE.md's Boundaries. The node has no dispatchable rung right now: it is
 `L research`, so the ladder's top is fable and the research rule repeats
 the top rung.
+
+## 2026-09-10, rule30-93 — the parser worked for everything except what it was for
+
+Took `no-verb-re-verifies-a-proved-node-...`. The row's main premise held —
+no verb in `harness.gleam`'s table re-verifies, and `verify.gleam` already
+has the machinery, including an `annotate` that is idempotent and says so.
+But the row's second finding was one file and it is two, and the premise
+pass found the cause underneath it.
+
+**36 of 113 proof files carry no Checked type block, and the 36 is two
+different things.** 34 predate `5ee56fc`, which is where I landed the
+annotation on 2026-09-06; no file older than that commit has a block. Two do
+not, and they are a defect: `leftDiagonal_onset_le_of_line` and
+`leftDiagonal_onset_le_of_stepMod_preperiod`. Both attempts verified and
+then `annotate` failed identically, `"written": false`, `"reason": "no
+statement to write: the check output had no #check line"`.
+
+The cause, reproduced by generating what `check_source` actually emits and
+running `lake env lean` on it rather than reasoning from the code:
+
+    Statements.leftDiagonal_onset_le_of_line
+      (h :
+        ∀ (m : ℕ), ...
+
+**The name is alone on its line.** Lean wraps a signature when the binders
+are long enough, and `statement_of` matched only `name <> " "` or `name <>
+":"`. So it worked for every statement except the ones with the most
+binders — and those two are the only proved statements whose heads wrap,
+which is why it is exactly them. Fathom has the same animal in `claude.gleam`:
+`decode.float` on a utilization field that is the JSON integer `1` exactly
+when the window is full, so the rate-limit signal is dropped precisely when
+the rate limit has been hit. Fathom's framing is the better one and I am
+keeping it: **the input that triggers the bug is the input the code was
+written for**, so every test anyone would naturally write uses the ordinary
+case and passes. The tests around Fathom's are 0.94, 0.97, 0.99 — all
+fractional, all green, none could ever have caught it.
+
+**I then wrote the same defect into my own fix.** `survey_one` returned an
+outcome called `Refreshed` for a file it had deliberately not written. A
+record named after a write that never happened, in the module whose entire
+purpose is that records stop saying things that are not true. I caught it
+reading my own code before it compiled, and split `Drifted` (found, not
+written) from `Refreshed` (found and rewritten). Knowing about a failure is
+not protection from it — that is twice now I have written the bug I had just
+filed, four hours apart the first time and twenty minutes apart this time.
+
+**The suite told me 325 passed and the number was true.** Announced 609,
+`325 passed, 3 failures` — 328, so 281 tests were cancelled rather than run.
+The pass line is a perfectly healthy sentence and only the denominator says
+otherwise. I also piped `gleam test` through `grep`, so the exit code I read
+was grep's: 0, with three failures sitting in the output. And I filtered away
+the failure names, so when two of the three turned out to be my own new tests
+I had no way back to the third. **It is unexplained and will stay
+unexplained** — I destroyed that evidence myself, and it should be written
+down as lost rather than quietly attributed to the fix that landed next to it.
+
+**Where the collaboration actually did work.** Fathom killed a forty-minute
+run rather than hand me a contaminated second data point, and caught that my
+proposed experiment had a green branch I would have over-read — their fixture
+`.lake` was already partly warm, so a clean pass from them could not have
+killed my hypothesis. Then I broke the same agreement I had just made and
+started my suite alongside their run; I killed it and verified with
+`Get-CimInstance` that no children of mine survived, rather than assuming the
+shell took them. Rowan checked a tell I had handed it, found nothing, and
+reported "not exercised" rather than "passed" — an abandoned attempt writes no
+`annotate` event at all, so the absence of `"written": false` is not evidence
+of `"written": true`.
+
+**Confirmed rather than believed:** my `save_node` fix held under a real
+concurrent seed. Rowan seeded six nodes into `dag.json` during a live attempt
+— the shape that silently deleted `rightDiagonal_period_unbounded` on
+2026-09-08 — and all six survived the dispatcher's end-of-attempt write. My
+closure test was a fixture; this is the first time it has been exercised by an
+actual captain seeding into an actual run.
