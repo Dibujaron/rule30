@@ -1,0 +1,40 @@
+
+seeder    Seeder
+model     opus
+region    (whole board)
+ended     finished — the seeder reported its proposal written; that is its claim about the file, and the check below is the only adjudication
+ceilings  80 turns, $12.0
+cost      $8.86
+turns     44
+session   5020d569-4ffa-4c3c-b7a8-84512d925eca
+log       c:/Users/dibuj/dev/rule30/runs/20260910T212409Z/seed-1
+proposal  c:/Users/dibuj/dev/rule30/blueprint/proposals/next.json
+
+Five P1 nodes proposed, every route compiled against the exact proposal bytes and axiom-clean; two of them close the open period-1 prize node, one unblocks another open node, and a sixth candidate was killed after I proved its hypothesis refutable from the light cone alone.
+
+check of c:/Users/dibuj/dev/rule30/blueprint/proposals/next.json:
+centerColumn_periodic_neg_one_black_times
+  DOES NOT PROVE: Does not prove P1 and does not weaken either wall. Its hypothesis is the negation of P1, so nobody can exhibit a p and N satisfying it and it carries NO WITNESS: a finite range would only confirm the hypothesis is unsatisfiable there, which is not what is claimed. It says nothing whatever about the white times, which is the entire open part. It is also not a settling or agreement-front statement and does not run into obstruction 69: it never reads a fixed bit of the packed row.
+  under:   centerColumn_other_isEventuallyPeriodic_of_center
+  route:   DOES NOT CLOSE — c:/Users/dibuj/dev/rule30/harness/build/checks/seed/centerColumn_periodic_neg_one_black_times_ca8b5d009abeff54be4103e963450db2.lean:11:39: error: unknown tactic
+  witness: unchecked — no witness supplied
+centerColumn_not_isEventuallyPeriodic_of_white_times
+  DOES NOT PROVE: IT IS NOT THE WALL AND IT DOES NOT WEAKEN IT. What it buys is a smaller target, not an easier one: nothing here says the residual (column 1 at the white times) is any more tractable than P1, and I claim no evidence that it is. The hypothesis is a conditional whose antecedent is the negation of P1, so it is unsatisfiable in fact, no p and N can be exhibited, and the node carries NO WITNESS by design rather than by omission. Anyone who proves the hypothesis has proved Prize 1, which is the point and also the warning.
+  under:   centerColumn_other_isEventuallyPeriodic_of_center
+  route:   closes the statement
+  witness: unchecked — no witness supplied
+centerColumn_black_infinitely_often
+  DOES NOT PROVE: Nothing above period 1. There is no induction on the period here and none is available: this half turns on a monotonicity that exists only when the centre column is white at EVERY late time, and one black cell in a period destroys it. So it is not a step toward either P1 wall, and the tier does not pretend it is. A mathematician would call this easy and would very likely call it folklore; it is not in any source held here, but I did not search the literature and it should not be reported as novel. The witness is a genuine instance check rather than a shadow — every N below 8 really does get a black cell below 12 — but it says nothing about large N, where the whole claim lives.
+  route:   closes the statement
+  witness: holds over N < 8, witness t < 12
+centerColumn_white_infinitely_often
+  DOES NOT PROVE: Nothing above period 1, and no induction on the period is implied or available — this half and the black half use completely different mechanisms (one the left neighbour, one a monotonicity on the right), which is why neither generalises and why the pair is not a step toward either P1 wall. Almost certainly folklore in mathematical terms; not found in the sources held here, but not searched for either, so it should not be reported as novel. The witness is a real instance check for N < 8, not a shadow, and it is silent about every N above 7.
+  route:   closes the statement
+  witness: holds over N < 8, witness t < 12
+column_one_succ_of_white
+  DOES NOT PROVE: Unconditional and true of every configuration, so by itself it rules nothing out — it is one unfolding of rule30_eq and a mathematician would call it a definition chase, not a result. It gives monotonicity only across a white centre cell; at a black one column 1 becomes the complement of the same OR and the monotonicity is gone, which is exactly why the period-1 argument it feeds does not reach period 2. WITNESS NON-VACUITY CHECKED: the hypothesis holds at t = 2, 6, 7 in range over the seed, and the same expression with column 3 in place of column 2 evaluates to false, so the check can fail.
+  route:   DOES NOT CLOSE — c:/Users/dibuj/dev/rule30/harness/build/checks/seed/column_one_succ_of_white_bb43f9e52ccd94072e4f3d39ed685323.lean:6:3: error: unknown tactic
+  witness: holds over t < 12 over the seed, hypothesis-guarded
+
+2 unchecked, 3 holds
+

@@ -2272,4 +2272,64 @@ theorem centerColumn_eq_evolve_mul_pow (k m : ℕ) :
     evolve (m * 2 ^ k + k) ((m * 2 ^ k : ℕ) : ℤ) = centerColumn k := by
   sorry
 
+/-- **Column 1 grows monotonically across a white centre cell.** If the centre
+cell is white at time `t`, then column 1 at `t + 1` is column 1 or column 2 at
+`t`.
+
+Proposed by Seeder (2026-09-10). Witness non-vacuity checked: the hypothesis
+holds at `t = 2, 6, 7` over the seed in range, and the same expression with
+column 3 in place of column 2 evaluates false, so the check can fail.
+
+DOES NOT PROVE: unconditional and true of every configuration, so it rules
+nothing out. One unfolding of `rule30_eq` — a mathematician would call it a
+definition chase, not a result. It gives monotonicity only *across a white
+centre cell*; at a black one column 1 becomes the complement of the same `OR`
+and the monotonicity is gone, which is exactly why the period-1 argument it
+feeds does not reach period 2. -/
+theorem column_one_succ_of_white (X : Config) (t : ℕ) (h : column X 0 t = false) :
+    column X 1 (t + 1) = (column X 1 t || column X 2 t) := by
+  sorry
+
+/-- **At the black times, the column to the left repeats too.** If the centre
+column had period `p` from `N`, then at every late *black* time the cell one
+place left of the origin also repeats.
+
+Proposed by Seeder (2026-09-10).
+
+DOES NOT PROVE: it does not prove P1 and does not weaken either wall. Its
+hypothesis is the negation of P1, so nobody can exhibit a `p` and `N`
+satisfying it, and it carries no witness — a finite range would only confirm
+the hypothesis is unsatisfiable there, which is not what is claimed. It says
+nothing whatever about the **white** times, which is the entire open part. It
+is not a settling or agreement-front statement and does not run into crystal
+69: it never reads a fixed bit of the packed row. -/
+theorem centerColumn_periodic_neg_one_black_times (p N : ℕ)
+    (hc : ∀ t ≥ N, centerColumn (t + p) = centerColumn t)
+    (t : ℕ) (ht : N ≤ t) (hb : centerColumn t = true) :
+    evolve (t + p) (-1) = evolve t (-1) := by
+  sorry
+
+/-- **A sufficient condition for Prize 1.** If, for every hypothetical period,
+column 1 repeats at the *white* times, then the centre column is not
+eventually periodic.
+
+Proposed by Seeder (2026-09-10). The first sufficient condition for P1 the
+board has produced since the wall annotation was corrected on 2026-09-10 to
+invite them: this is the shape an attack is supposed to have, because anything
+implying a P1-equivalent wall implies P1.
+
+DOES NOT PROVE: **it is not the wall and it does not weaken it.** What it buys
+is a smaller target, not an easier one — nothing here says the residual
+(column 1 at the white times) is any more tractable than P1, and the seeder
+claimed no evidence that it is. The hypothesis is a conditional whose
+antecedent is the negation of P1, so it is unsatisfiable in fact, no `p` and
+`N` can be exhibited, and the node carries no witness by design rather than by
+omission. **Anyone who proves the hypothesis has proved Prize 1**, which is
+the point and also the warning. -/
+theorem centerColumn_not_isEventuallyPeriodic_of_white_times
+    (h : ∀ p > 0, ∀ N : ℕ, (∀ t ≥ N, centerColumn (t + p) = centerColumn t) →
+        ∀ t ≥ N, centerColumn t = false → evolve (t + p) 1 = evolve t 1) :
+    ¬ IsEventuallyPeriodic centerColumn := by
+  sorry
+
 end Statements

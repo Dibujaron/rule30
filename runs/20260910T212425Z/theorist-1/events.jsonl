@@ -5,3 +5,43 @@
 {"ts":"2026-09-10T21:30:29Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\dioptra_front.mjs","denial":"","decision":"Allow"}
 {"ts":"2026-09-10T21:30:32Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/dioptra_front.mjs","denial":"","decision":"Allow"}
 {"ts":"2026-09-10T21:30:33Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/dioptra_front.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:35:26Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\dioptra_forced.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:35:34Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Edit","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\dioptra_forced.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:35:42Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Edit","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\dioptra_forced.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:35:45Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/dioptra_forced.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:35:45Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/dioptra_forced.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:36:39Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\dioptra_deep.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:36:42Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/dioptra_deep.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:36:42Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/dioptra_deep.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:36:47Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/dagdump.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:36:47Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/dagdump.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:38:31Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\sextant7_scratch_forced.lean","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:38:35Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"lake env lean explorer/sextant7_scratch_forced.lean","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:38:43Z","kind":"guard","node":"theorist-1","event":"PostToolUseFailure","tool":"Bash","attempted":"lake env lean explorer/sextant7_scratch_forced.lean","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:38:57Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Edit","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\sextant7_scratch_forced.lean","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:39:00Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"lake env lean explorer/sextant7_scratch_forced.lean","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:39:08Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"lake env lean explorer/sextant7_scratch_forced.lean","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:39:34Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\sextant7_scratch_axioms.lean","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:39:36Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"lake env lean explorer/sextant7_scratch_axioms.lean","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:39:45Z","kind":"guard","node":"theorist-1","event":"PostToolUseFailure","tool":"Bash","attempted":"lake env lean explorer/sextant7_scratch_axioms.lean","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:40:35Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\dioptra_front.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:40:37Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\dioptra_forced.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:40:38Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\dioptra_deep.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:41:19Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\sextant7_front.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:41:48Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\sextant7_forced.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:41:52Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/sextant7_forced.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:41:52Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/sextant7_forced.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:42:50Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\sextant7_invariants.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:43:01Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Edit","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\sextant7_invariants.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:43:07Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Edit","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\sextant7_invariants.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:43:14Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Edit","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\sextant7_invariants.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:43:17Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/sextant7_invariants.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:43:19Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/sextant7_invariants.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:44:12Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Edit","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\sextant7_invariants.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:44:22Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Edit","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\sextant7_invariants.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:44:25Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Edit","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\sextant7_invariants.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:44:28Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/sextant7_invariants.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:44:31Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/sextant7_invariants.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:45:19Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\sextant7_deep.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:45:22Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/sextant7_deep.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T21:45:22Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/sextant7_deep.mjs","denial":"","decision":"Allow"}
