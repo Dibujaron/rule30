@@ -35,6 +35,8 @@ import Rule30.Proofs.CenterColumnNotEventuallyConstant
 import Rule30.Proofs.CenterColumnNotEventuallyPeriodicOfAnyOther
 import Rule30.Proofs.CenterColumnNotEventuallyPeriodicOfRight
 import Rule30.Proofs.CenterColumnNotIsEventuallyPeriodicOfCohomologous
+import Rule30.Proofs.CenterColumnNotIsEventuallyPeriodicOfDeepAlternating
+import Rule30.Proofs.CenterColumnNotIsEventuallyPeriodicOfLongBlackRuns
 import Rule30.Proofs.CenterColumnNotIsEventuallyPeriodicOfWhiteTimes
 import Rule30.Proofs.CenterColumnOtherOfCohomologousColumn
 import Rule30.Proofs.CenterColumnPeriodicDamageWhite
@@ -45,6 +47,9 @@ import Rule30.Proofs.CenterColumnSuccOfBlack
 import Rule30.Proofs.CenterColumnZero
 import Rule30.Proofs.CentreForcedAfterDoubleWhite
 import Rule30.Proofs.ColOneOfWhite
+import Rule30.Proofs.ColumnAlternatingOfBlackRun
+import Rule30.Proofs.ColumnAlternatingShrink
+import Rule30.Proofs.ColumnBlackRunOfAlternating
 import Rule30.Proofs.ColumnDamageZeroOfBlackRun
 import Rule30.Proofs.ColumnNegOneDamageMask
 import Rule30.Proofs.ColumnNegTwoDamageDerivative
@@ -149,6 +154,7 @@ import Rule30.Proofs.RowStepAgreeSuccTwoIff
 import Rule30.Proofs.RowStepAgreeSuccTwoOfTriple
 import Rule30.Proofs.RowStepForcedAdvanceAtMostTwo
 import Rule30.Proofs.RowStepPrefixMinimal
+import Rule30.Proofs.Rule30AlternatingStep
 import Rule30.Proofs.Rule30LeftLocalLaw
 import Rule30.Proofs.Rule30LeftPermutive
 import Rule30.Proofs.Rule30NeOfLeftNe

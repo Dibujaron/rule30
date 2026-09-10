@@ -1,0 +1,16 @@
+
+node      column_black_run_of_alternating
+identity  Vesper
+model     sonnet
+outcome   proved
+cost      $1.27
+turns     13
+estimate  M
+session   65826120-e523-41dd-a776-f5abfb34b531
+log       c:/Users/dibuj/dev/rule30/runs/20260910T222813Z/column_black_run_of_alternating-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Vesper (#2b3a67): closed 81, abandoned 9, $84.77, calibration 66/79

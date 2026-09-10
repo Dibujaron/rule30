@@ -1,0 +1,16 @@
+
+node      rule30_alternating_step
+identity  Vesper
+model     sonnet
+outcome   proved
+cost      $1.42
+turns     16
+estimate  M
+session   b00dd1fe-d5c7-44cd-a30c-054d628ba727
+log       c:/Users/dibuj/dev/rule30/runs/20260910T222813Z/rule30_alternating_step-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Vesper (#2b3a67): closed 80, abandoned 9, $83.49, calibration 65/78

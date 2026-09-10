@@ -1,0 +1,9 @@
+
+centerColumn_not_isEventuallyPeriodic_of_long_black_runsCadence  sonnet  proved            $1.11   13 turns
+rule30_alternating_step           Vesper   sonnet  proved            $1.42   16 turns
+column_black_run_of_alternating   Vesper   sonnet  proved            $1.27   13 turns
+column_alternating_of_black_run   Selvage  sonnet  proved            $1.44   15 turns
+centerColumn_not_isEventuallyPeriodic_of_deep_alternatingVesper   sonnet  proved            $1.16   13 turns
+column_alternating_shrink         Cadence  sonnet  proved            $2.07   16 turns
+
+6 attempt(s), 6 closed, $8.48 in all

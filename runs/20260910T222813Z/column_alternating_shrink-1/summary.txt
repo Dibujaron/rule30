@@ -1,0 +1,16 @@
+
+node      column_alternating_shrink
+identity  Cadence
+model     sonnet
+outcome   proved
+cost      $2.07
+turns     16
+estimate  M
+session   01a367de-6d64-4729-b5ac-f88fcba2e076
+log       c:/Users/dibuj/dev/rule30/runs/20260910T222813Z/column_alternating_shrink-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Cadence (#2a6f77): closed 43, abandoned 10, $67.22, calibration 30/43

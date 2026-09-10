@@ -42,3 +42,40 @@
 {"ts":"2026-09-10T22:26:08Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Edit","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus7_rows.mjs","denial":"","decision":"Allow"}
 {"ts":"2026-09-10T22:26:12Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Edit","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus7_rows.mjs","denial":"","decision":"Allow"}
 {"ts":"2026-09-10T22:26:15Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/talus7_rows.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:31:27Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/talus7_rows.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:32:49Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus7_pickrun.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:32:52Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/talus7_pickrun.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:32:52Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/talus7_pickrun.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:33:01Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/talus7_center.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:33:01Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/talus7_center.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:33:22Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus7_scratch_alternation.lean","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:33:24Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"lake env lean explorer/talus7_scratch_alternation.lean","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:33:29Z","kind":"guard","node":"theorist-1","event":"PostToolUseFailure","tool":"Bash","attempted":"lake env lean explorer/talus7_scratch_alternation.lean","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:33:39Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Edit","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus7_scratch_alternation.lean","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:33:43Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Edit","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus7_scratch_alternation.lean","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:33:49Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus7_scratch_mutant.lean","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:33:52Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"lake env lean explorer/talus7_scratch_alternation.lean","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:33:57Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"lake env lean explorer/talus7_scratch_alternation.lean","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:37:24Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\docs\\attacks\\2026-09-10-prize-2-s-residual-find-any-bound-on-the-centre-column-s-excess-that-uses-rule-30-the-measurement-that-defines-this-topi.md","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:38:02Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus7_filter.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:38:05Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/talus7_filter.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:38:05Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/talus7_filter.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:38:51Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Edit","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus7_analyse.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:38:55Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Edit","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus7_analyse.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:39:00Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Edit","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus7_analyse.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:39:04Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Edit","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus7_analyse.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:39:09Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Edit","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus7_analyse.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:39:14Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/talus7_analyse.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:39:15Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/talus7_analyse.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:39:54Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus7_null.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:39:57Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/talus7_null.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:39:59Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/talus7_null.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:42:49Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\docs\\attacks\\2026-09-10-prize-2-s-residual-find-any-bound-on-the-centre-column-s-excess-that-uses-rule-30-the-measurement-that-defines-this-topi.md","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:42:56Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/talus7_pickrun.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:42:56Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/talus7_pickrun.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:43:41Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Edit","attempted":"c:\\Users\\dibuj\\dev\\rule30\\docs\\obstructions.md","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:43:50Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Edit","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus7_runbound.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:43:55Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Edit","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus7_runbound.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:43:59Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Edit","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\talus7_runbound.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:44:02Z","kind":"guard","node":"theorist-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/talus7_runbound.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:44:25Z","kind":"guard","node":"theorist-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/talus7_runbound.mjs","denial":"","decision":"Allow"}

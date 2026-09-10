@@ -44,6 +44,7 @@ function coin(n, seed) {
 function excessReport(name, b) {
   const n = b.length;
   let E = 0, minE = 0, minAt = 0, maxE = 0, maxAt = 0, firstNeg = -1, signChanges = 0;
+  let lastNonPos = -1, timePos = 0;
   let prevSign = 0;
   const prefix = new Int32Array(0);
   const decades = [];
@@ -53,6 +54,8 @@ function excessReport(name, b) {
     if (E < minE) { minE = E; minAt = t + 1; }
     if (E > maxE) { maxE = E; maxAt = t + 1; }
     if (firstNeg < 0 && E < 0) firstNeg = t + 1;
+    if (E <= 0) lastNonPos = t + 1;
+    if (E > 0) timePos++;
     const s = Math.sign(E);
     if (s !== 0 && prevSign !== 0 && s !== prevSign) signChanges++;
     if (s !== 0) prevSign = s;
@@ -64,6 +67,7 @@ function excessReport(name, b) {
   console.log(`\n[excess] ${name}`);
   console.log(`  E(N)=${E}  E/sqrt(N)=${(E / Math.sqrt(n)).toFixed(3)}  ` +
     `min=${minE}@${minAt}  max=${maxE}@${maxAt}  firstNeg=${firstNeg}  signChanges=${signChanges}`);
+  console.log(`  last N with E(N) <= 0: ${lastNonPos}   fraction of N with E(N) > 0: ${(timePos / n).toFixed(4)}`);
   console.log('  decades: ' + decades.map(([d, e, r]) => `${d}:${e}(${r}s)`).join(' '));
   void prefix;
 }
@@ -174,14 +178,15 @@ for (const [label, set] of Object.entries({
 // there a sparse rule-30 set of good cuts" has a data answer: how sparse is
 // the set of good cuts, measured multiplicatively?
 console.log('\n[the cut set the lemma needs] largest relative gap of ' +
-  'Z(eps) = { M <= N : |E(M)| <= eps*M }, over M >= 1000');
+  'Z(eps) = { M <= N : |E(M)| <= eps*M }, over the top decade M >= N/10');
 for (const [name, b] of [['rule 30', seedBits], ['fair coin', nullBits]]) {
   const n = b.length;
   const pre = new Int32Array(n + 1);
   for (let t = 0; t < n; t++) pre[t + 1] = pre[t] + (b[t] ? 1 : -1);
   for (const eps of [0, 1e-4, 1e-3]) {
-    let last = 1000, worst = 0, at = 0;
-    for (let M = 1000; M <= n; M++) {
+    const from = Math.floor(n / 10);
+    let last = from, worst = 0, at = 0;
+    for (let M = from; M <= n; M++) {
       if (Math.abs(pre[M]) <= eps * M) {
         const g = (M - 1 - last) / (M - 1);
         if (g > worst) { worst = g; at = M; }

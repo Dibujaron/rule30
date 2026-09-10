@@ -1,0 +1,16 @@
+
+node      centerColumn_not_isEventuallyPeriodic_of_deep_alternating
+identity  Vesper
+model     sonnet
+outcome   proved
+cost      $1.16
+turns     13
+estimate  S
+session   6a88df76-4e82-44b4-be2c-57459f9dff68
+log       c:/Users/dibuj/dev/rule30/runs/20260910T222813Z/centerColumn_not_isEventuallyPeriodic_of_deep_alternating-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Vesper (#2b3a67): closed 82, abandoned 9, $85.93, calibration 66/80

@@ -1,0 +1,16 @@
+
+node      centerColumn_not_isEventuallyPeriodic_of_long_black_runs
+identity  Cadence
+model     sonnet
+outcome   proved
+cost      $1.11
+turns     13
+estimate  S
+session   cdfd164f-c5d8-44a9-8a14-3e39686b10d5
+log       c:/Users/dibuj/dev/rule30/runs/20260910T222813Z/centerColumn_not_isEventuallyPeriodic_of_long_black_runs-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Cadence (#2a6f77): closed 42, abandoned 10, $65.15, calibration 29/42

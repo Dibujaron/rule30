@@ -78,6 +78,10 @@ console.log(`check: A051023 prefix mismatches ${badA}`);
 let alternationTested = 0, alternationBad = 0, firstAltBad = -1;
 let boundTested = 0, boundBad = 0, worstSlack = Infinity, worstAt = -1;
 let maxL = 0, maxLat = 0, maxLcolour = -1;
+// the derivation's own bound, L <= a, for a >= 1, per colour
+const tight = [Infinity, Infinity];
+const tightAt = [-1, -1];
+const viol = [0, 0];
 let cappedRuns = 0;
 let i = 0;
 while (i < N) {
@@ -90,6 +94,10 @@ while (i < N) {
     boundTested++;
     if (L > a + 1) { boundBad++; if (worstAt < 0) worstAt = a; }
     worstSlack = Math.min(worstSlack, a + 1 - L);
+    if (a >= 1) {
+      if (a - L < tight[col]) { tight[col] = a - L; tightAt[col] = a; }
+      if (L > a) viol[col]++;
+    }
     if (col === 1 && a > 0) {
       const arr = leftOfRunStart.get(a);
       if (arr) {
@@ -113,6 +121,9 @@ console.log(`    (runs longer than the ${CAP}-cell window: ${cappedRuns})`);
 console.log(`\n(2) the run bound L <= a + 1:`);
 console.log(`    ${boundBad} violations in ${boundTested} maximal runs; tightest margin ` +
   `a+1-L = ${worstSlack}${worstAt >= 0 ? ` (first violation at a=${worstAt})` : ''}`);
+console.log(`    the derivation's own bound, L <= a for a >= 1:`);
+console.log(`      white runs: ${viol[0]} violations, tightest a-L = ${tight[0]} at a=${tightAt[0]}`);
+console.log(`      black runs: ${viol[1]} violations, tightest a-L = ${tight[1]} at a=${tightAt[1]}`);
 console.log(`\n(3) how loose it is:`);
 console.log(`    longest run below N: L=${maxL} (colour ${maxLcolour}) starting at a=${maxLat}; ` +
   `bound allows ${maxLat + 1}, so the bound is loose by a factor ${((maxLat + 1) / maxL).toFixed(0)}`);
