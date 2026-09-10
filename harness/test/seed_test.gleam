@@ -917,6 +917,7 @@ fn brief() -> String {
     notes: [#("EvolveLeftEdge.lean", "**What this says.** The left edge is 1.")],
     crystals: Ok("# Seed crystals\n\nCandidate statements for future tiers."),
     connections: [],
+    survived: [],
     explorer_readme: "the BigInt engine",
     proposal_path: "C:/r/blueprint/proposals/next.json",
     region: option.None,
@@ -944,6 +945,7 @@ fn two_region_brief(region: option.Option(String)) -> String {
     notes: [],
     crystals: Error(Nil),
     connections: [],
+    survived: [],
     explorer_readme: "",
     proposal_path: "p",
     region:,
@@ -1004,6 +1006,7 @@ pub fn the_brief_says_when_nothing_is_open_test() {
       notes: [],
       crystals: Error(Nil),
       connections: [],
+      survived: [],
       explorer_readme: "",
       proposal_path: "p",
       region: option.None,
@@ -1031,6 +1034,7 @@ pub fn the_brief_says_when_the_literature_seeds_are_absent_test() {
       notes: [],
       crystals: Error(Nil),
       connections: [],
+      survived: [],
       explorer_readme: "",
       proposal_path: "p",
       region: option.None,
@@ -1373,6 +1377,7 @@ pub fn the_brief_derives_its_counts_rather_than_stating_them_test() {
       notes: [],
       crystals: Error(Nil),
       connections: [],
+      survived: [],
       explorer_readme: "",
       proposal_path: "p",
       region: option.None,
@@ -1393,6 +1398,7 @@ pub fn the_brief_derives_its_counts_rather_than_stating_them_test() {
       notes: [],
       crystals: Error(Nil),
       connections: [],
+      survived: [],
       explorer_readme: "",
       proposal_path: "p",
       region: option.None,
@@ -1467,6 +1473,7 @@ pub fn a_regional_brief_with_nothing_open_aims_at_the_prize_theorem_test() {
       notes: [],
       crystals: Error(Nil),
       connections: [],
+      survived: [],
       explorer_readme: "",
       proposal_path: "p",
       region: option.Some("P2"),
@@ -1544,6 +1551,7 @@ pub fn costs_are_rendered_as_money_test() {
       notes: [],
       crystals: Error(Nil),
       connections: [],
+      survived: [],
       explorer_readme: "",
       proposal_path: "p",
       region: option.None,
@@ -1560,6 +1568,7 @@ pub fn a_small_cost_keeps_both_places_test() {
       notes: [],
       crystals: Error(Nil),
       connections: [],
+      survived: [],
       explorer_readme: "",
       proposal_path: "p",
       region: option.None,
@@ -1766,6 +1775,7 @@ pub fn an_unfinished_connect_document_is_flagged_rather_than_inlined_test() {
       notes: [],
       crystals: Error(Nil),
       connections: seed.connections(dir),
+      survived: [],
       explorer_readme: "",
       proposal_path: "p.json",
       region: option.None,
@@ -1797,6 +1807,7 @@ pub fn the_brief_points_at_the_full_connect_documents_test() {
       notes: [],
       crystals: Error(Nil),
       connections: seed.connections(dir),
+      survived: [],
       explorer_readme: "",
       proposal_path: "p.json",
       region: option.None,
@@ -1823,6 +1834,7 @@ pub fn no_connect_documents_says_so_test() {
       notes: [],
       crystals: Error(Nil),
       connections: [],
+      survived: [],
       explorer_readme: "",
       proposal_path: "p.json",
       region: option.None,
@@ -1863,4 +1875,94 @@ pub fn the_real_connect_documents_extract_test() {
   list.each(stubs, fn(c) {
     assert string.contains(c.path, "census")
   })
+}
+
+/// A theorist's attack document has two payload sections and they must not be
+/// confused: `## 4 What survived` is candidates, `## 5 Claims that died` is
+/// dead routes. Same numbering as a connector's document, opposite content —
+/// a connector's `## 5` is a handoff FORWARD. Mapping section 5 across
+/// families would have put killed routes in front of a seeder as though they
+/// were things to propose.
+pub fn an_attack_document_s_two_sections_go_to_different_readers_test() {
+  let dir = "build/test-runs/seed/attack-sections"
+  let _ = simplifile.delete(dir)
+  let assert Ok(_) = simplifile.create_directory_all(dir <> "/docs/attacks")
+  let doc = "# Attack: the left diagonal
+
+" <> "## 3. What I tried
+prose
+
+" <> "## 4. What survived
+
+The onset bound holds to depth one million and the ladder argument is untouched by the counterexample, so it is the candidate worth seeding next.
+
+" <> "## 5. Claims that died
+
+The parity route dies at t=40: the residual is not a coboundary and the obstruction is explicit, so nobody should walk it again.
+
+" <> "## 6. Next
+more
+"
+  let assert Ok(_) = simplifile.write(dir <> "/docs/attacks/a.md", doc)
+
+  let assert [survived] = seed.attacks_survived(dir)
+  assert string.contains(survived.payload, "onset bound holds")
+  assert !string.contains(survived.payload, "parity route dies")
+
+  let assert [died] = seed.attacks_died(dir)
+  assert string.contains(died.payload, "parity route dies")
+  assert !string.contains(died.payload, "onset bound holds")
+}
+
+/// The seeder is shown what survived and NOT what died. A list of killed
+/// routes in front of a session choosing what to propose is at best noise and
+/// at worst a menu.
+pub fn the_seeder_brief_carries_survivors_and_not_dead_ends_test() {
+  let dir = "build/test-runs/seed/attack-brief"
+  let _ = simplifile.delete(dir)
+  let assert Ok(_) = simplifile.create_directory_all(dir <> "/docs/attacks")
+  let doc = "# Attack: the left diagonal
+
+" <> "## 4. What survived
+
+The onset bound holds to depth one million and the ladder argument is untouched, so it is the candidate worth seeding next time.
+
+" <> "## 5. Claims that died
+
+The parity route dies at t=40 and the obstruction is explicit, so nobody should ever walk that particular route again.
+"
+  let assert Ok(_) = simplifile.write(dir <> "/docs/attacks/a.md", doc)
+  let text =
+    seed.brief(
+      open: [],
+      closed: [],
+      notes: [],
+      crystals: Error(Nil),
+      connections: [],
+      survived: seed.attacks_survived(dir),
+      explorer_readme: "",
+      proposal_path: "p.json",
+      region: option.None,
+    )
+  assert string.contains(text, "onset bound holds")
+  assert !string.contains(text, "parity route dies")
+}
+
+/// And the dead ends render for the briefs that read the obstructions file,
+/// labelled as raw rather than merged into the curated one.
+pub fn the_dead_ends_render_as_their_own_section_test() {
+  let dir = "build/test-runs/seed/attack-died"
+  let _ = simplifile.delete(dir)
+  let assert Ok(_) = simplifile.create_directory_all(dir <> "/docs/attacks")
+  let doc = "# Attack: the left diagonal
+
+" <> "## 5. Claims that died
+
+The parity route dies at t=40 and the obstruction is explicit, so nobody should ever walk that particular route again.
+"
+  let assert Ok(_) = simplifile.write(dir <> "/docs/attacks/a.md", doc)
+  let text = seed.died_section(seed.attacks_died(dir))
+  assert string.contains(text, "parity route dies")
+  assert string.contains(text, "NOT yet in")
+  assert string.contains(text, "docs/attacks/a.md")
 }

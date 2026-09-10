@@ -59,7 +59,10 @@ pub fn families() -> List(Family) {
     Family(
       dir: "docs/attacks",
       produced_by: "theorist sessions",
-      read_by: None,
+      read_by: Some(
+        "the seeder brief (section 4, what survived) and the theorist and "
+        <> "connector briefs (section 5, claims that died)",
+      ),
       extension: ".md",
     ),
     Family(
