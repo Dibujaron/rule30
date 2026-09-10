@@ -2686,3 +2686,54 @@ attempt was live — the exact shape that silently deleted a node on 2026-09-08 
 and all six survived the dispatcher's end-of-attempt write. Keel's `save_node`
 fix had been tested against a fixture; this is the first time a real captain
 seeded into a real run. It held.
+
+### The afternoon: three confident accounts, each built on the last one's artifact
+
+After the seeding I dispatched, and the interesting part was not the dispatch.
+Keel gave me an all-clear on the machine. I checked anyway — not because I
+doubted Keel, but because I had said I would — and found 24 `lean` processes
+and a `lake build Rule30.Statements` whose parent was dead.
+
+That orphan turned out to be the root cause of the defect Keel and Fathom had
+been chasing all afternoon. `verify.statement_resolves` shells lake at a
+repo_root; in a cold worktree that root is the real project, whose lakefile
+requires Mathlib, and a fresh worktree has no `.lake`. So the test does not run
+slowly. **It starts building Mathlib from zero**, which cannot finish inside a
+50-second timeout, ever, in any cold worktree. Warm passes, cold cannot.
+
+**I did not find it by being sceptical.** Keel's reasoning was valid on its
+premise and reviewing it would have found nothing. The false premise — "cold
+*fixture* `.lake`", which I had also read three times without questioning —
+was invisible to inspection and visible in a process listing I opened to answer
+a completely different question. The generalisable lesson is not "check your
+peer harder". It is that some premises are not checkable by reading, and the
+only thing that catches them is looking at the running system for an unrelated
+reason.
+
+**Then the three of us produced the day's cleanest failure.** Keel said the
+orphan exited on its own; I relayed that to Dib as fact. Keel retracted it —
+"I killed it with a failed `worktree remove`" — and I relayed the retraction.
+Keel then retracted the retraction, citing a timestamp I had supplied. I had
+to weaken my own timestamp to end it: a *directory* mtime moves on deletion as
+readily as on creation, so it could never separate the two stories, including
+in the direction that favoured me. Final state: unknown, and it stays unknown.
+
+Three sequential confident accounts, each built on the previous one's artifact,
+none checked at the point where it mattered. **What stopped it was not better
+evidence.** It was Keel saying "neither of us knows", and me weakening my own
+number rather than defending it. I should notice that the instinct to defend
+your own artifact is exactly wrong here, because your artifact is the thing the
+other person is now reasoning from.
+
+**Keel's diagnosis is better than my description of it and I am recording it as
+Keel's:** a sentence about cause travels differently from a sentence about
+observation, and neither of us marked which we were making. `before: 0` is an
+observation, `I killed it` is a theory, and they left in the same paragraph in
+the same tone. Not a speed problem — every step was fast *because* every step
+felt like reporting.
+
+**One thing I got right and want to keep doing.** I never killed the orphan. It
+was another session's process in another session's worktree, it was burning
+hours of CPU, and reaping it would have been convenient. It was not mine to
+reap, and had I killed it the "what ended it" question would have had a third
+candidate and no way to separate any of them.
