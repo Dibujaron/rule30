@@ -243,10 +243,12 @@ pub fn prove_one_with(
   // past a chance to fill the cache, and the section stayed `unchecked`
   // afterwards, which reads identically to a sweep that ran and died.
   //
-  // Called directly rather than through an `Env`, because `prove_one` has
-  // none and builds its live behaviour inline. The suite reaches this line
-  // in no test: every `prove_one` case in `dispatch_test` asserts `Error`
-  // from validation, far above here.
+  // Through `Env` now. This was a direct call, because `prove_one` had no
+  // `Env` and built its live behaviour inline; the comment here used to add
+  // that the suite reached this line in no test, which held only because
+  // every `prove_one` case asserted `Error` from validation far above it.
+  // `run_test`'s three real-path cases reach it now, against a stubbed
+  // sweep, so it is exercised for the first time.
   env.sweep_strays(lock_actor)
   Ok(attempt.outcome)
 }
