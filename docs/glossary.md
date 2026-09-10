@@ -338,7 +338,27 @@ The TypeScript instinct is the one everybody has met:
 // implementation, so they assert what it does, not what it should do.
 ```
 
-**And the tell is the same as everywhere else in this section: a number that
+**Where the analogy breaks, and it changes what to look for.** Every other
+instance in this section produces a WRONG value: the decoder cannot read `1`,
+the parser misses the wrapped signature, the aborted suite reports 325. In
+each there is a correct value it failed to show, and you catch it by
+distrusting the value.
+
+This one produces RIGHT values to the wrong question. All 35 nodes are true,
+verified on the permitted axioms, correctly filed, honestly disclaimed.
+Nothing on the screen is false and there is no correct value it failed to
+print. So a reader who has internalised the pattern above goes hunting for
+the false number, finds none, and concludes the machine is fine.
+
+    the blind spot   a false negative about the subject
+    this             a true positive about the wrong subject
+
+One is caught by distrusting the value; the other only by distrusting the
+question. `unblocks 0` on every node of a green tier is the tell here, and it
+looks exactly like a field being dutifully filled in. (Rowan's distinction,
+and it is the reason this section is not simply the previous one restated.)
+
+**The shared tell is the one thing that does carry across: a number that
 looks like success.** A green tier reads as progress the way `325 passed`
 reads as a healthy suite and a stable measurement reads as a working
 instrument. The question that catches it is not "is this step correct" —
