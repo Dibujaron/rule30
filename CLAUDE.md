@@ -199,33 +199,43 @@ Three things that follow, each learned the hard way:
   where it should rest, which is how this checkout once sat on a feature
   branch until it was twenty commits behind `main` and three sessions
   were reading pre-landing harness code out of it.
-- **Set `HARNESS_REPO_ROOT` when you run the suite from a worktree.** Point
-  it at the shared checkout:
-
-  ```
-  HARNESS_REPO_ROOT=C:/Users/dibuj/dev/rule30 gleam test
-  ```
-
-  Almost all of the suite is isolated — tests that run Lean use
+- **The suite never touches the live checkout, and needs no environment.**
+  `gleam test` from a worktree is enough. Tests that run Lean use
   `harness/test/fixture-project/`, a dependency-free project that builds in
-  about two seconds, whose path comes from where the runner started and
-  **never** from this variable. **One test is not.** `run_test` calls
-  `dispatch.prove_one`, which reaches `statement_resolves(cfg.repo_root, …)`,
-  and `run_test`'s fixture config deliberately leaves `repo_root` alone
-  because that is where `.lake` is. In a fresh worktree `repo_root` is the
-  worktree, the worktree has no `.lake`, and that one call starts **building
-  Mathlib from scratch** — hours, often outliving the suite that spawned it,
-  and slow enough to trip the eunit module abort that silently drops ~289
-  tests behind a pass line that still reads fine.
+  about two seconds, whose path comes from where the runner started and never
+  from `HARNESS_REPO_ROOT`; the variable still redirects `config.load`'s paths
+  for tests that read them, and is not required.
 
-  So this is a mitigation for a defect, not a preference, and it should stop
-  being necessary: `prove-one-has-no-injectable-twin-so-the-suite-shells-real-lean-from-whatever-tree-it-is-in`
-  on the board is the fix — give `prove_one` an injectable twin the way `run`
-  has `run_with`, and no Lean is invoked from a worktree at all. **Until that
-  lands, read the announced test total before the pass count**, from any tree.
-  This paragraph said the opposite until 2026-09-10 — that the variable was
-  "never required" — and two agents started from-scratch Mathlib builds doing
-  exactly what it told them.
+  **Read the announced test total before the pass count.** The suite prints
+  `expecting N tests in M modules` first, and passed + failures + skipped must
+  add up to it — a shortfall means a module was cancelled rather than run, and
+  the pass line looks healthy either way. This instruction outlives the defect
+  below and applies from any tree.
+
+  *This was briefly untrue.* Until 2026-09-10 `run_test` reached
+  `statement_resolves(cfg.repo_root, …)` through `dispatch.prove_one`, and
+  `run_test`'s fixture config deliberately leaves `repo_root` alone because
+  that is where `.lake` is — so from a fresh worktree that one call built
+  Mathlib from scratch, for hours, tripping exactly the module abort the
+  paragraph above tells you to look for. Two agents hit it doing what this
+  file told them. `prove_one` gained an injectable twin, the way `run` has
+  `run_with`, and the suite now shells no Lean from any tree. Kept here
+  because a file that silently changes its mind twice in one evening teaches
+  nobody which of its claims are load-bearing.
+
+- **`git merge` does not auto-push; `git commit` does.** The `auto-push:
+  <sha> -> origin/main` line comes from the Claude Code harness, not from a
+  git hook — `.git/hooks/` is empty and neither settings file configures one —
+  and it fires on a commit, not on `HEAD` moving. So a landing that ends in a
+  merge sits on one disk until something else pushes it, and every merge
+  commit that has ever reached `origin` here did so by a manual `git push` or
+  by riding along with the next commit's auto-push. That ride is why nobody
+  noticed for days: a merge followed by a commit looks fine.
+
+  **So after any `git merge`, check and push.** `git rev-list --count main
+  --not --remotes` is the check that works; `git log --not --remotes` with no
+  positive revision traverses nothing and prints nothing for any repository in
+  any state, which reads exactly like a clean tree.
 
 - **Review in proportion to the change; the suite is not the cost.**
   Measured on 2026-09-07: the whole suite is 503 tests in 48 seconds, half
