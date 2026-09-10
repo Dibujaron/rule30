@@ -88,14 +88,20 @@ pub fn a_file_with_no_block_is_annotated_test() {
   assert statement == "Statements.t : True"
 }
 
-/// A survey never writes. 34 proof files predate the annotation and are not
-/// drift; a sweep that backfilled them would put 34 unreviewed blocks in one
-/// commit, and a first run that reports 34 findings is a report nobody reads
-/// a second time.
+/// A survey never writes. Proof files that predate the annotation are not
+/// drift; a sweep that backfilled them would put dozens of unreviewed blocks
+/// in one commit, and a first run reporting dozens of findings is a report
+/// nobody reads a second time.
 pub fn a_survey_reports_an_unannotated_file_and_writes_nothing_test() {
   let env =
     reverify.Env(
-      verifier: fn(_n) { verify.Verified(axioms: [], statement: "Statements.t : True", output: "") },
+      verifier: fn(_n) {
+        verify.Verified(
+          axioms: [],
+          statement: "Statements.t : True",
+          output: "",
+        )
+      },
       read: fn(_n) { Ok(bare_file) },
       annotate: fn(_n, _s) { panic as "a survey must never write" },
     )
@@ -110,7 +116,13 @@ pub fn a_survey_reports_an_unannotated_file_and_writes_nothing_test() {
 pub fn a_survey_reports_drift_without_writing_test() {
   let env =
     reverify.Env(
-      verifier: fn(_n) { verify.Verified(axioms: [], statement: "Statements.t : True", output: "") },
+      verifier: fn(_n) {
+        verify.Verified(
+          axioms: [],
+          statement: "Statements.t : True",
+          output: "",
+        )
+      },
       read: fn(_n) { Ok(annotated_file("Statements.t : 1 = 1")) },
       annotate: fn(_n, _s) { panic as "a survey must never write" },
     )
@@ -142,7 +154,9 @@ pub fn a_failed_check_does_not_touch_the_block_test() {
 pub fn a_verified_node_with_no_signature_is_its_own_outcome_test() {
   let env =
     reverify.Env(
-      verifier: fn(_n) { verify.Verified(axioms: [], statement: "", output: "") },
+      verifier: fn(_n) {
+        verify.Verified(axioms: [], statement: "", output: "")
+      },
       read: fn(_n) { panic as "nothing to reconcile without a signature" },
       annotate: fn(_n, _s) { panic as "must never write an empty block" },
     )
@@ -156,9 +170,17 @@ pub fn a_verified_node_with_no_signature_is_its_own_outcome_test() {
 pub fn a_refused_write_is_reported_test() {
   let env =
     reverify.Env(
-      verifier: fn(_n) { verify.Verified(axioms: [], statement: "Statements.t : True", output: "") },
+      verifier: fn(_n) {
+        verify.Verified(
+          axioms: [],
+          statement: "Statements.t : True",
+          output: "",
+        )
+      },
       read: fn(_n) { Ok(bare_file) },
-      annotate: fn(_n, _s) { Error("the statement contains comment delimiters") },
+      annotate: fn(_n, _s) {
+        Error("the statement contains comment delimiters")
+      },
     )
   let assert reverify.NotWritten(reason:, ..) = reverify.one(env, a_node("t"))
   assert string.contains(reason, "comment delimiters")

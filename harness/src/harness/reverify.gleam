@@ -20,12 +20,16 @@
 //// **Two scopes, and the split is deliberate.** `one` verifies a single node
 //// and writes; `survey` verifies many and writes nothing. A file with no
 //// block is either of two unrelated things and this module cannot tell them
-//// apart from the file alone: 34 proof files predate `5ee56fc`, where the
-//// annotation landed, and were never annotated at all; two lost their block
-//// to a parser defect (see `verify.statement_of`). Writing on a sweep would
-//// backfill all 36 in one unreviewable commit, so a sweep reports and a
-//// human then aims `one` at what they meant. Nothing here writes a block
-//// that a verification did not just produce.
+//// apart from the file alone: many proof files predate `5ee56fc`, where the
+//// annotation landed, and were never annotated at all; others lost their
+//// block to a parser defect (see `verify.statement_of`). As measured on
+//// 2026-09-10 that was 34 and 2 of 113 — a ratio that moves as nodes close,
+//// so treat it as the reason for the split rather than as a current count.
+////
+//// Writing on a sweep would backfill every one of them in a single
+//// unreviewable commit, so a sweep reports and a human then aims `one` at
+//// what they meant. Nothing here writes a block that a verification did not
+//// just produce.
 
 import gleam/int
 import gleam/list

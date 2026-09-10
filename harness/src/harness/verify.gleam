@@ -407,7 +407,7 @@ pub fn annotate(
 /// The statement currently recorded in `source`'s **Checked type** block, if
 /// it has one. `None` is a file that has never been annotated — which is not
 /// the same as a file whose block disagrees, and the two must not be
-/// collapsed: 34 proof files predate the annotation entirely and are not
+/// collapsed: some proof files predate the annotation entirely and are not
 /// drift, while a block that disagrees is.
 ///
 /// Reads back exactly what `annotated` writes, so the pair round-trips: the

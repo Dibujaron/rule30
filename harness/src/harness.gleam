@@ -59,13 +59,12 @@ fn run(cfg: config.Config, arguments: List(String)) -> Nil {
     //
     // With a node id it verifies and writes. With `--all` it verifies every
     // proved node and writes NOTHING: a file with no block is either a
-    // parser defect or one of the 34 that predate the annotation, this
+    // parser defect or one that predates the annotation, this
     // cannot tell which from the file alone, and a sweep that wrote would
     // backfill all of them in one unreviewable commit.
     ["reverify", "--all"] -> print_outcome(reverify_all(cfg))
     ["reverify", node_id] -> print_outcome(reverify_one(cfg, node_id))
-    ["reverify"] ->
-      print_outcome(Error("reverify needs <node-id> or --all"))
+    ["reverify"] -> print_outcome(Error("reverify needs <node-id> or --all"))
     ["run", ..flags] ->
       print_outcome(
         schedule.parse_plan(flags)
