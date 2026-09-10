@@ -1201,6 +1201,7 @@ pub fn brief(
   closed closed: List(dag.Node),
   notes notes: List(#(String, String)),
   crystals crystals: Result(String, Nil),
+  connections connections: List(Connection),
   explorer_readme explorer_readme: String,
   proposal_path proposal_path: String,
   region region: Option(String),
@@ -1339,6 +1340,9 @@ pub fn brief(
         "",
         "## Literature seeds (blueprint/crystals.md)",
         crystals_section(crystals),
+        "",
+        "## What the connect sessions found (docs/connections/)",
+        connections_section(connections),
         "",
         "## The engine",
         explorer_readme,
@@ -1609,6 +1613,7 @@ pub fn brief_at(
     closed: closed,
     notes: notes,
     crystals: crystals,
+    connections: connections(cfg.repo_root),
     explorer_readme: readme,
     proposal_path: proposal_path,
     region: region,
@@ -1636,6 +1641,149 @@ pub fn proof_notes(repo_root: String) -> List(#(String, String)) {
         use note <- result.try(note_of(text))
         Ok(#(name, note))
       })
+  }
+}
+
+/// One connect document's own conclusions, paired with its path.
+///
+/// `complete` is `False` when the document's section 5 is a stub — a
+/// connector session that ended mid-document leaves four good sections and an
+/// empty payload, and nothing anywhere else records that the document is
+/// unfinished. A reader who opens it cannot tell; this can, because a stub is
+/// tens of bytes where a written one is thousands.
+pub type Connection {
+  Connection(path: String, title: String, payload: String, complete: Bool)
+}
+
+/// Every connect document's `## 5. What to hand the theorist`, with the path
+/// to the full document beside it.
+///
+/// **Why the payload rather than the document, and why not just a pointer.**
+/// On 2026-09-10 `docs/connections/` held twelve documents, 549 KB, read by
+/// no brief in the harness — twelve connector sessions had produced exactly
+/// one crystal the seeder could see. The documents were correct, paid for, on
+/// disk, and reachable from nothing any dispatched session reads. Inlining
+/// them whole is not possible at that size, and a bare list of filenames is a
+/// pointer a session has no verb to follow.
+///
+/// Section 5 is the seam that makes the middle option work: it is where a
+/// connector writes what it would hand on, and across those twelve documents
+/// those sections totalled 32.7 KB against 549 KB of full text — six percent.
+/// So the brief can carry every document's own conclusions verbatim and still
+/// point at the full text for anything that needs chasing. That is also
+/// exactly what a captain harvested by hand on 2026-09-10 to produce crystals
+/// 61-68, which is the argument for doing it here: it worked once, as an
+/// evening, and it did not run again when the next connector finished.
+pub fn connections(repo_root: String) -> List(Connection) {
+  let dir = repo_root <> "/docs/connections"
+  case simplifile.read_directory(dir) {
+    Error(_) -> []
+    Ok(entries) ->
+      entries
+      |> list.filter(string.ends_with(_, ".md"))
+      |> list.sort(string.compare)
+      |> list.filter_map(fn(name) {
+        use text <- result.try(
+          simplifile.read(dir <> "/" <> name) |> result.replace_error(Nil),
+        )
+        let payload = section_five(text)
+        Ok(Connection(
+          path: "docs/connections/" <> name,
+          title: title_of(text),
+          payload: payload,
+          complete: is_written(payload),
+        ))
+      })
+  }
+}
+
+/// Was this section actually written, or is it a placeholder.
+///
+/// Two signals, and the marker is the primary one. A connector that stops
+/// mid-document leaves the heading with a placeholder under it — the census
+/// document's section 5 is the single line `*(being written)*` — and the
+/// marker says so in the author's own words rather than by inference.
+///
+/// The length floor is only a backstop for a placeholder phrased some other
+/// way, and it is set where nothing meaningful could have been handed on
+/// rather than where a payload starts looking thin. Real section 5s in this
+/// corpus run 2,000 to 4,000 bytes against the census stub's 17, so anything
+/// in between is a judgement this function should not be making: a short
+/// handoff is still a handoff, and calling it unfinished would be the same
+/// confident wrongness this whole row is about, pointed at a connector who
+/// was merely terse.
+fn is_written(payload: String) -> Bool {
+  string.length(payload) >= 80
+  && !string.contains(string.lowercase(payload), "being written")
+}
+
+/// The document's `# ` title line, or its filename standing in.
+fn title_of(text: String) -> String {
+  text
+  |> string.split(
+    "
+",
+  )
+  |> list.find(string.starts_with(_, "# "))
+  |> result.map(string.drop_start(_, 2))
+  |> result.unwrap("(untitled)")
+  |> string.trim
+}
+
+/// The body of the `## 5.` section: everything after that heading, up to the
+/// next `## ` heading or the end of the document.
+fn section_five(text: String) -> String {
+  let lines =
+    string.split(
+      text,
+      "
+",
+    )
+  let after =
+    list.drop_while(lines, fn(l) { !string.starts_with(l, "## 5") })
+    |> list.drop(1)
+  after
+  |> list.take_while(fn(l) { !string.starts_with(l, "## ") })
+  |> string.join(
+    "
+",
+  )
+  |> string.trim
+}
+
+/// The connect documents' conclusions, for the seeder's brief.
+///
+/// Each document contributes its own section 5 verbatim and a path to the
+/// full text. An unfinished document contributes a line saying so instead of
+/// an empty payload, because "this document is not finished" is information
+/// and a blank section is not.
+fn connections_section(cs: List(Connection)) -> String {
+  case cs {
+    [] -> "(no docs/connections in this checkout)"
+    _ -> "What the connect sessions found, each document's own \"what to hand
+" <> "on\" section verbatim. The full document is at the path given, and
+" <> "is several times longer than what is quoted here.
+
+" <> {
+        cs
+        |> list.map(fn(c) {
+          case c.complete {
+            True -> "### " <> c.title <> "
+`" <> c.path <> "`
+
+" <> c.payload
+            False -> "### " <> c.title <> "
+`" <> c.path <> "`
+
+**UNFINISHED — this document's conclusions section was " <> "never written. The sections above it in the document may " <> "still be worth reading, but nothing here was handed on.**"
+          }
+        })
+        |> string.join(
+          "
+
+",
+        )
+      }
   }
 }
 
