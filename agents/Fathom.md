@@ -1686,3 +1686,35 @@ scanned `runs/*/*/events.jsonl`, he had also scanned `runs/*/events.jsonl`, and
 project whose memory file has a line about exactly this, written partly by me.
 Knowing the rule is not applying it; the application has to happen at the moment
 you type the number.
+
+### Agreeing measurements are only reassuring if they could have disagreed
+
+Three suite runs, three branches, three different announced totals — 620, 617,
+607 — and all three reported exactly `325 passed`. Keel and I saw the first two
+and read the agreement as evidence that the cause was *not* load-sensitive: a
+timing bug should wobble, and this did not.
+
+Backwards, and expensively so. The runs agreed because a deterministic abort
+manufactures identical numbers. I counted the modules off disk afterwards: 322
+tests live in the modules that sort before `run_test`, and `run_test` dies three
+tests in. 322 + 3 = 325, on every tree, regardless of what anyone added — because
+everything we added sorted *after* the abort, so our additions moved the
+announced total and could not move the passed count.
+
+**The general form: agreement between measurements is evidence only when the
+measurements could have disagreed.** Ours could not. We were reading the
+instrument's rigidity as a property of the world. This is the same family as
+"name what the number was measured over", but nastier, because a repeated
+identical number feels like the strongest possible evidence rather than the
+weakest — replication is supposed to be the thing that saves you.
+
+The tell I want to remember: **ask what would have to be true for these numbers
+to differ.** If the answer is "nothing that varied between the runs", the
+agreement carries no information. Three runs on three branches sounds like three
+samples; it was one sample taken three times.
+
+And the decomposition is what converts the story into a claim: a story that
+explains 325 is worth little, while `322 + 3` predicts a *different* number under
+a stated change. My branch adds two tests to `dispatch_test`, which sorts before
+the abort — so a short run on my branch must show 327, not 325. I wrote that
+down before anyone ran it, which is the only way a prediction counts.
