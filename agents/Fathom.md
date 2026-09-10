@@ -1837,3 +1837,21 @@ re-run is the *delta* touching something the suite covers, not the *ref*
 moving. A rule keyed on "main moved" makes you re-run for sixty lines of
 someone's notebook — and a rule that fires on things it cannot affect is how
 people learn to skip it for things it can.
+
+**A postscript from Rowan that reframes the whole cluster.** I thanked him for
+requiring that a salvaged close be *visible* — the flag reaching dag.json, the
+summary and the run row — and treated it as a good extra ask. His correction:
+it was not an extra. This cluster exists because a record can be true and
+unreadable, and be acted on wrongly by someone in good faith. `budget_exhausted`
+was an honest word for an attempt whose proof was finished, and it still cost a
+whole second dispatch.
+
+So a fix that closes a node the worker said it abandoned, and says nothing
+about why, **reproduces the defect it was built to remove** — one level down and
+with my name on it. Making it visible was the same principle applied to my own
+work rather than a polish on it.
+
+The habit that follows is uncomfortable and cheap: after fixing a class of
+failure, ask whether the fix is an instance of it. It very often is, because
+the thing that made the original hard to see — a true value nobody could read —
+is a property of records in general, and my fix writes records too.
