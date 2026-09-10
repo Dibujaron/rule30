@@ -40,6 +40,35 @@ pub fn prove_one(
   cfg: config.Config,
   node_id: String,
 ) -> Result(dag.Outcome, String) {
+  prove_one_with(cfg, node_id, fn(l) { live_env(cfg, l) })
+}
+
+/// `prove_one` with its environment injected, exactly as `run_with` is to
+/// `run`.
+///
+/// **Why a function of the log rather than an `Env`.** `live_env` closes over
+/// the run's log, and the log must not be opened until validation has passed
+/// — a node id that does not resolve should leave no run directory behind.
+/// So the caller supplies the recipe and this opens the log first.
+///
+/// **What this is for, and it is not tidiness.** Until it existed, `prove_one`
+/// built its live behaviour inline and a test of it could not stub anything:
+/// `statement_gate` shells `lake build Rule30.Statements` at `cfg.repo_root`,
+/// and `run_test` deliberately leaves `repo_root` pointing at the real
+/// checkout. In a worktree with no `.lake` that call starts a from-scratch
+/// Mathlib build, which exceeds eunit's 50s per-test budget, and eunit's
+/// response is to cancel the whole module — 282 of 607 tests silently
+/// unrun behind a healthy-looking `325 passed, 3 failures`. Two agents hit it
+/// on 2026-09-10 doing exactly what `CLAUDE.md` told them to do.
+///
+/// Every sibling call site in `dispatch_test` already injects and never runs
+/// Lean. This one was outside the pattern, and it was the one a captain
+/// reaches for most directly.
+pub fn prove_one_with(
+  cfg: config.Config,
+  node_id: String,
+  env_for: fn(log.Log) -> Env,
+) -> Result(dag.Outcome, String) {
   use d <- result.try(dag.load(cfg.dag_path))
   use node <- result.try(
     dag.get(d, node_id)
@@ -103,6 +132,9 @@ pub fn prove_one(
     run_log.dir,
     node_id <> "-" <> int.to_string(list.length(node.attempts) + 1),
   ))
+  // Built here rather than by the caller because it closes over `run_log`,
+  // which cannot be opened until validation has passed.
+  let env = env_for(run_log)
   use lock_actor <- result.try(
     lock.start(240_000)
     |> result.map_error(fn(e) {
@@ -114,7 +146,7 @@ pub fn prove_one(
   // unverifiable by construction, and finding that out after the guard is
   // up and an identity has been named wastes both. It sits below that
   // check rather than beside it because it needs the build lock.
-  use _ <- result.try(statement_gate(cfg, lock_actor, node, run_log))
+  use _ <- result.try(env.statement_gate(lock_actor, node))
 
   use g <- result.try(guard.start(
     guard.Rules(
@@ -148,17 +180,27 @@ pub fn prove_one(
     dag.claim(node, by: identity.name, at: log.now_iso(), run: run_log.run_id)
   use d <- result.try(dag.save_node(claimed, cfg.dag_path))
 
-  let #(attempt, report) =
-    worker.attempt(
-      attempt_cfg,
-      worker.live_deps(cfg, task_message),
-      d,
-      claimed,
-      identity,
-      model,
-      g,
-      l,
+  // Built from `env` rather than `worker.live_deps`, so that a test of
+  // `prove_one_with` stubs the verifier the way every `run` test already
+  // does. `undecided` mirrors `run`'s, and for the same reason: the
+  // lock-wrapped verifier reports a lost lock as a `BuildFailed` carrying
+  // `lock_held_message`, and `salvage` must tell that from a proof that
+  // genuinely does not build.
+  let deps =
+    worker.Deps(
+      verify: env.verifier(lock_actor),
+      annotate: env.annotate,
+      undecided: fn(verdict) {
+        case verdict {
+          verify.BuildFailed(output) ->
+            string.contains(output, lock_held_message)
+          _ -> False
+        }
+      },
+      task_message:,
     )
+  let #(attempt, report) =
+    worker.attempt(attempt_cfg, deps, d, claimed, identity, model, g, l)
   let attempt = attribute(l, node_id, attempt)
   use d <- result.try(dag.save_node(record(claimed, attempt), cfg.dag_path))
   // On the attempt log, not the run log where `run` puts its `index` event
@@ -166,7 +208,7 @@ pub fn prove_one(
   // this the more specific of the two homes; noted so the asymmetry reads
   // as chosen rather than as whichever log was in scope.
   use _ <- result.try(case attempt.outcome {
-    dag.Closed -> index_proof(cfg, l, claimed)
+    dag.Closed -> index_proof(l, env.index, claimed)
     _ -> Ok(Nil)
   })
 
@@ -192,8 +234,7 @@ pub fn prove_one(
   // earlier.
   case pending {
     None -> Nil
-    Some(p) ->
-      run_check(fn(path) { seed.check_file_in(cfg.repo_root, path) }, p)
+    Some(p) -> run_check(env.check_proposals, p)
   }
   // `run` sweeps and this did not, which was an omission and not a choice.
   // `prove-one` is the verb a captain reaches for on the node they just
@@ -206,7 +247,7 @@ pub fn prove_one(
   // none and builds its live behaviour inline. The suite reaches this line
   // in no test: every `prove_one` case in `dispatch_test` asserts `Error`
   // from validation, far above here.
-  sweep_strays(cfg, lock_actor, run_log)
+  env.sweep_strays(lock_actor)
   Ok(attempt.outcome)
 }
 
@@ -933,8 +974,8 @@ pub const proofs_index = "Rule30/Proofs.lean"
 /// board. A proof nothing imports is a proof nobody notices has rotted; an
 /// index nobody re-renders is one nobody notices has drifted.
 fn index_proof(
-  cfg: config.Config,
   l: log.Log,
+  index: fn(dag.Node) -> Result(Nil, String),
   node: dag.Node,
 ) -> Result(Nil, String) {
   log.event(l, "index", [
@@ -942,7 +983,7 @@ fn index_proof(
     #("module", json.string(dag.proof_module(node))),
     #("file", json.string(proofs_index)),
   ])
-  write_index(cfg, l, node)
+  index(node)
 }
 
 /// The write behind `index_proof`, without its event: the `import` line into

@@ -483,7 +483,15 @@ pub fn prove_one_writes_its_record_in_an_attempt_directory_test() {
       roster.Roster([scripted_identity(), understudy()]),
       Dag([node]),
     )
-  let assert Ok(_) = dispatch.prove_one(f.cfg, id)
+  // Through the twin, so the statement gate is stubbed. Wired to the real
+  // `prove_one` this line shells `lake build Rule30.Statements` at
+  // `cfg.repo_root` -- which in a worktree with no `.lake` starts building
+  // Mathlib from scratch, exceeds eunit's 50s budget, and takes this whole
+  // module's ~289 tests down with it behind a healthy-looking pass line.
+  let assert Ok(_) =
+    dispatch.prove_one_with(f.cfg, id, fn(_l) {
+      env(f, verify.BuildFailed("never consulted"))
+    })
   let assert Ok(runs) = simplifile.read_directory(f.cfg.runs_root)
   let assert [run] = runs
   let run_dir = f.cfg.runs_root <> "/" <> run
@@ -491,7 +499,10 @@ pub fn prove_one_writes_its_record_in_an_attempt_directory_test() {
   // A real event, not merely the file: `log.open` touches `events.jsonl`,
   // so asserting it exists would prove the directory was opened and
   // nothing about where the attempt's events land.
-  assert string.contains(read(attempt_dir <> "/events.jsonl"), "\"kind\":\"sent\"")
+  assert string.contains(
+    read(attempt_dir <> "/events.jsonl"),
+    "\"kind\":\"sent\"",
+  )
   assert simplifile.is_file(attempt_dir <> "/summary.txt") == Ok(True)
   // The split, both halves. The `dispatch` event belongs to the RUN log
   // because state.sh's held-claims section greps `runs/*/events.jsonl` one
@@ -517,10 +528,10 @@ pub fn prove_one_writes_its_record_in_an_attempt_directory_test() {
 pub fn prove_one_numbers_its_attempt_directory_after_the_recorded_attempts_test() {
   let id = "harness_probe_fixture_" <> token()
   let node =
-    Node(
-      ..probe(id, []),
-      attempts: [gave_up("Scripted", "haiku"), gave_up("Scripted", "haiku")],
-    )
+    Node(..probe(id, []), attempts: [
+      gave_up("Scripted", "haiku"),
+      gave_up("Scripted", "haiku"),
+    ])
   let f =
     fixture_with_board(
       "prove-one-attempt-number",
@@ -535,15 +546,21 @@ pub fn prove_one_numbers_its_attempt_directory_after_the_recorded_attempts_test(
   let base = string.split(rel, "/") |> list.last |> result.unwrap(rel)
   let older = f.cfg.runs_root <> "/20260101T000000Z/" <> id <> "-2"
   let assert Ok(_) = simplifile.create_directory_all(older)
-  let assert Ok(_) = simplifile.write(older <> "/" <> base, "-- older work
-")
+  let assert Ok(_) =
+    simplifile.write(
+      older <> "/" <> base,
+      "-- older work
+",
+    )
   assert brief.previous_attempt_file(f.cfg, node) == Some(older <> "/" <> base)
 
-  let assert Ok(_) = dispatch.prove_one(f.cfg, id)
+  let assert Ok(_) =
+    dispatch.prove_one_with(f.cfg, id, fn(_l) {
+      env(f, verify.BuildFailed("never consulted"))
+    })
 
   let assert Ok(runs) = simplifile.read_directory(f.cfg.runs_root)
-  let assert [new_run] =
-    list.filter(runs, fn(r) { r != "20260101T000000Z" })
+  let assert [new_run] = list.filter(runs, fn(r) { r != "20260101T000000Z" })
   let dir = f.cfg.runs_root <> "/" <> new_run <> "/" <> id <> "-3"
   assert simplifile.is_file(dir <> "/summary.txt") == Ok(True)
 }
@@ -573,9 +590,15 @@ pub fn a_file_parked_by_prove_one_is_named_by_the_next_brief_test() {
   let live = f.cfg.repo_root <> "/" <> rel
   let assert Ok(False) = simplifile.is_file(live)
   let assert Ok(_) =
-    simplifile.write(live, "-- a fixture's unclosed work
-")
-  let assert Ok(_) = dispatch.prove_one(f.cfg, id)
+    simplifile.write(
+      live,
+      "-- a fixture's unclosed work
+",
+    )
+  let assert Ok(_) =
+    dispatch.prove_one_with(f.cfg, id, fn(_l) {
+      env(f, verify.BuildFailed("never consulted"))
+    })
   assert simplifile.is_file(live) == Ok(False)
   let assert Ok(runs) = simplifile.read_directory(f.cfg.runs_root)
   let assert [run] = runs
