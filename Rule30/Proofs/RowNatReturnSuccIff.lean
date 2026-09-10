@@ -20,8 +20,6 @@ Statements.rowNat_return_succ_iff (n T p : ℕ) (h : rowNat T % 2 ^ (n + 1) = ro
 ```
 -/
 
-private def rowStep (r : ℕ) : ℕ := (4 * r) ^^^ ((2 * r) ||| r)
-
 private theorem rowNat_succ_eq (t : ℕ) : rowNat (t + 1) = rowStep (rowNat t) := rfl
 
 private theorem testBit_rowStep (r i : ℕ) :

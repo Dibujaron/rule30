@@ -1471,7 +1471,7 @@ theorem centerColumn_run_boundary (t : ℕ) :
   sorry
 
 /-- **The rows, modulo `2 ^ n`, are the orbit of `1` under one integer
-operation.** Writing `stepMod n r = ((4 * r) ^^^ ((2 * r) ||| r)) % 2 ^ n` — rule
+operation.** With `stepMod n r = rowStep r % 2 ^ n` from `Rule30.Basic` — rule
 30 applied to a whole row at once, as a single bit-twiddle on a natural number,
 truncated to `n` bits — the seed's row `t` reduced mod `2 ^ n` is exactly
 `(stepMod n)^[t]` applied to `1`.
@@ -1481,7 +1481,7 @@ below the cone is the forward orbit of `1` under a map from `Fin (2 ^ n)` to
 itself. Proved by Cadence at `leftDiagonal_onset_le` attempt 6; axioms
 `[propext, Quot.sound]`. -/
 theorem rowNat_mod_eq_iterate (n t : ℕ) :
-    rowNat t % 2 ^ n = (fun r => ((4 * r) ^^^ ((2 * r) ||| r)) % 2 ^ n)^[t] (1 % 2 ^ n) := by
+    rowNat t % 2 ^ n = (stepMod n)^[t] (1 % 2 ^ n) := by
   sorry
 
 /-- **The onset wall reduces to a preperiod bound for a finite map.** If for every
@@ -1501,14 +1501,14 @@ itself for the sixth time; re-verified by the captain, axioms exactly the three
 permitted. -/
 theorem leftDiagonal_onset_le_of_stepMod_preperiod
     (H : ∀ k x : ℕ, x < 2 ^ (k + 1) → ∃ p > 0, ∀ t ≥ 2 * k,
-      (fun r => ((4 * r) ^^^ ((2 * r) ||| r)) % 2 ^ (k + 1))^[t + p] x
-        = (fun r => ((4 * r) ^^^ ((2 * r) ||| r)) % 2 ^ (k + 1))^[t] x) :
+      (stepMod (k + 1))^[t + p] x
+        = (stepMod (k + 1))^[t] x) :
     ∀ k, ∃ p > 0, ∃ N ≤ k, PeriodicFrom (leftDiagonal k) p N := by
   sorry
 
 /-- **The onset wall, with no cellular automaton in it: an equivalence.** Every
 left diagonal has settled by its own index if and only if, for every `k`, the
-orbit of `1` under the truncated step `r ↦ (4 * r) ^^^ ((2 * r) ||| r)` modulo
+orbit of `1` under the truncated step `rowStep` modulo
 `2 ^ (k + 1)` takes the same value at times `2 * k` and `2 * k + 2 ^ k`.
 
 The right-hand side mentions no diagonal, no configuration, no evolution: it is
@@ -1529,8 +1529,8 @@ of `1`. -/
 theorem leftDiagonal_onset_le_iff_stepMod_return :
     (∀ k, ∃ p > 0, ∃ N ≤ k, PeriodicFrom (leftDiagonal k) p N) ↔
     ∀ k : ℕ,
-      (fun r => ((4 * r) ^^^ ((2 * r) ||| r)) % 2 ^ (k + 1))^[2 * k] (1 % 2 ^ (k + 1))
-        = (fun r => ((4 * r) ^^^ ((2 * r) ||| r)) % 2 ^ (k + 1))^[2 * k + 2 ^ k]
+      (stepMod (k + 1))^[2 * k] (1 % 2 ^ (k + 1))
+        = (stepMod (k + 1))^[2 * k + 2 ^ k]
             (1 % 2 ^ (k + 1)) := by
   sorry
 
@@ -1595,13 +1595,13 @@ width, with period `4` rather than the `16` the orbit of `1` needs — the
 all-starts statement closes faster than the single orbit does. Proved by
 Cadence at `leftDiagonal_onset_le` attempt 6; surfaced by the stray sweep. -/
 theorem stepMod_preperiod_le_of_le_11 : ∀ k ≤ 11, ∀ x < 2 ^ (k + 1),
-    (fun r => ((4 * r) ^^^ ((2 * r) ||| r)) % 2 ^ (k + 1))^[2 * k + 4] x
-      = (fun r => ((4 * r) ^^^ ((2 * r) ||| r)) % 2 ^ (k + 1))^[2 * k] x := by
+    (stepMod (k + 1))^[2 * k + 4] x
+      = (stepMod (k + 1))^[2 * k] x := by
   sorry
 
-/-- **Rule 30's row map commutes with doubling.** Writing `step r = 4 * r ^^^
-(2 * r ||| r)` for rule 30 applied to a whole row at once, `step (2 * s) =
-2 * step s` exactly, as natural numbers.
+/-- **Rule 30's row map commutes with doubling.** With `rowStep` from
+`Rule30.Basic` for rule 30 applied to a whole row at once,
+`rowStep (2 * s) = 2 * rowStep s` exactly, as natural numbers.
 
 In the picture: doubling a row slides it one cell further in from the black
 left edge, and rule 30 does not notice, because the cell outside is white
@@ -1613,7 +1613,7 @@ Kernel-proved by Talus (theorist, 2026-09-09) in
 `explorer/talus5_scratch_halving.lean`; axioms `[propext, Quot.sound]`, no
 choice. -/
 theorem step_two_mul (s : ℕ) :
-    ((4 * (2 * s)) ^^^ ((2 * (2 * s)) ||| (2 * s))) = 2 * ((4 * s) ^^^ ((2 * s) ||| s)) := by
+    rowStep (2 * s) = 2 * rowStep s := by
   sorry
 
 /-- **Doubling commutes with the whole truncated iteration, one bit wider.**
@@ -1625,8 +1625,8 @@ the truncation tower: the even periodic points at width `n + 1` are exactly
 twice the periodic points at width `n`, so everything new at each level is odd.
 Kernel-proved by Talus in the same file. -/
 theorem stepMod_iterate_two_mul (n t s : ℕ) :
-    (fun r => ((4 * r) ^^^ ((2 * r) ||| r)) % 2 ^ (n + 1))^[t] (2 * s)
-      = 2 * (fun r => ((4 * r) ^^^ ((2 * r) ||| r)) % 2 ^ n)^[t] s := by
+    (stepMod (n + 1))^[t] (2 * s)
+      = 2 * (stepMod n)^[t] s := by
   sorry
 
 end Statements

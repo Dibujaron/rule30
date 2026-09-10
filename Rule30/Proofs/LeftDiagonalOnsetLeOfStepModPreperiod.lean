@@ -16,8 +16,8 @@ the truncated orbit at `n+k`, taken from the hypothesis at `t = n+k ≥ 2k`.
 
 theorem leftDiagonal_onset_le_of_stepMod_preperiod
     (H : ∀ k x : ℕ, x < 2 ^ (k + 1) → ∃ p > 0, ∀ t ≥ 2 * k,
-      (fun r => ((4 * r) ^^^ ((2 * r) ||| r)) % 2 ^ (k + 1))^[t + p] x
-        = (fun r => ((4 * r) ^^^ ((2 * r) ||| r)) % 2 ^ (k + 1))^[t] x) :
+      (stepMod (k + 1))^[t + p] x
+        = (stepMod (k + 1))^[t] x) :
     ∀ k, ∃ p > 0, ∃ N ≤ k, PeriodicFrom (leftDiagonal k) p N := by
   intro k
   have h1 : (1 : ℕ) < 2 ^ (k + 1) := by

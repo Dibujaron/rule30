@@ -6,14 +6,17 @@ import Mathlib.Tactic.Ring
 **Why it is true.** Doubling a row is a bit shift by one position, and the step function distributes over bit shifts via the XOR and OR operations.
 **Where the work is.** The bit-shift distribution lemmas for XOR and OR; the rest is arithmetic.
 
-**Checked type** (written by the harness after `lake build` and the `type_of%` check passed, not by the worker):
+**Checked type** (refreshed by the captain during the 2026-09-09 `stepMod` retrofit,
+which changed this statement; the signature below is what `#check` printed against
+`Rule30.Statements` after the retrofit built clean, not a harness verification run):
 ```lean
-Statements.step_two_mul (s : ℕ) : 4 * (2 * s) ^^^ (2 * (2 * s) ||| 2 * s) = 2 * (4 * s ^^^ (2 * s ||| s))
+Statements.step_two_mul (s : ℕ) : rowStep (2 * s) = 2 * rowStep s
 ```
 -/
 
 theorem step_two_mul (s : ℕ) :
-    ((4 * (2 * s)) ^^^ ((2 * (2 * s)) ||| (2 * s))) = 2 * ((4 * s) ^^^ ((2 * s) ||| s)) := by
+    rowStep (2 * s) = 2 * rowStep s := by
+  unfold rowStep
   have h : ∀ x : ℕ, 2 * x = x <<< 1 := fun x => by omega
   have eq : ∀ x : ℕ, 4 * x = x <<< 2 := fun x => by omega
   simp only [eq, h, Nat.shiftLeft_or_distrib, Nat.shiftLeft_xor_distrib, ← Nat.shiftLeft_add]

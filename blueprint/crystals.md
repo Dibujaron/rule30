@@ -743,6 +743,87 @@ an explicit hypothesis rather than something a proof has to survive. A
 conditional whose hypothesis is the open object is a normal node; the
 unconditional version is the wall.
 
+## How to read a check, 2026-09-09 (three instances in one evening)
+
+Not candidate statements — a caution about the tools that produce them, put
+here because this is the file a seeder reads before proposing, and every
+instance below was a *sound* measurement read as an answer to a question it
+was not measuring.
+
+**The pattern.** A check is sound about its own subject and silent about the
+thing its reader wants to know. Nothing is wrong with the number; the
+denominator is supplied by the reader, and it is supplied wrongly.
+
+- **A repetition count measured inheritance and was read as consensus.**
+  Attempts `-2` through `-6` on `leftDiagonal_onset_le` look like five
+  independent assaults, and a lemma appearing in three of them looks like
+  three provers converging. They are not independent: the brief for each
+  attempt **names the previous attempt's parked file** (`dispatch.gleam`,
+  the `parked` field) and tells the worker to read it. The files are
+  cumulative — `onset-3` to `onset-4` is 48 lines added to a 195-line file.
+  The one lemma that scored `3x` was one authorship inherited twice, and the
+  three copies were byte-identical *including the tactic script*.
+  **The tell: three people who independently need a lemma write three
+  different proofs of it. Identical text is evidence of copying.**
+  (Fathom, correcting a rule Rowan had written into its brief.)
+- **Elaboration measured provability and was read as fitness for purpose.**
+  `windowSum_eq_of_periodicFrom` was stated at `PeriodicFrom c L 0`, was
+  true, elaborated clean on the first try, and was axiom-clean — and did not
+  serve one of the three files it was written for, which has a general onset
+  `N`. A weaker statement typechecks perfectly, so no amount of elaboration
+  can catch this. **The technique that does: re-prove what each consumer
+  actually needs, taking the proposed public statement in as a hypothesis.**
+  That converts "I intend not to reach for the private helper" into "I
+  cannot". It caught the defect on the first run. (Fathom.)
+- **A test count measured the bytes on disk at each moment and was read as
+  "the suite".** 325 passed of an announced 607, from a run whose source was
+  edited while it ran. The number was accurate; the diagnosis built to
+  explain it ("the `Env` injection did not cover `prove-one`") was specific,
+  plausible and invented. A clean run gives 607 of 607. (Keel, retracting.)
+
+**And the habit that underwrites all three, which is cheaper than any of
+them:** a check you have never seen fail is not yet a check. Exit `0` with no
+output is indistinguishable from a command that did not run. Before believing
+a success, break the thing on purpose and confirm the failure is real, at the
+right line. Fathom did this before reporting nine axiom-clean theorems, and
+it costs one edit and one re-run.
+
+This is the same animal as the *well-formed and wrong* rule in `CLAUDE.md`,
+one level up: that rule is about a value that is true and a conclusion that is
+false, and these three are about the specific mechanism — an unstated
+denominator — that keeps producing it here.
+
+**The claim all three of these tempt you into, and it is false.** After the
+first instance was caught, the proposed replacement was *duplication across
+landed files*, on the premise that it is independent of the brief chain
+because "no brief ever hands a worker a landed file". **That premise is
+false and was never checked.** Measured against the corpus: **135 briefs
+name `Rule30.Proofs.` modules**, with descriptions. The brief for
+`rightDiagonal_antiperiodic_of_odd_driver-1` names the helper `blockXor`
+eight times on one line; the brief for
+`rightDiagonal_periodicFrom_step_of_even_driver-1` names it six times. Both
+workers were told the helper's name before writing a line. And `rowStep`,
+which three landed files "independently" chose, first appears in a theorist
+session on 2026-09-07, is named in the brief for `rowNat_mod_eq_iterate-1`,
+and reaches the other two through the cumulative onset chain
+(`-3 → -4 → -5 → -6`) — one origin, copied forward, across two personas.
+
+**So: the brief channel is a shared ancestor for everything a worker
+writes.** Any measurement over worker output — names, proofs, repetition,
+cross-file agreement — is correlated through it *by default*. "These were
+independent" is a claim about the harness, and it has to be checked against
+`runs/*/*/briefs/`, not assumed. There may be no independent measurement
+available over this corpus at all. If so, the honest move is to treat
+duplication as **friction worth fixing** and stop trying to license it as
+**evidence of importance** — the fix is right either way, and arguably more
+urgent if the cause is copying, since the brief channel will keep doing it.
+
+A name-keyed scan has a second, smaller limit worth stating: it sees only
+duplication that agreed on a name. `blockXor_shift` in one file and
+`windowSum_shift` plus `windowSum_const` in another are one idea written
+twice under different names with different proofs, and no such scan can see
+it. That one was found by reading.
+
 ## Not credible or not verified
 
 - arXiv:2207.13237 (Das, "Rule 30: Solving the Chaos") claims an analytical

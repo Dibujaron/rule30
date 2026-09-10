@@ -26,9 +26,6 @@ Statements.leftDiagonal_onset_le_iff_rowNat_return :
 ```
 -/
 
-/-- One step of the packed row as a function of the number alone. -/
-private def rowStep (r : ℕ) : ℕ := (4 * r) ^^^ ((2 * r) ||| r)
-
 private theorem rowNat_succ_eq (t : ℕ) : rowNat (t + 1) = rowStep (rowNat t) := rfl
 
 private theorem testBit_rowStep (r i : ℕ) :

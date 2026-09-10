@@ -200,6 +200,29 @@ gives out near row 18. `rowCell_eq_evolve` (a node on the board) says the
 model and the definition agree; after it, a concrete fact about any row to
 depth in the thousands is a theorem by `decide`, with no extra axiom. -/
 
+/-- **Rule 30's row map, on a whole row at once.** Not to be confused with
+`step` above, which is the general elementary-CA step on a `Config`; this is
+rule 30 specifically, on a row packed into one `Nat`.
+
+`4 * r` shifts the row two
+bits up so that bit `b` of it is the *left* neighbour of position `b - t - 1`;
+`2 * r` is the centre; `r` itself is the right neighbour; and the whole
+expression is `left XOR (centre OR right)`, which is `rule30_eq` applied to
+every bit simultaneously. The explorer's BigInt engine does the same thing
+with shifts. -/
+def rowStep (r : Nat) : Nat := (4 * r) ^^^ ((2 * r) ||| r)
+
+/-- **The row map truncated to `n` bits.** `rowStep` carries information only
+upward through the bits, so cutting to `n` bits before and after the step
+gives the same answer as cutting after: `stepMod n` is a genuine map on
+`Nat`s below `2 ^ n`, and the truncations form a tower rather than a
+sequence of unrelated finite systems.
+
+Reading the picture: bit `k` of the row is the cell `k` places in from the
+black left edge, so truncating to `n` bits is looking at the leftmost `n`
+diagonals and ignoring everything further in. -/
+def stepMod (n r : Nat) : Nat := rowStep r % 2 ^ n
+
 /-- Row `t` of the single-seed picture as one number: the cell at position
 `x` is bit `x + t`, so bit `0` is the left edge and bit `2t` the right edge.
 

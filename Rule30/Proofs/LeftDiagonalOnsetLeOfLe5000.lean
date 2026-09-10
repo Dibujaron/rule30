@@ -39,10 +39,10 @@ private theorem rowNat_periodicFrom_of_return (k p : ℕ)
   intro n hn
   have e1 := rowNat_mod_eq_iterate (k + 1) (2 * k)
   have e2 := rowNat_mod_eq_iterate (k + 1) (2 * k + p)
-  have hgT : (fun r => ((4 * r) ^^^ ((2 * r) ||| r)) % 2 ^ (k + 1))^[2 * k] (1 % 2 ^ (k + 1))
-      = (fun r => ((4 * r) ^^^ ((2 * r) ||| r)) % 2 ^ (k + 1))^[2 * k + p] (1 % 2 ^ (k + 1)) := by
+  have hgT : (stepMod ((k + 1)))^[2 * k] (1 % 2 ^ (k + 1))
+      = (stepMod ((k + 1)))^[2 * k + p] (1 % 2 ^ (k + 1)) := by
     rw [← e1, ← e2]; exact h
-  have hall := iterate_eq_of_eq (fun r => ((4 * r) ^^^ ((2 * r) ||| r)) % 2 ^ (k + 1))
+  have hall := iterate_eq_of_eq (stepMod ((k + 1)))
     (1 % 2 ^ (k + 1)) p (2 * k) hgT (n + k) (by omega)
   have e3 := rowNat_mod_eq_iterate (k + 1) (n + k)
   have e4 := rowNat_mod_eq_iterate (k + 1) (n + k + p)

@@ -11,14 +11,13 @@ function.
 the output in terms of bits `i`, `i-1`, `i-2` of the input, then check both sides of the
 commuting equation read the same bits when `i < n`.
 
-**Checked type** (written by the harness after `lake build` and the `type_of%` check passed, not by the worker):
+**Checked type** (refreshed by the captain during the 2026-09-09 `stepMod` retrofit,
+which changed this statement; the signature below is what `#check` printed against
+`Rule30.Statements` after the retrofit built clean, not a harness verification run):
 ```lean
-Statements.rowNat_mod_eq_iterate (n t : ℕ) :
-  rowNat t % 2 ^ n = (fun r => (4 * r ^^^ (2 * r ||| r)) % 2 ^ n)^[t] (1 % 2 ^ n)
+Statements.rowNat_mod_eq_iterate (n t : ℕ) : rowNat t % 2 ^ n = (stepMod n)^[t] (1 % 2 ^ n)
 ```
 -/
-
-private def rowStep (r : ℕ) : ℕ := (4 * r) ^^^ ((2 * r) ||| r)
 
 private theorem rowNat_succ_eq (t : ℕ) : rowNat (t + 1) = rowStep (rowNat t) := rfl
 
@@ -44,7 +43,7 @@ private theorem rowStep_mod_two_pow (r n : ℕ) :
   · simp [hi]
 
 theorem rowNat_mod_eq_iterate (n t : ℕ) :
-    rowNat t % 2 ^ n = (fun r => ((4 * r) ^^^ ((2 * r) ||| r)) % 2 ^ n)^[t] (1 % 2 ^ n) := by
+    rowNat t % 2 ^ n = (stepMod n)^[t] (1 % 2 ^ n) := by
   induction t with
   | zero => rfl
   | succ t ih =>
