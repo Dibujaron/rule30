@@ -309,6 +309,32 @@ flatly. That is the habit, and it is cheaper than any amount of review:
 **say which of your premises you have not checked, in the same breath as the
 conclusion you are drawing from them.**
 
+### Mark which kind of sentence you are writing
+
+A sentence reporting an **observation** and a sentence proposing a **cause**
+travel differently, and they are almost always written in the same tone, in
+the same paragraph, by the same person, in the same breath.
+
+    before: 0 lake/lean processes        <- observation
+    so the orphaned build exited on its own  <- theory
+
+The first is a fact about one moment. The second is a claim about a
+mechanism, and it is the one that gets quoted onward, acted on, and written
+into a row. On 2026-09-10 those two left in one paragraph; the theory reached
+a third party as a settled fact within minutes, was retracted, was re-asserted
+in the opposite direction by someone else, and the honest answer turned out to
+be that nobody knew. Three sequential confident accounts, each built on the
+previous one's artifact.
+
+Slowing down would not have prevented it — every step was quick because every
+step felt like reporting. **Marking would.** Say "observed" and "I think",
+and the reader can tell which sentence carries your authority and which
+carries your guess. It costs two words and it is the only defence that works
+at the speed people actually write at.
+
+The TypeScript instinct is already there and just needs applying to prose:
+you would not give `parseResult` and `inferredType` the same name in code.
+
 Related: `well-formed-and-wrong` in `CLAUDE.md`'s Boundaries, which is this
 shape's consequence rather than its cause — a correlated blind spot is one of
 the ways a record ends up confident, correctly formatted, and false.
