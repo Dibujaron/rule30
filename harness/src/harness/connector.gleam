@@ -112,14 +112,19 @@ pub const default_model = "fable"
 
 const usage = "connect [<vantage>] [--as <Name> | --mint] [--model M]"
 
-/// Parse the arguments after `connect`. A bare argument is the vantage —
-/// one word, or a quoted phrase the shell passes as one argument — and a
-/// second bare argument is refused rather than joined, because a vantage
-/// meant as one phrase and arrived as two words would silently attack from
-/// the first word alone. An unknown flag is refused for the same reason a
-/// theorist's is: a misspelt `--model` would spend hours on the wrong
-/// model. The shape is `theorist.parse_flags`'s exactly, but it is not
-/// reused: it is built on `Flags`, which is this module's own type.
+/// The dead ends from the attack documents, beside the obstructions file
+/// they belong in.
+///
+/// `docs/obstructions.md` exists to stop a session re-walking a route someone
+/// has already killed, and both this brief and the theorist's inline it. The
+/// attack documents' `## 5. Claims that died` is the same content — fourteen
+/// documents of adjudicated dead ends, 31,634 bytes — that never got copied
+/// across. So the row's sharpest instance was not an artifact nobody reads,
+/// but an artifact nobody reads sitting next to the reader built for it.
+///
+/// Presented as its own section rather than merged into the obstructions
+/// text: the obstructions file is curated and these are raw, and a reader
+/// should be able to tell which is which.
 pub fn parse_flags(flags: List(String)) -> Result(Flags, String) {
   parse_flags_into(
     flags,
@@ -398,6 +403,7 @@ pub fn brief(
     vantage: vantage,
     sighting_path: sighting_path,
     obstructions: read("docs/obstructions.md"),
+    died: seed.attacks_died(cfg.repo_root),
     sources: read("docs/sources.md"),
     basic: read("Rule30/Basic.lean"),
   ))
@@ -418,6 +424,7 @@ pub fn render(
   vantage vantage: Option(String),
   sighting_path sighting_path: String,
   obstructions obstructions: Result(String, Nil),
+  died died: List(seed.Connection),
   sources sources: Result(String, Nil),
   basic basic: Result(String, Nil),
 ) -> String {
@@ -463,6 +470,9 @@ pub fn render(
       "",
       "## The obstructions (docs/obstructions.md)",
       theorist.inlined(obstructions, "docs/obstructions.md"),
+      "",
+      "## Dead ends not yet in the obstructions file (docs/attacks/)",
+      seed.died_section(died),
       "",
       "## The sources (docs/sources.md)",
       theorist.inlined(sources, "docs/sources.md"),

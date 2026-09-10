@@ -1202,6 +1202,7 @@ pub fn brief(
   notes notes: List(#(String, String)),
   crystals crystals: Result(String, Nil),
   connections connections: List(Connection),
+  survived survived: List(Connection),
   explorer_readme explorer_readme: String,
   proposal_path proposal_path: String,
   region region: Option(String),
@@ -1343,6 +1344,9 @@ pub fn brief(
         "",
         "## What the connect sessions found (docs/connections/)",
         connections_section(connections),
+        "",
+        "## What the theorists' attacks left standing (docs/attacks/)",
+        survived_section(survived),
         "",
         "## The engine",
         explorer_readme,
@@ -1493,6 +1497,70 @@ fn crystals_section(crystals: Result(String, Nil)) -> String {
   }
 }
 
+/// The attack documents' surviving candidates, for the seeder.
+///
+/// A theorist's job is to attack a claim until it dies, so `## 4. What
+/// survived` is the residue after its own falsification — claims that took
+/// the attack and held. That is the closest thing on disk to a pre-vetted
+/// proposal, and until 2026-09-10 no brief read it: fourteen documents,
+/// 391 KB, pointed at by nothing.
+///
+/// The dead ends from those same documents are deliberately NOT here. They go
+/// to the briefs that read `docs/obstructions.md`, because a seeder choosing
+/// what to propose wants what survived, and a list of killed routes in front
+/// of it is at best noise and at worst a menu.
+fn survived_section(cs: List(Connection)) -> String {
+  case cs {
+    [] -> "(no docs/attacks in this checkout)"
+    _ ->
+      "Claims that survived a theorist's own attempt to kill them, each\n"
+      <> "document's own section 4 verbatim. These are the nearest thing on\n"
+      <> "disk to a vetted proposal; the full attack is at the path given.\n\n"
+      <> {
+        cs
+        |> list.map(fn(c) {
+          case c.complete {
+            True -> "### " <> c.title <> "\n`" <> c.path <> "`\n\n" <> c.payload
+            False ->
+              "### "
+              <> c.title
+              <> "\n`"
+              <> c.path
+              <> "`\n\n**UNFINISHED — this attack's surviving-claims section "
+              <> "was never written.**"
+          }
+        })
+        |> string.join("\n\n")
+      }
+  }
+}
+
+/// Parse the arguments after `connect`. A bare argument is the vantage —
+/// one word, or a quoted phrase the shell passes as one argument — and a
+/// second bare argument is refused rather than joined, because a vantage
+/// meant as one phrase and arrived as two words would silently attack from
+/// the first word alone. An unknown flag is refused for the same reason a
+/// theorist's is: a misspelt `--model` would spend hours on the wrong
+/// model. The shape is `theorist.parse_flags`'s exactly, but it is not
+/// reused: it is built on `Flags`, which is this module's own type.
+pub fn died_section(cs: List(Connection)) -> String {
+  case cs {
+    [] -> ""
+    _ ->
+      "These are dead ends from the attack documents that are NOT yet in\n"
+      <> "docs/obstructions.md. They are raw where the obstructions file is\n"
+      <> "curated, and each is a route a theorist attacked and killed.\n\n"
+      <> {
+        cs
+        |> list.filter(fn(c) { c.complete })
+        |> list.map(fn(c) {
+          "### " <> c.title <> "\n`" <> c.path <> "`\n\n" <> c.payload
+        })
+        |> string.join("\n\n")
+      }
+  }
+}
+
 fn closed_table(closed: List(dag.Node)) -> String {
   closed
   |> list.map(fn(n) {
@@ -1614,6 +1682,7 @@ pub fn brief_at(
     notes: notes,
     crystals: crystals,
     connections: connections(cfg.repo_root),
+    survived: attacks_survived(cfg.repo_root),
     explorer_readme: readme,
     proposal_path: proposal_path,
     region: region,
@@ -1655,6 +1724,66 @@ pub type Connection {
   Connection(path: String, title: String, payload: String, complete: Bool)
 }
 
+/// Every `.md` under `dir`, with the body of the section whose heading starts
+/// with `prefix`, and whether that section was actually written.
+pub fn payloads(
+  repo_root: String,
+  dir: String,
+  prefix: String,
+) -> List(Connection) {
+  let full = repo_root <> "/" <> dir
+  case simplifile.read_directory(full) {
+    Error(_) -> []
+    Ok(entries) ->
+      entries
+      |> list.filter(string.ends_with(_, ".md"))
+      |> list.sort(string.compare)
+      |> list.filter_map(fn(name) {
+        use text <- result.try(
+          simplifile.read(full <> "/" <> name) |> result.replace_error(Nil),
+        )
+        let payload = section(text, prefix)
+        Ok(Connection(
+          path: dir <> "/" <> name,
+          title: title_of(text),
+          payload: payload,
+          complete: is_written(payload),
+        ))
+      })
+  }
+}
+
+/// A theorist's attack document has TWO payload sections, and they go to
+/// different readers.
+///
+/// `## 4. What survived` holds the candidate claims that outlived the
+/// theorist's own falsification — the analogue of a connector's `## 5`, and
+/// what a seeder wants. `## 5. Claims that died` is a category the connectors
+/// have no equivalent of, and it belongs in front of whoever reads
+/// `docs/obstructions.md` rather than in front of whoever is choosing what to
+/// seed.
+///
+/// Measured across all fourteen attack documents on 2026-09-10: section 4 is
+/// 20,380 bytes, section 5 is 31,634, together 13.3% of 391 KB. The heading is
+/// present in 14 of 14 and no document is thin enough for the completeness
+/// check to have to adjudicate — a cleaner seam than the connectors', which
+/// had one stub.
+pub fn attacks_survived(repo_root: String) -> List(Connection) {
+  payloads(repo_root, "docs/attacks", "## 4")
+}
+
+/// The dead ends, for the briefs that already read `docs/obstructions.md`.
+///
+/// Which briefs those are was read off the code rather than chosen: the
+/// theorist brief inlines the obstructions and a theorist may append to them,
+/// the connector brief inlines them and is told its dead ends go in its own
+/// section instead, and the seeder brief does not read them at all. So the
+/// dead ends belong beside the obstructions in those two briefs, and nowhere
+/// near the seeder.
+pub fn attacks_died(repo_root: String) -> List(Connection) {
+  payloads(repo_root, "docs/attacks", "## 5")
+}
+
 /// Every connect document's `## 5. What to hand the theorist`, with the path
 /// to the full document beside it.
 ///
@@ -1675,26 +1804,7 @@ pub type Connection {
 /// 61-68, which is the argument for doing it here: it worked once, as an
 /// evening, and it did not run again when the next connector finished.
 pub fn connections(repo_root: String) -> List(Connection) {
-  let dir = repo_root <> "/docs/connections"
-  case simplifile.read_directory(dir) {
-    Error(_) -> []
-    Ok(entries) ->
-      entries
-      |> list.filter(string.ends_with(_, ".md"))
-      |> list.sort(string.compare)
-      |> list.filter_map(fn(name) {
-        use text <- result.try(
-          simplifile.read(dir <> "/" <> name) |> result.replace_error(Nil),
-        )
-        let payload = section_five(text)
-        Ok(Connection(
-          path: "docs/connections/" <> name,
-          title: title_of(text),
-          payload: payload,
-          complete: is_written(payload),
-        ))
-      })
-  }
+  payloads(repo_root, "docs/connections", "## 5")
 }
 
 /// Was this section actually written, or is it a placeholder.
@@ -1732,22 +1842,24 @@ fn title_of(text: String) -> String {
 
 /// The body of the `## 5.` section: everything after that heading, up to the
 /// next `## ` heading or the end of the document.
-fn section_five(text: String) -> String {
-  let lines =
-    string.split(
-      text,
-      "
-",
-    )
+/// The body of one `## ` section: everything after the heading that starts
+/// with `prefix`, up to the next `## ` heading or the end of the document.
+///
+/// The prefix is a parameter and not a constant, because **the same section
+/// number means opposite things in different roles.** A connector's `## 5` is
+/// `What to hand the theorist`, a handoff forward. A theorist's `## 5` is
+/// `Claims that died`. Mapping "section 5" across families would have carried
+/// a theorist's dead ends into the seeder's brief as though they were
+/// candidates to seed, which is the worst available confusion: the entire
+/// value of that section is that those routes are CLOSED.
+fn section(text: String, prefix: String) -> String {
+  let lines = string.split(text, "\n")
   let after =
-    list.drop_while(lines, fn(l) { !string.starts_with(l, "## 5") })
+    list.drop_while(lines, fn(l) { !string.starts_with(l, prefix) })
     |> list.drop(1)
   after
   |> list.take_while(fn(l) { !string.starts_with(l, "## ") })
-  |> string.join(
-    "
-",
-  )
+  |> string.join("\n")
   |> string.trim
 }
 
