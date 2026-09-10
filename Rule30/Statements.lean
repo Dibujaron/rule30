@@ -1856,4 +1856,111 @@ theorem leftDiagonal_onset_le_not_of_black_ladder (N : ℕ → ℕ)
     (k : ℕ) (hk : 3 ≤ k) : k < N k := by
   sorry
 
+/-- **Iteration algebra: a return repeats for ever.** If the orbit of `x`
+under a map comes back to where it was at time `N` after `p` more steps, then
+every later time repeats with the same shift.
+
+Proposed by Seeder (2026-09-10). Pure bookkeeping about an arbitrary
+function's orbit: the plumbing every preperiod argument in the packed row
+model rebuilds, stated once.
+
+DOES NOT PROVE: it says nothing whatever about rule 30, and it is the only
+node in its tier that would be equally true of any map at all. It bears on no
+prize conjecture. -/
+theorem stepMod_preperiod_of_return (n N p x : ℕ)
+    (h : (stepMod n)^[N + p] x = (stepMod n)^[N] x) :
+    ∀ t ≥ N, (stepMod n)^[t + p] x = (stepMod n)^[t] x := by
+  sorry
+
+/-- **The odd starts carry the whole problem.** A preperiod bound `B` that
+holds for every odd start below `2 ^ n` holds for every start below `2 ^ n`.
+
+The even states are a copy of the whole system one bit narrower
+(`stepMod_iterate_two_mul`), so a bound proved on the odd half transports to
+them. Proposed by Seeder (2026-09-10).
+
+DOES NOT PROVE: this removes half the state space and leaves the hard half —
+the odd starts are where every measured worst case lives, so it is a
+reduction rather than progress on the bound. `B` is a hypothesis and not a
+construction: the statement is silent on whether any `B` with the wall's
+slope exists. Not a prize conjecture. -/
+theorem stepMod_preperiod_of_odd (B : ℕ → ℕ) (hmono : ∀ n, B n ≤ B (n + 1))
+    (H : ∀ n x : ℕ, x < 2 ^ n → x % 2 = 1 → ∃ p > 0, ∀ t ≥ B n,
+      (stepMod n)^[t + p] x = (stepMod n)^[t] x) :
+    ∀ n x : ℕ, x < 2 ^ n → ∃ p > 0, ∀ t ≥ B n,
+      (stepMod n)^[t + p] x = (stepMod n)^[t] x := by
+  sorry
+
+/-- **Two black bits buy two bits of agreement.** If two rows already agree on
+their low `n + 1` bits and bits `n` and `n + 1` are black where it matters,
+the next pair of rows agrees on their low `n + 3` bits.
+
+The packed-row twin of `leftDiagonal_periodicFrom_step_two_of_black`, and the
+one of that pair that a finite range can check: read through `rowNat` it
+reaches far past row 18, where reading `leftDiagonal` through `evolve` costs
+`3 ^ (j + k)` and gives out. Sharpens `rowNat_return_succ_iff`, which buys one
+bit, to two.
+
+Proposed by Seeder (2026-09-10); witness holds over `T < 200`, `n < 40` at
+shift `p = 16`, on the real rows.
+
+DOES NOT PROVE: a sufficient condition, not a characterisation. The front also
+advances for reasons this rule does not name, and nothing here says how often
+the two black bits occur — which is the wall. -/
+theorem rowNat_return_succ_two (n T p : ℕ)
+    (h : rowNat T % 2 ^ (n + 1) = rowNat (T + p) % 2 ^ (n + 1))
+    (hb : (rowNat T).testBit n = true)
+    (hc : (rowNat T).testBit (n + 1) = true)
+    (hd : (rowNat (T + p)).testBit (n + 1) = true) :
+    rowNat (T + 1) % 2 ^ (n + 3) = rowNat (T + p + 1) % 2 ^ (n + 3) := by
+  sorry
+
+/-- **A black cell resets the next two diagonals at once.** Given a shared
+period `q` on diagonals `m` and `m + 1`, a black cell at index `j + 1` on both
+`m + 1` and `m + 2` carries that period to diagonals `m + 2` and `m + 3` with
+onset `j + 1`.
+
+Crystal 62's request, answered: it prices the levels that settle *before*
+their driver's loop is cut, which is the gap between the truth (`1.25 n`) and
+every reset-style induction (`2 n`). Taking two diagonals per step instead of
+one moves a measured ladder from `1.99` to `1.697` against a budget of `2`.
+
+Proposed by Seeder (2026-09-10). Deliberately a one-step rule and **not** a
+ladder: a ladder's hypothesis shape is exactly what
+`leftDiagonal_onset_le_not_of_black_ladder` killed, and `1.697` is a measured
+slope over 5000 levels rather than a proof that the slope stays under `2`.
+
+DOES NOT PROVE: not `leftDiagonal_onset_le`, and not a prize conjecture — the
+left edge of the cone, where periodicity is already proved. No witness is
+offered and the reason is stated rather than skipped: the hypotheses are
+periodicity statements, which no finite range expresses, and reading
+`leftDiagonal` through `evolve` costs `3 ^ (j + k)`, so a naive witness cannot
+reach index 18 where the first transient lives. `rowNat_return_succ_two`
+carries the witness for the same mechanism. -/
+theorem leftDiagonal_periodicFrom_step_two_of_black (m q N j : ℕ) (hNj : N ≤ j)
+    (h0 : PeriodicFrom (leftDiagonal m) q N)
+    (h1 : PeriodicFrom (leftDiagonal (m + 1)) q N)
+    (hblack : leftDiagonal (m + 1) (j + 1) = true)
+    (hblack2 : leftDiagonal (m + 2) (j + 1) = true) :
+    PeriodicFrom (leftDiagonal (m + 2)) q (j + 1) ∧
+      PeriodicFrom (leftDiagonal (m + 3)) q (j + 1) := by
+  sorry
+
+/-- **A congruence at any time gives a period from that time.** Rows `T` and
+`T + p` agreeing on their low `k + 1` bits makes diagonal `k` periodic with
+period `p` from index `T`.
+
+The companion of `leftDiagonal_periodicFrom_of_rowNat_agree` with the
+`T ≤ 2 * k` hypothesis dropped and the onset paid for instead: free `T`,
+weaker conclusion. Proposed by Seeder (2026-09-10).
+
+DOES NOT PROVE: a strict weakening in its conclusion — onset `T`, not `k` — in
+exchange for dropping a hypothesis, so it is not stronger than the landed
+form, and it says nothing about how small `p` can be taken, which is the
+period wall. Not a prize conjecture; the left edge only. -/
+theorem leftDiagonal_periodicFrom_of_rowNat_agree_any (k p T : ℕ)
+    (h : rowNat T % 2 ^ (k + 1) = rowNat (T + p) % 2 ^ (k + 1)) :
+    PeriodicFrom (leftDiagonal k) p T := by
+  sorry
+
 end Statements
