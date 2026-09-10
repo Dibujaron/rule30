@@ -1308,6 +1308,26 @@ pub fn parked(
 /// worker closes a node with a file that merely elaborates. The bar is the
 /// bar every closed node already had to clear.
 ///
+/// **What this costs, checked rather than assumed.** It puts a `deps.verify`
+/// on a path that used to be a bare nudge, and the verifier takes the shared
+/// build lock — so the question is how often it reaches an actual `lake
+/// build`. `verify.verify` answers it: a missing proof file is a `simplifile
+/// .read` that fails, and a file containing `sorry` is a string search, and
+/// both return before `verify_build` is called. So a worker still working has
+/// no file and pays a read; a worker with a half-written file pays a read and
+/// a scan; only a file that is present and sorry-free — which is exactly the
+/// case worth adjudicating — reaches Lean. The number of times that can
+/// happen in one attempt is bounded by `max_verify_rounds`, the same bound
+/// `adjudicate` already runs under.
+///
+/// **That ordering inside `verify.verify` is load-bearing here, not
+/// incidental.** The cheap checks come first because a file must be read
+/// before it can be searched, and this function's cost depends on them
+/// staying first. Reordering them for tidiness — putting the build ahead of
+/// the `sorry` scan, say — would leave every test green and quietly start
+/// charging a `lake build` for every turn on which a worker merely forgot to
+/// report.
+///
 /// A node closed here has no worker report, so `Ending` carries `None` and
 /// the attempt is recorded `reported: False`: no notebook entry, no journal
 /// entry, no re-pricing scored against the identity's calibration. That is

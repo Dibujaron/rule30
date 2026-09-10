@@ -215,6 +215,37 @@ pub fn status_names_the_rungs_that_failed_and_the_ones_the_harness_broke_test() 
     == ""
 }
 
+/// A refusal leaves a trace on the status row, and it names the model.
+///
+/// Without `refused=` a refused attempt appears nowhere on the row: it spends
+/// no rung so it is absent from `failed=`, and the harness did not break it
+/// so it is absent from `harness=`. The count would say `attempts=2` with one
+/// of them invisible — and the invisible one carries the only actionable fact
+/// a refusal has, which is which model said no.
+pub fn status_names_the_model_that_refused_test() {
+  let d =
+    Dag([
+      Node(..node("harness_probe", "harness_probe", dag.S, []), attempts: [
+        attempt(dag.BudgetExhausted),
+        Attempt(..attempt(dag.Refused), model: "fable"),
+      ]),
+    ])
+  let assert Ok(text) = dispatch.status(cfg_for(d))
+  assert string.contains(text, "attempts=2 failed=haiku refused=fable")
+}
+
+/// And a refusal is not a rung. This is the assertion the ladder reads: a
+/// refused attempt that burned a rung would send the identical brief up a
+/// model that will refuse it again.
+pub fn a_refused_attempt_does_not_count_as_a_failed_attempt_test() {
+  let n =
+    Node(..node("harness_probe", "harness_probe", dag.S, []), attempts: [
+      Attempt(..attempt(dag.Refused), model: "fable"),
+      Attempt(..attempt(dag.Refused), model: "opus"),
+    ])
+  assert config.failed_attempts(n) == 0
+}
+
 pub fn status_marks_a_research_node_and_lists_it_last_test() {
   // `deep_probe` unblocks a node and would lead the leaf list by rank; it is
   // research, so the row says so and the leaf list puts it behind the

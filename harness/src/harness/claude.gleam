@@ -231,17 +231,36 @@ fn event_decoder(raw: String) -> decode.Decoder(Event) {
       // required — for the same reason `status` below is optional, which was
       // written down here and then not applied to these two.
       //
-      // **A full window sends `1`, not `1.0`.** JSON has one number type and
-      // the CLI serialises a whole number bare, so the one reading that means
-      // *this window is closed* is the one reading `decode.float` rejects.
-      // And `subfield` is required, so the rejection was never a misread
+      // **`decode.float` is blind at both ends of the range and nowhere
+      // else.** JSON has one number type and a whole value is serialised
+      // bare, so utilization arrives as an integer for exactly two readings —
+      // `0` and `1` — because every value in between carries a decimal
+      // point. An empty window and a full one are therefore the only two the
+      // float decoder cannot read, and a full window is the only reading that
+      // must park a run.
+      //
+      // And `subfield` being required meant the rejection was never a misread
       // field: the whole decode failed, `parse_event` fell back to `Other`,
       // `hit_ceiling` never saw a `RateLimit`, and the attempt ran on to the
       // CLI's error result and was filed `budget_exhausted` against the
-      // node's ladder. Measured over the 774 rate-limit events under `runs/`
-      // on 2026-09-10: six carried an integer at this field, and exactly one
-      // of those had a status other than `allowed*` — `column_settledConfig_eq-1`
-      // in run 20260907T210826Z, which is the attempt that paid for it.
+      // node's ladder.
+      //
+      // Measured on 2026-09-10 over the attempt logs, `runs/*/*/events.jsonl`
+      // — 166 files, 774 rate-limit events; 803 if the run-root logs are
+      // included, which hold none of the integers. Six integers, and the
+      // split is the whole story:
+      //
+      //     u=0  allowed           x4   harmless
+      //     u=0  allowed_warning   x1   harmless
+      //     u=1  rejected          x1   runs/20260907T210826Z/column_settledConfig_eq-1
+      //
+      // So the decoder was blind five times where blindness cost nothing and
+      // once where it cost an attempt — which is why any ordinary sample of
+      // this field makes it look perfect. The `allowed_warning` zero is
+      // listed separately rather than folded in with the four on purpose: it
+      // is harmless only because `hit_ceiling` tests the `allowed` prefix, so
+      // if that test ever narrows, that row stops being harmless and a reader
+      // told "the zeros are all allowed" would not know to look.
       //
       // The defaults keep a shape change from costing the signal rather than
       // the field. `status` is the authority in `hit_ceiling` and it now

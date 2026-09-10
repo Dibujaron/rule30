@@ -820,12 +820,22 @@ fn crashed(
   )
 }
 
-/// The tail of a status row: which models have failed at this node, and
-/// which attempts the harness broke, e.g. ` failed=haiku,sonnet
-/// harness=opus`. Empty when there is nothing to say. `attempts=3` alone
-/// reads as three verdicts on the node; with the rungs beside it a reader
-/// can see that two of them were the ladder's cheap probes and discount
-/// them by eye.
+/// The tail of a status row: which models have failed at this node, which
+/// attempts the harness broke, and which models refused it, e.g. `
+/// failed=haiku,sonnet harness=opus refused=fable`. Empty when there is
+/// nothing to say. `attempts=3` alone reads as three verdicts on the node;
+/// with the rungs beside it a reader can see that two of them were the
+/// ladder's cheap probes and discount them by eye.
+///
+/// `refused=` earns its place by naming the one fact a refusal makes
+/// actionable: WHICH model refused. A refusal is a property of the model
+/// against this brief rather than of the brief or the node — the same
+/// connector brief refused on fable and ran on opus minutes later on
+/// 2026-09-08 — so a role whose default model refuses looks exactly like a
+/// broken brief until someone pays to try another one. Without this the
+/// attempt appears in neither `failed=` nor `harness=`, because it spends no
+/// rung and the harness did not break it, and so leaves no trace on the row
+/// at all.
 pub fn rungs_tried(n: dag.Node) -> String {
   let models = fn(label: String, keep: fn(dag.Outcome) -> Bool) {
     case
@@ -842,6 +852,7 @@ pub fn rungs_tried(n: dag.Node) -> String {
   }
   models("failed", burns_a_rung)
   <> models("harness", fn(o) { o == dag.HarnessFailed })
+  <> models("refused", fn(o) { o == dag.Refused })
 }
 
 fn run_summary(state: RunState) -> String {
