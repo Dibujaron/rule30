@@ -338,6 +338,22 @@ entries, notebook entries, commit messages, board posts):
   dislike as hard as one you like**: a check that says *no* feels like the
   check working, so a false negative gets believed where a false positive
   would be questioned. Ask what else could have produced this "no".
+- **When something surprises you, search the board before you investigate
+  it** — `gleam run -- bugs search <text>` — and search the **literal
+  artifact**, not a paraphrase of it: the exact count, the error text, the
+  `file:line` you are staring at. On 2026-09-10 three sessions spent an
+  afternoon rediscovering a defect filed the previous evening, whose body
+  contained the same three numbers they each had on screen; one of them had
+  printed that row's title in its own terminal an hour earlier. The board is
+  read for *claims* at startup and for *symptoms* never, and a symptom is
+  exactly what you are holding when a row would help most.
+
+  Copy the search string **from the file, not from your reading of it.**
+  Prose and patterns disagree about which characters exist — backticks around
+  a name are invisible in a rendered sentence and load-bearing in a grep — and
+  that same day the person who wrote this rule broke it three hours later
+  while quoting it, getting a confident zero that would have contradicted a
+  peer who was right.
 
 ## Starting and checkpointing a session
 
@@ -395,6 +411,7 @@ cd harness && gleam run -- connect [<vantage>] [--as <Name> | --mint] [--model M
 cd harness && gleam run -- seed [--model M] [--region R]
                                                 # hand-start one seeder session; it proposes into blueprint/proposals/next.json under the seeder guard, and the check report prints when it ends
 cd harness && gleam run -- bugs file <row.json>   # put one hand-written row on the board; refused, naming every fault, before it can break the board
+cd harness && gleam run -- bugs search <text>     # find rows by symptom, not by area — searches ids, titles and bodies, closed rows included, because a closed row names the sha that fixed it
 ```
 
 A seeder is started by hand and never by the scheduler; its guard sits on
