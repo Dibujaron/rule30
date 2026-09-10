@@ -9,12 +9,10 @@ a function on a finite set, so its whole orbit structure can be decided outright
 **Where the work is.** Nowhere in Lean — the kernel decides the statement directly; the
 `set_option` lines only raise its recursion and heartbeat limits enough to let it finish.
 
-**Checked type** (refreshed by the captain during the 2026-09-09 `stepMod` retrofit,
-which changed this statement; the signature below is what `#check` printed against
-`Rule30.Statements` after the retrofit built clean, not a harness verification run):
+**Checked type** (written by the harness after `lake build` and the `type_of%` check passed, not by the worker):
 ```lean
-Statements.stepMod_preperiod_le_of_le_11 :
-  ∀ k ≤ 11, ∀ x < 2 ^ (k + 1), (stepMod (k + 1))^[2 * k + 4] x = (stepMod (k + 1))^[2 * k] x
+Statements.stepMod_preperiod_le_of_le_11 (k : ℕ) :
+  k ≤ 11 → ∀ x < 2 ^ (k + 1), (stepMod (k + 1))^[2 * k + 4] x = (stepMod (k + 1))^[2 * k] x
 ```
 -/
 
