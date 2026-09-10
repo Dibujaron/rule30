@@ -229,6 +229,14 @@
       "role": "overseer",
       "started": "2026-09-10T14:24:00Z",
       "claude_session": "34c80e11-65ff-4b26-bf1f-85662de02029"
+    },
+    {
+      "identity": "Keel",
+      "session_name": "rule30-93",
+      "ref": "1e45cf",
+      "role": "framework",
+      "started": "2026-09-10T14:25:00Z",
+      "claude_session": "e32b534e-57ab-48e3-a256-ba804c4fa598"
     }
   ]
 }
