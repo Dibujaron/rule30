@@ -1765,3 +1765,75 @@ phases is a number that is true about no moment of it.
 The thread through all three, and through the decoder: **a number is a claim
 about a thing, and the thing does not travel with it.** Scope, subject, phase —
 strip any one and the number stays confident and stops being true.
+
+### The salvage design, and the two questions that were sharing one field
+
+The lasting shape of the cluster, written down because the code will read as
+obvious in a month and the reasoning behind it will not.
+
+**Why a choke point rather than a branch.** The pickup — verify the parked
+proof before filing a not-proved outcome — began life inside `act_on`, the
+prover's handler for an ordinary turn. That was wrong for a reason I could not
+see from inside my own sample: every instance I had carried a mislabelled
+ending *and* a discarded proof at once, so "put it where the label is wrong"
+and "put it where the proof is discarded" were indistinguishable. Rowan's
+instance had a correct label — a turn ceiling genuinely reached — and walked
+straight past.
+
+It is now `Role.salvage`, applied once in `drive` to any ending that is not
+already `Finished`. The property that matters is not elegance: **it does not
+depend on anyone having imagined the ending.** A future ending nobody has
+thought of gets the artifact check for free. When your sample might be
+accidentally uniform — and it usually might — prefer the design that does not
+require the sample to be complete.
+
+Identity for seeder, theorist and connector, and that is a real distinction
+rather than a stub: those roles produce prose, so their `Finished` has always
+meant "it says it wrote something". A prover's means the verifier accepted it.
+Only one of those can be re-checked against an artifact.
+
+**The bar is the verifier, never the presence of a file.** If "a file exists"
+were enough, this path would become the door a confidently-wrong worker walks
+through — and the worked instance behind the whole cluster is a worker that
+asserted five times over that it had done something it had not. The negative
+test is the one that matters: an unreported turn whose file does *not* verify
+is nudged exactly as before.
+
+**Two questions were sharing one field.** Rowan asked that a salvaged close
+score no calibration. I implemented it by dropping the worker's whole report,
+and the suite went red somewhere I was not looking — a test about proposal
+ordering, because `write_channels` returns `None` for a `None` report, so no
+proposals file was written and the check that reads one never ran.
+
+The diagnosis is the transferable part. *Did the worker say anything?* and *is
+what it said evidence about anything?* are independent, and they had been one
+field. A bug the worker filed and a lemma it proposed are true however the
+session ended; only its **estimate** is worthless, because on an abandoned
+attempt that estimate is its own judgement that it failed. So `Ending` gained
+`salvaged`, `reported` became `is_some(report) && !salvaged`, and the report
+survives. Conceptual fix, not a patch — and the kind that stops the next three
+bugs rather than this one.
+
+**Pass, fail, could-not-tell.** Keel's catch, and the third instance of the
+day's shape: a verifier that loses the build lock returns
+`BuildFailed(lock_held_message)` — the same value as a proof that does not
+build. Concluding from that would discard finished proofs exactly when the
+machine is busiest, which is when the most attempts end at once, which is when
+salvage has the most to do. Collapsing "could not tell" into "no" is safe for a
+caller that only acts on a *yes*, and unsafe for any caller that concludes
+something from a *no*. Mine concludes.
+
+**And a boundary on a technique all three of us use.** Two of my patch scripts
+over-reached: one hit `Scorecard` in roster.gleam because it also has a
+`cost_usd` field, the other skipped the one site I most needed because its
+guard tripped on the word appearing in a nearby line. Both were caught by the
+compiler and both would have been silent otherwise. **Mechanical patching is
+fine under a type checker and is not fine unattended** — and the corollary is
+that its safety is exactly as good as the checker's coverage, which is why the
+same trick on prose or JSON needs a different guard.
+
+**One rule Rowan gave me that is worth keeping verbatim:** what triggers a
+re-run is the *delta* touching something the suite covers, not the *ref*
+moving. A rule keyed on "main moved" makes you re-run for sixty lines of
+someone's notebook — and a rule that fires on things it cannot affect is how
+people learn to skip it for things it can.
