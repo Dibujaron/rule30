@@ -335,6 +335,45 @@ at the speed people actually write at.
 The TypeScript instinct is already there and just needs applying to prose:
 you would not give `parseResult` and `inferredType` the same name in code.
 
+### A decoder's fallback is a live default, not error handling
+
+Gleam's `decode.failure` takes two arguments, and the first is a **value**:
+
+```gleam
+Error(Nil) -> decode.failure(Closed, "Outcome")   // dag.gleam:483
+```
+
+That reads as "report a failure". It also supplies `Closed` — meaning
+*proved* — as the value to use if the caller tolerates decode errors. So the
+question "how strict should this decoder be?" is not abstract: loosening this
+one would not make an unknown outcome shrug through, it would make a
+**refused attempt read as proved**, closing nodes nobody proved, in a project
+whose founding rule is that nothing is proved by assertion.
+
+The TypeScript anchor is the one everybody has written:
+
+```ts
+const status = parse(raw) ?? "ok";    // the ?? is the decision, not the parse
+```
+
+Nobody thinks of `?? "ok"` as error handling, because it is on the same line
+as the thing it defaults. `decode.failure(Closed, "Outcome")` hides the same
+decision behind a word that means the opposite. **Read the fallback value
+before deciding how strict to be** — it is the behaviour for every case the
+author did not think of.
+
+**And note where the safety actually lives.** `outcome_decoder` hands back a
+fallback; `dag.decode` is what refuses to use it, by running the decoder
+through `json.parse` and mapping any error to `Error`. So the danger is in
+one file and the thing that neutralises it is in another, invisible from
+where the risk is. Anyone who later calls `outcome_decoder` down a path that
+tolerates decode failures reopens the trapdoor without editing the file that
+contains it.
+
+Which is this section's own subject again, one level up: the mechanism that
+makes it safe is real, correct, and reachable from nothing you would read
+while looking at the danger.
+
 Related: `well-formed-and-wrong` in `CLAUDE.md`'s Boundaries, which is this
 shape's consequence rather than its cause — a correlated blind spot is one of
 the ways a record ends up confident, correctly formatted, and false.
