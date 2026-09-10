@@ -2152,4 +2152,124 @@ theorem centerColumn_density_tendsto_half_of_nearby_cuts
     Filter.Tendsto centerColumnDensity Filter.atTop (nhds (1 / 2 : ℝ)) := by
   sorry
 
+/-- **The centre column is black infinitely often and white infinitely
+often.** It never settles to one colour.
+
+Proposed by Seeder (2026-09-10). This is the **period-1 case of Prize 1** and
+the only node on the board with prize content of its own.
+
+DOES NOT PROVE: nothing above period 1. No induction on the period is implied
+or available — the two halves use completely different arguments and neither
+generalises — so it is not a step toward either P1 wall. Witness holds over
+`t < 12`, which is a finite shadow only: both colours occurring early is a
+necessary consequence, so it catches a flipped quantifier or a swapped
+true/false and is not evidence for the infinitary claim. -/
+theorem centerColumn_not_eventually_constant :
+    (∀ N : ℕ, ∃ t ≥ N, centerColumn t = true) ∧
+      (∀ N : ℕ, ∃ t ≥ N, centerColumn t = false) := by
+  sorry
+
+/-- **Where a difference can sit, one cell left of the origin.** If two
+pictures agree in the centre column at times `t` and `t + 1`, their
+disagreement at column `-1` is masked by the centre cell: it can be non-white
+only when the centre is white.
+
+Proposed by Seeder (2026-09-10). Machinery a proof by contradiction against a
+periodic centre column would use.
+
+DOES NOT PROVE: **not a sufficient condition for the wall.** It is
+unconditional and true of every pair of pictures, so it rules nothing out by
+itself. It says nothing about the white times, which is where the open part
+lives — only that at a white cell the mask is open.
+
+NON-VACUITY CHECKED: the seed itself will not witness this. Its white left
+cone means a difference planted at position `d` takes about `4 d` rows to
+creep back to column 1, so over `initialConfig` both sides are identically
+zero at reachable depths. The witness uses noisy rows instead, and the
+left-hand side is genuinely non-zero at four points inside its range. -/
+theorem column_neg_one_damage_mask (X Y : Config) (t : ℕ)
+    (h0 : column X 0 t = column Y 0 t)
+    (h1 : column X 0 (t + 1) = column Y 0 (t + 1)) :
+    xor (column X (-1) t) (column Y (-1) t)
+      = ((! column X 0 t) && xor (column X 1 t) (column Y 1 t)) := by
+  sorry
+
+/-- **One column further left, the disagreement is a discrete derivative.**
+The disagreement at column `-2` is the `xor` of the column `-1` disagreement
+at `t` and at `t + 1`.
+
+Proposed by Seeder (2026-09-10).
+
+DOES NOT PROVE: **the cascade does not continue, and that is the honest limit
+of the statement rather than a gap in it.** The same claim one column further
+left — that the disagreement at `-3` is the derivative of the one at `-2` — is
+measured FALSE: 418 failures in 35,795 hypothesis hits over random
+configuration pairs. The reason is visible in the proof: at column `-2` the
+second input to the `||` is still the shared origin column, and at `-3` it is
+not. **A prover should not expect an induction here and a seeder should not
+propose one.** -/
+theorem column_neg_two_damage_derivative (X Y : Config) (t : ℕ)
+    (h0 : column X 0 t = column Y 0 t)
+    (h1 : column X 0 (t + 1) = column Y 0 (t + 1)) :
+    xor (column X (-2) t) (column Y (-2) t)
+      = xor (xor (column X (-1) t) (column Y (-1) t))
+          (xor (column X (-1) (t + 1)) (column Y (-1) (t + 1))) := by
+  sorry
+
+/-- **A black run in the centre column shields everything behind it.** If two
+pictures agree in the centre column for `j` steps and the centre is black
+throughout, they agree at every position from `0` back to `-j`.
+
+Proposed by Seeder (2026-09-10).
+
+DOES NOT PROVE: `i ≤ j` is **exact, not an artefact of the proof** — the next
+position along genuinely differs, in 17,596 of 311,892 hypothesis hits over
+random configuration pairs, and 7 times inside the witness's own range. So
+there is no stronger version to reach for. A statement about black runs only;
+it says nothing about the times between them, which is precisely the open
+part. -/
+theorem column_damage_zero_of_black_run (X Y : Config) (t j : ℕ)
+    (hagree : ∀ s ≤ j, column X 0 (t + s) = column Y 0 (t + s))
+    (hblack : ∀ s < j, column X 0 (t + s) = true)
+    (i : ℕ) (hi : i ≤ j) :
+    column X (-(i : ℤ)) t = column Y (-(i : ℤ)) t := by
+  sorry
+
+/-- **A periodic centre column would keep disagreeing beside itself.** If the
+centre column repeated with period `p` from `N`, then arbitrarily late there
+would be a white centre cell at which the column one to the left fails to
+repeat.
+
+Proposed by Seeder (2026-09-10). One consequence a proof of the wall would
+derive.
+
+DOES NOT PROVE: **it is not the wall and does not weaken it.** The hypothesis
+is the negation of Prize 1, so nobody can exhibit a `p` and `N` satisfying it
+and the statement carries no witness — a finite range would only confirm the
+hypothesis is unsatisfiable there, which is not what is claimed. Nothing here
+rules the hypothesis out; if it could, it would be the prize. -/
+theorem centerColumn_periodic_damage_white (p N : ℕ) (hp : 0 < p)
+    (hc : ∀ t ≥ N, centerColumn (t + p) = centerColumn t) (M : ℕ) :
+    ∃ t ≥ M, centerColumn t = false ∧ evolve (t + p) (-1) ≠ evolve t (-1) := by
+  sorry
+
+/-- **The centre column reappears away from the origin.** Cell `m * 2 ^ k` of
+row `m * 2 ^ k + k` is centre-column cell `k`.
+
+Proposed by Seeder (2026-09-10); the halving law read forwards. The first node
+putting the centre column anywhere but at position `0`.
+
+DOES NOT PROVE: infrastructure, not an attack — by itself it proves nothing
+about either wall, and it is a short consequence of two closed nodes. It does
+not touch crystal 69's ratio: the centre column still outruns the left-hand
+settling front and this says nothing about that.
+
+The witness is an explicit list rather than a range because the cost is
+`3 ^ (m * 2 ^ k + k)`: `k = 2, m = 3` is row 15 and already 14 million
+neighbour evaluations, and `k = 3, m = 2` is row 19 and out of reach. Checked
+independently to `k ≤ 6`, `m ≤ 4` with the array engine. -/
+theorem centerColumn_eq_evolve_mul_pow (k m : ℕ) :
+    evolve (m * 2 ^ k + k) ((m * 2 ^ k : ℕ) : ℤ) = centerColumn k := by
+  sorry
+
 end Statements

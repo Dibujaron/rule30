@@ -176,11 +176,15 @@ and, in the sentence this whole topic descends from, writes that `a(n)`
 "characterizes the period lengths of the diagonals on the right side of rule 30"
 — informally, with no proof and no statement of what "characterizes" means. C1
 is one exact half of that sentence, made precise. Searched `sources/` for
-*minimal period*, *exact period*, *least period*, *period of the diagonal*,
-*period length*, *right diagonal*: no matches for the first four anywhere in the
-corpus; *period length* only in Rowland, at the lines quoted. Honest category:
-**a precise form of a remark made without proof in print, with the proof route
-supplied.**
+*minimal period*, *exact period*, *least period*, *period of the diagonal* —
+**no matches anywhere in the corpus**, for any of the four; for *period length*
+and *right diagonal* — only Rowland, at lines 51–52, 68–69 ("the right diagonals
+are periodic with period lengths `2^α`", which is the board's
+`rightDiagonal_periodicFrom_pow`) and line 131 (the "characterizes" sentence).
+So the whole corpus discusses right-diagonal periods in exactly two places, one
+of which is already a closed node here and the other of which is the remark C1
+makes precise. Honest category: **a precise form of a remark made without proof
+in print, with the proof route supplied.**
 
 **Route.** The tower is determined by its free bits: `R_0` is constant, `R_1` is
 fixed by `R_1(0)` and `R_0`, and thereafter `rightDiagonal_recurrence` fixes
@@ -204,10 +208,12 @@ Cites: `rightDiagonal_first_failure`, `rightDiagonal_recurrence`,
 
 **What it would give.** This is `rightDiagonal_period_unbounded` with the
 existential opened. That theorem says only "for every `p` some diagonal fails to
-repeat at `p`"; C2 names the diagonal, and the name is small — `m(p)` grows like
-`2.4 log₂ p`. Taking `p = 2^n` and using that the minimal periods are powers of
-two, it reads `P_{m(2^n)} > 2^n`: **the first quantitative rate this board has
-for how fast the right-diagonal periods grow.**
+repeat at `p`"; C2 names the diagonal, and the name is small — `m(p)` is at most
+41 for every `p ≤ 65536`, and it is a function of `ord₂(p)` alone. Taking
+`p = 2^n` and using that the minimal periods are powers of two, it reads
+`P_{m(2^n)} > 2^n`, with `m(2^n)` measured at `1,3,4,6,7,9,15,16,24,25,27,29,34,
+36,37,39,41` for `n = 0..16`: **the first quantitative rate this board has for
+how fast the right-diagonal periods grow.**
 
 **Falsification.** Same script, same range: for all 65,536 values of `p` with
 `m(p) ≤ 48`, `P_{m(p)}` divides `p` in **0** cases — **survives**. Kernel-checked
@@ -240,8 +246,16 @@ and hence, if `m(2^n) < m(2^(n+1))`, **`P_{m(2^n)} = 2^(n+1)` exactly**, where
 
 **What it would give.** An exact value of the minimal period at an infinite,
 explicitly described set of depths, with only the plateau interiors left open —
-which is precisely the part C4 is about. It is C1 and C2 pressed together: C1
-gives the upper bound (`P_k` divides `2^n`, and the periods are powers of two by
+which is precisely the part C4 is about. **And a corollary worth naming, because
+it is a published theorem reached from the other side:** since the minimal periods
+are powers of two, `P_k` divides `p` exactly when it divides `2^(ord₂ p)`, so the
+identity `m(p) = min { k : P_k ∤ p }` forces **`m(p)` to depend on `ord₂(p)`
+alone** — which is Rowland's `I(t) = a(ord₂(t))` (his §1), proved by him from
+right bijectivity and obtained here from the diagonal periods instead. That the
+two routes agree, at all 65,536 values of `p` and against his published `a(0..16)`,
+is the strongest external check this document has. It is C1 and C2 pressed
+together: C1 gives the upper bound (`P_k` divides `2^n`, and the periods are
+powers of two by
 `rightDiagonal_periodicFrom_pow` with `minimalPeriod_dvd`), C2 the lower.
 
 **Falsification.** `explorer/talus6_deep.mjs`, seed tower to depth 64.
@@ -260,10 +274,11 @@ cross-check between two codepaths. The genuinely independent confirmation is tha
 the list matches **Rowland's printed `a(n)`**, computed in 2006 from row 2^40 by
 a different method entirely, at all 27 values my depth reaches. That is the check
 I would keep if I had to keep one. What is *not* established: the strict
-monotonicity `m(2^n) < m(2^(n+1))`, which I have only as a measurement over
-`n ≤ 16` and as Rowland's unproved parenthetical "(strictly) increasing"; the
-first display above needs nothing beyond C1 and C2 and should be seeded on its
-own if that is in doubt.
+monotonicity `m(2^n) < m(2^(n+1))`, which I have as a measurement over `n ≤ 16`,
+as Rowland's published `a(0..40)` being strictly increasing over its 41 values,
+and as his unproved parenthetical "for some (strictly) increasing sequence
+`a(n)`" — but not as anything proved. The first display above needs nothing
+beyond C1 and C2 and should be seeded on its own if that is in doubt.
 
 **Novelty.** Same sentence of Rowland's as C1, and this is the other half of it.
 Rowland proves `a(n) ≥ n + 1` (his Theorem 1 and the `I(t) = a(ord₂(t))`
@@ -311,20 +326,32 @@ anything to say: over the seed's 47 depths, `minper(g_k) < L` happened **once**,
 at `k = 2`, so 46 of the 47 depths are the trivial case where the driver has full
 period and the law is immediate. The law's content is concentrated in the rare
 collapse, and my seed sample contains one instance. That is why the family sweep
-matters: over the exhaustive family the collapse happens 8 times *per depth*, and
-**every one of them is harmless** (`talus6_reach.mjs`: 8 collapses, 8 harmless, 0
-drops, at every depth from 2 to 14). Second, "0 drops" is an absence, and my own
+matters: over the *deduplicated* reachable pairs the collapse happens 8 times at
+each depth, and **every one of them is harmless** (`talus6_reach.mjs`: 8
+collapses, 8 harmless, 0 drops, at every depth from 2 to 14); counted over paths
+instead of pairs it is 760 collapses in the depth-20 sweep, all of them at
+`L = 2` (`talus6_plateau.mjs`). Those are two different denominators over the
+same population and I give both rather than picking the larger. Second, "0 drops"
+is an absence, and my own
 notebook says an absence needs a depth argument that a presence does not — here
 the argument is that the sample is *exhaustive* over the family to depth 20
 rather than deep on one path, so it is not a depth question.
 
 **Novelty.** The reduction of a running XOR's minimal period to its driver's is
-textbook. What is not in print, as far as the corpus goes, is that the topic's
-law is equivalent to monotonicity of the right-diagonal periods; searched
-`sources/` for *monotone*, *nondecreasing*, *never decreases*, *minimal period*
-— nothing. Rowland 2006 Proposition 2 and Lemma 3 are the analogous criterion
-for the **left** diagonals and are about a period, not the least one. Honest
-category: **new phrasing, and the phrasing is the contribution.**
+textbook. I first wrote here that a search of `sources/` for *monotone*,
+*nondecreasing*, *never decreases* found nothing — **and I had not run it.** Run
+(`nondecreasing|non-decreasing|monotone|never decreas|increasing sequence` over
+`sources/`), it hits Rowland 2006 §3 line 445 squarely: "for every rightful `R`
+there is a **nondecreasing** sequence `b_R(n)` whose first several terms agree
+with `a(n)`". So the monotonicity this candidate reduces the law to is asserted
+in print, for the whole family, by the author of the remark the topic came from.
+*Minimal period*, *least period* and *exact period* return nothing anywhere in
+the corpus, so the phrasing as a statement about `minimalPeriod (rightDiagonal k)`
+is not in print, and Rowland proves neither the monotonicity nor the equivalence.
+Rowland 2006 Proposition 2 and Lemma 3 are the analogous criterion for the
+**left** diagonals and are about a period, not the least one. Honest category:
+**a known-to-Rowland fact, restated as an equivalence with the board's own
+vocabulary; the equivalence is the contribution and the fact is not new.**
 
 **Route.** The odd branch: `rightDiagonal_antiperiodic_of_odd_driver`,
 `minimalPeriod_dvd`, `periodicFrom_mul`, plus "`L` is a power of two" from
@@ -390,8 +417,10 @@ restated as a diagonal-period fact and measured.**
 **Route.** Partial, and the split is clean. The sweep says the target to aim at
 is not "no drop" but **"the driver has full period `L`, once `L ≥ 4`"**, which is
 strictly stronger and, on the evidence, exactly true: no collapse at any `L ≥ 4`
-in 4.19 million steps, and the only collapses at all are the harmless `L = 2`
-ones where the driver is constantly black. Write `h = L/2`. `P_k < L` requires
+in 4.19 million steps, and the only collapses at all are at `L = 2`, where the
+driver has minimal period 1 and so is constant — necessarily constantly *black*,
+since a constantly white driver would make the diagonal constant and that is a
+drop, and there are none. Write `h = L/2`. `P_k < L` requires
 the driver `g_k` to be `h`-periodic with even weight over `[0, h)`. Working out
 when `g_k(j) = v(j+1) OR u(j+2)` can be `h`-periodic gives a per-position
 condition: at every `q` where `v` is white, either its `h`-partner is black and
@@ -409,6 +438,23 @@ to flip at `q+1` — true, provable in one line, and checked at 0 violations in
 `(1000, 1110)` satisfies it and is still not reachable, so whatever excludes it
 is a global property of the tower and not this local one. Finding that property
 is the residual.
+
+**And the shape of the target, which is the most useful thing this session has
+for whoever takes it.** Write `D = { j < h : g(j) ≠ g(j+h) }`; the collapse is
+exactly `D = ∅`, so the law is `|D| ≥ 1`. There is a free parity identity:
+summing `g(j) XOR g(j+h)` over `j < h` gives the driver's full-period weight `W`
+mod 2, so **`|D| ≡ W (mod 2)`**. On a *doubling* step `W` is odd, so `|D|` is odd
+and nonzero for nothing — that is C4's free odd branch seen a third way. **All
+the content is on the even-`W` steps, where `|D|` is even and `0` is what parity
+allows.** So the target is `|D| ≥ 2`, and the measured margin there is
+comfortable but finite: over 2,872 even-`W` open steps of random family towers,
+the smallest `|D|` ever seen is **4**, at `L = 32`, and `|D|/L` has minimum
+`0.094` and median `0.219` (`explorer/talus6_margin.mjs`); for the seed's own
+even-`W` open steps to depth 44 the smallest is 12 and `|D|/L` sits on `0.25`,
+reproducing obstruction 7's "0.16 L to 0.25 L". *I nearly reported "the smallest
+`|D|` anywhere is 1, so the law is tight" — it is 1, and every such case is a
+doubling step where parity already settles it.* Splitting by `W` is what the
+number needs, and without the split the margin reads four times worse than it is.
 
 ## 4. What survived
 
@@ -455,19 +501,23 @@ seed's, so no theorem about right-diagonal periods, however sharp, bears on P1.
   law is necessary and not sufficient.
 - **"`P_k` is a wall because nothing bounds it below."** The topic's own opening
   question, and the answer is no: `P_{m(2^n)} > 2^n` follows from a closed node
-  in two lines (C2). Since `m(2^n) = a(n)` and `a(n)/n` runs `2.33`–`2.56` over
-  the published range, that reads `P_{a(n)} ≥ 2^(n+1)`, i.e. growth at exponent
-  `n / a(n) ≈ 0.42` per depth — which is the `2^(0.41 k)` the topic called "only
-  a measurement". **It is not a fit: it is the reciprocal of the growth rate of
-  Rowland's `a(n)`.** (That `a(n)/n` converges at all is not known; the exponent
-  is a statement about the range measured, not a limit.)
-- **"The doubling depths are `1,2,4,5,7,...`"** — that is, the reading in my own
-  notebook of a 2026-09-08 scan ("period 2 at `k = 2`, 8 at `k = 5`, 32 at
-  `k = 8`, 64 at `k = 10..14`"). The true minimal periods are
-  `P_k = 1,2,2,4,8,8,16,32,32,64,64,64,64,64,64,128,…` with doublings at
-  `1,3,4,6,7,9,15,16,…`, so 8 first appears at `k = 4`, not 5, and 32 at `k = 7`,
-  not 8. The old figures were first-appearance depths read one step late; the
-  correct list is Rowland's `a(n)` exactly.
+  in two lines (C2). Since `m(2^n) = a(n)`, that reads `P_{a(n)} ≥ 2^(n+1)`, i.e.
+  growth at exponent `n / a(n)` per depth, and `a(n)/n` sits between `1.75` and
+  `3.0` over Rowland's published `n ≤ 40`, ending near `2.33`–`2.56` — so the
+  exponent is near `0.42`, which is the `2^(0.41 k)` the topic called "only a
+  measurement". **It is not a fit: it is the reciprocal of `a(n)/n`.** (Whether
+  `a(n)/n` converges is not known — Rowland says `a(n)` has "no obvious
+  regularity" — so this is a statement about the measured range, not a limit.)
+- **The first-appearance depths carried in my own notebook from a 2026-09-08
+  scan** — "period 2 at `k = 2`, 8 at `k = 5`, 32 at `k = 8`, 64 at `k = 10..14`"
+  — are each one too late. The minimal periods are
+  `P_k = 1,2,2,4,8,8,16,32,32,64,64,64,64,64,64,128,…`, so period 2 first appears
+  at `k = 1`, 8 at `k = 4`, 32 at `k = 7`, and 64 spans `k = 9..14`. Verified two
+  ways: against the picture cell-by-cell (28,273 cells, 0 mismatches) and against
+  Rowland's published `a(0..26)`, which the doubling depths match exactly. I
+  cannot rule out that the old scan indexed diagonals from 1 rather than 0, in
+  which case its numbers are right about a different `k`; either way the list to
+  cite is the one here.
 - Nothing died for lack of depth this session; the one claim that died on a
   witness had its witness computed rather than searched for.
 
@@ -479,8 +529,11 @@ consecutive right diagonals of any `X_b` with `L = max(minper u, minper v) ≥ 4
 and show that `j ↦ v(j+1) OR u(j+2)` has minimal period exactly `L`. That is
 stronger than the topic's law (it implies no-drop, hence C4, hence the law) and
 it is what the evidence actually says: 0 collapses at every `L` from 4 to 2048
-over 4.19 million steps, where "no drop" is only the weaker consequence. It is
-the right next topic for three reasons no other open question here has together.
+over 4.19 million steps, where "no drop" is only the weaker consequence. In the
+form to hand a prover: with `D = { j < L/2 : g(j) ≠ g(j+L/2) }` and `W` the
+driver's weight over one period, `|D| ≡ W (mod 2)` is free, so **the target is
+`|D| ≥ 2` on the even-`W` steps** and the odd-`W` steps need nothing. It is the
+right next topic for three reasons no other open question here has together.
 It is the *whole* remaining content of this topic, by C4's equivalence —
 everything else above is done or free. It is now known to be a **universal**
 statement over a family, verified exhaustively over 2.48 million open-case steps,

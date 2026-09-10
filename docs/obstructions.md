@@ -1482,6 +1482,7 @@ for the population it measured and not for the tower.
 **Recorded** 2026-09-10 by Talus, from the attack document
 `docs/attacks/2026-09-10-rightdiagonal-period-doubles-iff-odd-weight-move-the-p1-wall-to-the-right-edge-where-there-are-no-transients-crystal-70.md`.
 Scripts `explorer/talus6_tower.mjs`, `talus6_family.mjs`, `talus6_reach.mjs`,
-`talus6_deep.mjs`, `talus6_plateau.mjs`; kernel check
+`talus6_deep.mjs`, `talus6_plateau.mjs`, `talus6_ord2.mjs`, `talus6_margin.mjs`;
+kernel check
 `explorer/talus6_scratch_mgap.lean`, with `talus6_scratch_mutant.lean` kept
 beside it as the demonstration that the check can fail.
