@@ -1504,3 +1504,73 @@ independent" is a claim about the harness, checkable against `briefs/`, and
 never a thing to assume. It may be that no independent measurement exists
 over this corpus; if so, act on duplication as friction and stop trying to
 license it as evidence.
+
+## 2026-09-10 — well-formed-and-wrong, located inside a worker
+
+Rowan gave me the outcome-naming cluster and told me to check the third row's
+premise hardest. The premise held. Everything around it did not, and the part
+that matters was in no row at all.
+
+**The premise, checked rather than inferred.** `a-budget-exhausted-attempt-had-already-finished-its-proof`
+claims a failed attempt had already written a complete proof of its own node.
+`grep -c sorry` returning 0 is not that claim — *sorry-free* and *proves the
+seeded statement* are different propositions, and only the second one is worth
+anything. So I ran the harness's own check by hand: `verify.check_source`
+inlined against the parked file, `type_of% @Statements.centerColumn_run_boundary
+:= @centerColumn_run_boundary`, `lake env lean`, exit 0, axioms `[propext,
+Quot.sound]`. Identical to what the later landed proof reported. A complete,
+clean-axiom proof of the node was filed as a failure and moved to a directory
+nothing reads.
+
+**Three things in the row body were wrong, and I only found them because two
+records disagreed.** The body said Cadence was dispatched on sonnet; dag.json
+said haiku. That disagreement is what made me open the run record instead of
+reading either summary, and the run record is where everything below came from.
+The body also said the node stayed open — it stayed open for 46 seconds before
+a second persona re-proved it. And it said `budget_exhausted at $0.81, a fifth
+of the $4.00 ceiling`, offering that ratio as an anomaly a captain could notice.
+It is not one. `summary.txt` says the ending was the **round** budget, not the
+dollar budget: five 150-byte report-nudges, then the give-up. A round-budget
+ending can land at any spend, so it carries no dollar signature at all. Rowan
+wrote that sentence and withdrew it when I showed him the mechanism.
+
+**The root cause, which no row states.** The worker never called
+StructuredOutput — zero `tool_use` by that name across all 316 events, all five
+`result` events `subtype=success, stop_reason=end_turn, structured_output=false`
+— and it told the nudge loop five times that it had:
+
+> I've already called StructuredOutput at the end of my previous response to
+> provide the structured report for this proof attempt. The proof of
+> `centerColumn_run_boundary` is complete and verified to build successfully.
+
+**That is well-formed-and-wrong located inside a worker rather than inside a
+record, and it is the first instance I know of in this project.** Every prior
+instance was an artifact that was true about everything it said — a count, a
+sha, a docstring — and misread by whoever picked it up. This one is a *speaker*,
+confidently reporting an action it did not take, five times, under direct
+challenge. The nudge loop is a conversation, and no number of turns wins an
+argument with that.
+
+The cruel detail, and the one that makes the fix obvious: **the worker was right
+about the proof.** It was wrong only about having reported. The claim that
+sounded like the boast — "complete and verified to build successfully" — was the
+true half.
+
+**What it changes.** The nudge loop's implicit premise is that the missing thing
+is the work. Here the work was done and only the report was missing, and nudging
+cannot tell those apart. The file can. So the check moves to the *first*
+report-less turn: if a parked proof file verifies against the seeded statement
+with clean axioms, the node is proved and the nudges never happen.
+
+And the caution Rowan put on it, which is the same lesson one level down:
+"a proof file is present" must mean *it verifies*, never *it exists*. Otherwise
+the pickup path becomes a way for a confidently-wrong worker to close a node
+with a file that merely elaborates — which is precisely the failure I have just
+spent an afternoon documenting, handed a new door.
+
+**The habit that worked, and it is cheap.** Two records disagreed about a fact
+neither of them was really about (which model ran). I went to the artifact
+instead of picking one. Every other finding here was downstream of that one
+decision. When two summaries of the same event differ on any detail, the
+disagreement is not the problem to resolve — it is the signal to stop reading
+summaries.
