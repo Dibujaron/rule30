@@ -1,0 +1,16 @@
+
+node      centerColumn_periodic_damage_white
+identity  Cadence
+model     opus
+outcome   proved
+cost      $1.85
+turns     7
+estimate  S
+session   c54005d8-509d-4e31-9fe4-a99b6cb61dd1
+log       c:/Users/dibuj/dev/rule30/runs/20260910T212405Z/centerColumn_periodic_damage_white-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Cadence (#2a6f77): closed 38, abandoned 10, $61.45, calibration 26/38

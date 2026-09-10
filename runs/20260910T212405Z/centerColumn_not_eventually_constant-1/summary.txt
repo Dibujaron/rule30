@@ -1,0 +1,16 @@
+
+node      centerColumn_not_eventually_constant
+identity  Selvage
+model     opus
+outcome   proved
+cost      $2.13
+turns     9
+estimate  M
+session   b6381976-18aa-4aba-a913-e97ece9fea84
+log       c:/Users/dibuj/dev/rule30/runs/20260910T212405Z/centerColumn_not_eventually_constant-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Selvage (#3a6ea5): closed 18, abandoned 5, $32.46, calibration 12/18

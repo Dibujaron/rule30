@@ -1,0 +1,16 @@
+
+node      centerColumn_eq_evolve_mul_pow
+identity  Vesper
+model     sonnet
+outcome   proved
+cost      $1.06
+turns     15
+estimate  S
+session   8f88b8a0-8619-43ec-a8bf-e87c168f8fc9
+log       c:/Users/dibuj/dev/rule30/runs/20260910T212405Z/centerColumn_eq_evolve_mul_pow-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Vesper (#2b3a67): closed 75, abandoned 9, $78.50, calibration 61/74

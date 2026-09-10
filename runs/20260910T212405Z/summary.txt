@@ -1,0 +1,9 @@
+
+centerColumn_eq_evolve_mul_pow    Vesper   sonnet  proved            $1.06   15 turns
+column_neg_one_damage_mask        Selvage  sonnet  proved            $0.76   10 turns
+column_damage_zero_of_black_run   Cadence  sonnet  proved            $1.39   16 turns
+centerColumn_not_eventually_constantSelvage  opus    proved            $2.13   9 turns
+column_neg_two_damage_derivative  Vesper   sonnet  proved            $1.73   19 turns
+centerColumn_periodic_damage_whiteCadence  opus    proved            $1.85   7 turns
+
+6 attempt(s), 6 closed, $8.92 in all

@@ -1,0 +1,37 @@
+{"ts":"2026-09-10T21:24:05Z","kind":"run","max_attempts":9,"concurrency":3}
+{"ts":"2026-09-10T21:24:19Z","kind":"statement_gate","node":"centerColumn_eq_evolve_mul_pow","result":"resolves","statement":"Statements.centerColumn_eq_evolve_mul_pow : ∀ (k m : ℕ), evolve (m * 2 ^ k + k) ↑(m * 2 ^ k) = centerColumn k"}
+{"ts":"2026-09-10T21:24:19Z","kind":"dispatch","node":"centerColumn_eq_evolve_mul_pow","identity":"Vesper","model":"sonnet","reason":"open leaf; unblocks 0; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4130,"log":"c:/Users/dibuj/dev/rule30/runs/20260910T212405Z/centerColumn_eq_evolve_mul_pow-1","in_flight":1}
+{"ts":"2026-09-10T21:24:27Z","kind":"statement_gate","node":"column_damage_zero_of_black_run","result":"resolves","statement":"Statements.column_damage_zero_of_black_run : ∀ (X Y : Config) (t j : ℕ),\n  (∀ s ≤ j, column X 0 (t + s) = column Y 0 (t + s)) →\n    (∀ s < j, column X 0 (t + s) = true) → ∀ i ≤ j, column X (-↑i) t = column Y (-↑i) t"}
+{"ts":"2026-09-10T21:24:27Z","kind":"dispatch","node":"column_damage_zero_of_black_run","identity":"Cadence","model":"sonnet","reason":"open leaf; unblocks 0; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4131,"log":"c:/Users/dibuj/dev/rule30/runs/20260910T212405Z/column_damage_zero_of_black_run-1","in_flight":2}
+{"ts":"2026-09-10T21:24:36Z","kind":"statement_gate","node":"column_neg_one_damage_mask","result":"resolves","statement":"Statements.column_neg_one_damage_mask : ∀ (X Y : Config) (t : ℕ),\n  column X 0 t = column Y 0 t →\n    column X 0 (t + 1) = column Y 0 (t + 1) →\n      (column X (-1) t ^^ column Y (-1) t) = (!column X 0 t && (column X 1 t ^^ column Y 1 t))"}
+{"ts":"2026-09-10T21:24:36Z","kind":"dispatch","node":"column_neg_one_damage_mask","identity":"Selvage","model":"sonnet","reason":"open leaf; unblocks 0; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4132,"log":"c:/Users/dibuj/dev/rule30/runs/20260910T212405Z/column_neg_one_damage_mask-1","in_flight":3}
+{"ts":"2026-09-10T21:27:08Z","kind":"index","node":"centerColumn_eq_evolve_mul_pow","module":"Rule30.Proofs.CenterColumnEqEvolveMulPow","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-10T21:27:09Z","kind":"theorem_index","node":"centerColumn_eq_evolve_mul_pow","file":"blueprint/index.md","outcome":"written"}
+{"ts":"2026-09-10T21:27:27Z","kind":"statement_gate","node":"column_neg_two_damage_derivative","result":"resolves","statement":"Statements.column_neg_two_damage_derivative : ∀ (X Y : Config) (t : ℕ),\n  column X 0 t = column Y 0 t →\n    column X 0 (t + 1) = column Y 0 (t + 1) →\n      (column X (-2) t ^^ column Y (-2) t) =\n        (column X (-1) t ^^ column Y (-1) t ^^ (column X (-1) (t + 1) ^^ column Y (-1) (t + 1)))"}
+{"ts":"2026-09-10T21:27:27Z","kind":"dispatch","node":"column_neg_two_damage_derivative","identity":"Vesper","model":"sonnet","reason":"open leaf; unblocks 0; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4133,"log":"c:/Users/dibuj/dev/rule30/runs/20260910T212405Z/column_neg_two_damage_derivative-1","in_flight":3}
+{"ts":"2026-09-10T21:27:27Z","kind":"index","node":"column_neg_one_damage_mask","module":"Rule30.Proofs.ColumnNegOneDamageMask","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-10T21:27:27Z","kind":"theorem_index","node":"column_neg_one_damage_mask","file":"blueprint/index.md","outcome":"written"}
+{"ts":"2026-09-10T21:27:38Z","kind":"statement_gate","node":"centerColumn_not_eventually_constant","result":"resolves","statement":"Statements.centerColumn_not_eventually_constant : (∀ (N : ℕ), ∃ t ≥ N, centerColumn t = true) ∧\n  ∀ (N : ℕ), ∃ t ≥ N, centerColumn t = false"}
+{"ts":"2026-09-10T21:27:38Z","kind":"dispatch","node":"centerColumn_not_eventually_constant","identity":"Selvage","model":"opus","reason":"open leaf; unblocks 0; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4134,"log":"c:/Users/dibuj/dev/rule30/runs/20260910T212405Z/centerColumn_not_eventually_constant-1","in_flight":3}
+{"ts":"2026-09-10T21:31:13Z","kind":"index","node":"column_damage_zero_of_black_run","module":"Rule30.Proofs.ColumnDamageZeroOfBlackRun","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-10T21:31:13Z","kind":"theorem_index","node":"column_damage_zero_of_black_run","file":"blueprint/index.md","outcome":"written"}
+{"ts":"2026-09-10T21:31:29Z","kind":"statement_gate","node":"centerColumn_periodic_damage_white","result":"resolves","statement":"Statements.centerColumn_periodic_damage_white : ∀ (p N : ℕ),\n  0 < p →\n    (∀ t ≥ N, centerColumn (t + p) = centerColumn t) →\n      ∀ (M : ℕ), ∃ t ≥ M, centerColumn t = false ∧ evolve (t + p) (-1) ≠ evolve t (-1)"}
+{"ts":"2026-09-10T21:31:29Z","kind":"dispatch","node":"centerColumn_periodic_damage_white","identity":"Cadence","model":"opus","reason":"open leaf; unblocks 0; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4135,"log":"c:/Users/dibuj/dev/rule30/runs/20260910T212405Z/centerColumn_periodic_damage_white-1","in_flight":3}
+{"ts":"2026-09-10T21:32:01Z","kind":"index","node":"centerColumn_not_eventually_constant","module":"Rule30.Proofs.CenterColumnNotEventuallyConstant","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-10T21:32:02Z","kind":"theorem_index","node":"centerColumn_not_eventually_constant","file":"blueprint/index.md","outcome":"written"}
+{"ts":"2026-09-10T21:33:22Z","kind":"index","node":"column_neg_two_damage_derivative","module":"Rule30.Proofs.ColumnNegTwoDamageDerivative","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-10T21:33:22Z","kind":"theorem_index","node":"column_neg_two_damage_derivative","file":"blueprint/index.md","outcome":"written"}
+{"ts":"2026-09-10T21:34:04Z","kind":"index","node":"centerColumn_periodic_damage_white","module":"Rule30.Proofs.CenterColumnPeriodicDamageWhite","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-10T21:34:05Z","kind":"theorem_index","node":"centerColumn_periodic_damage_white","file":"blueprint/index.md","outcome":"written"}
+{"ts":"2026-09-10T21:34:21Z","kind":"stray","file":"explorer/astrolabe_scratch_bridge.lean","verdict":"clean"}
+{"ts":"2026-09-10T21:34:21Z","kind":"stray","file":"explorer/astrolabe_scratch_p3.lean","verdict":"no_theorems"}
+{"ts":"2026-09-10T21:34:27Z","kind":"stray","file":"explorer/dioptra_scratch_whiterun.lean","verdict":"clean"}
+{"ts":"2026-09-10T21:34:27Z","kind":"stray","file":"explorer/seeder_p1_final.lean","verdict":"no_theorems"}
+{"ts":"2026-09-10T21:34:27Z","kind":"stray","file":"explorer/seeder_p1_live.lean","verdict":"no_theorems"}
+{"ts":"2026-09-10T21:34:27Z","kind":"stray","file":"explorer/seeder_p1_witness.lean","verdict":"no_theorems"}
+{"ts":"2026-09-10T21:34:27Z","kind":"stray","file":"explorer/seeder_p1_witness2.lean","verdict":"no_theorems"}
+{"ts":"2026-09-10T21:34:27Z","kind":"stray","file":"explorer/seeder_p1_witness3.lean","verdict":"no_theorems"}
+{"ts":"2026-09-10T21:34:27Z","kind":"stray","file":"explorer/seeder_p1_witness4.lean","verdict":"no_theorems"}
+{"ts":"2026-09-10T21:34:27Z","kind":"stray","file":"explorer/seeder_p1_witnesscheck.lean","verdict":"no_theorems"}
+{"ts":"2026-09-10T21:34:34Z","kind":"stray","file":"explorer/seeder_scratch_p1.lean","verdict":"clean"}
+{"ts":"2026-09-10T21:34:42Z","kind":"stray","file":"explorer/seeder_scratch_p1b.lean","verdict":"clean"}

@@ -1,0 +1,16 @@
+
+node      column_damage_zero_of_black_run
+identity  Cadence
+model     sonnet
+outcome   proved
+cost      $1.39
+turns     16
+estimate  M
+session   bfbeba2a-994d-4dce-a1c6-73d64b98eb1c
+log       c:/Users/dibuj/dev/rule30/runs/20260910T212405Z/column_damage_zero_of_black_run-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Cadence (#2a6f77): closed 37, abandoned 10, $59.60, calibration 26/37

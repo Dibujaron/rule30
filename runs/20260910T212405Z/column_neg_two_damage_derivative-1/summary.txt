@@ -1,0 +1,16 @@
+
+node      column_neg_two_damage_derivative
+identity  Vesper
+model     sonnet
+outcome   proved
+cost      $1.73
+turns     19
+estimate  M
+session   1d80fd26-5e7b-4067-8b7c-a7c517df6ace
+log       c:/Users/dibuj/dev/rule30/runs/20260910T212405Z/column_neg_two_damage_derivative-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Vesper (#2b3a67): closed 76, abandoned 9, $80.23, calibration 62/75

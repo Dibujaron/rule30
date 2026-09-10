@@ -121,6 +121,65 @@ console.log(`Hankel over F_2 : ${nonzero} nonsingular, ${zero} singular, of ${Ma
 // the unconditional consequence
 console.log(`\nUNCONDITIONAL: any eventual period p with preperiod N0 of the centre column satisfies N0 + p >= ${prof[N]}.`);
 
+// ---- comparison sequences --------------------------------------------------
+// The point: a proof that L(n) -> infinity exists in the literature for exactly
+// one kind of explicit sequence — automatic sequences whose Hankel determinants
+// obey a substitution recursion (Allouche-Peyriere-Wen-Wen for Thue-Morse).
+// Those sequences have a PERFECT profile, |L(n) - n/2| <= 1/2 for every n.
+// Rule 30's does not.  That is the seam, and it is measurable.
+function profileReport(name, s) {
+  const p = bmProfile(s);
+  const n = s.length;
+  let worst = 0, argw = 0, firstBreak = -1;
+  for (let k = 1; k <= n; k++) {
+    const d = Math.abs(p[k] - k / 2);
+    if (d > worst) { worst = d; argw = k; }
+    if (d > 0.5 && firstBreak < 0) firstBreak = k;
+  }
+  let nz = 0; for (let m = 1; 2 * m <= n; m++) if (p[2 * m] === m) nz++;
+  console.log(`  ${name.padEnd(22)} L(${n}) = ${String(p[n]).padStart(6)}   max |L-n/2| = ${worst.toFixed(1)} at n=${argw}` +
+    `   perfect: ${firstBreak < 0 ? 'YES' : 'no (first break n=' + firstBreak + ')'}` +
+    `   nonsingular Hankel ${nz}/${Math.floor(n / 2)}`);
+}
+console.log('\n--- linear complexity profiles side by side (depth 8192) ---');
+{
+  const M = 8192;
+  const tm = new Uint8Array(M);
+  for (let i = 0; i < M; i++) { let v = i, b = 0; while (v) { b ^= v & 1; v >>>= 1; } tm[i] = b; }
+  profileReport('Thue-Morse', tm);
+
+  // period-doubling sequence: fixed point of 1 -> 10, 0 -> 11
+  {
+    let s = '1';
+    while (s.length < M) s = s.split('').map(ch => ch === '1' ? '10' : '11').join('');
+    const pd = new Uint8Array(M); for (let i = 0; i < M; i++) pd[i] = s.charCodeAt(i) - 48;
+    profileReport('period-doubling', pd);
+  }
+  // regular paperfolding sequence
+  {
+    const pf = new Uint8Array(M);
+    for (let i = 1; i <= M; i++) { let k = i; while ((k & 1) === 0) k >>= 1; pf[i - 1] = ((k >> 1) & 1) ^ 1; }
+    profileReport('paperfolding', pf);
+  }
+  // rule 90's centre column from a single seed — eventually periodic (all white
+  // after t = 0), so its linear complexity is bounded.  The control that shows
+  // the criterion really does separate.
+  {
+    const r90 = new Uint8Array(M);
+    let r = 1n;
+    for (let t = 0; t < M; t++) { r90[t] = Number((r >> BigInt(t)) & 1n); r = (r << 2n) ^ r; }
+    profileReport('rule 90 centre column', r90);
+  }
+  // a fair coin
+  {
+    let st = 2463534242;
+    const rnd = new Uint8Array(M);
+    for (let i = 0; i < M; i++) { st ^= st << 13; st ^= st >>> 17; st ^= st << 5; st >>>= 0; rnd[i] = st & 1; }
+    profileReport('xorshift32 low bit', rnd);
+  }
+  profileReport('rule 30 centre column', c.subarray(0, M));
+}
+
 // the distribution of jump sizes (partial-quotient degrees of the continued
 // fraction of the generating series in F_2((x))): a jump of size j at step k
 // corresponds to a partial quotient of degree j.

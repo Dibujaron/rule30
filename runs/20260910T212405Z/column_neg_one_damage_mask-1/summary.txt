@@ -1,0 +1,16 @@
+
+node      column_neg_one_damage_mask
+identity  Selvage
+model     sonnet
+outcome   proved
+cost      $0.76
+turns     10
+estimate  S
+session   fa3f6106-5088-457e-b6a8-5b1dd9e94036
+log       c:/Users/dibuj/dev/rule30/runs/20260910T212405Z/column_neg_one_damage_mask-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Selvage (#3a6ea5): closed 17, abandoned 5, $30.33, calibration 12/17
