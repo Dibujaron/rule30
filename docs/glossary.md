@@ -362,6 +362,18 @@ So the fix is different from the two above, and it is not a better query:
 **quote a measurement with the moment it was taken, or take it again.** "Now
 shows" is the tell — a present-tense verb attached to a past-tense reading.
 
+Rowan's generalisation, which is the reason this is worth a section rather
+than an anecdote: **a measurement quoted without its timestamp is the same
+defect as a count quoted without its denominator**, and this project only had
+a rule for one of them. `CLAUDE.md`'s Boundaries says to name what a number
+was measured *over*; nothing said to name *when*. Both are the subject of the
+measurement going missing — one across the sample, one across the clock — and
+both produce a sentence that is true of something and quoted about something
+else.
+
+The two together are one habit: a number travels with what it was measured
+over and when it was taken, or it does not travel.
+
 Related: `an-artifact-that-answers-the-question-exists-and-nothing-points-at-it`
 on the board. And on a stale worktree versus a stale branch, which is the same
 distinction one level out: a branch ref carries no `harness/build/`, so nothing
