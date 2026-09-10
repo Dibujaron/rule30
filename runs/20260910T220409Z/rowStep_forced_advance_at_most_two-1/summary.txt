@@ -1,0 +1,16 @@
+
+node      rowStep_forced_advance_at_most_two
+identity  Vesper
+model     haiku
+outcome   proved
+cost      $0.35
+turns     7
+estimate  S
+session   dc8713b2-ee0b-469f-b5ed-a27bc774312f
+log       c:/Users/dibuj/dev/rule30/runs/20260910T220409Z/rowStep_forced_advance_at_most_two-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext
+
+Vesper (#2b3a67): closed 79, abandoned 9, $82.07, calibration 64/77

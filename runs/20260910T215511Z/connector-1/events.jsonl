@@ -38,3 +38,27 @@
 {"ts":"2026-09-10T22:02:40Z","kind":"guard","node":"connector-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\groma_switch.mjs","denial":"","decision":"Allow"}
 {"ts":"2026-09-10T22:02:44Z","kind":"guard","node":"connector-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/groma_switch.mjs","denial":"","decision":"Allow"}
 {"ts":"2026-09-10T22:02:49Z","kind":"guard","node":"connector-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/groma_switch.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:05:14Z","kind":"guard","node":"connector-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\groma_complex.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:05:17Z","kind":"guard","node":"connector-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/groma_complex.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:05:17Z","kind":"guard","node":"connector-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/groma_complex.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:05:31Z","kind":"guard","node":"connector-1","event":"PreToolUse","tool":"WebSearch","attempted":"Morse-Hedlund theorem factor complexity eventually periodic p(n) <= n survey arXiv","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:05:31Z","kind":"web","event":"PreToolUse","node":"connector-1","tool":"WebSearch","url":"","query":"Morse-Hedlund theorem factor complexity eventually periodic p(n) <= n survey arXiv","urls":[]}
+{"ts":"2026-09-10T22:05:31Z","kind":"guard","node":"connector-1","event":"PreToolUse","tool":"WebSearch","attempted":"Durand characterization substitutive sequences return words derived sequences theorem","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:05:31Z","kind":"web","event":"PreToolUse","node":"connector-1","tool":"WebSearch","url":"","query":"Durand characterization substitutive sequences return words derived sequences theorem","urls":[]}
+{"ts":"2026-09-10T22:05:44Z","kind":"guard","node":"connector-1","event":"PreToolUse","tool":"WebFetch","attempted":"http://iml.univ-mrs.fr/~cassaign/publis/cant-chapter4.pdf","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:05:44Z","kind":"web","event":"PreToolUse","node":"connector-1","tool":"WebFetch","url":"http://iml.univ-mrs.fr/~cassaign/publis/cant-chapter4.pdf","query":"","urls":["http://iml.univ-mrs.fr/~cassaign/publis/cant-chapter4.pdf"]}
+{"ts":"2026-09-10T22:05:45Z","kind":"guard","node":"connector-1","event":"PreToolUse","tool":"WebFetch","attempted":"https://arxiv.org/abs/0807.3322","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:05:45Z","kind":"web","event":"PreToolUse","node":"connector-1","tool":"WebFetch","url":"https://arxiv.org/abs/0807.3322","query":"","urls":["https://arxiv.org/abs/0807.3322"]}
+{"ts":"2026-09-10T22:05:48Z","kind":"guard","node":"connector-1","event":"PostToolUse","tool":"WebFetch","attempted":"https://arxiv.org/abs/0807.3322","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:05:48Z","kind":"web","event":"PostToolUse","node":"connector-1","tool":"WebFetch","url":"https://arxiv.org/abs/0807.3322","query":"","urls":["https://arxiv.org/abs/0807.3322"]}
+{"ts":"2026-09-10T22:06:05Z","kind":"guard","node":"connector-1","event":"PostToolUseFailure","tool":"WebFetch","attempted":"http://iml.univ-mrs.fr/~cassaign/publis/cant-chapter4.pdf","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:06:05Z","kind":"web","event":"PostToolUseFailure","node":"connector-1","tool":"WebFetch","url":"http://iml.univ-mrs.fr/~cassaign/publis/cant-chapter4.pdf","query":"","urls":["http://iml.univ-mrs.fr/~cassaign/publis/cant-chapter4.pdf"]}
+{"ts":"2026-09-10T22:06:11Z","kind":"guard","node":"connector-1","event":"PreToolUse","tool":"WebFetch","attempted":"https://arxiv.org/abs/1109.5801","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:06:11Z","kind":"web","event":"PreToolUse","node":"connector-1","tool":"WebFetch","url":"https://arxiv.org/abs/1109.5801","query":"","urls":["https://arxiv.org/abs/1109.5801"]}
+{"ts":"2026-09-10T22:06:14Z","kind":"guard","node":"connector-1","event":"PostToolUse","tool":"WebFetch","attempted":"https://arxiv.org/abs/1109.5801","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:06:14Z","kind":"web","event":"PostToolUse","node":"connector-1","tool":"WebFetch","url":"https://arxiv.org/abs/1109.5801","query":"","urls":["https://arxiv.org/abs/1109.5801"]}
+{"ts":"2026-09-10T22:07:22Z","kind":"guard","node":"connector-1","event":"PreToolUse","tool":"Write","attempted":"c:\\Users\\dibuj\\dev\\rule30\\explorer\\groma_defect.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:07:31Z","kind":"guard","node":"connector-1","event":"PreToolUse","tool":"Bash","attempted":"node explorer/groma_defect.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:07:31Z","kind":"guard","node":"connector-1","event":"PostToolUse","tool":"Bash","attempted":"node explorer/groma_defect.mjs","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:07:32Z","kind":"guard","node":"connector-1","event":"PreToolUse","tool":"WebSearch","attempted":"Cassaigne sequences with grouped factors complexity n+c quasi-Sturmian morphic image Sturmian theorem","denial":"","decision":"Allow"}
+{"ts":"2026-09-10T22:07:32Z","kind":"web","event":"PreToolUse","node":"connector-1","tool":"WebSearch","url":"","query":"Cassaigne sequences with grouped factors complexity n+c quasi-Sturmian morphic image Sturmian theorem","urls":[]}

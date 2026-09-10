@@ -146,6 +146,9 @@ import Rule30.Proofs.RowNatTestBitZero
 import Rule30.Proofs.RowStepAgreeForward
 import Rule30.Proofs.RowStepAgreeSuccIff
 import Rule30.Proofs.RowStepAgreeSuccTwoIff
+import Rule30.Proofs.RowStepAgreeSuccTwoOfTriple
+import Rule30.Proofs.RowStepForcedAdvanceAtMostTwo
+import Rule30.Proofs.RowStepPrefixMinimal
 import Rule30.Proofs.Rule30LeftLocalLaw
 import Rule30.Proofs.Rule30LeftPermutive
 import Rule30.Proofs.Rule30NeOfLeftNe

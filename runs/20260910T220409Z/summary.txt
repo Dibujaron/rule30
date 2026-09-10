@@ -1,0 +1,6 @@
+
+rowStep_forced_advance_at_most_twoVesper   haiku   proved            $0.35   7 turns
+rowStep_agree_succ_two_of_triple  Selvage  sonnet  proved            $0.71   8 turns
+rowStep_prefix_minimal            Cadence  haiku   proved            $0.46   18 turns
+
+3 attempt(s), 3 closed, $1.52 in all

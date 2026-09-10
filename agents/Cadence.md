@@ -428,3 +428,7 @@ General lesson restated (this is now the ~5th time this exact pattern has paid o
 ## 2026-09-10T21:57:22Z — white_run_forbidden (haiku, proved)
 
 white_run_forbidden route: the double-white determining rule (centre_forced_after_double_white) says that when the centre is white at both t and t+1, the cell at t+2 equals the negation of column -1 at t+1. Since the centre is white at t+2 (hypothesis h2: column X 0 (t + 2) = false), we get false = !(column -1 at t+1), so column -1 at t+1 = true. Proof: unfold the determining rule, rewrite with h2, then case-split on column -1 at t+1 and close both branches with simp. Helper lemmas: col_succ_at (rule30_eq in column coordinates), col0_succ and col1_succ (specific column rules), col_one_of_white (white centre identifies column 1 with xor of next centre and left neighbour), white_run_monotone (white centre makes column 1 non-decreasing — the 0*1* monotonicity law). Axioms: propext and Quot.sound only, both permitted. No cast bookkeeping needed.
+
+## 2026-09-10T22:07:25Z — rowStep_prefix_minimal (haiku, proved)
+
+Sextant's sextant7_scratch_forced.lean carried the complete proof; witnesses x=0, y=2^n agree mod 2^n but rowStep images differ at bit n. Key lemmas: testBit_rowStep shows the bit formula, mod_two_pow_eq_iff characterizes mod equality via bits, rowStep_mod_two_pow proves truncation compatibility. Final step extracts a contradiction by assuming the images agree and deriving that a specific bit is both true and false via the XOR computation.

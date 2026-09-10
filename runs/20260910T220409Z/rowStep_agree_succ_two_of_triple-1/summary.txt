@@ -1,0 +1,16 @@
+
+node      rowStep_agree_succ_two_of_triple
+identity  Selvage
+model     sonnet
+outcome   proved
+cost      $0.71
+turns     8
+estimate  M
+session   02ddd1e8-9341-4275-881c-198da2c2443d
+log       c:/Users/dibuj/dev/rule30/runs/20260910T220409Z/rowStep_agree_succ_two_of_triple-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Selvage (#3a6ea5): closed 22, abandoned 5, $35.31, calibration 15/22
