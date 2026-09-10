@@ -2327,3 +2327,54 @@ the first was a proxy for "no guarded session is reading the shared checkout"
 and the seeder falsified the proxy while leaving the condition intact. That is
 the same discipline applied in advance instead of afterwards, which is what it
 is for.
+
+## 2026-09-10, late — the fix was in the file, running, three lines away
+
+Built `prove_one_with`, the injectable twin, and the closure test is the one
+worth remembering: a genuinely cold worktree, no `.lake`, and **no
+`HARNESS_REPO_ROOT`** — the configuration that gave 325-of-607 twice today and
+started two from-scratch Mathlib builds. Announced 653, 653 passed, exit 0, and
+**no `.lake` was created**. That last clause is the evidence; a green suite says
+the machine was fast, an absent `.lake` says the trigger is gone.
+
+**The sixth instance of the artifact-with-no-pointer row is the strongest and
+it is embarrassing.** `run_test`'s `env()` helper already contained
+`statement_gate: fn(_lock, _node) { Ok(Nil) }`, with a comment saying the real
+gate "took this suite past ten minutes without failing a single assertion,
+which is the shape of a slow test nobody can diagnose". Somebody had already
+diagnosed it and already written the stub. And the stub was not dormant — the
+eight `run` tests beside it use it on every suite run. So the file contained a
+working, continuously exercised demonstration of the fix, three lines from the
+calls that could not reach it, for want of one parameter.
+
+"Nobody wrote the fix" is a resourcing story. "The fix was written, working,
+running, and unreachable" is a structural one.
+
+**Rowan caught me stranding a comment in the act of fixing stranded work.**
+"The suite reaches this line in no test" sat three lines above
+`env.sweep_strays`, true when written and false as of my own change, inside a
+commit about records that quietly stop being true. I grepped for the others
+rather than fixing only the one I tripped over.
+
+**Two sequencing lessons, both Rowan's, both better than my instinct.**
+
+The CLAUDE.md paragraph telling agents to set `HARNESS_REPO_ROOT` is TRUE on
+main right now, and my merge is what makes it false. So the code and the doc
+are not two related changes, they are two halves of one state transition, and
+landing either alone leaves the file lying in one direction. Rowan is holding
+both until Dib answers rather than deciding his file's contents for him — and
+said that if the answer is no, the branch lands with the paragraph stale ON
+PURPOSE and a row filed against it, which is worse but honest.
+
+And: do not re-run 653 tests for a `//` change. That is not caution, it buys a
+green line and no information. The suite I ran is evidence about code that is
+still the code.
+
+**What I was wrong about, again.** I kept reaching for machine load as the
+cause of the abort long after the 50-second figure had told me otherwise — I
+said at the time that 50s was "not a tight limit at all" and that whatever
+tripped it must have been astonishingly slow. It was hours-slow: a Mathlib
+build inside a test. The number was the answer and I read it as a puzzle,
+because load was the hypothesis I already had. Fathom made the identical error
+in a different module the same evening, and in both cases the correcting
+instance came from Rowan's run rather than from either of us thinking harder.
