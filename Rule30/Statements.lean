@@ -1753,4 +1753,107 @@ about the limit. -/
 theorem centerColumn_eq_rowNat_testBit (t : ℕ) : centerColumn t = (rowNat t).testBit t := by
   sorry
 
+/-- **The lowest bit of every row is set.** Read as a binary number, every row
+of the pattern is odd.
+
+`leftDiagonal 0` is the left edge of the cone and is black at every index
+(`evolve_left_edge`), and `leftDiagonal 0 t` is bit `0` of row `t`
+(`leftDiagonal_eq_rowNat_testBit`); this is those two composed and nothing else.
+
+Proposed by Seeder (2026-09-10), and it is the base case of every front
+argument in the packed row model: a front starts at height 1 precisely because
+any two rows agree on their lowest bit. The walk parked by onset attempts 11
+and 12 had to prove it privately twice, under two names, before it could take
+its first step.
+
+DOES NOT PROVE: supply, not insight. A change of notation for a fact the board
+closed long ago. It bears on no prize conjecture and gives no bound on any
+onset or period. -/
+theorem rowNat_testBit_zero (t : ℕ) : (rowNat t).testBit 0 = true := by
+  sorry
+
+/-- **The low bits of a row are autonomous, so an agreement is never lost.** If
+two rows agree modulo `2 ^ n` at one time, every later pair of rows the same
+distance apart agrees modulo `2 ^ n` too.
+
+Truncating to the low `n` bits commutes with the step, so the truncated rows
+are the orbit of `1` under `stepMod n` (`rowNat_mod_eq_iterate`, closed): two
+orbit points that coincide at `T` coincide for ever after.
+
+Proposed by Seeder (2026-09-10). Harvest rather than invention, and that is the
+argument for the node: it has been re-proved privately three times in three
+sessions under three names — inside `leftDiagonal_onset_le_iff_rowNat_return`,
+as `iterate_eq_of_eq` inside `leftDiagonal_onset_le_of_le_5000`, and as part of
+`agree_bdry` in the walk parked by onset attempts 11 and 12.
+
+DOES NOT PROVE: pure bookkeeping about a deterministic map on finitely many
+states. It says agreement is never *lost*, not that it is ever *gained* —
+gaining a bit is `rowNat_return_succ_iff`, already closed, and how often that
+succeeds is the wall. -/
+theorem rowNat_agree_forward (n T p t : ℕ) (hTt : T ≤ t)
+    (h : rowNat T % 2 ^ n = rowNat (T + p) % 2 ^ n) :
+    rowNat t % 2 ^ n = rowNat (t + p) % 2 ^ n := by
+  sorry
+
+/-- **The onset wall in one congruence per diagonal.** If rows `T` and `T + p`
+agree on their low `k + 1` bits at any one time `T ≤ 2 * k`, then diagonal `k`
+has period `p` from index `k`.
+
+Diagonal `k` at index `j` is bit `k` of row `j + k`
+(`leftDiagonal_eq_rowNat_testBit`), so "diagonal `k` has settled by index `k`"
+asks exactly that rows `T` and `T + p` agree on bit `k` for every `T ≥ 2 * k` —
+and agreement at one `T` suffices because the low bits are autonomous
+(`rowNat_agree_forward`). The hypothesis `T ≤ 2 * k` is what makes `j + k ≥ T`
+available at every `j ≥ k`; it is tight, not incidental.
+
+Proposed by Seeder (2026-09-10). This is the interface every packed-row attempt
+on the wall has wanted, and it is strictly freer than either closed reduction:
+`leftDiagonal_onset_le_iff_rowNat_return` pins `T = 2 * k` and `p = 2 ^ k`, and
+`leftDiagonal_onset_le_of_stepMod_preperiod` demands a preperiod bound for
+*every* start `x < 2 ^ (k + 1)` when only the orbit of `1` is the seed's row.
+Here `T` and `p` are the prover's to choose.
+
+DOES NOT PROVE: says nothing about whether such a congruence exists at large
+`k`, which is the wall itself. The shift `p` must be allowed to vary with `k`
+and this statement does — no single `p` serves every `k`, since
+`leftDiagonal_period_unbounded` is proved. Not a prize conjecture; the left
+edge only. -/
+theorem leftDiagonal_periodicFrom_of_rowNat_agree (k p T : ℕ) (hT : T ≤ 2 * k)
+    (h : rowNat T % 2 ^ (k + 1) = rowNat (T + p) % 2 ^ (k + 1)) :
+    PeriodicFrom (leftDiagonal k) p k := by
+  sorry
+
+/-- **The black-ladder route cannot reach the onset wall.** Any ladder meeting
+`leftDiagonal_onset_le_of_black_ladder`'s own hypotheses overshoots: `N k > k`
+at every `k ≥ 3`.
+
+That closed block gives periodicity from the ladder's own `N k`, so reaching
+`leftDiagonal_onset_le`'s `∃ N ≤ k` through it needs a ladder with `N k ≤ k`.
+Its `hmono` is *strict*, so `N 0 < N 1 < …` already forces `N k ≥ k`, and
+`N k ≤ k` at a single index pins `N` to the identity on the whole initial
+segment below it. At `k = 2` the witness hypothesis then asks that diagonal 3
+be black at index 3 or white from index 3 on, and diagonal 3 is black exactly
+at even indices (`evolve_left_fourth_diagonal`), so it is white at 3 and black
+at 4 and both branches fail.
+
+Proposed by Seeder (2026-09-10) in the weaker form forbidding one ladder that
+serves every `k`; landed by Rowan in this pointwise form, which also forbids a
+ladder tailored to a single `k` and so closes the escape a prover would try
+next. Both forms were elaborated before landing.
+
+DOES NOT PROVE: does not say `leftDiagonal_onset_le_of_black_ladder` is
+useless — only that it cannot yield `∃ N ≤ k` directly, because its
+conclusion's onset *is* the ladder's own `N k`. A proof that uses the block and
+then improves the onset by other means is untouched, as is the block read with
+`hmono` weakened to `≤`. It says nothing about whether the wall is true: the
+measured onsets are at most `k / 2` for every `k ≤ 722` and the wall is
+believed. It bears on no prize conjecture; this is the left edge of the cone,
+where periodicity is already proved. -/
+theorem leftDiagonal_onset_le_not_of_black_ladder (N : ℕ → ℕ)
+    (hmono : ∀ k, N k < N (k + 1))
+    (hwitness : ∀ k, leftDiagonal (k + 1) (N (k + 1)) = true ∨
+        ∀ j ≥ N k + 1, leftDiagonal (k + 1) j = false)
+    (k : ℕ) (hk : 3 ≤ k) : k < N k := by
+  sorry
+
 end Statements
