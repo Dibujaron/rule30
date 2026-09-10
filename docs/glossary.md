@@ -434,6 +434,46 @@ it actually read and find the instruction in it.** `gleam run -- seed brief`
 prints exactly what a seeder is given, costs nothing, and would have answered
 this in one command.
 
+### A check whose "no" is structurally guaranteed
+
+`CLAUDE.md` says to distrust a result you dislike as hard as one you like,
+because a check that says *no* feels like the check working. The strongest
+form of that is a check whose *no* was never capable of being anything else.
+
+```bash
+git log --oneline --not --remotes     # prints nothing. Always. Any repo, any state.
+git rev-list --count HEAD --not --remotes   # the real answer
+```
+
+`git log` defaults to `HEAD` only when you supply no revisions at all.
+Supplying a negated one suppresses that default, so the first command
+traverses nothing and reports nothing — a clean tree, forever, including
+while three commits sit on one disk and on no remote.
+
+Verified rather than believed, with a constructed discriminating case: a
+commit made on a throwaway branch and never pushed gives `0` from the bare
+form and `1` from the explicit one. That construction is the whole method —
+**a check that cannot fail cannot be tested by a case where it should
+pass.** You have to build the case where it must say *yes* and watch it say
+*no*.
+
+`.claude/skills/startup/state.sh` uses the correct form
+(`git rev-list --count "$branch" --not --remotes`), which is why its
+unflushed-work section works. The broken instrument was an ad-hoc one, used
+three times in an evening to report a tree clean, on an evening it was not.
+
+The TypeScript shape is the same and just as quiet:
+
+```ts
+if (items.filter(x => x.bad).length === 0) ok();   // `items` was never populated
+```
+
+**And the reason this is hard to catch is that it agrees with you.** A green
+result from a broken check and a green result from a clean tree are the same
+character on the screen. The tell is never in the output — it is in asking
+what this command would print if the thing I am looking for were definitely
+there.
+
 ### Mark which kind of sentence you are writing
 
 A sentence reporting an **observation** and a sentence proposing a **cause**
