@@ -381,6 +381,19 @@ fn first_line(output: String) -> String {
 /// a second one.
 pub const annotation_heading = "**Checked type** (written by the harness after `lake build` and the `type_of%` check passed, not by the worker):"
 
+/// What marks a **Checked type** block, independent of the parenthetical
+/// after it.
+///
+/// `annotation_heading` is what this harness WRITES; this is what a reader
+/// must RECOGNISE, and they are not the same set. A captain who refreshes a
+/// block by hand rewrites the parenthetical — correctly, because claiming a
+/// verification run that did not happen would be the worse sin — and five
+/// files on main say "(refreshed by the captain during the 2026-09-09
+/// `stepMod` retrofit". Matching the full sentence made `annotation_in`
+/// return `None` for every one of them, so a survey reported the five files
+/// whose provenance was weakest as having no block at all.
+pub const annotation_marker = "**Checked type**"
+
 /// Write `statement` into `node`'s proof file, inside its `/-!` note, once
 /// the proof has verified. Nothing outside the note changes, and text that
 /// could open or close a comment is refused, so the file that was verified
@@ -413,7 +426,7 @@ pub fn annotate(
 /// Reads back exactly what `annotated` writes, so the pair round-trips: the
 /// heading, a fenced `lean` block, the statement inside it.
 pub fn annotation_in(source: String) -> Option(String) {
-  case string.split_once(source, annotation_heading) {
+  case string.split_once(source, annotation_marker) {
     Error(Nil) -> option.None
     Ok(#(_, after)) ->
       case string.split_once(after, "```lean\n") {
@@ -458,7 +471,12 @@ pub fn annotated(source: String, statement: String) -> Result(String, String) {
     string.split_once(after, "-/")
     |> result.replace_error("the proof file's /-! note is never closed"),
   )
-  let worker_text = case string.split_once(body, annotation_heading) {
+  // Split on the MARKER, not the full heading: a block refreshed by hand
+  // carries a different parenthetical, and splitting on the sentence this
+  // harness writes would fail to find it and append a SECOND block below the
+  // first. Replacing a captain's block with a verified one is the whole point
+  // of re-verification; stacking two is the opposite.
+  let worker_text = case string.split_once(body, annotation_marker) {
     Ok(#(theirs, _)) -> theirs
     Error(Nil) -> body
   }

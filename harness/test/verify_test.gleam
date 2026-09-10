@@ -9,6 +9,8 @@
 //// directory, and a per-run token in the fixture id keeps them off each
 //// other's files.
 
+import gleam/list
+
 import gleam/option.{None}
 import gleam/string
 import harness/dag.{type Node, Node}
@@ -433,4 +435,62 @@ pub fn the_probe_makes_binders_explicit_test() {
   // reports as a stuck instance problem.
   assert verify.resolve_source("some_name")
     == "import Rule30.Statements\n#check @Statements.some_name\n"
+}
+
+/// A block written by hand carries a DIFFERENT parenthetical, and it must
+/// still be recognised. Five files on main open with this exact text, from
+/// Rowan's 2026-09-09 `stepMod` retrofit — the parenthetical was rewritten
+/// deliberately, so the block would not claim a verification run that never
+/// happened.
+///
+/// Matching the full `annotation_heading` missed all five, so a survey
+/// reported the files whose provenance was WEAKEST as carrying no block at
+/// all — the check failing on exactly the input it existed to examine.
+pub fn annotation_in_reads_a_hand_refreshed_block_test() {
+  let source =
+    "import Rule30.Basic\n\n/-!\n**What this says.** A thing.\n\n**Checked type** (refreshed by the captain during the 2026-09-09 `stepMod` retrofit,\nnot by a verification run):\n```lean\nStatements.t : True\n```\n-/\n\ntheorem t : True := trivial\n"
+  assert verify.annotation_in(source) == option.Some("Statements.t : True")
+}
+
+/// And the block this harness writes itself still reads back, so the pair
+/// still round-trips.
+pub fn annotation_in_reads_back_what_annotated_writes_test() {
+  let assert Ok(written) =
+    verify.annotated(
+      "import Rule30.Basic\n\n/-!\n**What this says.** A thing.\n-/\n\ntheorem t : True := trivial\n",
+      "Statements.t : True",
+    )
+  assert verify.annotation_in(written) == option.Some("Statements.t : True")
+}
+
+/// A file with no block at all is still `None` — the distinction the whole
+/// survey rests on must survive loosening the match.
+pub fn annotation_in_is_none_without_a_block_test() {
+  assert verify.annotation_in(
+      "import Rule30.Basic\n\n/-!\n**What this says.** A thing.\n-/\n",
+    )
+    == option.None
+}
+
+/// Re-annotating a HAND-REFRESHED block replaces it rather than stacking a
+/// second one below it, and the replacement carries the harness's own
+/// parenthetical — which is the entire value of re-verifying such a file.
+/// Splitting on the full heading instead of the marker would leave the
+/// captain's block in place and add a second, so the file would end up
+/// asserting twice with different provenance.
+pub fn annotated_replaces_a_hand_refreshed_block_test() {
+  let hand =
+    "import Rule30.Basic\n\n/-!\n**What this says.** A thing.\n\n**Checked type** (refreshed by the captain during the 2026-09-09 `stepMod` retrofit,\nnot by a verification run):\n```lean\nStatements.t : 1 = 1\n```\n-/\n\ntheorem t : True := trivial\n"
+  let assert Ok(out) = verify.annotated(hand, "Statements.t : True")
+  // Exactly one block, and it is the harness's.
+  assert count_occurrences(out, "**Checked type**") == 1
+  assert string.contains(out, verify.annotation_heading)
+  assert !string.contains(out, "refreshed by the captain")
+  assert verify.annotation_in(out) == option.Some("Statements.t : True")
+  // The worker's own note is untouched.
+  assert string.contains(out, "**What this says.** A thing.")
+}
+
+fn count_occurrences(haystack: String, needle: String) -> Int {
+  list.length(string.split(haystack, needle)) - 1
 }
