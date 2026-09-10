@@ -712,6 +712,190 @@ in another coat, and would sit beside it, not under it.
     reformulation and worth stating; the single-cycle and invertibility
     machinery of that field is closed and must not be proposed.
 
+61. **The onset wall with no automaton in it, and it holds from every
+    start.** The strongest packed-row form of `leftDiagonal_onset_le` yet
+    stated, and it mentions no cell, no seed and no damage front:
+
+        for every `n >= 1` and every `r < 2^n`,
+        `T^(2(n-1))(r) = T^(2(n-1) + 2^(n-1))(r)  (mod 2^n)`,
+        where `T(r) = 4r XOR (2r OR r)`.
+
+    This **implies the wall**, through the one definitional row of crystal 60
+    (`leftDiagonal k j = bit_k (rowNat (j+k))`), and it asks for something
+    stronger than the wall does: the wall needs the orbit of `1`, this needs
+    every start. Exhaustive to `n = 31` — all `2^31` starts — worst tail `39`
+    against an allowed `60`, worst ratio `1.381` at `n = 19`. **The naive
+    induction is already known to fail**: `maxTail(n+1) <= maxTail(n) + 2` is
+    FALSE at `n = 18 -> 19` (22 jumps to 26), so any proof must amortize over
+    levels rather than pay per level. Obstruction 6 says the same of the
+    front; this says it of a max over a finite set, where a retreat costs
+    nothing — a genuinely different induction to attempt. Vernier, connector,
+    2026-09-09, `docs/connections/2026-09-09-t-functions-2-adic-dynamics-*.md`.
+    **Consequence for a seeder:** this is the wall in the vocabulary the board
+    landed on 2026-09-10 (`rowNat_agree_forward`,
+    `leftDiagonal_periodicFrom_of_rowNat_agree`, `rowNat_testBit_zero`), so it
+    is the first statement that can be attacked with those three blocks in
+    hand. Its per-level form is refuted; do not propose one.
+
+62. **No reset-style induction closes the onset wall, at any constant, and
+    here is the counterexample.** Define `C_1 = 0` and
+    `C_(k+1) = 1 + min{ t >= C_k : bit_(k-1)(rowNat t) = 1 }`. Then
+    `C_k <= 2k - 2` is **false**: `C_119 = 237 > 236`, the only violation
+    below `k = 600`, exact (`gnomon_cascade.mjs`, `gnomon_check.mjs`). The
+    falsification is not the point; the **reason** is. The control bit's
+    black density is `0.4993`, so the cascade's slope is `2` by a law of
+    large numbers, and the wall's own budget has slope `2` — the two are
+    exactly critical. Every reset-style induction on this board is the same
+    sum of mean-2 waiting times: obstruction 6's front at `2.00 k`, Talus's
+    `2.674 n`, this cascade at `1.96 k`. So no argument of that family can
+    work at any constant. **What the gap actually is:** the distance between
+    the truth (`1.25 n`) and the cascade (`2 n`) is entirely the 596 of 599
+    levels that settle *before* their driver's loop is cut. In the board's
+    vocabulary that is obstruction 6's "skipped diagonals settle at indices
+    below their drivers' onsets", measured and unexplained; in the
+    Boolean-network vocabulary it is "a node whose loop is intact can still
+    be forced, because its two drivers agree". Ships with an arithmetic
+    correction: the board's `1.34 n` and `0.8229` are *tail + period*, and the
+    wall needs the *preperiod*, which is `1.25 n` and `0.7396` (verified by
+    reproducing `talus4_margin.mjs`: `71 + 8 = 79`, `79/96 = 0.8229`).
+    Gnomon, connector, 2026-09-09,
+    `docs/connections/2026-09-09-synchronizing-automata-*.md`.
+    **Consequence for a seeder:** a proposal that prices the early settlings
+    is wanted; a proposal that resets per level is refuted in advance.
+
+63. **The local law and the settled region cannot prove the onset wall, and
+    the margin is 0.001 the wrong way.** Let `G` be the never-retreating
+    front driven by the settled words alone. Then `G(t) >= F(t)` whenever
+    they start together — a two-case induction on `rule30_left_local_law`
+    (crystal A2) plus "the cell left of the leftmost deviation is settled",
+    checked at 0 violations over 129,000 rows (`rosetta_compare.mjs`). `G` is
+    **optimal** among background-driven comparisons, so its speed is the
+    exact ceiling of what those two ingredients can prove together — and that
+    speed is `0.50106` over `2 x 10^8` rows across diagonals 87,868 to
+    `10^8`, every one of twenty `10^7`-blocks in `0.50076-0.50133`, none
+    below, `13.4` sigma against the script's own random-background control at
+    `0.49999`. The wall needs `<= 0.5`. Stated for the board:
+    **`leftDiagonal_onset_le` is not a consequence of
+    `rule30_left_local_law` together with the settled region.** A proof must
+    reach into the transient band. The honest caveat, which keeps this a
+    sighting rather than a theorem: `0.50106` is a window average of a
+    deterministic walk and nobody has proved it never falls below `1/2`
+    later. Rosetta, connector, 2026-09-09,
+    `docs/connections/2026-09-09-percolation-and-first-passage-*.md`.
+    **Consequence for a seeder:** do not propose a monotone comparison
+    against the settled background; that family is priced and it is short.
+
+64. **The one measured route that lands on the right side of the wall, and
+    it is a gap in a reachable set rather than a slow walker.** Three pieces,
+    smallest first. (a) *The survival law*, already proved in the kernel on
+    `[propext]` (`explorer/alidade_scratch_survival.lean`): for rows `c` and
+    `d` agreeing at `i-1` and differing at `i`,
+    `xor (rule30 c i) (rule30 d i) = xor (! d (i+1)) (d i && xor (c (i+1)) (d (i+1)))`,
+    with the corollaries making the right side `! d (i+1)` when `d i` is
+    white or when `c` and `d` agree at `i+1`. A seedable node of size S under
+    `leftDiagonal_onset_le`; it generalises crystal 50(b), which is its
+    agreeing half in diagonal coordinates. (b) *The forced retreat*: if
+    `S(t, F(t)-1)` is black, `S(t, F(t))` white and `S(t, F(t)+1)` black then
+    `F(t+1) > F(t)` — immediate from (a) plus A2, and measured on 132,152 of
+    999,960 rows with no exception. (c) *The bound*: with `R(t0) = {F(t0)}`
+    and `R(t+1)` the image of `R(t)` under `x -> {x-1}` when `S(t,x-1)` is
+    white, `{x}` at triple `(1,0,1)`'s complement, `[x+1, inf)` at `(1,0,1)`
+    and `[x, inf)` otherwise, `F(t) >= min R(t)` for every `t >= t0`. One-step
+    induction from (a) and A2. **`min R(t)` runs at `0.45310`** over `4 x 10^6`
+    rows from diagonal 100,000, every `5 x 10^5`-block in
+    `[0.45265, 0.45412]`, confirmed by a second implementation carrying no ray
+    at all. Compare crystal 63: that route's margin is `0.001` **against** the
+    wall, this one's is `0.047` **for** it. The two honest gaps: nothing
+    proves the DP stays below `1/2` on every stretch, and the DP escapes onto
+    the eventually-white diagonals, so stretches must be chained — which is
+    exactly the prerequisite in the next crystal. Alidade, connector,
+    2026-09-09, `docs/connections/2026-09-09-computational-mechanics-*.md`.
+
+65. **The prerequisite both front routes need, and it is two lines.** For
+    every `t`, the settled word `S_(kappa(t)-1)` is not identically white,
+    where `kappa(t) = t + F(t)`. From `leftDiagonal_periodicFrom_pow` and
+    crystal A2: if it were, the front would advance for ever, and diagonal
+    `kappa(t)` would then disagree with its own settled word at every later
+    index. **What it buys:** the retreats at rows 2, 31, 501, 71,116, 77,910
+    and 117,324 become *forced* rather than observed, and every
+    monotone-comparison route closes globally rather than by measurement.
+    Without it, crystal 64's bound covers only the stretch between two
+    doublings and nothing tiles all of time. Verified to depth 130,000 rows
+    and `kappa = 97,529` (`rosetta_visits.mjs`). Reached independently by
+    Rosetta (Topic 2) and Alidade (Topic 2) on 2026-09-09.
+    **Consequence for a seeder:** the smallest of the front lemmas, the most
+    likely to close, and load-bearing for two separate routes. Seed it first.
+
+66. **The OR-to-XOR filter: reject on sight, cost nothing.** Any proposed
+    argument for either prize whose reasoning survives replacing `OR` with
+    `XOR` is refuted immediately, because rule 150's centre column is
+    constantly black and rule 90's is eventually white, while rule 30's is
+    the prize. Rule 30 *is* rule 150 plus one quadratic term
+    (`4r XOR (2r OR r) = (4r XOR 2r XOR r) XOR (2r AND r)`, crystal 59), so
+    that term is the entire difficulty and any argument blind to it is blind
+    to everything. Rule 150's centre column is identically black in two lines
+    from `P_t = (1+u+u^2)^t` and Frobenius, measured `10^7/10^7`; its column 1
+    obeys `a(2t) = 0`, `a(2t+1) = 1 XOR a(t)`, from which eventual
+    periodicity fails by a three-line descent. **This rejects, without
+    reading them:** surjectivity, left-permutivity, the light cone, the
+    space-time SFT, entropy rank one, the sandwich lemma, expansiveness of
+    the vertical direction, the whole Mauduit-Rivat family, the whole
+    automatic-sequence family, and every rigidity argument. Rule 90 is the
+    witness that carries *more* structure than rule 30 in every one of those
+    respects. Rosetta and Parallax, connectors, 2026-09-08 and 2026-09-09.
+    **Consequence for a seeder:** run this on your own proposal before
+    writing it down. It is a ten-minute test and it has never been wrong.
+
+67. **The ensemble filter, and the theorem that makes it citable.** Reject
+    any proposed argument whose only use of the seed is that it is a point of
+    a full-measure set. Three independent reasons, each checkable: the
+    ensemble is *exactly* featureless and, by Kari-Taati plus the measured
+    absence of conservation laws, it is the only ensemble available; the seed
+    is computable, and being typical for every computable mixing dynamics is
+    *equivalent* to Schnorr randomness, which no computable point has; and
+    the eventually periodic sequences are dense in the support of every
+    candidate Gibbs measure, so no support or positivity argument separates
+    them from their complement. The theorem that converts this from a mood
+    into a citation: **`centerColumn_trace_uniform`** — for every `n` and
+    every word `v : Fin (n+1) -> Bool`, the number of windows
+    `w : Fin (2n+1) -> Bool` whose column word is `v` is exactly `2^n`. Five
+    lines: fix the cells at `1..n` as parameters, and the map from the cells
+    at `0, -1, ..., -n` to the column word is triangular over `F_2` with unit
+    diagonal by `evolveFrom_leftPermutive` at radius `t`. Kernel-checked at
+    `n = 1, 2, 3` (`explorer/parallax3_scratch_trace.lean`), enumerated to
+    word length 12 in two implementations. It generalises `window_count_half`,
+    which is its marginal at one time, and should cost about the same.
+    Parallax, connector, 2026-09-09,
+    `docs/connections/2026-09-09-thermodynamic-formalism-*.md`.
+    **Consequence for a seeder:** `centerColumn_trace_uniform` is worth
+    seeding and is explicitly NOT a step towards the wall — its value is that
+    every future measure-flavoured proposal can be answered with a node
+    number instead of an argument.
+
+68. **The nearest published result to Prize 1 cannot be pushed to it, and the
+    missing case is one small statement.** Kopra's left-expansivity theorem is
+    the closest thing in print; its dimensions `(h, d, w)` mean "a `w`-wide,
+    `(h+d+1)`-tall block of the picture determines the cell to its left".
+    Rule 30's spreading speed is exactly `1` (`evolve_left_edge`, closed), so
+    Kopra's `s < 1/h` forces `h = 0`, and at `h = 0` left permutivity leaves
+    only `w = 2`. The missing case is `w = 1`, and it appears to be true:
+
+        for every `d` and every `X` with `column X 0 0 = false`, there is `Y`
+        with `column Y 0 t = column X 0 t` for all `t <= d`, and
+        `column Y (-1) 0 != column X (-1) 0`.
+
+    Exhaustive for `d <= 14`; the sharper form — the determined column words
+    are *exactly* those with a black anchor — exhaustive for `d <= 11`,
+    `h <= 5`. The black half is already the board's `column_succ_of_black`;
+    the content is the white half and the construction is the compensating
+    configuration. Explicit witnesses at `d = 4`: the windows `011100000` and
+    `000001000` over positions `-4..4` share column word `01100` and differ at
+    position `-1`. Parallax, connector, 2026-09-09,
+    `docs/connections/2026-09-09-gowers-uniformity-norms-*.md`.
+    **Consequence for a seeder:** small, almost certainly true,
+    provable-looking, and what it buys is a closed door with a sign on it —
+    so the next session does not rediscover Kopra and ask why not `w = 1`.
+
 ## The convergence of 2026-09-09, and the object no node states
 
 Four sessions on 2026-09-09 — Talus twice (theorist), Gnomon and Vernier
