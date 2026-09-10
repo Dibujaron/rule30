@@ -1855,3 +1855,60 @@ The habit that follows is uncomfortable and cheap: after fixing a class of
 failure, ask whether the fix is an instance of it. It very often is, because
 the thing that made the original hard to see — a true value nobody could read —
 is a property of records in general, and my fix writes records too.
+
+## 2026-09-10 — a producer with no reader is not an error, it is silence
+
+The artifact-reachability row, and the sentence is the whole finding. Nothing
+fails, nothing warns, nothing is even slow — **the system's response to the
+defect is identical to its response to everything being fine.** That is why
+all six filed instances were found by someone looking for something else.
+There was no other way to find them.
+
+Everything else followed from having that sentence rather than the symptom.
+The row described artifacts "reachable from nothing anyone reads", which
+invites you to add a pointer — and the row had six instances, so a seventh
+pointer was never the answer. The cause says instead: make *produced and
+unread* a reported state, in a report a later session already reads.
+
+**The argument for `status` being the home was already in the codebase.**
+`stray_section` calls its own family "work already paid for that no verb
+points at". Whoever wrote that had the general case in hand and filed it as a
+fact about Lean files. Worth remembering how often the sentence you need is
+already written down somewhere, attached to one instance.
+
+**It found a seventh instance on its first run** — `docs/attacks`, fourteen
+theorist documents, 416 KB, read by nothing. I verified it before believing my
+own table, which mattered: the table is mine and a table is exactly what I
+would not have doubted.
+
+**The backstop is the part I would defend hardest.** The family table is
+hand-maintained and will be forgotten, and a table that silently omits a
+family is this row's own defect arriving inside the fix for it. So the table
+is not its own only signal: any `docs/` directory no family declares prints as
+undeclared. **A mechanism that can catch the disease it treats needs a check
+that does not depend on the thing that failed.**
+
+**The measurement that dissolved a fork rather than settling it.** Rowan had
+three options for the connect documents — inline, index, distil-by-verb — and
+no way to choose. Each document already contained its own distillation, and
+across twelve those sections were 32.7 KB against 549 KB. Six percent. That
+produces a fourth option needing no judgement from anyone, because the
+distillation was written by the session that did the work. When a design fork
+will not resolve by argument, measure the thing the options disagree about;
+sometimes the number removes the fork instead of picking a side.
+
+**And the trap I would have walked into.** I was ready to generalise "section
+5" across document families. A connector's §5 is *What to hand the theorist*,
+a handoff forward; a theorist's §5 is *Claims that died*. Same number,
+opposite content. It would have carried killed routes to a seeder as
+candidates to propose — and it would have looked right, because the extraction
+would have worked perfectly on exactly the wrong content. Rowan measured the
+sections and told me; I would not have checked, because the two families
+looked alike and the code did not care.
+
+That is today's shape for the last time: **the machinery succeeding at the
+wrong subject.** A decoder that cannot read a full window, a sweep that reports
+116 of 116 having read 111, a count true of a different tree, an extractor
+lifting the graveyard and labelling it the harvest. In every one the mechanism
+worked and the referent was wrong, and no amount of checking the mechanism
+harder would have caught any of them.
