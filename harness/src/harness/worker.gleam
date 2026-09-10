@@ -784,11 +784,30 @@ pub type Tally {
 /// for a prover includes adjudicating a `proved` claim before pausing. The
 /// loop itself owns the endings no role can override: a timeout, an exit,
 /// a CLI error, and the rate-limit signal that turns `act` into `park`.
+/// `salvage` is the role's last look at an ending the loop has already
+/// decided, and it exists because an ending the loop owns can still be
+/// wrong about whether the work was done.
+///
+/// The loop's endings are about the SESSION — the CLI stopped, the turns ran
+/// out, nothing was said for too long. None of them is a claim about the
+/// artifact on disk, and the harness has one adjudicator that is. On
+/// 2026-09-10 `periodicFrom_trans_period` ended at the CLI's turn ceiling
+/// after 41 turns on haiku, $1.08, and the parked file proved the node with
+/// clean axioms; the run then spent a whole second dispatch re-deriving it
+/// on sonnet for $0.88. Nothing about that ending was mislabelled — 40 turns
+/// really were spent, so `budget_exhausted` was the honest word. A better
+/// name would have saved nothing. Only asking the file does.
+///
+/// Identity for every role but the prover: a seeder or a theorist has no
+/// artifact a machine can adjudicate, which is exactly why their `Finished`
+/// means "it says it wrote something" and a prover's means "the verifier
+/// accepted it".
 pub type Role(r) {
   Role(
     decode: fn(Dynamic) -> Result(r, String),
     act: fn(Loop(r), Option(r)) -> #(Tally, Ending(r)),
     park: fn(Loop(r), Option(r)) -> #(Tally, Ending(r)),
+    salvage: fn(log.Log, Ending(r)) -> Ending(r),
   )
 }
 
@@ -942,7 +961,88 @@ fn prover_role(deps: Deps, node: dag.Node) -> Role(Report) {
     decode: report_from_dynamic,
     act: fn(t, report) { act_on(deps, node, t, report) },
     park: fn(t, report) { park(deps, node, t, report) },
+    salvage: fn(l, ending) { salvage(deps, node, l, ending) },
   )
+}
+
+/// The last question asked of a prover's attempt: whatever went wrong with
+/// the session, is there a proof of this node on disk anyway.
+///
+/// Only endings that are not already `Finished` reach here, so a closed node
+/// is never re-verified. Everything else is fair game, including `Abandoned`
+/// — a worker that reported giving up but left a file that verifies has
+/// still proved the node, and `lake` outranks a worker's own assessment of
+/// its work. `RateLimited` is included too: parking loses nothing, but
+/// closing loses even less.
+///
+/// **The bar is the verifier and never the presence of a file**, for the
+/// same reason it is in `unreported`: if "a file is there" were enough, this
+/// would be the door a confidently-wrong worker walks through, and the
+/// worked instance behind all of this is a worker that asserted five times
+/// over that it had done something it had not.
+///
+/// Cost is one `deps.verify` per non-closing attempt — once, at the end,
+/// against the price of a whole second dispatch. An attempt with nothing on
+/// disk pays a failed `simplifile.read` and stops there. Under `run
+/// --concurrency 3` several attempts can finish together and queue on the
+/// shared build lock, which the verifier already waits on for every ordinary
+/// close; the queue is bounded by the concurrency cap and each place in it is
+/// one build.
+///
+/// **A salvage that fails must never fail the attempt.** Any verdict that is
+/// not `Verified` returns the ending exactly as it arrived, so a correctly
+/// filed failure cannot be turned into a harness error by the act of asking
+/// this question. The only thing this function can do is upgrade.
+fn salvage(
+  deps: Deps,
+  node: dag.Node,
+  l: log.Log,
+  ending: Ending(Report),
+) -> Ending(Report) {
+  case ending.end {
+    Finished -> ending
+    _ -> {
+      let verdict = deps.verify(node)
+      log.event(l, "salvage", [
+        #("node", json.string(node.id)),
+        #("ending", json.string(string.inspect(ending.end))),
+        #("verified", json.bool(verify.is_verified(verdict))),
+        #("verdict", json.string(verify.verdict_text(verdict))),
+      ])
+      case verdict {
+        verify.Verified(statement:, ..) -> {
+          let written = deps.annotate(node, statement)
+          log.event(l, "annotate", [
+            #("node", json.string(node.id)),
+            #("statement", json.string(statement)),
+            #("written", json.bool(result.is_ok(written))),
+            #("reason", json.string(result.unwrap_error(written, ""))),
+          ])
+          // `report: None`, which `run_session` turns into `reported: False`,
+          // so no estimate is scored against the identity's calibration. It
+          // matters most for the ending it is least obvious for: an
+          // `Abandoned` attempt's `estimate` is the worker's own judgement
+          // that it FAILED, and scoring that as a re-pricing of a node the
+          // kernel says it closed would corrupt calibration in a direction
+          // nobody would ever trace back. The report's prose goes with it —
+          // a notebook entry explaining why the attempt failed is not a
+          // description of the close that actually happened, and keeping it
+          // would put a worker's account of a failure on a proved node.
+          Ending(
+            ..ending,
+            end: Finished,
+            report: None,
+            notes: "the session ended without closing the node, and the proof "
+              <> "file on disk verified against the seeded statement: "
+              <> verify.verdict_text(verdict)
+              <> "\nThe session's own ending was: "
+              <> ending.notes,
+          )
+        }
+        _ -> ending
+      }
+    }
+  }
 }
 
 /// Start a session, say `first_message`, drive the turn loop under `role`
@@ -969,7 +1069,13 @@ pub fn drive(
       rate_limited: False,
     ))
   shutdown(session, l, ending.gone)
-  #(tally, ending)
+  // One choke point rather than a branch per ending. Every way a session can
+  // stop passes through here — the ones the role decided and the ones the
+  // loop owns alike — so an ending nobody has thought of yet gets the
+  // artifact check for free, which is the property that was missing when the
+  // check lived only on the report-less path and a turn-ceiling ending
+  // walked straight past it.
+  #(tally, role.salvage(l, ending))
 }
 
 /// The tools every dispatched session may call, as `--allowedTools` names

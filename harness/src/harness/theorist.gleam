@@ -569,6 +569,11 @@ fn report_decoder() -> decode.Decoder(Report) {
 /// about the file and not about the turn.
 pub fn role() -> worker.Role(Report) {
   worker.Role(
+    // Identity: there is no artifact here a machine can adjudicate. A
+    // prover salvages an ending by asking `lake` whether the proof on disk
+    // is real; a theorist produces prose, so its `Finished` has always
+    // meant "it says it wrote something" and nothing else can be checked.
+    salvage: fn(_l, ending) { ending },
     decode: report_from_dynamic,
     act: fn(t, report) {
       case report {

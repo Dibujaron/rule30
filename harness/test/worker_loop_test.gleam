@@ -616,7 +616,7 @@ pub fn a_failed_verdict_goes_back_and_the_second_claim_closes_test() {
 
 // --- (b) the CLI ends the session ---------------------------------------------
 
-pub fn an_errored_result_is_budget_exhausted_and_is_never_verified_test() {
+pub fn an_errored_result_is_budget_exhausted_and_is_salvage_checked_test() {
   let r =
     go(
       scenario("cli-error", [
@@ -624,8 +624,21 @@ pub fn an_errored_result_is_budget_exhausted_and_is_never_verified_test() {
       ]),
     )
   assert r.attempt.outcome == dag.BudgetExhausted
-  // A session the CLI killed did not prove anything, whatever it claimed.
-  assert r.verify_calls == 0
+  // This test used to assert `verify_calls == 0`, under the comment "a
+  // session the CLI killed did not prove anything, whatever it claimed".
+  // That premise was refuted on 2026-09-10 by
+  // runs/20260910T151819Z/periodicFrom_trans_period-1: the CLI killed a
+  // session at its turn ceiling whose proof file proved the node with clean
+  // axioms, and the run spent a second dispatch re-deriving it.
+  //
+  // So the session's ending is asked about the SESSION and the file is asked
+  // about the PROOF, and the second question is now always put — once, by
+  // `salvage`. The outcome here is still `budget_exhausted` because this
+  // scenario scripts no verdict, so the verifier's default answer is a
+  // failure and the ending stands unchanged. That is the property worth
+  // holding: asking the question cannot turn a correctly-filed failure into
+  // anything else.
+  assert r.verify_calls == 1
   assert r.eof
 }
 
@@ -654,9 +667,13 @@ pub fn a_report_the_cli_dropped_is_recovered_from_the_last_call_test() {
   assert report.summary == "the last call"
   assert report.notebook == "scripted notebook"
   assert string.contains(r.events, "\"kind\":\"report_recovered\"")
-  // Recovered, not adjudicated: a session the CLI killed still proved
-  // nothing.
-  assert r.verify_calls == 0
+  // Recovered, then salvage-checked. The report is recovered from the
+  // stream rather than adjudicated as a claim — a CLI error result carries
+  // no `structured_output`, so the call in the stream is the only copy — and
+  // the single verify is `salvage` asking the file, not the loop believing
+  // the claim. No verdict is scripted, so the answer is a failure and the
+  // ending stands.
+  assert r.verify_calls == 1
   assert r.eof
 }
 
@@ -845,9 +862,13 @@ pub fn a_rate_limited_turn_whose_proof_fails_is_parked_test() {
   // A failed verdict annotates nothing: the note only ever carries a
   // statement the check file actually printed for a verified proof.
   assert r.annotations == ""
-  // Adjudicated once, and no verdict sent back: the window is throttling
-  // us, so another turn would spend it for nothing.
-  assert r.verify_calls == 1
+  // Twice: once adjudicating the worker's `proved` claim, which failed, and
+  // once by `salvage` on the way out. No verdict is sent back either time —
+  // the window is throttling us, so another turn would spend it for nothing.
+  // A paused attempt is salvage-checked like any other: parking loses
+  // nothing, but closing loses even less, and the second call here returns
+  // the scripted-nothing default so the attempt stays parked.
+  assert r.verify_calls == 2
   assert r.eof
 }
 
@@ -1136,4 +1157,124 @@ pub fn an_unreported_turn_whose_proof_fails_is_still_nudged_test() {
     )
   assert r.attempt.outcome == dag.BudgetExhausted
   assert string.contains(r.attempt.notes, "stopped reporting")
+}
+
+// --- salvage: the file outranks the session's ending ---------------------------
+
+fn verified(statement: String) -> verify.Verdict {
+  verify.Verified(
+    axioms: ["propext", "Quot.sound"],
+    statement: statement,
+    output: "'harness_check' depends on axioms: [propext, Quot.sound]",
+  )
+}
+
+/// The worked instance, reproduced: an attempt the CLI ended at its turn
+/// ceiling, whose proof file proves the node.
+///
+/// runs/20260910T151819Z/periodicFrom_trans_period-1, Vesper on haiku, 41
+/// turns against a 40 ceiling, $1.08. The parked file had zero `sorry` and
+/// verified against the seeded statement with axioms [propext, Quot.sound];
+/// the run then dispatched a second attempt which re-derived the same proof
+/// on sonnet for $0.88.
+///
+/// Nothing about that ending was mislabelled — the turns really were spent,
+/// so `budget_exhausted` was the honest name. That is exactly why this case
+/// needs the file check and not a better word: a naming fix saves nothing
+/// here, because the name was already right.
+pub fn a_turn_ceiling_ending_whose_proof_verifies_closes_the_node_test() {
+  let r =
+    go(
+      Scenario(
+        ..scenario("salvage-turn-ceiling", [
+          [
+            init_line("sess-sv"),
+            error_result_line("sess-sv", "error_max_turns"),
+          ],
+        ]),
+        verdicts: [verified("Statements.harness_probe : True")],
+      ),
+    )
+  assert r.attempt.outcome == dag.Closed
+  assert r.annotations == "harness_probe\tStatements.harness_probe : True\n"
+  assert string.contains(r.attempt.notes, "turn ceiling")
+}
+
+/// A worker that gave up, whose file proves the node anyway.
+///
+/// The project's founding rule is that nobody declares a proof done by
+/// assertion — `lake` decides. That rule had only ever run in one direction:
+/// a worker claiming "I proved it" was disbelieved until the kernel agreed,
+/// while a worker saying "I give up" was believed unconditionally. There is
+/// no reason for the asymmetry, and this is the rule applied symmetrically.
+pub fn an_abandoned_attempt_whose_proof_verifies_closes_the_node_test() {
+  let r =
+    go(
+      Scenario(
+        ..scenario("salvage-abandoned", [
+          [init_line("sess-ab"), result_line("sess-ab", False, "abandoned")],
+        ]),
+        verdicts: [verified("Statements.harness_probe : True")],
+      ),
+    )
+  assert r.attempt.outcome == dag.Closed
+}
+
+/// And a salvaged close scores no calibration. `reported` is what the roster
+/// reads to decide whether an `estimate` is the worker's own re-pricing, and
+/// on an abandoned attempt that estimate is the worker's judgement that it
+/// FAILED. Scoring it against a node the kernel says it closed would corrupt
+/// calibration in a direction nobody would ever trace back.
+pub fn a_salvaged_close_carries_no_report_test() {
+  let r =
+    go(
+      Scenario(
+        ..scenario("salvage-unreported", [
+          [init_line("sess-ab2"), result_line("sess-ab2", False, "abandoned")],
+        ]),
+        verdicts: [verified("Statements.harness_probe : True")],
+      ),
+    )
+  assert r.attempt.outcome == dag.Closed
+  assert r.attempt.reported == False
+  assert r.report == None
+}
+
+/// The property that makes this safe to run on every ending: asking cannot
+/// break anything. A salvage whose verdict is a failure leaves the ending
+/// exactly as it arrived, so a correctly filed failure cannot become a
+/// harness error by virtue of the question being put.
+pub fn a_failed_salvage_leaves_the_ending_untouched_test() {
+  let r =
+    go(
+      Scenario(
+        ..scenario("salvage-fails", [
+          [
+            init_line("sess-nf"),
+            error_result_line("sess-nf", "error_max_turns"),
+          ],
+        ]),
+        verdicts: [verify.BuildFailed("no proof file at Rule30/Proofs/X.lean")],
+      ),
+    )
+  assert r.attempt.outcome == dag.BudgetExhausted
+  assert r.annotations == ""
+  assert r.verify_calls == 1
+}
+
+/// A node the worker closed properly is not re-verified on the way out.
+/// `salvage` returns a `Finished` ending untouched, so an ordinary close
+/// still costs exactly the adjudications the claim itself required.
+pub fn a_closed_node_is_not_salvage_checked_test() {
+  let r =
+    go(
+      Scenario(
+        ..scenario("salvage-skips-closed", [
+          [init_line("sess-ok"), result_line("sess-ok", False, "proved")],
+        ]),
+        verdicts: [verified("Statements.harness_probe : True")],
+      ),
+    )
+  assert r.attempt.outcome == dag.Closed
+  assert r.verify_calls == 1
 }
