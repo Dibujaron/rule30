@@ -203,7 +203,47 @@ pub fn check_source(declaration: String, route: Route) -> String {
     |> list.unique
     |> list.map(fn(m) { "import " <> m })
     |> string.join("\n")
-  imports <> "\n" <> declaration <> "\n  " <> route.tactics <> "\n"
+  imports <> "\n" <> declaration <> "\n" <> indented(route.tactics) <> "\n"
+}
+
+/// `tactics` with its common left margin replaced by exactly two spaces,
+/// so the block sits under its `by` however the captain happened to write
+/// it.
+///
+/// **Prepending two spaces to the raw text is what this replaces, and it
+/// was a `blocks`-severity defect.** A route is naturally written already
+/// indented, so `"  " <> tactics` put the FIRST line at column 4 and every
+/// other line at column 2. Lean opens a tactic block at the first tactic's
+/// column, so the rest of the route fell outside it and elaboration
+/// reported `unsolved goals` -- indistinguishable from a genuinely open
+/// node. On 2026-09-10 a seeder pass had all four of its routes reported as
+/// not closing; all four close, and the captain who believed the report
+/// re-derived every one of them by hand.
+///
+/// Only the COMMON margin moves. Relative indentation inside the block is
+/// what Lean reads to nest `cases` arms, so it survives exactly. Blank
+/// lines are ignored when measuring the margin -- counting them would find
+/// a margin of zero and leave every real line over-indented against it.
+fn indented(tactics: String) -> String {
+  let lines = string.split(tactics, "\n")
+  let margin =
+    lines
+    |> list.filter(fn(l) { string.trim(l) != "" })
+    |> list.map(leading_spaces)
+    |> list.reduce(int.min)
+    |> result.unwrap(0)
+  lines
+  |> list.map(fn(l) {
+    case string.trim(l) {
+      "" -> ""
+      _ -> "  " <> string.drop_start(l, margin)
+    }
+  })
+  |> string.join("\n")
+}
+
+fn leading_spaces(line: String) -> Int {
+  string.length(line) - string.length(string.trim_start(line))
 }
 
 /// Elaborate one claimed route against the declaration named `lean_name`
