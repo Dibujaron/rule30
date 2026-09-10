@@ -803,3 +803,61 @@ pub fn the_board_is_unchanged_after_any_refusal_test() {
     assert after == before
   })
 }
+
+// --- searching the board by symptom -------------------------------------------
+
+fn worded(
+  id: String,
+  title: String,
+  body: String,
+  status: bugs.BugStatus,
+) -> Bug {
+  Bug(..bug(id, status), title:, body:)
+}
+
+pub fn search_finds_a_body_line_test() {
+  let board =
+    Board([
+      worded("a", "unrelated", "nothing here", bugs.Open),
+      worded("b", "the suite", "Measured: 325 passed, 3 failures.", bugs.Open),
+    ])
+  let assert [#(hit, line)] = bugs.search(board, "325 passed")
+  assert hit.id == "b"
+  assert string.contains(line, "325 passed")
+}
+
+/// The whole point of the verb: a session that is surprised has an artifact,
+/// not an area. Matching must be case-insensitive, because nobody retypes an
+/// error string with its original capitalisation.
+pub fn search_ignores_case_test() {
+  let board =
+    Board([worded("a", "T", "Permission DENIED on remove", bugs.Open)])
+  let assert [_] = bugs.search(board, "permission denied")
+  Nil
+}
+
+/// A closed row is the BEST answer to "has anyone seen this" — it names the
+/// sha that fixed it — so search must not hide them the way `filtered` does.
+pub fn search_includes_closed_rows_test() {
+  let board =
+    Board([worded("a", "T", "the abort loses the module", bugs.Fixed)])
+  let assert [#(hit, _)] = bugs.search(board, "abort")
+  assert hit.id == "a"
+}
+
+/// A title match reports the title rather than an arbitrary body line, so a
+/// row found by its name does not print something confusing instead.
+pub fn search_prefers_the_title_test() {
+  let board =
+    Board([worded("a", "orphaned lake build", "orphaned elsewhere", bugs.Open)])
+  let assert [#(_, line)] = bugs.search(board, "orphaned")
+  assert line == "orphaned lake build"
+}
+
+/// Empty input matches nothing rather than everything. A search that returned
+/// all 111 rows for a typo would be read as "no useful hits" and close the
+/// habit down on its first use.
+pub fn search_on_empty_text_matches_nothing_test() {
+  let board = Board([worded("a", "T", "b", bugs.Open)])
+  assert bugs.search(board, "   ") == []
+}

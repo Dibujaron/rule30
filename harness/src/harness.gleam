@@ -7,6 +7,7 @@
 
 import argv
 import envoy
+import gleam/bool
 import gleam/int
 import gleam/io
 import gleam/list
@@ -81,6 +82,13 @@ fn run(cfg: config.Config, arguments: List(String)) -> Nil {
     ["bugs", "claim", _] ->
       print_outcome(Error("bugs claim needs --as <Identity>"))
     ["bugs", "reopen", id] -> print_outcome(reopen_bug(cfg, id))
+    // `bugs search` is the verb a session reaches for when it is SURPRISED,
+    // as opposed to `bugs --area`/`--severity`, which are for browsing. It
+    // searches bodies and it includes closed rows, because a closed row is
+    // the best possible answer to "has anyone seen this before" — it names
+    // the sha that fixed it.
+    ["bugs", "search", ..terms] ->
+      print_outcome(search_bugs(cfg, string.join(terms, " ")))
     ["bugs", "close", id, verdict, "--resolution", text] ->
       print_outcome(close_bug(cfg, id, verdict, text))
     ["bugs", "close", _, _] | ["bugs", "close", _, _, "--resolution"] ->
@@ -143,7 +151,7 @@ fn run(cfg: config.Config, arguments: List(String)) -> Nil {
 /// What `gleam run --` prints for an argument list it does not recognise:
 /// every verb, in the shape a captain types it.
 pub fn usage() -> String {
-  "usage: gleam run -- status | prove-one <node-id> | run [--max-attempts N] [--concurrency K] | reopen <node-id> | reverify <node-id> | reverify --all | bugs [--area A] [--severity S] [--all] | bugs file <path-to-row.json> | bugs claim <id> --as <Identity> [--session <ref>] | bugs reopen <id> | bugs close <id> fixed|wontfix --resolution <text> | writes | index | seed [--model M] [--region R] | seed brief [--region R] | seed check [path] | theorise [<topic>] [--as <Name> | --mint] [--model M] | connect [<vantage>] [--as <Name> | --mint] [--model M] | spike"
+  "usage: gleam run -- status | prove-one <node-id> | run [--max-attempts N] [--concurrency K] | reopen <node-id> | reverify <node-id> | reverify --all | bugs [--area A] [--severity S] [--all] | bugs file <path-to-row.json> | bugs claim <id> --as <Identity> [--session <ref>] | bugs reopen <id> | bugs search <text> | bugs close <id> fixed|wontfix --resolution <text> | writes | index | seed [--model M] [--region R] | seed brief [--region R] | seed check [path] | theorise [<topic>] [--as <Name> | --mint] [--model M] | connect [<vantage>] [--as <Name> | --mint] [--model M] | spike"
 }
 
 /// One theorist session on the parsed flags' model, topic and persona, on
@@ -276,6 +284,37 @@ fn proved_node(
         <> "` is "
         <> dag.status_to_string(other)
         <> ", not proved; reverify only re-checks a node that is already closed",
+      )
+  }
+}
+
+/// Find rows by what a session actually has in hand — an error string, a
+/// number, a `file:line` — rather than by the axes used for browsing.
+fn search_bugs(cfg: config.Config, needle: String) -> Result(String, String) {
+  use <- bool.guard(
+    string.trim(needle) == "",
+    Error("bugs search needs some text to look for"),
+  )
+  use board <- result.try(bugs.load(cfg.bugs_path))
+  case bugs.search(board, needle) {
+    [] -> Ok("no row mentions `" <> needle <> "`")
+    hits ->
+      Ok(
+        string.join(
+          list.map(hits, fn(hit) {
+            let #(b, line) = hit
+            "  " <> bugs.status_to_string(b.status) <> "  " <> b.id <> "
+      " <> line
+          }),
+          "
+",
+        )
+        <> "
+"
+        <> int.to_string(list.length(hits))
+        <> " row(s) mention `"
+        <> needle
+        <> "` (closed rows included on purpose)",
       )
   }
 }
