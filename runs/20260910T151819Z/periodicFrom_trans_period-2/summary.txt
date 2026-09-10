@@ -1,0 +1,16 @@
+
+node      periodicFrom_trans_period
+identity  Vesper
+model     sonnet
+outcome   proved
+cost      $0.88
+turns     10
+estimate  S
+session   0c5a42cf-31c8-4377-8cf7-b81e16e6e78f
+log       c:/Users/dibuj/dev/rule30/runs/20260910T151819Z/periodicFrom_trans_period-2
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Quot.sound
+
+Vesper (#2b3a67): closed 68, abandoned 7, $68.54, calibration 56/68

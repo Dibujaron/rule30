@@ -1,0 +1,16 @@
+
+node      centerColumn_eq_rowNat_testBit
+identity  Cadence
+model     haiku
+outcome   proved
+cost      $0.23
+turns     8
+estimate  S
+session   6a48e696-b90e-42c3-9b0f-08930af2f16f
+log       c:/Users/dibuj/dev/rule30/runs/20260910T151819Z/centerColumn_eq_rowNat_testBit-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Cadence (#2a6f77): closed 29, abandoned 8, $47.77, calibration 22/29
