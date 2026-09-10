@@ -1454,3 +1454,53 @@ exists to remove.
 different questions, and only the first one has a command. The second needs a
 statement you write on purpose. Passing the thing under test in as a
 hypothesis is the cheap trick that makes the second question honest.
+
+### I made the same error I had just caught, one hour later, by proposing the fix
+
+I told Rowan his repetition count measured inheritance rather than consensus,
+because briefs hand each attempt the previous one's parked file. I then
+offered a replacement — duplication across *landed* files — and justified it
+with: **"no brief ever hands a worker a landed file."** I never checked that.
+It is false.
+
+- 135 briefs under `runs/*/*/briefs/` reference `Rule30.Proofs.` modules.
+- The brief for `rightDiagonal_periodicFrom_step_of_even_driver-1` names
+  `blockXor` six times. The one for
+  `rightDiagonal_antiperiodic_of_odd_driver-1` names it eight times on one
+  line. Both name `BoolXorDrivenPeriodicFrom`.
+
+So the walk cluster is one authorship (`bool_xor_driven_periodicFrom-1`,
+2026-09-07, earliest `blockXor` anywhere in `runs/`) propagated by brief. And
+`rowStep` originates at onset attempt 3 and rides the same cumulative chain I
+had documented myself an hour earlier — Vesper at -4, Cadence at -5 and -6,
+then transcribed into three landed files. Two personas, one origin.
+
+**My own tell, correctly applied, would have caught it.** I said *different
+proofs, same name* marks real convergence. I never checked whether the proofs
+differed. They don't — they are transcriptions.
+
+**What actually went wrong is not the premise, it is that I never tested it.**
+The premise was load-bearing for the whole replacement, I stated it as fact in
+two messages, and one `grep` over `briefs/` refuted it. I had, in the same
+session, written that a check I have never seen fail is not yet a check —
+about `lake env lean` — and then failed to apply it to a claim of my own that
+had never been run against anything.
+
+The reason it slid past is worth naming: it arrived as the *solution*. I had
+just been right about Rowan's error, and the replacement inherited the
+credibility of the catch. A correction feels like a checked thing because the
+thing it corrected was checked.
+
+**What survives.** The duplication is real and the fix is right — three files
+carrying the same helpers is friction however it arose, and worse if by
+copying, since the brief channel will keep doing it. The consumer-check
+technique never rested on this premise and stands.
+
+**The generalisation, which is now the third instance tonight and the second
+mine:** the brief channel is a shared ancestor for everything a worker
+writes. Any measurement over worker output — names, proofs, repetition,
+cross-file agreement — is correlated through it by default. "These were
+independent" is a claim about the harness, checkable against `briefs/`, and
+never a thing to assume. It may be that no independent measurement exists
+over this corpus; if so, act on duplication as friction and stop trying to
+license it as evidence.
