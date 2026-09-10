@@ -295,10 +295,29 @@ fn size_decoder() -> decode.Decoder(dag.Size) {
 /// `Rule30/Proofs/` and a test must be able to see the write without making
 /// it, and the task message because a node whose statement cannot be found
 /// must fail before a session is ever started.
+/// `undecided` asks the layer that owns the build lock whether a verdict is
+/// a real answer or an "I could not tell". It exists because the two are the
+/// same value: a verifier that loses the lock after ten minutes returns
+/// `verify.BuildFailed(dispatch.lock_held_message)`, which is
+/// indistinguishable from a proof that does not build.
+///
+/// It is a function on `Deps` rather than a string compared here for two
+/// reasons. `lock_held_message` lives in `dispatch`, which imports this
+/// module, so reading it here would be a cycle. And the knowledge belongs to
+/// whoever wrapped the verifier in a lock: a `Deps` built without one — the
+/// offline tests, `live_deps` — has no lost-lock case at all and says so by
+/// answering `False` to everything.
+///
+/// The distinction is the glossary's three-way one: pass, fail, and
+/// could-not-tell. Collapsing the third into the second is safe for a caller
+/// that only acts on a pass, and unsafe for any caller that concludes
+/// something from a non-pass — which `salvage` does, since it is deciding
+/// whether a finished proof gets thrown away.
 pub type Deps {
   Deps(
     verify: fn(dag.Node) -> verify.Verdict,
     annotate: fn(dag.Node, String) -> Result(Nil, String),
+    undecided: fn(verify.Verdict) -> Bool,
     task_message: String,
   )
 }
@@ -311,6 +330,10 @@ pub fn live_deps(cfg: config.Config, task_message: String) -> Deps {
     annotate: fn(node, statement) {
       verify.annotate(cfg.repo_root, node, statement)
     },
+    // No lock wrapped around this verifier, so every verdict it gives is a
+    // real one. `prove_one` runs one attempt and takes the lock through the
+    // guard rather than through the verifier.
+    undecided: fn(_) { False },
     task_message:,
   )
 }
@@ -1003,10 +1026,36 @@ fn salvage(
     Finished -> ending
     _ -> {
       let verdict = deps.verify(node)
+      // Pass, fail, could-not-tell — and the third is recorded as itself.
+      //
+      // A verifier that lost the build lock returns a `BuildFailed` carrying
+      // `lock_held_message`, which is the same shape as a proof that does not
+      // build. Reading that as "the parked proof is no good" would be a false
+      // negative on precisely the case this function exists to catch, and a
+      // silent one: the attempt would look correctly handled. Worse, it
+      // correlates — the lock is lost when the machine is busiest, which is
+      // when the most attempts are ending at once, which is when salvage has
+      // the most to do. A blind spot that opens exactly when it matters is
+      // the shape this project keeps finding, and this is the third module
+      // it has turned up in.
+      //
+      // Nothing changes about what salvage DOES on a non-pass; it declines to
+      // upgrade either way. What changes is what the record says, so that a
+      // missed salvage is visible as an unanswered question rather than
+      // invisible as a settled failure.
+      let outcome_word = case
+        verify.is_verified(verdict),
+        deps.undecided(verdict)
+      {
+        True, _ -> "verified"
+        False, True -> "undecided"
+        False, False -> "failed"
+      }
       log.event(l, "salvage", [
         #("node", json.string(node.id)),
         #("ending", json.string(string.inspect(ending.end))),
         #("verified", json.bool(verify.is_verified(verdict))),
+        #("result", json.string(outcome_word)),
         #("verdict", json.string(verify.verdict_text(verdict))),
       ])
       case verdict {
@@ -1039,7 +1088,26 @@ fn salvage(
               <> ending.notes,
           )
         }
-        _ -> ending
+        // Not a pass. The ending stands either way — but when the verifier
+        // could not reach a verdict, the notes say so, because "the proof was
+        // not salvageable" and "nobody was able to look" are different facts
+        // about the same attempt and only one of them is a reason to stop
+        // wondering about the parked file.
+        _ ->
+          case deps.undecided(verdict) {
+            False -> ending
+            True ->
+              Ending(
+                ..ending,
+                notes: "SALVAGE UNDECIDED: the verifier could not reach a "
+                  <> "verdict on the parked proof, so this attempt's outcome "
+                  <> "is its session's ending and NOT a finding about the "
+                  <> "proof file, which was never adjudicated: "
+                  <> verify.verdict_text(verdict)
+                  <> "\n"
+                  <> ending.notes,
+              )
+          }
       }
     }
   }

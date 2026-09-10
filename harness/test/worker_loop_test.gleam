@@ -116,6 +116,12 @@ fn go(s: Scenario) -> Run {
         )
         |> result.map_error(simplifile.describe_error)
       },
+      undecided: fn(verdict) {
+        case verdict {
+          verify.BuildFailed(output) -> output == undecided_message
+          _ -> False
+        }
+      },
       task_message: "Prove it.",
     )
 
@@ -178,6 +184,13 @@ fn an_identity() -> roster.Identity {
 
 /// A verifier that hands back `verdicts` in order and records every call, so
 /// a test can assert it was *not* consulted.
+/// The offline stand-in for `dispatch.lock_held_message`: a scripted verdict
+/// that means the verifier could not reach one. The real string lives in
+/// `dispatch`, which these tests do not import; what is under test is that
+/// `salvage` routes an undecided verdict differently from a failed one, not
+/// the wording either layer uses.
+const undecided_message = "the build lock was held by another worker"
+
 fn scripted_verifier(
   calls_path: String,
   verdicts: List(verify.Verdict),
@@ -1277,4 +1290,54 @@ pub fn a_closed_node_is_not_salvage_checked_test() {
     )
   assert r.attempt.outcome == dag.Closed
   assert r.verify_calls == 1
+}
+
+/// A lost build lock must not read as a failed proof.
+///
+/// The verifier that a run wraps around the build lock returns
+/// `BuildFailed(lock_held_message)` when it waits ten minutes and gives up —
+/// the same shape as a proof that does not build. If `salvage` concluded
+/// from that, it would discard a finished proof exactly when the machine is
+/// busiest, which is when the most attempts end at once and when salvage has
+/// the most to do. Silent, and correlated with the moment it matters.
+pub fn an_undecided_salvage_says_so_rather_than_concluding_test() {
+  let r =
+    go(
+      Scenario(
+        ..scenario("salvage-undecided", [
+          [
+            init_line("sess-ud"),
+            error_result_line("sess-ud", "error_max_turns"),
+          ],
+        ]),
+        verdicts: [verify.BuildFailed(undecided_message)],
+      ),
+    )
+  // The ending stands: an undecided salvage never upgrades.
+  assert r.attempt.outcome == dag.BudgetExhausted
+  assert r.annotations == ""
+  // But the record says the question went unanswered, rather than letting
+  // the outcome read as a finding about the proof file.
+  assert string.contains(r.attempt.notes, "SALVAGE UNDECIDED")
+  assert string.contains(r.events, "\"result\":\"undecided\"")
+}
+
+/// And an ordinary failed verification is still recorded as a failure, not
+/// as an undecided one — otherwise the distinction would be decorative.
+pub fn a_failed_salvage_is_recorded_as_failed_not_undecided_test() {
+  let r =
+    go(
+      Scenario(
+        ..scenario("salvage-failed-not-undecided", [
+          [
+            init_line("sess-fl"),
+            error_result_line("sess-fl", "error_max_turns"),
+          ],
+        ]),
+        verdicts: [verify.BuildFailed("unknown identifier 'foo'")],
+      ),
+    )
+  assert r.attempt.outcome == dag.BudgetExhausted
+  assert !string.contains(r.attempt.notes, "SALVAGE UNDECIDED")
+  assert string.contains(r.events, "\"result\":\"failed\"")
 }

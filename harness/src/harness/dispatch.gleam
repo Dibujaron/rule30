@@ -656,6 +656,19 @@ fn start(
         worker.Deps(
           verify: run_.verify,
           annotate: run_.env.annotate,
+          // This verifier is the lock-wrapped one, so it has a verdict that
+          // is not a verdict: a lost lock comes back as `BuildFailed` with
+          // this exact text. `salvage` needs to tell that from a proof that
+          // genuinely does not build, and this is the only place that knows
+          // the difference — the same pairing `attribute` relies on, and the
+          // same reason `lock_held_message`'s text is load-bearing.
+          undecided: fn(verdict) {
+            case verdict {
+              verify.BuildFailed(output) ->
+                string.contains(output, lock_held_message)
+              _ -> False
+            }
+          },
           task_message:,
         )
       let done = run_.done
