@@ -17,6 +17,15 @@ a black boundary cell resets the diagonal with its period unchanged
 machine's period stay unchanged too (`bool_driven_periodicFrom_of_return`).
 **Where the work is.** Lining up the induction's two periods (`2^m`, `2^(m+1)`)
 onto one common period `2^(m+1)` via `periodicFrom_mul` before either branch fires.
+
+**Checked type** (written by the harness after `lake build` and the `type_of%` check passed, not by the worker):
+```lean
+Statements.leftDiagonal_onset_le_of_line
+  (h :
+    ∀ (m : ℕ),
+      leftDiagonal (m + 1) (m + 2) = true ∨ leftDiagonal (m + 2) (m + 1 + 2 ^ (m + 2)) = leftDiagonal (m + 2) (m + 1))
+  (k : ℕ) : ∃ p > 0, ∃ N ≤ k, PeriodicFrom (leftDiagonal k) p N
+```
 -/
 
 theorem leftDiagonal_onset_le_of_line

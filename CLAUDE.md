@@ -129,9 +129,13 @@ Two rules specific to this work:
 - Loosening the guard is never a fix on its own. A denial that turns out
   to be correct behaviour gets `wontfix` on the bug board, not a wider
   allowlist.
-- Never edit the guard, hooks, or the dispatcher while a run is in flight
-  — a change made while workers are live can invalidate the trust
-  boundary they are currently relying on.
+- Never edit the guard, hooks, or the dispatcher **in the shared checkout**
+  while a run is in flight — a change made while workers are live can
+  invalidate the trust boundary they are currently relying on. A worktree is
+  a different directory that no live worker opens, so this does not reach
+  worktree work; what it actually forbids is **landing** — no fast-forward
+  of `main`, no merge into the shared checkout, no moving the ref — because
+  the danger is the *next* read out of the shared tree, not the edit.
 
 One more boundary, and not a file boundary: the project's rule is one
 live session per persona, and for a dispatched prover the scheduler
@@ -214,9 +218,16 @@ Three things that follow, each learned the hard way:
   not the exception. Run the suite once, before the fast-forward, and not
   again to feel safe.
 
-This composes with the freeze rule above rather than competing with it: a
-run in flight means no framework edits at all, so worktree work and a live
-run never overlap by design.
+This composes with the freeze rule above rather than competing with it, and
+the seam is worth stating plainly because reading it the other way costs an
+hour: a run in flight freezes the **shared checkout**, not the framework
+agent. Worktree work continues during a run — a live worker reads the guard,
+the hooks and the dispatcher out of the shared checkout as they sit on disk,
+and a worktree is a directory it never opens. The dispatcher is also already
+running from a compiled `harness/build/`, so even a source edit in the shared
+tree would not reach the attempt in flight; what would reach it is the next
+read, which is why the frozen act is landing rather than editing. So worktree
+work and a live run overlap by design, and it is the landing that waits.
 
 ## Who reads what
 

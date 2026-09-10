@@ -250,6 +250,33 @@ pub fn statement_of_keeps_wrapped_continuation_lines_test() {
 }
 
 /// A name that merely begins with the one sought is a different statement.
+/// Lean wraps a signature whose binders are long enough by putting the NAME
+/// ALONE on the first line, with everything else indented under it. Captured
+/// from this toolchain on 2026-09-10 by generating what `check_source` emits
+/// for `leftDiagonal_onset_le_of_line` and running `lake env lean` on it.
+///
+/// This is not a hypothetical shape. It is why
+/// `Rule30/Proofs/LeftDiagonalOnsetLeOfLine.lean` and
+/// `LeftDiagonalOnsetLeOfStepModPreperiod.lean` carry no **Checked type**
+/// block: both verified, then `annotate` was handed `""` and wrote nothing,
+/// recording `"no statement to write: the check output had no #check line"`
+/// in their attempts' `events.jsonl`. The node still closed and the verdict
+/// still said VERIFIED, so nothing downstream could tell.
+pub fn statement_of_takes_a_name_alone_on_its_line_test() {
+  let out =
+    "Statements.leftDiagonal_onset_le_of_line\n  (h :\n    ∀ (m : ℕ),\n      leftDiagonal (m + 1) (m + 2) = true)\n  (k : ℕ) : True\n'harness_check' depends on axioms: [propext]\n"
+  assert verify.statement_of(out, "leftDiagonal_onset_le_of_line")
+    == "Statements.leftDiagonal_onset_le_of_line\n  (h :\n    ∀ (m : ℕ),\n      leftDiagonal (m + 1) (m + 2) = true)\n  (k : ℕ) : True"
+}
+
+/// The exact-line match must not reopen the hazard the space-or-colon rule
+/// guards: a name alone on its line is still distinguishable from a LONGER
+/// name alone on its line, by the same equality.
+pub fn statement_of_does_not_match_a_longer_name_alone_on_its_line_test() {
+  let out = "Statements.evolve_left_edge_of_zero\n  (n : ℕ) : True\n"
+  assert verify.statement_of(out, "evolve_left_edge") == ""
+}
+
 pub fn statement_of_does_not_match_a_longer_name_test() {
   let out = "Statements.evolve_left_edge_of_zero (n : ℕ) : True\n"
   assert verify.statement_of(out, "evolve_left_edge") == ""

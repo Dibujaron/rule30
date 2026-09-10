@@ -112,12 +112,37 @@ fn judge_axioms(node: dag.Node, output: String) -> Verdict {
 /// Measured against the real toolchain on 2026-09-07: `lean` on a file
 /// prints an info message bare, with no `path:line:col:` prefix, and the
 /// axioms line follows it. The name must be followed by a space or a colon
-/// so that a statement whose name extends another's is not mistaken for it.
+/// so that a statement whose name extends another's is not mistaken for it
+/// — **or be the whole line**, which is the case that was missing.
+///
+/// Lean wraps a signature whose binders are long by putting the name alone
+/// on the first line and indenting everything under it. Measured on
+/// 2026-09-10 by generating what `check_source` emits for
+/// `leftDiagonal_onset_le_of_line` and running `lake env lean` on it:
+///
+///     Statements.leftDiagonal_onset_le_of_line
+///       (h :
+///         ∀ (m : ℕ), leftDiagonal (m + 1) (m + 2) = true ∨ ...
+///       (k : ℕ) : ∃ p > 0, ∃ N ≤ k, PeriodicFrom (leftDiagonal k) p N
+///
+/// Requiring a space or a colon matched none of that, so this returned `""`
+/// for exactly the statements with the most binders, and `annotate` wrote
+/// no block. It cost two proof files their **Checked type** block
+/// (`LeftDiagonalOnsetLeOfLine`, `LeftDiagonalOnsetLeOfStepModPreperiod`)
+/// with no signal anywhere a reader would look: both attempts still
+/// reported VERIFIED, both nodes still closed, and the only trace was
+/// `"written": false` in an `annotate` event nobody reads. A missing block
+/// then reads as an accepted gap rather than a failure.
+///
+/// Whole-line equality cannot reopen the hazard the space-or-colon rule
+/// guards, because `Statements.foo` alone on a line differs from
+/// `Statements.foo_bar` alone on a line by that same equality.
 pub fn statement_of(output: String, lean_name: String) -> String {
   let name = "Statements." <> lean_name
   let opens = fn(line) {
     string.starts_with(line, name <> " ")
     || string.starts_with(line, name <> ":")
+    || line == name
   }
   case list.drop_while(string.split(output, "\n"), fn(l) { !opens(l) }) {
     [] -> ""
@@ -377,6 +402,29 @@ pub fn annotate(
   |> result.map_error(fn(e) {
     "could not write " <> path <> ": " <> simplifile.describe_error(e)
   })
+}
+
+/// The statement currently recorded in `source`'s **Checked type** block, if
+/// it has one. `None` is a file that has never been annotated — which is not
+/// the same as a file whose block disagrees, and the two must not be
+/// collapsed: some proof files predate the annotation entirely and are not
+/// drift, while a block that disagrees is.
+///
+/// Reads back exactly what `annotated` writes, so the pair round-trips: the
+/// heading, a fenced `lean` block, the statement inside it.
+pub fn annotation_in(source: String) -> Option(String) {
+  case string.split_once(source, annotation_heading) {
+    Error(Nil) -> option.None
+    Ok(#(_, after)) ->
+      case string.split_once(after, "```lean\n") {
+        Error(Nil) -> option.None
+        Ok(#(_, body)) ->
+          case string.split_once(body, "```") {
+            Error(Nil) -> option.None
+            Ok(#(statement, _)) -> option.Some(string.trim(statement))
+          }
+      }
+  }
 }
 
 /// `source` with the harness's block as the last thing inside its first

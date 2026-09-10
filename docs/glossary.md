@@ -232,3 +232,109 @@ Reached independently in two unrelated modules within a few hours on
 2026-09-06 — `Denial` in the guard and `WitnessVerdict` in the seeder — which
 is the reason it is written down here as the project's shape rather than as
 one author's taste.
+
+## The check that fails on exactly its own case
+
+A **correlated blind spot** is a check whose failure is triggered by the very
+condition it exists to detect. Not a check that is flaky, and not one that is
+wrong everywhere — one that is right for every ordinary input and wrong for
+the input it was written for.
+
+Four instances, three of them found on 2026-09-10 within a few hours:
+
+| The check | Works for | Blind to |
+|---|---|---|
+| `verify.statement_of` | any statement whose signature fits one line | the longest signatures — Lean wraps them, putting the name alone on its line |
+| `claude.gleam`'s rate-limit decoder | `0.94`, `0.97`, `0.99` | `1`, which JSON writes bare as an integer — and utilization is `1` exactly when the window is full |
+| `lake env lean Rule30/Statements.lean` | a file with a broken proof | a file whose theorems escaped the namespace: it compiles, so the check passes on precisely the file it needed to fail on |
+| a falsification witness that times out | a false statement, which short-circuits instantly | a true one, which pays the full exponential — so timing out *correlates with the statement being true* |
+
+The TypeScript anchor is the one everyone has written:
+
+```ts
+// Works for every list you will type in a test.
+const median = (xs: number[]) => xs.sort()[Math.floor(xs.length / 2)];
+```
+
+`sort()` without a comparator sorts *lexicographically*, so this is correct
+for single digits and wrong the moment a number reaches double figures. The
+test you would naturally write — `[3, 1, 2]` — passes.
+
+**Where that anchor breaks, and it is the whole point.** The `median` bug is
+merely *likely* to survive testing. These four are *guaranteed* to, because
+the triggering input is not rare — it is the case the code was written to
+handle. Look at the tests that sat beside the rate-limit decoder: `0.94`,
+`0.97`, `0.99`. All fractional, all green, and not one of them could ever have
+caught it, because a full window is the only interesting window and a full
+window is the one that serialises as an integer. The tests were not
+insufficient. They were pointed away from the subject.
+
+So the usual defences do not apply. More tests of the ordinary case add
+nothing. Coverage is already total — every line ran. Code review does not help
+either, because the code is a faithful implementation of a rule that is right
+almost always; three separate people read `starts_with(name <> " ")` and none
+of them thought about wrapping.
+
+**What does work is naming the correlation out loud.** Ask what input the
+check exists to catch, then ask whether that input is *shaped differently*
+from the inputs you tested. A full window is an integer. A long signature
+wraps. An escaped theorem still compiles. A true statement never terminates.
+In each case the answer was available without running anything.
+
+**The fifth instance is the worst, because the tell was in the agreement.**
+Two of us ran the suite in different worktrees on different code. Both got
+`325 passed`. An identical number reached independently is the strongest
+signal a measurement can give you — it is what reproducibility *looks* like —
+and we both read the match as evidence that nothing load-sensitive was going
+on, because a load-sensitive fault should have produced two different numbers.
+
+It was evidence for exactly the opposite. One slow test was killed by a
+timeout and eunit aborted its whole module, so the run stopped at a fixed
+point in a fixed order: 325 every time, regardless of *what* made it slow.
+A deterministic abort point manufactures agreement. The number was stable
+because the suite was broken in the same place twice, and stability
+impersonated a working instrument.
+
+So add a question to the two above: when two measurements agree, ask whether
+they agree because the thing is real or because they share a mechanism that
+would produce the same answer either way.
+
+Every one of these was caught by someone publishing a premise before the
+conclusion that rested on it — "I have not verified that `decode.float`
+rejects an int", "I believe the timeout is 5 seconds but have not found where
+it is set", "this is inference about your run, not a fact about it". The
+catches all landed on sentences their own author had already flagged as
+load-bearing and unchecked. The mistakes that survived were the ones stated
+flatly. That is the habit, and it is cheaper than any amount of review:
+**say which of your premises you have not checked, in the same breath as the
+conclusion you are drawing from them.**
+
+### Mark which kind of sentence you are writing
+
+A sentence reporting an **observation** and a sentence proposing a **cause**
+travel differently, and they are almost always written in the same tone, in
+the same paragraph, by the same person, in the same breath.
+
+    before: 0 lake/lean processes        <- observation
+    so the orphaned build exited on its own  <- theory
+
+The first is a fact about one moment. The second is a claim about a
+mechanism, and it is the one that gets quoted onward, acted on, and written
+into a row. On 2026-09-10 those two left in one paragraph; the theory reached
+a third party as a settled fact within minutes, was retracted, was re-asserted
+in the opposite direction by someone else, and the honest answer turned out to
+be that nobody knew. Three sequential confident accounts, each built on the
+previous one's artifact.
+
+Slowing down would not have prevented it — every step was quick because every
+step felt like reporting. **Marking would.** Say "observed" and "I think",
+and the reader can tell which sentence carries your authority and which
+carries your guess. It costs two words and it is the only defence that works
+at the speed people actually write at.
+
+The TypeScript instinct is already there and just needs applying to prose:
+you would not give `parseResult` and `inferredType` the same name in code.
+
+Related: `well-formed-and-wrong` in `CLAUDE.md`'s Boundaries, which is this
+shape's consequence rather than its cause — a correlated blind spot is one of
+the ways a record ends up confident, correctly formatted, and false.

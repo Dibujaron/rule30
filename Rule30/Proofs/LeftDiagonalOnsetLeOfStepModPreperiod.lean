@@ -12,6 +12,13 @@ and `leftDiagonal_eq_rowNat_testBit` reads diagonal `k` off bit `k` of a row; bi
 number only depends on the number mod `2^(k+1)`.
 **Where the work is.** None of it is diagonal reasoning: it is matching `rowNat (n+p+k)` to
 the truncated orbit at `n+k`, taken from the hypothesis at `t = n+k ≥ 2k`.
+
+**Checked type** (written by the harness after `lake build` and the `type_of%` check passed, not by the worker):
+```lean
+Statements.leftDiagonal_onset_le_of_stepMod_preperiod
+  (H : ∀ (k x : ℕ), x < 2 ^ (k + 1) → ∃ p > 0, ∀ t ≥ 2 * k, (stepMod (k + 1))^[t + p] x = (stepMod (k + 1))^[t] x)
+  (k : ℕ) : ∃ p > 0, ∃ N ≤ k, PeriodicFrom (leftDiagonal k) p N
+```
 -/
 
 theorem leftDiagonal_onset_le_of_stepMod_preperiod

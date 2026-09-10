@@ -1,0 +1,17 @@
+
+node      periodicFrom_trans_period
+identity  Vesper
+model     haiku
+outcome   budget_exhausted
+cost      $1.08
+turns     41
+estimate  S
+session   27e45b74-25e7-4a20-918d-0ba183f0b585
+log       c:/Users/dibuj/dev/rule30/runs/20260910T151819Z/periodicFrom_trans_period-1
+proof     c:/Users/dibuj/dev/rule30/runs/20260910T151819Z/periodicFrom_trans_period-1/PeriodicFromTransPeriod.lean (moved out of Rule30/Proofs/: not a closed node)
+
+verifier:
+the CLI ended the session at the CLI's turn ceiling (40 turns): {"duration_api_ms":303250,"stop_reason":"tool_use","session_id":"27e45b74-25e7-4a20-918d-0ba183f0b585","total_cost_usd":1.0787708999999999,"usage":{"input_tokens":322,"cache_creation_input_tokens":173788,"cache_read_input_tokens":5800289,"output_tokens":29910,"output_tokens_details":{"thinking_tokens":7035},"server_tool_use":{"web_search_requests":0,"web_fetch_requests":0},"service_tier":"standard","cache_creation":{"ephemeral_1h_input_tokens":173788,"ephemeral_5m_input_tokens":0},"inference_geo":"not_available","iterations":[{"input_tokens":8,"output_tokens":149,"cache_read_input_tokens":172623,"cache_creation_input_tokens":1165,"cache_creation":{"ephemeral_5m_input_tokens":0,"ephemeral_1h_input_tokens":1165},"type":"message"}],"speed":"standard"},"modelUsage":{"claude-haiku-4-5-20251001":{"inputTokens":1536,"outputTokens":29926,"cacheReadInputTokens":5800289,"cacheCreationInputTokens":173788,"webSearchRequests":0,"costUSD":1.0787708999999999,"contextWindow":200000,"maxOutputTokens":3
+… (clipped; the full text is in events.jsonl)
+
+Vesper (#2b3a67): closed 67, abandoned 7, $67.67, calibration 55/67

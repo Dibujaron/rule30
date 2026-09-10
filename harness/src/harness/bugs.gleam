@@ -8,6 +8,7 @@
 //// dispatcher from what it already knows, so a worker cannot file under
 //// another identity or claim a node it was not dispatched to.
 
+import gleam/bool
 import gleam/dict.{type Dict}
 import gleam/dynamic.{type Dynamic}
 import gleam/dynamic/decode
@@ -656,6 +657,55 @@ pub fn open_bugs(board: Board) -> List(Bug) {
 
 /// The board narrowed for display: by area, by severity, and by whether
 /// settled bugs are included. Newest first, like `open_bugs`.
+/// Every row whose id, title or body contains `needle`, case-insensitively,
+/// paired with the first matching line of context.
+///
+/// **Searches CLOSED rows too, and that is the point.** `filtered` hides them
+/// because a closed row is not work; a closed row is exactly what a session
+/// mid-symptom most needs, because it says the thing has been seen and names
+/// the sha that fixed it.
+///
+/// This exists because on 2026-09-10 three sessions spent an afternoon
+/// rediscovering an open row whose body contained the literal string they all
+/// had in hand — `325 passed, 3 failures`. Two of them had already rendered
+/// its title to their own terminals. The board filters by area and severity,
+/// which are the axes for BROWSING; a session that is surprised has an
+/// artifact instead, and had nowhere to type it.
+pub fn search(board: Board, needle: String) -> List(#(Bug, String)) {
+  let want = string.lowercase(string.trim(needle))
+  use <- bool.guard(want == "", [])
+  board.bugs
+  |> list.filter_map(fn(b) {
+    case matching_line(b, want) {
+      Ok(line) -> Ok(#(b, line))
+      Error(Nil) -> Error(Nil)
+    }
+  })
+}
+
+/// The first line of `b` containing `want`, preferring the title so a row
+/// whose title matches does not report an arbitrary body line instead.
+fn matching_line(b: Bug, want: String) -> Result(String, Nil) {
+  let hit = fn(text: String) { string.contains(string.lowercase(text), want) }
+  case hit(b.title) || hit(b.id) {
+    True -> Ok(b.title)
+    False ->
+      case
+        list.filter(
+          string.split(
+            b.body,
+            "
+",
+          ),
+          hit,
+        )
+      {
+        [first, ..] -> Ok(string.trim(first))
+        [] -> Error(Nil)
+      }
+  }
+}
+
 pub fn filtered(
   board: Board,
   area: Option(Area),
