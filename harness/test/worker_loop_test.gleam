@@ -1238,7 +1238,7 @@ pub fn an_abandoned_attempt_whose_proof_verifies_closes_the_node_test() {
 /// on an abandoned attempt that estimate is the worker's judgement that it
 /// FAILED. Scoring it against a node the kernel says it closed would corrupt
 /// calibration in a direction nobody would ever trace back.
-pub fn a_salvaged_close_carries_no_report_test() {
+pub fn a_salvaged_close_scores_no_calibration_but_keeps_the_report_test() {
   let r =
     go(
       Scenario(
@@ -1250,7 +1250,16 @@ pub fn a_salvaged_close_carries_no_report_test() {
     )
   assert r.attempt.outcome == dag.Closed
   assert r.attempt.reported == False
-  assert r.report == None
+  // The node's own size stands in, not the worker's estimate — which on an
+  // abandoned attempt was its estimate of its own failure.
+  assert r.attempt.estimate == dag.S
+  // But the report SURVIVES, and this is the assertion that cost a red
+  // suite to learn. Suppressing the estimate by dropping the whole report
+  // also drops the worker's filed bugs and proposed lemmas, and
+  // `write_channels` returns `None` for a `None` report — so no proposals
+  // file gets written and the check that reads one never runs. That is what
+  // `a_proposal_is_checked_after_the_run_summary_test` went red for.
+  let assert Some(_) = r.report
 }
 
 /// The property that makes this safe to run on every ending: asking cannot

@@ -791,8 +791,25 @@ pub fn ceiling_words(cfg: config.Config, ceiling: Ceiling) -> String {
 /// How one session ended, with the last report the role decoded. `gone`
 /// says the child is already dead — killed, or exited on its own — so there
 /// is no stdin left to close and nothing left to drain.
+///
+/// `salvaged` marks an ending the harness decided by looking at the artifact
+/// rather than by believing the session — see `salvage`. It is separate from
+/// `report` because the two answer different questions: `report` is whether
+/// the worker said anything, `salvaged` is whether its `estimate` is evidence
+/// about anything.
+///
+/// Keeping them apart is not decorative, and the suite is what taught it.
+/// `reported` on the attempt is what `roster.scorecard` reads to decide
+/// whether the worker's `estimate` was a real re-pricing, and on a salvaged
+/// close it never is — on an `Abandoned` attempt that estimate is the
+/// worker's own judgement that it FAILED. Suppressing it by dropping the
+/// whole report also threw away the report's FILED BUGS and PROPOSED LEMMAS,
+/// which are true whatever the session did.
+/// `a_proposal_is_checked_after_the_run_summary_test` went red for exactly
+/// that: `write_channels` returns `None` for a `None` report, so no proposals
+/// file was written and the check that reads one never ran.
 pub type Ending(r) {
-  Ending(end: End, notes: String, report: Option(r), gone: Bool)
+  Ending(end: End, notes: String, report: Option(r), gone: Bool, salvaged: Bool)
 }
 
 /// What the last `result` event said about the session as a whole.
@@ -947,11 +964,20 @@ fn run_session(
       // With no report there is no re-pricing: the node's own size stands
       // in, and `reported` says it is not the worker's estimate, so the
       // scorecard does not score it as calibration.
-      estimate: case ending.report {
-        Some(r) -> r.estimate
-        None -> node.size
+      //
+      // A salvaged ending is the second way to have no re-pricing while
+      // still having a report. The harness closed the node by reading the
+      // artifact, so whatever the worker estimated was an estimate of
+      // something else — on an `Abandoned` attempt, of its own failure. The
+      // node's size stands in there too and `reported` is false, but the
+      // report itself survives to `write_channels`, because a bug the worker
+      // filed and a lemma it proposed do not stop being true just because
+      // the harness disagreed with its verdict on its own work.
+      estimate: case ending.report, ending.salvaged {
+        Some(r), False -> r.estimate
+        _, _ -> node.size
       },
-      reported: option.is_some(ending.report),
+      reported: option.is_some(ending.report) && !ending.salvaged,
       cost_usd: tally.cost_usd,
       turns: tally.turns,
       notes: ending.notes,
@@ -1067,20 +1093,20 @@ fn salvage(
             #("written", json.bool(result.is_ok(written))),
             #("reason", json.string(result.unwrap_error(written, ""))),
           ])
-          // `report: None`, which `run_session` turns into `reported: False`,
-          // so no estimate is scored against the identity's calibration. It
-          // matters most for the ending it is least obvious for: an
-          // `Abandoned` attempt's `estimate` is the worker's own judgement
-          // that it FAILED, and scoring that as a re-pricing of a node the
-          // kernel says it closed would corrupt calibration in a direction
-          // nobody would ever trace back. The report's prose goes with it —
-          // a notebook entry explaining why the attempt failed is not a
-          // description of the close that actually happened, and keeping it
-          // would put a worker's account of a failure on a proved node.
+          // `salvaged: True` rather than `report: None`. It suppresses the
+          // estimate — `run_session` folds it into `reported`, so nothing is
+          // scored against the identity's calibration, which matters most
+          // where it is least obvious: an `Abandoned` attempt's `estimate` is
+          // the worker's own judgement that it FAILED, and scoring that as a
+          // re-pricing of a node the kernel says it closed would corrupt
+          // calibration in a direction nobody would ever trace back.
+          //
+          // The report itself stays. It carries the worker's filed bugs and
+          // proposed lemmas, and a bug is true whatever the session did.
           Ending(
             ..ending,
             end: Finished,
-            report: None,
+            salvaged: True,
             notes: "the session ended without closing the node, and the proof "
               <> "file on disk verified against the seeded statement: "
               <> verify.verdict_text(verdict)
@@ -1232,6 +1258,7 @@ fn turn_loop(t: Loop(r)) -> #(Tally, Ending(r)) {
           ),
           None,
           True,
+          False,
         ),
       )
     }
@@ -1255,6 +1282,7 @@ fn turn_loop(t: Loop(r)) -> #(Tally, Ending(r)) {
               note(tally, "exited " <> int.to_string(status)),
               None,
               True,
+              False,
             ),
           )
         }
@@ -1296,6 +1324,7 @@ fn turn_loop(t: Loop(r)) -> #(Tally, Ending(r)) {
                   <> clip(raw, 1000),
                 report,
                 False,
+                False,
               ),
             )
             // The CLI ended it, and its `subtype` says at which ceiling.
@@ -1313,6 +1342,7 @@ fn turn_loop(t: Loop(r)) -> #(Tally, Ending(r)) {
                     <> ": "
                     <> clip(raw, 1000),
                   report,
+                  False,
                   False,
                 ),
               )
@@ -1395,7 +1425,10 @@ fn act_on(
     Some(r) ->
       case r.outcome {
         "proved" -> adjudicate(deps, node, t, r)
-        "abandoned" -> #(t.tally, Ending(Abandoned, r.summary, Some(r), False))
+        "abandoned" -> #(
+          t.tally,
+          Ending(Abandoned, r.summary, Some(r), False, False),
+        )
         // in_progress: the model ended its turn early, so ask for more.
         _ ->
           nudge(
@@ -1455,6 +1488,7 @@ pub fn parked(
       RateLimited,
       note(t.tally, "the five-hour window is rate limiting" <> extra),
       report,
+      False,
       False,
     ),
   )
@@ -1545,6 +1579,7 @@ fn unreported(
             <> clip(text, 2000),
           None,
           False,
+          True,
         ),
       )
     }
@@ -1585,6 +1620,7 @@ fn adjudicate(
               <> clip(text, 2000),
             Some(report),
             False,
+            False,
           ),
         )
       }
@@ -1618,7 +1654,7 @@ fn close(
     #("written", json.bool(result.is_ok(written))),
     #("reason", json.string(result.unwrap_error(written, ""))),
   ])
-  #(t.tally, Ending(Finished, clip(text, 2000), Some(report), False))
+  #(t.tally, Ending(Finished, clip(text, 2000), Some(report), False, False))
 }
 
 /// Run the verifier on this node and log what it found. The verdict's own
@@ -1656,7 +1692,7 @@ pub fn nudge(
     }
     False -> #(
       t.tally,
-      Ending(BudgetExhausted(Rounds), exhausted_notes, report, False),
+      Ending(BudgetExhausted(Rounds), exhausted_notes, report, False, False),
     )
   }
 }

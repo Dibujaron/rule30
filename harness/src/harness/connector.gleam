@@ -321,11 +321,11 @@ pub fn role() -> worker.Role(Report) {
           case r.outcome {
             "sighted" -> #(
               t.tally,
-              worker.Ending(worker.Finished, r.summary, Some(r), False),
+              worker.Ending(worker.Finished, r.summary, Some(r), False, False),
             )
             "abandoned" -> #(
               t.tally,
-              worker.Ending(worker.Abandoned, r.summary, Some(r), False),
+              worker.Ending(worker.Abandoned, r.summary, Some(r), False, False),
             )
             _ ->
               worker.nudge(
