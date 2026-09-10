@@ -984,7 +984,6 @@ pub fn every_line_the_harness_sends_is_logged_test() {
   assert string.contains(r.events, "Fix the proof and report again.")
 }
 
-
 // --- endings the harness used to fold together ---------------------------------
 
 /// The full window, driven through the whole loop. This is the attempt from
@@ -1078,11 +1077,13 @@ pub fn an_unreported_turn_whose_proof_verifies_closes_the_node_test() {
         ..scenario("unreported-proof-verifies", [
           [init_line("sess-un"), unreported_result_line("sess-un")],
         ]),
-        verdicts: [verify.Verified(
+        verdicts: [
+          verify.Verified(
             axioms: ["propext"],
             statement: "theorem scripted : True",
             output: "ok",
-          )],
+          ),
+        ],
       ),
     )
   assert r.attempt.outcome == dag.Closed
@@ -1101,11 +1102,13 @@ pub fn an_adopted_proof_is_recorded_as_unreported_test() {
         ..scenario("unreported-proof-no-report", [
           [init_line("sess-un2"), unreported_result_line("sess-un2")],
         ]),
-        verdicts: [verify.Verified(
+        verdicts: [
+          verify.Verified(
             axioms: ["propext"],
             statement: "theorem scripted : True",
             output: "ok",
-          )],
+          ),
+        ],
       ),
     )
   assert r.attempt.outcome == dag.Closed

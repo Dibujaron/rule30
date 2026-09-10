@@ -400,8 +400,7 @@ pub fn refusal_category(events: List(Event)) -> Option(String) {
       Some(_) -> found
       None ->
         case event {
-          Other(raw) ->
-            json.parse(raw, decoder) |> result.unwrap(None)
+          Other(raw) -> json.parse(raw, decoder) |> result.unwrap(None)
           _ -> None
         }
     }

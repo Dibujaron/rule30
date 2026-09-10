@@ -190,47 +190,47 @@ pub fn who(
     // empty here too: a mint is a mint regardless of who else is running.
     True -> Ok(schedule.Mint(region: region, busy: []))
     False ->
-  case persona {
-    None -> Ok(schedule.who_for(roster_, region, busy: []))
-    Some(name) ->
-      case list.find(roster_.identities, fn(i) { i.name == name }) {
-        Ok(identity) if identity.region == region ->
-          Ok(schedule.Existing(identity))
-        Ok(identity) ->
-          Error(
-            prefix
-            <> name
-            <> " is on the roster for region "
-            <> identity.region
-            <> ", not "
-            <> region
-            <> "; a "
-            <> role_word
-            <> " runs only as a "
-            <> role_word,
-          )
-        Error(Nil) ->
-          Error(
-            prefix
-            <> "no "
-            <> role_word
-            <> " named "
-            <> name
-            <> " on the roster"
-            <> case roster.for_region(roster_, region) {
-              [] ->
-                "; the "
+      case persona {
+        None -> Ok(schedule.who_for(roster_, region, busy: []))
+        Some(name) ->
+          case list.find(roster_.identities, fn(i) { i.name == name }) {
+            Ok(identity) if identity.region == region ->
+              Ok(schedule.Existing(identity))
+            Ok(identity) ->
+              Error(
+                prefix
+                <> name
+                <> " is on the roster for region "
+                <> identity.region
+                <> ", not "
                 <> region
-                <> " region is empty, so leave --as off to mint one"
-              some ->
-                "; the "
+                <> "; a "
                 <> role_word
-                <> "s are "
-                <> string.join(list.map(some, fn(i) { i.name }), ", ")
-            },
-          )
+                <> " runs only as a "
+                <> role_word,
+              )
+            Error(Nil) ->
+              Error(
+                prefix
+                <> "no "
+                <> role_word
+                <> " named "
+                <> name
+                <> " on the roster"
+                <> case roster.for_region(roster_, region) {
+                  [] ->
+                    "; the "
+                    <> region
+                    <> " region is empty, so leave --as off to mint one"
+                  some ->
+                    "; the "
+                    <> role_word
+                    <> "s are "
+                    <> string.join(list.map(some, fn(i) { i.name }), ", ")
+                },
+              )
+          }
       }
-    }
   }
 }
 

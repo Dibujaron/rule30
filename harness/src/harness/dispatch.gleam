@@ -798,7 +798,10 @@ fn crashed(
     dag.get(state.d, flight.node_id)
     |> result.replace_error("`" <> flight.node_id <> "` vanished from the DAG"),
   )
-  use d <- result.try(dag.save_node(dag.release(node, dag.Open), run_.cfg.dag_path))
+  use d <- result.try(dag.save_node(
+    dag.release(node, dag.Open),
+    run_.cfg.dag_path,
+  ))
   log.event(run_.run_log, "crashed", [
     #("node", json.string(node.id)),
     #("reason", json.string(reason)),

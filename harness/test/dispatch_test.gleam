@@ -128,8 +128,11 @@ pub fn status_names_the_model_and_ceilings_of_the_next_attempt_test() {
   let d = Dag([node("harness_probe", "harness_probe", dag.S, [])])
   let assert Ok(text) = dispatch.status(cfg_for(d))
   let assert Ok(#(_, leaves)) =
-    string.split_once(text, "Open leaves, in dispatch order:
-")
+    string.split_once(
+      text,
+      "Open leaves, in dispatch order:
+",
+    )
   // An S node with no failed attempts sits on the bottom rung.
   assert string.contains(leaves, "next: haiku")
   assert string.contains(leaves, "40 turns")
@@ -141,16 +144,14 @@ pub fn status_names_the_model_and_ceilings_of_the_next_attempt_test() {
 /// the most and it is the one whose denomination went unstated.
 pub fn status_names_the_research_ceilings_at_the_top_rung_test() {
   let base = node("research_probe", "research_probe", dag.L, [])
-  let spent =
-    dag.Node(
-      ..base,
-      research: True,
-      attempts: [attempt(dag.GaveUp)],
-    )
+  let spent = dag.Node(..base, research: True, attempts: [attempt(dag.GaveUp)])
   let assert Ok(text) = dispatch.status(cfg_for(Dag([spent])))
   let assert Ok(#(_, leaves)) =
-    string.split_once(text, "Open leaves, in dispatch order:
-")
+    string.split_once(
+      text,
+      "Open leaves, in dispatch order:
+",
+    )
   // L's ladder is [opus, fable]; one failed attempt puts the next on fable,
   // under the research ceilings rather than the ordinary $4.
   assert string.contains(leaves, "next: fable")
@@ -168,11 +169,17 @@ pub fn status_names_no_model_for_a_walled_leaf_test() {
     ])
   let assert Ok(text) = dispatch.status(cfg_for(d))
   let assert Ok(#(walled, _)) =
-    string.split_once(text, "Open leaves, in dispatch order:
-")
+    string.split_once(
+      text,
+      "Open leaves, in dispatch order:
+",
+    )
   let assert Ok(#(_, walled_section)) =
-    string.split_once(walled, "will not offer these):
-")
+    string.split_once(
+      walled,
+      "will not offer these):
+",
+    )
   assert string.contains(walled_section, "walled_probe")
   assert !string.contains(walled_section, "next:")
 }
