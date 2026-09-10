@@ -385,7 +385,7 @@ pub fn a_salvaged_attempt_round_trips_and_an_ordinary_one_adds_no_key_test() {
       salvaged: True,
       cost_usd: 1.0,
       turns: 4,
-      notes: "salvaged",
+      notes: "the kernel accepted the parked proof",
     )
   let node = Node(..node("n", [], dag.Proved, dag.S), attempts: [base])
   let text = dag.encode(Dag([node]))
@@ -397,7 +397,7 @@ pub fn a_salvaged_attempt_round_trips_and_an_ordinary_one_adds_no_key_test() {
   // The ordinary case writes no key, and decodes to False.
   let plain = Attempt(..base, salvaged: False)
   let plain_text = dag.encode(Dag([Node(..node, attempts: [plain])]))
-  assert !string.contains(plain_text, "salvaged")
+  assert !string.contains(plain_text, "\"salvaged\"")
   let assert Ok(Dag([plain_back])) = dag.decode(plain_text)
   let assert [b] = plain_back.attempts
   assert b.salvaged == False
