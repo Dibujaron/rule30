@@ -309,6 +309,67 @@ flatly. That is the habit, and it is cheaper than any amount of review:
 **say which of your premises you have not checked, in the same breath as the
 conclusion you are drawing from them.**
 
+### When every step is correct and the direction is wrong
+
+The sharpest instance of the correlated blind spot is not in a parser. It is
+in the board, and `CLAUDE.md` states it: **the seeder proposes what it can
+find routes for, routes exist where the mathematics is tractable, and the
+tractable region is the left edge precisely because periodicity is already
+proved there.** Measured 2026-09-10 — 35 of 132 nodes under two walls whose
+own descriptions disclaim all three prizes, nine outward edges between them,
+an evening of tiers all reporting `unblocks 0`.
+
+Nothing was careless and no step was wrong. Every statement was true, every
+route elaborated, every proof verified on the three permitted axioms, every
+tier closed. The aggregate was motion away from the goal.
+
+It is the same shape as a check that fails on exactly the input it exists
+for, one level up: **the condition that makes the machine productive is the
+condition that makes its output beside the point.** Tractability is what
+lets a route be found and it is also what marks ground already won. So the
+correlation is causal rather than unlucky, which is why it does not average
+out with more effort — and why, in `CLAUDE.md`'s own words, *getting better
+at closing nodes makes this worse rather than better*.
+
+The TypeScript instinct is the one everybody has met:
+
+```ts
+// Every test passes. Coverage is 100%. The tests were written from the
+// implementation, so they assert what it does, not what it should do.
+```
+
+**Where the analogy breaks, and it changes what to look for.** Every other
+instance in this section produces a WRONG value: the decoder cannot read `1`,
+the parser misses the wrapped signature, the aborted suite reports 325. In
+each there is a correct value it failed to show, and you catch it by
+distrusting the value.
+
+This one produces RIGHT values to the wrong question. All 35 nodes are true,
+verified on the permitted axioms, correctly filed, honestly disclaimed.
+Nothing on the screen is false and there is no correct value it failed to
+print. So a reader who has internalised the pattern above goes hunting for
+the false number, finds none, and concludes the machine is fine.
+
+    the blind spot   a false negative about the subject
+    this             a true positive about the wrong subject
+
+One is caught by distrusting the value; the other only by distrusting the
+question. `unblocks 0` on every node of a green tier is the tell here, and it
+looks exactly like a field being dutifully filled in. (Rowan's distinction,
+and it is the reason this section is not simply the previous one restated.)
+
+**The shared tell is the one thing that does carry across: a number that
+looks like success.** A green tier reads as progress the way `325 passed`
+reads as a healthy suite and a stable measurement reads as a working
+instrument. The question that catches it is not "is this step correct" —
+every step was — but *what would a proof of the thing I actually want cite,
+and does any of this appear in it?*
+
+Which is why `DOES NOT PROVE` is a field rather than a courtesy: a tier where
+every entry disclaims all three prizes is not a tier of bad work, it is a
+tier of good work pointed away, and only an explicit field makes that
+visible in aggregate.
+
 ### A measurement that includes its own apparatus
 
 Twice in one evening a process query answered confidently about the wrong
