@@ -495,6 +495,47 @@ it actually read and find the instruction in it.** `gleam run -- seed brief`
 prints exactly what a seeder is given, costs nothing, and would have answered
 this in one command.
 
+### The check you skip is the one that would cost you the finding
+
+`CLAUDE.md` says **distrust a result you dislike as hard as one you like**.
+The headline is symmetric. Everything after it is not:
+
+> a check that says *no* feels like the check working, so a false negative
+> gets believed where a false positive would be questioned. Ask what else
+> could have produced this "no".
+
+Mechanism, worked example and question are all about the disliked direction.
+A reader takes the example home, not the headline — so in practice the rule
+binds one way, and the other way has no handle to grab.
+
+**The missing half, from 2026-09-11.** Rowan sent a message to a peer, got a
+refusal, and read it as a live instance of a known bug — a good finding, the
+kind that makes a session look observant. The check that would have killed it
+was a liveness reading nine minutes old, and `CLAUDE.md`'s own *is this state
+at rest* would have killed it instantly. It never got run. Rowan's own
+account of why: **"I liked the finding."** The peer's session had in fact
+ended; there was no bug instance at all.
+
+Nothing about scepticism was absent in general — the same session spent that
+evening checking everything it disliked. What was absent was scepticism
+pointed at a result it wanted.
+
+So the liked direction needs its own question, because the disliked one's does
+not transfer. "What else could have produced this *no*" has no natural mirror
+you would think to ask, since a *yes* does not feel like it needs one. The
+one that works is about cost rather than truth:
+
+> **What would I have to check to lose this finding, and have I run it?**
+
+That question is answerable while the finding still feels good, which is the
+only moment it matters. And the tell is the same as everywhere else in this
+section: **the absence of friction.** A finding you had to fight for has been
+checked on the way; one that arrived whole and flattering has not.
+
+Related: `when-every-step-is-correct-and-the-direction-is-wrong` above, which
+is this failure at the scale of a research programme rather than a message —
+a green tier arrives whole and flattering too.
+
 ### A check whose "no" is structurally guaranteed
 
 `CLAUDE.md` says to distrust a result you dislike as hard as one you like,
