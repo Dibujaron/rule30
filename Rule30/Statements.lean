@@ -2582,4 +2582,97 @@ theorem centerColumn_white_run_le_period (p N : ℕ) (hp : 0 < p)
     False := by
   sorry
 
+/-- **A black run of the centre column is shorter than the time it starts at.**
+If the centre column is black at every time from `a` to `a + L`, with `a ≥ 1`,
+then `L < a`.
+
+Proposed by Seeder 2026-09-11 for region P2; route checked before landing.
+While the centre column stays black, the cells just left of it are forced to
+alternate black-white-black, one cell deeper per further black step
+(`column_alternating_of_black_run`). The cone will not allow a deep
+checkerboard: at row `a` the two leftmost cells that exist at all, at `-a` and
+`-(a-1)`, are both black (`evolve_left_edge`, `evolve_left_second_diagonal`),
+while alternation makes consecutive depths opposite. So the forced block
+cannot reach depth `a`. `1 ≤ a` is not a technicality — at `a = 0` the cone's
+left edge and the origin are the same cell, and the seed's own opening run is
+two cells long. Measured: 0 violations over 1,000,344 maximal runs to
+`N = 2,000,000`, tight at `a = 3`. Orientation-sensitive: rule 86, rule 30
+mirrored, has the same centre-column runs and fails the underlying alternation
+at 316 of 968 cells.
+
+DOES NOT PROVE: nothing towards Prize 2. It bounds one run and says nothing
+about how often runs occur or about any density. -/
+theorem centerColumn_black_run_lt_start (a L : ℕ) (ha : 1 ≤ a)
+    (h : ∀ s ≤ L, centerColumn (a + s) = true) : L < a := by
+  sorry
+
+/-- **A white run of the centre column is shorter than three times its start
+time.** If the centre column is white at every time from `a` to `a + L`, with
+`a ≥ 1`, then `L < 3 * a`.
+
+Proposed by Seeder 2026-09-11 for region P2. The white twin of the black-run
+bound, splitting on the colour of the column one cell left of the origin,
+which is monotone inside a white run (`white_run_forbidden`). Before it turns
+black, reading rule 30 backwards (`sideways_inverse`) forces an all-white
+triangle that the black left edge stops; after, it forces the checkerboard in
+the opposite phase to a black run's, which the cone's two adjacent black cells
+stop. The two bounds compose to `L < 3 * a`.
+
+DOES NOT PROVE: not the sharp bound, and nothing here explains the gap.
+Measured, a maximal white run beginning at `a` has length at most `a / 2`;
+`3` is stated because `3` is what this argument gives. Nothing towards
+Prize 2. -/
+theorem centerColumn_white_run_lt_start (a L : ℕ) (ha : 1 ≤ a)
+    (h : ∀ s ≤ L, centerColumn (a + s) = false) : L < 3 * a := by
+  sorry
+
+/-- **The centre column is not constant on any window from `a` to `4 * a`.**
+Both colours appear between times `a` and `a + 3 * a`, for every `a ≥ 1`.
+
+Proposed by Seeder 2026-09-11 for region P2. The two run bounds read as one
+statement: all black would contradict the black bound at `L = a`, all white
+the white bound at `L = 3 * a`. Stated with the same `3 * a` on both sides so
+the counting node has one window rather than two. This is the interface — the
+form in which rule 30 says something about the centre column that a `Bool`
+sequence can fail.
+
+DOES NOT PROVE: nothing towards Prize 2; it is the two run bounds restated.
+The window is far too wide — measured, every window `[a, 2a]` already holds
+both colours — and the width is the white bound's constant rather than a fact
+about the picture. -/
+theorem centerColumn_window_not_constant (a : ℕ) (ha : 1 ≤ a) :
+    (∃ s ≤ 3 * a, centerColumn (a + s) = true) ∧
+      (∃ s ≤ 3 * a, centerColumn (a + s) = false) := by
+  sorry
+
+/-- **Below `5 ^ n`, the centre column has at least `n` cells of each colour.**
+
+Proposed by Seeder 2026-09-11 for region P2; the derivation was checked in
+Lean with the window statement taken as a hypothesis rather than assumed
+available. The windows `[5 ^ k, 5 ^ (k+1))` for `k < n` are disjoint and cover
+`[1, 5 ^ n)`, and each contains the window `[5 ^ k, 4 * 5 ^ k]` that
+`centerColumn_window_not_constant` says holds both colours — `4 * 5 ^ k <
+5 ^ (k+1)` is the whole reason the base is `5` rather than `4`.
+
+This is the first bound on the centre column's excess that uses rule 30 at
+all: it gives `|2 * count N - N| ≤ N - 2 * ⌊log₅ N⌋`, in the same inequality
+that `centerColumn_density_tendsto_half_iff_excess_nat` states the prize in.
+
+DOES NOT PROVE: nothing towards Prize 2, and the gap is not a matter of
+sharpening. `N - 2 log₅ N` is `N(1 - o(1))` where the prize needs `o(N)`, and
+Talus's attack of 2026-09-10 caps the whole run route at `N(1 - 1/(c log N))`
+for any run bound however sharp — so no successor of these four nodes reaches
+it. What it does is put one statement about `centerColumnCount` on the board
+that a `Bool` sequence can fail. CAPTAIN'S CORRECTION TO THE PROPOSAL: the
+seeder wrote that all twelve closed P2 nodes hold of every `ℕ → Bool`. Ten do.
+`centerColumn_zero` and `centerColumnCount_eq_stepMod_count` are rule-30
+statements, but neither constrains the density — one fixes a single value, the
+other re-encodes the count in the packed-row vocabulary without yielding an
+inequality. The refined claim, which is what this tier rests on, is that this
+would be the first P2 node giving a rule-30-dependent BOUND on the counts. -/
+theorem centerColumnCount_ge_of_pow (n : ℕ) :
+    n ≤ ((Finset.range (5 ^ n)).filter fun t => centerColumn t = true).card ∧
+      n ≤ ((Finset.range (5 ^ n)).filter fun t => centerColumn t = false).card := by
+  sorry
+
 end Statements
