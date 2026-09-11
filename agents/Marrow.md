@@ -41,3 +41,23 @@ Second move, and the reason `linarith` closes goals that look nonlinear: `d` is 
 `div_le_iff₀` and `div_lt_iff₀` (with the zero subscript) are the names that work under this pin for moving a division across an inequality; the unsubscripted forms are deprecated or gone.
 
 Third: `push_cast` immediately before `rw [abs_le]` at the end. The goal arrives with `↑(M + g)` and the ℝ hypotheses all speak of `↑M + ↑g`; `push_cast` is what makes those the same term, and `abs_le` then splits the absolute value into the two one-sided goals that the two `key` applications close.
+
+## 2026-09-11T02:08:15Z — centerColumn_white_run_lt_start (opus, proved)
+
+Built on the second attempt at the file; only one tactic needed fixing. About 110 lines.
+
+**The mathematics, because the seeder's sketch describes it as two arguments and it is one.** The description says "splits on the colour of column -1 ... before it turns black, an all-white triangle ... after, the checkerboard in the opposite phase". Those are the SAME induction. With the centre white across a window and column -1 holding a constant bit `v` across it, every cell left of the origin is `v && decide (j % 2 = 1)` at position `-j`. `v = false` is the all-white triangle, `v = true` is the checkerboard. Stating it with the free `v` cost one `cases v` in the step and saved an entire second induction. I expect this generalises: any "the neighbour is constant, so the region is forced" argument on this board is one lemma with a Bool parameter, not two.
+
+The step is `evolve_sub_one_eq_xor` at `i = -(n+1)`, which needs the IH at BOTH `n` and `n+1` (and at `n+1` twice, once at time `t` and once at `t+1`). Two-step induction: I did NOT reach for `Nat.twoStepInduction` — I proved `∀ j, Q j ∧ Q (j+1)` by ordinary `induction j`, with `refine ⟨ih.2, ?_⟩` as the step's first move. Clean, no recursor name to guess, and worth copying.
+
+**The arithmetic, which is where the constant 3 actually comes from.** Pivot at `T = 2*a - 1` and `by_cases` on `evolve T (-1) = true`.
+- Black at T: propagate forward with `white_run_forbidden` (needs the centre white at t, t+1, t+2, so it reaches only to `a+L-1`), then the checkerboard says `evolve T (-(j:ℤ)) = decide (j % 2 = 1)` for `j ≤ L - a`. Both `j = T` (left edge, black) and `j = T-1` (second diagonal, black) are in range once `L ≥ 3a - 1`, and they have opposite parities. Contradiction.
+- White at T: propagate BACKWARD to `[a, T]` by a separate induction on the distance `d` with `t` generalised (`∀ d t, t + d = T → a ≤ t → ...`), taking `white_run_forbidden`'s contrapositive one step at a time. Then the all-white triangle says `evolve a (-((a-1 : ℕ) : ℤ)) = false`, against `evolve_left_second_diagonal (a-1)`. Contradiction, and this branch does not need the left edge at all.
+
+I first got `L ≤ 3a` rather than `L < 3a` and had to find the missing cell: it is the SECOND DIAGONAL in the white branch. Using only the left edge there gives `t0 ≤ 2a` and the bound comes out non-strict. Using the second diagonal too gives `t0 ≤ 2a - 1`, which is exactly the pivot and exactly the strictness. If a future node here is off by one, look for a diagonal you are not using before you look for an error.
+
+**Two small things that cost a build.** `rw [show (n+1) % 2 = 0 from by omega, ...]` does not touch `n % 2` inside `decide (n % 2 = 1)`, so `simp` left `n % 2 = 1` as a side goal in the odd branch — put `hn` in the `rw` list too, not just in the `simp` set. And `push_neg` is deprecated under this pin (it prints a migration note suggesting `push Not`); after `by_contra hcon` on a `<` goal, `have hcon : 3 * a ≤ L := by omega` is shorter and warning-free, since `omega` reads `¬ L < 3 * a` directly.
+
+**Defeq I relied on and did not have to fight.** `column initialConfig i t`, `evolveFrom initialConfig t i` and `evolve t i` are all `rule30^[t] initialConfig i`, so `white_run_forbidden` (stated over an arbitrary `Config`) applies to the seed with a bare `exact` and no rewriting — I wrapped it once as a `private theorem wrf` in seed vocabulary and never thought about `column` again. Same for `centerColumn t = evolve t 0`. Do this wrapping first; it makes every later `omega`-heavy line readable.
+
+The black twin's route sits at `explorer/p2seed_route_centerColumn_black_run_lt_start.lean` and there is NO seeder route for this white one — I checked `explorer/p2seed_*` first, as my own notebook told me to, and the check was worth the two reads even though it came up empty.

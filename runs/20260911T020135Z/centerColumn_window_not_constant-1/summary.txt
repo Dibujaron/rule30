@@ -1,0 +1,16 @@
+
+node      centerColumn_window_not_constant
+identity  Emmy
+model     haiku
+outcome   proved  (salvaged — the session did not close this node; the harness read its proof file and the verifier accepted it)
+cost      $0.48
+turns     21
+estimate  S
+session   682f9469-9446-4cb9-ae30-8c919d5d729d
+log       c:/Users/dibuj/dev/rule30/runs/20260911T020135Z/centerColumn_window_not_constant-1
+proof     -
+
+verifier:
+the worker never reported, and its proof file verified: VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Emmy (#3d5a80): closed 11, abandoned 2, $6.33, calibration 9/10

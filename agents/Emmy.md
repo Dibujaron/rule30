@@ -89,3 +89,23 @@ Key lemmas: `Finset.range_add_one`, `Finset.filter_insert`, `Finset.card_insert_
 Pattern: For Finset cardinality arguments over ranges, induction on one dimension and `range_add_one` to express the range split, then `filter_insert` to handle the predicate on the boundary element.
 
 No automaton semantics needed—pure Finset.card bookkeeping.
+
+## 2026-09-11T02:04:23Z — centerColumn_black_run_lt_start (sonnet, proved)
+
+**centerColumn_black_run_lt_start (proved, M).** The brief's own route was exact and needed no deviation: the served `column_alternating_of_black_run initialConfig` (for a Config X, `column X i t := evolveFrom X t i`) is defeq to `evolve` at `X = initialConfig` — `evolve t = rule30^[t] initialConfig = evolveFrom initialConfig t`, and `centerColumn t = evolve t 0`. So a hypothesis of type `∀ s ≤ L, centerColumn (a+s) = true` can be handed directly to a `have` of type `∀ s ≤ L, column initialConfig 0 (a+s) = true` with no cast, and the alternating conclusion `column initialConfig (-(j:ℤ)) t = decide (j%2=0)` can likewise be assigned straight into a `have` typed `evolve a (-(j:ℤ)) = decide (...)` — Lean unifies both by defeq unfold, no `show`/`change` needed.
+
+The whole proof: by_contra to get `a ≤ L`, instantiate the alternating lemma at depths `j = a` and `j = a - 1` (both ≤ L since a ≤ L, a ≥ 1), pull the two actual values from `evolve_left_edge a` and `evolve_left_second_diagonal (a-1)` (the latter needs `a - 1 + 1 = a` rewritten in, from `ha : 1 ≤ a`, by omega), then `of_decide_eq_true` turns each `true = decide (_ % 2 = 0)` into the arithmetic fact, and `omega` closes the parity contradiction (a and a-1 can't both be even) directly, using `ha` from context.
+
+One papercut: `push_neg` is deprecated in this Mathlib pin (suggests `push Not` or a macro shim) — for a simple `¬(L < a) → a ≤ L` it's just as easy to `have hL : a ≤ L := by omega` right after `by_contra hL`, shadowing the by_contra hypothesis; omega still sees the shadowed one during its own elaboration. Cheaper than fighting the deprecation.
+
+Verified `#print axioms` locally before final report (temporarily appended the line, confirmed exactly propext/Classical.choice/Quot.sound, then removed it) — not required by the brief but cheap insurance given the harness's own check is the one that counts.
+
+## 2026-09-11T02:17:50Z — centerColumnCount_ge_of_pow (sonnet, proved)
+
+**centerColumnCount_ge_of_pow (proved, M).** Band: Project-internal/Nothing — the node's own note is explicit that this is a fence, not progress toward Prize 2 (gives N - 2*log_5(N), where the prize needs o(N), and Talus's 2026-09-10 result caps every run-bound route below that anyway).
+
+Route, simpler than the brief's own sketch: rather than constructing n pairwise-disjoint windows up front and taking an injective map, induct directly on n carrying the conjunction. At the step, `centerColumn_window_not_constant (5^n) ha` (ha : 1 ≤ 5^n, from `Nat.one_le_pow n 5 (by norm_num)`) hands back one true-witness s1 ≤ 3*5^n and one false-witness s2 ≤ 3*5^n in the window [5^n, 4*5^n]. Since 4*5^n < 5^(n+1) = 5*5^n, each witness t = 5^n + s_i lands in `range (5^(n+1))` but not in `range (5^n)` (t ≥ 5^n). So `insert t A ⊆ B` where A = filter(range 5^n), B = filter(range 5^(n+1)), giving `B.card ≥ A.card + 1 ≥ n + 1` via `Finset.card_insert_of_notMem` + `Finset.card_le_card`. No global injective-map construction needed — the induction does the disjointness bookkeeping window-by-window automatically.
+
+**omega/`Finset.range_subset` trap, cost two failed builds:** `apply Finset.range_subset.mpr` followed by `rw [hp]; omega` (hp : 5^(n+1) = 5*5^n) silently left omega staring at a goal still containing an unrelated atom it displayed as `x` — no error from `apply` or `rw`, just a baffling omega counterexample dump with an atom that traced to nothing in the visible context. Never diagnosed the root cause (didn't have budget to bisect further); the fix was to abandon `Finset.range_subset` entirely and prove the range-subset goal by hand: `intro x hx; rw [Finset.mem_range] at hx ⊢; rw [hp]; omega`. This is now the pattern I'd reach for first rather than the iff lemma when `range (a^n) ⊆ range (a^(n+1)))`-shaped subset goals come up with a pow rewrite needed — cheaper than debugging the mystery.
+
+`exact ⟨by rw [hp]; omega, ht1⟩` inside an already-simp'd membership goal worked fine with no such issue — the trap seems specific to composing `apply <iff>.mpr` with a later `rw` inside the same tactic block, not to `rw [hp]; omega` in general.

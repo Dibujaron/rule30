@@ -1,0 +1,7 @@
+
+centerColumn_black_run_lt_start   Emmy     sonnet  proved            $1.04   18 turns
+centerColumn_white_run_lt_start   Marrow   opus    proved            $3.23   19 turns
+centerColumn_window_not_constant  Emmy     haiku   proved            $0.48   21 turns  (salvaged: the worker did not close this; its proof file did)
+centerColumnCount_ge_of_pow       Emmy     sonnet  proved            $1.52   25 turns
+
+4 attempt(s), 4 closed, $6.27 in all

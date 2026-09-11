@@ -1,0 +1,16 @@
+
+node      centerColumnCount_ge_of_pow
+identity  Emmy
+model     sonnet
+outcome   proved
+cost      $1.52
+turns     25
+estimate  M
+session   1e33ef3c-c61a-4af3-af7e-08e01fb7a5ed
+log       c:/Users/dibuj/dev/rule30/runs/20260911T020135Z/centerColumnCount_ge_of_pow-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Emmy (#3d5a80): closed 12, abandoned 2, $7.85, calibration 10/11

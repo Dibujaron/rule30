@@ -1,0 +1,19 @@
+{"ts":"2026-09-11T02:01:35Z","kind":"run","max_attempts":4,"concurrency":2}
+{"ts":"2026-09-11T02:01:45Z","kind":"statement_gate","node":"centerColumn_black_run_lt_start","result":"resolves","statement":"Statements.centerColumn_black_run_lt_start : ∀ (a L : ℕ), 1 ≤ a → (∀ s ≤ L, centerColumn (a + s) = true) → L < a"}
+{"ts":"2026-09-11T02:01:45Z","kind":"dispatch","node":"centerColumn_black_run_lt_start","identity":"Emmy","model":"sonnet","reason":"open leaf; unblocks 0; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4130,"log":"c:/Users/dibuj/dev/rule30/runs/20260911T020135Z/centerColumn_black_run_lt_start-1","in_flight":1}
+{"ts":"2026-09-11T02:01:54Z","kind":"statement_gate","node":"centerColumn_white_run_lt_start","result":"resolves","statement":"Statements.centerColumn_white_run_lt_start : ∀ (a L : ℕ), 1 ≤ a → (∀ s ≤ L, centerColumn (a + s) = false) → L < 3 * a"}
+{"ts":"2026-09-11T02:01:54Z","kind":"dispatch","node":"centerColumn_white_run_lt_start","identity":"Marrow","model":"opus","reason":"open leaf; unblocks 0; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4131,"log":"c:/Users/dibuj/dev/rule30/runs/20260911T020135Z/centerColumn_white_run_lt_start-1","in_flight":2}
+{"ts":"2026-09-11T02:04:23Z","kind":"index","node":"centerColumn_black_run_lt_start","module":"Rule30.Proofs.CenterColumnBlackRunLtStart","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-11T02:04:23Z","kind":"theorem_index","node":"centerColumn_black_run_lt_start","file":"blueprint/index.md","outcome":"written"}
+{"ts":"2026-09-11T02:08:14Z","kind":"index","node":"centerColumn_white_run_lt_start","module":"Rule30.Proofs.CenterColumnWhiteRunLtStart","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-11T02:08:15Z","kind":"theorem_index","node":"centerColumn_white_run_lt_start","file":"blueprint/index.md","outcome":"written"}
+{"ts":"2026-09-11T02:08:23Z","kind":"statement_gate","node":"centerColumn_window_not_constant","result":"resolves","statement":"Statements.centerColumn_window_not_constant : ∀ (a : ℕ),\n  1 ≤ a → (∃ s ≤ 3 * a, centerColumn (a + s) = true) ∧ ∃ s ≤ 3 * a, centerColumn (a + s) = false"}
+{"ts":"2026-09-11T02:08:23Z","kind":"dispatch","node":"centerColumn_window_not_constant","identity":"Emmy","model":"haiku","reason":"open leaf; unblocks 1; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4132,"log":"c:/Users/dibuj/dev/rule30/runs/20260911T020135Z/centerColumn_window_not_constant-1","in_flight":1}
+{"ts":"2026-09-11T02:11:34Z","kind":"index","node":"centerColumn_window_not_constant","module":"Rule30.Proofs.CenterColumnWindowNotConstant","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-11T02:11:34Z","kind":"theorem_index","node":"centerColumn_window_not_constant","file":"blueprint/index.md","outcome":"written"}
+{"ts":"2026-09-11T02:11:42Z","kind":"statement_gate","node":"centerColumnCount_ge_of_pow","result":"resolves","statement":"Statements.centerColumnCount_ge_of_pow : ∀ (n : ℕ),\n  n ≤ {t ∈ Finset.range (5 ^ n) | centerColumn t = true}.card ∧\n    n ≤ {t ∈ Finset.range (5 ^ n) | centerColumn t = false}.card"}
+{"ts":"2026-09-11T02:11:42Z","kind":"dispatch","node":"centerColumnCount_ge_of_pow","identity":"Emmy","model":"sonnet","reason":"open leaf; unblocks 0; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4133,"log":"c:/Users/dibuj/dev/rule30/runs/20260911T020135Z/centerColumnCount_ge_of_pow-1","in_flight":1}
+{"ts":"2026-09-11T02:17:50Z","kind":"index","node":"centerColumnCount_ge_of_pow","module":"Rule30.Proofs.CenterColumnCountGeOfPow","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-11T02:17:50Z","kind":"theorem_index","node":"centerColumnCount_ge_of_pow","file":"blueprint/index.md","outcome":"written"}
+{"ts":"2026-09-11T02:17:56Z","kind":"stray","file":"explorer/p2seed_route_centerColumn_black_run_lt_start.lean","verdict":"clean"}
+{"ts":"2026-09-11T02:18:01Z","kind":"stray","file":"explorer/p2seed_scratch.lean","verdict":"clean"}

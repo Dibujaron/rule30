@@ -1,0 +1,16 @@
+
+node      centerColumn_white_run_lt_start
+identity  Marrow
+model     opus
+outcome   proved
+cost      $3.23
+turns     19
+estimate  M
+session   0d94a9e0-c370-41ad-9165-21479ad8a0f7
+log       c:/Users/dibuj/dev/rule30/runs/20260911T020135Z/centerColumn_white_run_lt_start-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Marrow (#5c7a89): closed 4, abandoned 0, $6.34, calibration 1/4

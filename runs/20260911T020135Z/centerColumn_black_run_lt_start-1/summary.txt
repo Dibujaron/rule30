@@ -1,0 +1,16 @@
+
+node      centerColumn_black_run_lt_start
+identity  Emmy
+model     sonnet
+outcome   proved
+cost      $1.04
+turns     18
+estimate  M
+session   f71e10c0-8efa-4f3c-90fb-0df1cd09b5f4
+log       c:/Users/dibuj/dev/rule30/runs/20260911T020135Z/centerColumn_black_run_lt_start-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Emmy (#3d5a80): closed 10, abandoned 2, $5.85, calibration 9/10

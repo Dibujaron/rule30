@@ -18,8 +18,10 @@ import Rule30.Proofs.BoolDrivenPeriodicFromOfReset
 import Rule30.Proofs.BoolDrivenPeriodicFromOfReturn
 import Rule30.Proofs.BoolMapIterateThree
 import Rule30.Proofs.BoolXorDrivenPeriodicFrom
+import Rule30.Proofs.CenterColumnBlackRunLtStart
 import Rule30.Proofs.CenterColumnCountBlock
 import Rule30.Proofs.CenterColumnCountEqStepModCount
+import Rule30.Proofs.CenterColumnCountGeOfPow
 import Rule30.Proofs.CenterColumnCountSandwich
 import Rule30.Proofs.CenterColumnCountSucc
 import Rule30.Proofs.CenterColumnDensityLeOne
@@ -45,6 +47,8 @@ import Rule30.Proofs.CenterColumnRightNotBothIsEventuallyPeriodic
 import Rule30.Proofs.CenterColumnRunBoundary
 import Rule30.Proofs.CenterColumnSuccOfBlack
 import Rule30.Proofs.CenterColumnWhiteRunLePeriod
+import Rule30.Proofs.CenterColumnWhiteRunLtStart
+import Rule30.Proofs.CenterColumnWindowNotConstant
 import Rule30.Proofs.CenterColumnZero
 import Rule30.Proofs.CentreForcedAfterDoubleWhite
 import Rule30.Proofs.ColOneOfWhite

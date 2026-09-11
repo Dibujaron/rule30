@@ -1,0 +1,19 @@
+
+connector  Orrery
+model      fable
+problem    centerColumn_other_isEventuallyPeriodic_of_center
+vantage    Make P3 sayable. P3 is Wolfram's computational-irreducibility conjecture for rule 30's centre column, and docs/prize.md states plainly that it is NOT A TASK and must never go in the DAG as a solver goal -- because Prize.lean states it against a hole nobody can fill, deliberately, since a placeholder that cannot mislead beats a statement that can be trivially satisfied. YOUR QUESTION IS THE ONE THAT FILE NAMES AS OPEN: what concrete uniform machine model, with binary input encoding and step-counted cost, makes P3 sayable at all? Two traps are already documented and each produces a statement that looks fine and is not. (1) Cost with nothing attached to run: an interface with separate  and  fields is satisfied by cost = 0, making the conjecture FALSE rather than approximate, and moving the honesty requirement into the interface does not help since that field can be satisfied with True. (2) Input arrival: if n comes as n tally marks, reading the input costs n and the bound holds by construction -- proven and meaningless. So n must arrive in binary, about log n digits, which makes P3 assert a running time EXPONENTIAL IN ITS INPUT SIZE. Two concrete deaths on the record: Mathlib's Nat.Partrec.Code.evaln is unusable because evaln_bound forces n < k so cost >= n holds by construction; and circuit size fails in the OPPOSITE direction, since a circuit on log n input bits computes any such function in size O(n / log n), below linear, making the circuit analogue outright FALSE. Turing.TM0 / TM1 is the plausible direction and is a guess, not a finding. What is wanted is a model a complexity theorist would sign off on, with the reason it escapes both traps. A negative -- that no such model is within reach of current Mathlib -- is a result and should be said plainly.
+sighting   c:/Users/dibuj/dev/rule30/docs/connections/2026-09-11-make-p3-sayable-p3-is-wolfram-s-computational-irreducibility-conjecture-for-rule-30-s-centre-column-and-docs-prize-md-st.md
+document   MISSING — nothing is at that path
+ended      refused by the API (reasoning_extraction) — nothing was attempted, so this says nothing about the topic; the same brief on a different model is the move, not the same brief later
+ceilings   600 turns, $80.0
+cost       $2.35
+turns      1
+session    ddc7d330-ad24-4bd9-8743-5286737c3e63
+log        c:/Users/dibuj/dev/rule30/runs/20260911T020835Z/connector-1
+
+the API refused the request (reasoning_extraction). No work was attempted, so this says nothing about the node; the same brief on a different model is the move, not the same brief later: {"duration_api_ms":3708,"stop_reason":"refusal","session_id":"ddc7d330-ad24-4bd9-8743-5286737c3e63","total_cost_usd":2.348849,"usage":{"input_tokens":39,"cache_creation_input_tokens":117332,"cache_read_input_tokens":0,"output_tokens":0,"output_tokens_details":{"thinking_tokens":0},"server_tool_use":{"web_search_requests":0,"web_fetch_requests":0},"service_tier":"standard","cache_creation":{"ephemeral_1h_input_tokens":117332,"ephemeral_5m_input_tokens":0},"inference_geo":"not_available","iterations":[{"input_tokens":39,"output_tokens":0,"cache_read_input_tokens":0,"cache_creation_input_tokens":117332,"cache_creation":{"ephemeral_5m_input_tokens":0,"ephemeral_1h_input_tokens":117332},"type":"message"}],"speed":"standard"},"modelUsage":{"claude-haiku-4-5-20251001":{"inputTokens":1739,"outputTokens":16,"cacheReadInputTokens":0,"cacheCreationInputTokens":0,"webSearchRequests":0,"costUSD":0.001819,"contextWindow":200000,"maxOutputTokens":32000,"thinkingTokens":0,"canonicalModel":"claude-haik
+… (clipped; the full text is in events.jsonl)
+
+next vantage, in the connector's words:
+(no report, so no next vantage)
