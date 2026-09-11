@@ -1,0 +1,34 @@
+
+seeder    Seeder
+model     opus
+region    P2
+ended     finished — the seeder reported its proposal written; that is its claim about the file, and the check below is the only adjudication
+ceilings  80 turns, $12.0
+cost      $8.61
+turns     43
+session   672bd11d-74c3-4c8e-8458-ed87e1001657
+log       c:/Users/dibuj/dev/rule30/runs/20260911T013339Z/seed-1
+proposal  c:/Users/dibuj/dev/rule30/blueprint/proposals/next.json
+
+Four connected P2 nodes proposed: the black-run bound (route verified against the board), its white twin, the window statement they combine into, and the count consequence — the first bound on the centre column's excess that uses rule 30, and honestly disclaimed as far short of the prize.
+
+check of c:/Users/dibuj/dev/rule30/blueprint/proposals/next.json:
+centerColumn_black_run_lt_start
+  DOES NOT PROVE: Nothing towards Prize 2 on its own. It bounds one run and says nothing about how often runs occur or about any density. Its only ingredient is the cone, and by Talus's fence (docs/attacks/2026-09-10-prize-2-s-residual-…, C2) the cone's sole consequence for the centre column is a run bound — every other local law rule 30 supplies is quantified over `Config` and so holds of every `Bool` sequence.
+  route:   closes the statement
+  witness: holds over a ≤ 8 and L ≤ 8. The cheap disjuncts come first so the automaton is evaluated only where the claim has content, at 1 ≤ a ≤ L, and the inner `all` stops at the first white cell — so no read goes past depth 12.
+centerColumn_white_run_lt_start
+  DOES NOT PROVE: Not the sharp bound, and nothing here explains the gap: measured, a maximal white run beginning at `a` has length at most `a/2`, where this proves only `< 3a`. Nothing towards Prize 2 on its own.
+  route:   none claimed
+  witness: holds over a ≤ 5 and L ≤ 15. Weak on purpose: with the cheap disjuncts first, the automaton is read only where `L ≥ 3a`, and the white stretch there breaks within a cell or two, so nothing deep is checked. The bound's content is at larger `a` and is covered by the scripts named in the reason, not by this.
+centerColumn_window_not_constant
+  DOES NOT PROVE: Nothing towards Prize 2: it is the two run bounds restated. The window is far too wide — measured, every window `[a, 2a]` already holds both colours — and the width is the white bound's constant rather than a fact about the picture.
+  route:   none claimed
+  witness: holds over 1 ≤ a ≤ 4. `any` stops at the first witness of each colour and both are found within two cells of `a` at every `a` in range, so no read goes past depth 6.
+centerColumnCount_ge_of_pow
+  DOES NOT PROVE: Nothing towards Prize 2, and the gap is not a matter of sharpening. The bound is `N - 2 log₅ N`, which is `N(1 - o(1))`, where the prize needs `o(N)`; Talus's attack of 2026-09-10 shows the whole run route is capped at `N(1 - 1/(c log N))` for any run bound however sharp, so no successor of these four nodes reaches it. What it does is put one statement about `centerColumnCount` on the board that a `Bool` sequence can fail — all twelve closed P2 nodes hold of every `ℕ → Bool`, which is the measurement that named this tier.
+  route:   none claimed
+  witness: holds over n < 2, and I want to be plain that this is nearly vacuous: it checks the shape of the inequality and the colours are not swapped, and nothing else. `n = 2` needs `centerColumn 24`, which is depth 24 against a usable ceiling near 18, so this claim cannot carry a naive witness that reaches its content. The content was checked in the engine instead: both counts below `5 ^ n` exceed `n` by orders of magnitude at every `n ≤ 8` (`explorer/p2seed_runs.mjs` prints the same tally in base 2).
+
+4 holds
+

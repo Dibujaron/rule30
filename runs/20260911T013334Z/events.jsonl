@@ -1,0 +1,3 @@
+{"ts":"2026-09-11T01:33:50Z","kind":"statement_gate","node":"centerColumn_white_run_le_period","result":"resolves","statement":"Statements.centerColumn_white_run_le_period : ∀ (p N : ℕ),\n  0 < p →\n    (∀ t ≥ N, centerColumn (t + p) = centerColumn t) →\n      ∀ (t : ℕ), N ≤ t → (∀ s < p, centerColumn (t + s) = false) → False"}
+{"ts":"2026-09-11T01:33:50Z","kind":"dispatch","node":"centerColumn_white_run_le_period","identity":"Vesper","model":"haiku","reason":"open leaf; unblocks 0; ladder step 1","max_turns":40,"max_budget_usd":4.0,"log":"c:/Users/dibuj/dev/rule30/runs/20260911T013334Z/centerColumn_white_run_le_period-1"}
+{"ts":"2026-09-11T01:40:13Z","kind":"theorem_index","node":"centerColumn_white_run_le_period","file":"blueprint/index.md","outcome":"written"}

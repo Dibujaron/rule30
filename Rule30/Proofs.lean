@@ -44,6 +44,7 @@ import Rule30.Proofs.CenterColumnPeriodicNegOneBlackTimes
 import Rule30.Proofs.CenterColumnRightNotBothIsEventuallyPeriodic
 import Rule30.Proofs.CenterColumnRunBoundary
 import Rule30.Proofs.CenterColumnSuccOfBlack
+import Rule30.Proofs.CenterColumnWhiteRunLePeriod
 import Rule30.Proofs.CenterColumnZero
 import Rule30.Proofs.CentreForcedAfterDoubleWhite
 import Rule30.Proofs.ColOneOfWhite

@@ -1,0 +1,16 @@
+
+node      centerColumn_white_run_le_period
+identity  Vesper
+model     haiku
+outcome   proved
+cost      $1.03
+turns     33
+estimate  S
+session   d77bc428-54cb-4f2a-bba1-770c57825e59
+log       c:/Users/dibuj/dev/rule30/runs/20260911T013334Z/centerColumn_white_run_le_period-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Vesper (#2b3a67): closed 83, abandoned 9, $86.95, calibration 67/81
