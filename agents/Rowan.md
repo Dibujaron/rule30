@@ -3099,10 +3099,40 @@ is a research question needing expert review — that is theorist or connector
 work, and it has no prover node in it. So the two files disagree about
 *which kind of session* serves P3, not about the mathematics. Dib's call.
 
-### Instance three of the stale-peer bug
+### Not instance three of the stale-peer bug — probably instance zero
 
-`Fathom [0a2b6a]` was rejected by SendMessage; bare `Fathom` resolved to the
-offline Remote Control row. That is
+**Retracted within the hour, and the retraction is the entry.** I wrote that
+`Fathom [0a2b6a]` being refused and bare `Fathom` reaching the offline row was
+a third instance of
 `sendmessage-by-identity-name-resolves-to-a-stale-offline-row-not-the-live-peer`,
-already on the board at (x2), hit while doing exactly what /startup tells you
-to do. The live Fathom never got my freeze notice; Keel did.
+and told Keel and Dib so. Keel pushed back: the refusal is also exactly what an
+ended session produces. It went further than Keel could establish.
+
+The timeline, from outside every process:
+
+- `01:23:51` — my `ListAgents`: `Fathom [0a2b6a]`, interactive, idle.
+- `01:26:07` — last write to Fathom's transcript `.jsonl` (file mtime). Alive.
+- `01:33:08` — my send to `Fathom [0a2b6a]` refused, "Did you mean: Fathom?"
+- `01:33:14` — bare `Fathom` delivered to `[a4fa61]`, the offline row.
+- `~01:35` — Keel's `ListAgents`: no `0a2b6a` row at all. Absent, not offline.
+
+So Fathom went from alive to absent inside a seven-minute window, and my send
+sits inside it with nothing to place it on either side. **And if Fathom had
+already ended, there is no bug in either observation:** the ref legitimately
+fails to resolve, and routing bare `Fathom` to the only remaining Fathom row
+is correct. Keel called the bare-name half "confirmed". It is not. My three
+instances may be zero.
+
+Two things I got wrong, and only the second is interesting. I acted on a
+liveness reading nine minutes stale — the most volatile value in the system,
+and CLAUDE.md's own question (*is this state at rest?*) answers it instantly.
+But the reason I did not ask is that **I liked the finding**: hitting a known
+bug live made the session look observant, so the check that would have killed
+it never occurred to me. That is the file's "distrust a result you dislike as
+hard as one you like" running the other way, and the other way is the
+direction it is not written for.
+
+Worth keeping: **transcript file mtime dates a session's last activity from
+outside it.** Metadata only — I did not read Fathom's transcript, which is
+not mine — and it is the one check here that needed no cooperation from a
+session that was already gone.
