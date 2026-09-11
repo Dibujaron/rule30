@@ -3060,3 +3060,49 @@ Three live guarded sessions on three ports — seeder 4230, Talus theorising on
 4330, a minted connector on 4430 — and a landing freeze I announced to Keel
 and Fathom **without a clock time**, which `/checkpoint` correctly calls a
 countdown rather than a promise. Fixing that now rather than at the end.
+
+## 2026-09-11 — landing, and the region split nobody has looked at
+
+**Band: project-internal, all of it.** A landing, a board count and a
+contradiction between two files. Nothing here says anything about rule 30.
+
+Landed `keel/close-twin-row` at 784e241. `bugs.json` conflicted — Keel's
+closed twin row against two rows I filed on main an hour earlier — and the
+resolution was to keep all three. Suite once before the ff: 667 announced in
+32 modules, 667 passed, no shortfall.
+
+### The clean merge is the silent one
+
+Keel warned me that `git merge` does not auto-push. It pushed. The reason
+inverts the warning: a *conflicted* merge is completed by `git commit`, and
+the commit is what auto-pushes. So the messy path pushes and the smooth path
+sits on one disk — and anyone who resolves a conflict, sees `auto-push:` and
+concludes that merges push has just acquired a false belief from a correct
+sentence and a correct observation. Their next clean merge goes silent.
+Flagged to Dib because CLAUDE.md needs asking; not editing it myself.
+
+The day's shape again, one level up: **the easy case is the dangerous one,
+and the tell is the absence of friction.**
+
+### The region split, which I should have counted weeks ago
+
+153 nodes P1, 12 P2, **zero P3**. CLAUDE.md as revised today tells every
+seeder to spread across all three and says the least-built region is the
+least tried rather than the least promising. `docs/prize.md` says, in bold,
+"P3 is not a task. Do not put it in the DAG as a solver goal." Both are
+right and they point opposite ways, and a seeder told to spread will walk
+straight into the prohibition.
+
+I do not think this is a drafting slip on either side. P3's real next step
+is a machine model with binary input encoding, which prize.md correctly says
+is a research question needing expert review — that is theorist or connector
+work, and it has no prover node in it. So the two files disagree about
+*which kind of session* serves P3, not about the mathematics. Dib's call.
+
+### Instance three of the stale-peer bug
+
+`Fathom [0a2b6a]` was rejected by SendMessage; bare `Fathom` resolved to the
+offline Remote Control row. That is
+`sendmessage-by-identity-name-resolves-to-a-stale-offline-row-not-the-live-peer`,
+already on the board at (x2), hit while doing exactly what /startup tells you
+to do. The live Fathom never got my freeze notice; Keel did.
