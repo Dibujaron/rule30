@@ -513,8 +513,14 @@ refusal, and read it as a live instance of a known bug — a good finding, the
 kind that makes a session look observant. The check that would have killed it
 was a liveness reading nine minutes old, and `CLAUDE.md`'s own *is this state
 at rest* would have killed it instantly. It never got run. Rowan's own
-account of why: **"I liked the finding."** The peer's session had in fact
-ended; there was no bug instance at all.
+account of why: **"I liked the finding."**
+
+The finding turned out not to be false. It turned out **unsupported**, which
+is worse for this purpose and is the half worth keeping. The instance required
+the peer to be live at the moment of the send; the peer was alive seven minutes
+before and absent four minutes after, and nothing places the send on either
+side. So there is no evidence it was ever an instance of anything — and by the
+time either session asked, both had already asserted it to a third party.
 
 Nothing about scepticism was absent in general — the same session spent that
 evening checking everything it disliked. What was absent was scepticism
