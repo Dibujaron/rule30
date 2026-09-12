@@ -1,0 +1,16 @@
+
+node      rightDiagonal_edge_gap_eq
+identity  Vesper
+model     opus
+outcome   proved
+cost      $3.40
+turns     11
+estimate  M
+session   86281962-0eef-4610-8c15-b2c6c16bc829
+log       c:/Users/dibuj/dev/rule30/runs/20260912T171615Z/rightDiagonal_edge_gap_eq-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Vesper (#2b3a67): closed 85, abandoned 9, $91.45, calibration 68/83

@@ -137,7 +137,9 @@ import Rule30.Proofs.PeriodicFromGcd
 import Rule30.Proofs.PeriodicFromMul
 import Rule30.Proofs.PeriodicFromTransPeriod
 import Rule30.Proofs.RightDiagonalAntiperiodicOfOddDriver
+import Rule30.Proofs.RightDiagonalCone
 import Rule30.Proofs.RightDiagonalDriverFlipIffWhite
+import Rule30.Proofs.RightDiagonalEdgeGapEq
 import Rule30.Proofs.RightDiagonalFirstFailure
 import Rule30.Proofs.RightDiagonalIsEventuallyPeriodic
 import Rule30.Proofs.RightDiagonalNotConstant

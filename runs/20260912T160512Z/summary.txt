@@ -1,0 +1,50 @@
+
+seeder    Seeder
+model     opus
+region    P1
+ended     finished — the seeder reported its proposal written; that is its claim about the file, and the check below is the only adjudication
+ceilings  80 turns, $12.0
+cost      $7.68
+turns     26
+session   d904dcd7-6b2e-4a9e-9c10-7130a22065a4
+log       c:/Users/dibuj/dev/rule30/runs/20260912T160512Z/seed-1
+proposal  c:/Users/dibuj/dev/rule30/blueprint/proposals/next.json
+
+Six P1 nodes proposed, spined on the damage between the picture and its own slide by p; node 1 comes with a route that compiles clean and node 4 is the mechanism statement the board has never assembled.
+
+check of c:/Users/dibuj/dev/rule30/blueprint/proposals/next.json:
+damage_front_advances
+  DOES NOT PROVE: Nothing about the centre column, nothing about periodicity, nothing about rule 30 beyond one application of rule30_eq. Band: Nothing — a one-step statement true of the picture grown from any two rows. Its value is entirely as the iterable form the other nodes need.
+  WARNING: the statement mixes ℕ and ℤ or uses absolute value — found a term ascribed to ℤ or ℝ. Provers spent their budgets cycling on casts (two of the three exhaustions on 2026-09-07); the captain's rule in docs/prover-cookbook.md prefers a statement in ℕ, with an absolute value over casts written as two ℕ inequalities.
+  route:   closes the statement
+  witness: unchecked — no witness supplied
+centerColumn_damage_front_exists
+  DOES NOT PROVE: The hypothesis h0 is an instance of the counterfactual periodicity assumption; nobody can exhibit a t at which it is interesting. Band: Nothing — a least-element argument over two closed cone facts. It proves only that the front exists, never how deep it is.
+  WARNING: the statement mixes ℕ and ℤ or uses absolute value — found a term ascribed to ℤ or ℝ. Provers spent their budgets cycling on casts (two of the three exhaustions on 2026-09-07); the captain's rule in docs/prover-cookbook.md prefers a statement in ℕ, with an absolute value over casts written as two ℕ inequalities.
+  under:   centerColumn_other_isEventuallyPeriodic_of_center
+  route:   none claimed
+  witness: unchecked — no witness supplied
+centerColumn_periodic_damage_mask
+  DOES NOT PROVE: Does not prove P1 and does not weaken it. The hypothesis is eventual periodicity, which is the negation of the prize, so the identity describes a world nobody can exhibit. It is not a fifth sufficient condition — it is an identity, and it says nothing about whether the two failures can be arranged to occur together, which is the whole residual.
+  under:   centerColumn_other_isEventuallyPeriodic_of_center
+  route:   none claimed
+  witness: unchecked — no witness supplied
+centerColumn_periodic_damage_arrival
+  DOES NOT PROVE: Band: project-internal. It does NOT prove P1, and it is not a sufficient condition for it: the hypothesis is eventual periodicity, so this describes what a periodic centre column would have to arrange, not that it cannot. Two specific things it does not give. It says nothing about the SUPPLY of damage — how deep the front is at each time, hence how often arrivals happen — and the counting of arrivals against the available white times is where a contradiction would have to come from. And it is a statement about the left half only; the compensating failure at column +1 is asserted, not explained, and explaining it is obstruction 9. Note also that the ≤ p spacing of white times that would make an arrival count bite is itself only available from the counterfactual run bounds, not from the picture.
+  WARNING: the statement mixes ℕ and ℤ or uses absolute value — found a term ascribed to ℤ or ℝ. Provers spent their budgets cycling on casts (two of the three exhaustions on 2026-09-07); the captain's rule in docs/prover-cookbook.md prefers a statement in ℕ, with an absolute value over casts written as two ℕ inequalities.
+  under:   centerColumn_other_isEventuallyPeriodic_of_center
+  route:   none claimed
+  witness: unchecked — no witness supplied
+centerColumn_black_run_le_period
+  DOES NOT PROVE: Band: Nothing. It mirrors a closed node line for line and adds no rule 30 content of its own; its hypothesis is counterfactual, so like the white version it bounds the alphabet of an object nobody can construct. Seeded as supply for the rung below and for crystal 73's alphabet reading, not as progress.
+  under:   centerColumn_other_isEventuallyPeriodic_of_center
+  route:   none claimed
+  witness: unchecked — no witness supplied
+centerColumn_periodic_two_alternating
+  DOES NOT PROVE: It does NOT prove the p = 2 instance — it reduces it, and the reduction is the cheap half. The instance itself is open: an alternating tail is not refutable by anything on the board, because it propagates leftward without closing (columns -1 and -2 are pinned to a single free bit per pair, and the cone boundary is never reached — the run bounds put the forced block at depth below the time, which is crystal 69's ratio again). And the ladder does not obviously continue: this argument is special to p = 2, where a repeated adjacent pair IS a run of length p, and gives nothing at p ≥ 3.
+  under:   centerColumn_other_isEventuallyPeriodic_of_center
+  route:   none claimed
+  witness: unchecked — no witness supplied
+
+6 unchecked, 3 with a cast warning
+

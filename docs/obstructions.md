@@ -2112,3 +2112,200 @@ imposed, and the cone is expressible inside the right-diagonal recurrence after
 all. Whether the resulting condition on `centerColumn 0 … centerColumn k` is
 non-trivial, or an identity the recurrence forces anyway, is the next topic of
 the document above and is unmeasured here.
+
+## The cone condition does live inside the right-diagonal tower, and having it is having the centre column
+
+**The natural attempt.** The addendum above is right that the cone is
+expressible in the tower, and the obvious next move is to use it. The tower of
+right diagonals is generated from `R_0`, `R_1` and one free bit per level,
+`R_k(0) = centerColumn k`; the entry *"The flat right-diagonal tower is a real
+picture"* says nothing in the right half can separate the seed from
+`…10101|000`, because the property that does is the existence of a leftmost
+black cell and that "lives outside the tower". Run each diagonal backwards to
+index `-k`, where `rightDiagonal k j = evolve (j+k) j` reads the initial row at
+`-k`, and the cone becomes a condition on the tower itself. Then hope it is a
+weak structural property — one that a periodic centre column would contradict
+without one's having to know the centre column.
+
+**Why it fails.** The first half works and is worth having; the hope is dead,
+and the measurement is exact rather than statistical.
+
+*The expressibility is real, and cheaper than anyone priced it.* Periodicity
+extends backwards: `R_k(-i) = R_k(2^k - i)` for every `i ≤ k` (0 mismatches
+over `k ≤ 24`, and over eight configurations including three that violate the
+cone, `explorer/sextant10_backward.mjs`, `sextant10_family.mjs`), because the
+recurrence is invertible in its own argument and the driver's two reads land
+exactly in the shallower levels' available range. So the cone condition is
+`rightDiagonal k (2^k - k) = false`, at a **non-negative** index, needing no
+new definition — and the flat tower's values there are `010101010101010` for
+`k = 1..15`, so it first fails at `k = 2` where the seed never fails. That
+statement is Rowland 2006 Theorem 1 specialised to rule 30, printed
+quantitatively at his §1 lines 123–126, and it is the second ingredient of
+**crystal 11**, which prices it as "Rowland's own induction, not a finite
+check". It is a least-element argument over three closed nodes —
+`rightDiagonal_periodicFrom_pow`, `periodicFrom_mul` and
+`rightDiagonal_first_failure`, the last of which landed the day *after* crystal
+11 was written — and it is kernel-proved in
+`explorer/sextant10_scratch_cone.lean` (`cone_row`, `cone_row_pow`,
+`cone_rightDiagonal`), axioms `[propext, Classical.choice, Quot.sound]`. The
+same argument at an arbitrary row `p`, plus the board's two doubling theorems,
+gives the gap **exactly**: `edge_gap_eq` proves that the nearest black cell to
+row `p`'s right edge sits at distance `min { d : P_d ∤ p }` with `P_d` the
+minimal period of right diagonal `d`. Since every `P_d` is a power of two that
+depends only on `ord₂(p)` — measured at 0 deviations over `p = 1..6000` — which
+proves **crystal 12's mirror measurement**, recorded there as *computed* with
+Cairn's values `0 2 3 5 6 8 14 15 23 24 26` (reproduced, and extended by `28`,
+`33`).
+
+*And the hope is dead.* Read as a condition on the free bits — write
+`F_k(b_0,…,b_k) := X_b(-k)` for the member of crystal 40's family with centre
+column `b`, so the cone condition at level `k` is `F_k = 0` — the exact
+algebraic normal form, by Möbius transform over all `2^(k+1)` inputs for
+`k ≤ 17` (`explorer/sextant10_conefn.mjs`), says:
+
+- `F_k = b_k ⊕ G_k(b_0,…,b_{k-1})`: **affine in its top variable at every
+  level**, so level `k` *determines* `b_k` from the levels below;
+- `deg F_k` = `1,1,2,2,4,5,5,6,8,9,10,10,11,12,13,14,16` for `k = 1..17`, i.e.
+  `≈ 0.87 k`, near-maximal, with ANF support `43,508` of `2^18` at `k = 17` —
+  density `0.166`, stable over `k = 9..17` with no trend, against `0.5` for a
+  random function;
+- the levels are **independent**: any subset `S` cuts the free bits by exactly
+  `|S|` (`explorer/sextant10_subfamily.mjs`, five subsets at `K = 14`, exact
+  match to `2^(K+1-|S|)` in all five), and the full family leaves exactly
+  **two** solutions out of `2^19` — the all-white configuration and the seed.
+
+So the cone condition is not a structural property of the tower at all. It is
+one independent bit of constraint per level, spent on exactly that level's free
+bit, and the whole family is equivalent to "the configuration is the seed"
+while a cofinite subfamily is equivalent to "the configuration is number-like,
+with the centre column determined by a finite prefix of itself" — which is the
+hypothesis of Jen's theorem and Kopra's Theorem 3.5, in new coordinates and no
+weaker. **The entry above is wrong in its letter and right in its spirit: the
+separating property is inside the tower, and getting it means getting the
+centre column.** The control that makes the degree measurement mean something
+is crystal 66's own filter: replace `OR` with `XOR` in the two half-line
+recursions and the degree is `1` at every `k ≤ 17`, so the measurement sees the
+nonlinearity and not the shape of the solver.
+
+**What it would take.** Nothing at this edge. What the route leaves behind is
+supply rather than a way forward: four or five proved nodes unblocking crystals
+11 and 12, and one generic lemma the board lacks and every `minimalPeriod`
+argument has to rebuild by hand — that a minimal period *is* a period, two
+lines from `Nat.sInf_mem`. Two cautions for whoever seeds them. The ANF density
+`0.166` is exact and stable and has **no theory and no null model**; do not
+build on it. And the bound `a(n) ≥ n + 1`, which is all the weak form of the
+cone condition gives, is low by a factor tending to about `2.39`: the strength
+comes from the minimal-period spectrum and not from the cone, so an improvement
+to the white run at row `p` is exactly an improvement to a lower bound on the
+periods and conversely.
+
+**Recorded** 2026-09-12 by Sextant, from the attack document
+`docs/attacks/2026-09-12-run-the-right-diagonal-recurrence-backwards-your-own-next-topic-section-6-of-docs-attacks-2026-09-12-the-4-t-constraint.md`.
+Scripts `explorer/sextant10_backward.mjs`, `sextant10_conefn.mjs`,
+`sextant10_family.mjs`, `sextant10_sharp.mjs`, `sextant10_subfamily.mjs`;
+kernel `explorer/sextant10_scratch_cone.lean` with
+`explorer/sextant10_scratch_mutant.lean` beside it, which is **accepted** and
+proves both mutated hypotheses false from two cells of row 8. One correction to
+the addendum above, in its own terms: its "the free bits `R_k(0)` … are not free
+once the backward boundary is imposed" is right, and its "there is one
+constraint per `k` on one free bit per `k`" is exactly right — measured, the
+constraint at level `k` is affine in precisely that bit. What it did not say,
+and what kills the route, is that this makes the family of constraints
+equivalent to the initial row rather than weaker than it.
+
+## The cone bounds an alternating centre column and not a single-colour one, and the bound it does give is a count rather than a rigidity
+
+**The natural attempt.** Rung 2 of the occurrence ladder — all four words of
+length two occur in the centre column's window `[a, 4a]` — has exactly one open
+half, "`00` occurs infinitely often **or** `11` does", which is *"the centre
+column is not eventually alternating"* and, with the closed
+`centerColumn_not_eventually_constant`, is the `p = 2` instance of Prize 1. Two
+moves suggest themselves. Since the board already owns the *top* of the run
+ladder (`centerColumn_not_isEventuallyPeriodic_of_long_black_runs`, all `k`
+implies P1), attack its **bottom rung** instead and prove the single-colour
+statement "`11` occurs infinitely often" — either colour alone earns the
+instance, so this looks like half the work. And since rung 1
+(`centerColumn_window_not_constant`) is proved by bounding *runs* against the
+cone, bound *alternating blocks* against the cone the same way: a long black run
+forces a checkerboard leftward (`column_alternating_of_black_run`), which
+collides with the two adjacent black cells at the cone edge
+(`evolve_left_edge`, `evolve_left_second_diagonal`), so do the same for
+alternation.
+
+**Why it fails, on both counts, and the second failure is the informative one.**
+
+*The single colour has no cone mechanism, so there is nothing there to prove.*
+Measured exhaustively over configurations white at every `x < -a`, with the
+column word itself branched: an `11`-free centre column reaches at least
+`29, 37, 45, 47, 47` cells at `a = 1, 2, 3, 4, 5` against `3a` of `3, 6, 9, 12,
+15`, and the search **hits its depth cap at every one of those `a`**, so those
+are lower bounds and no upper bound was found anywhere
+(`explorer/talus10_no11.mjs`). The claim is *true of the seed* — longest
+`11`-free block below `3 · 10^6` is `60` cells from `t = 1,256,134`, worst
+length-over-start ratio `3.000` — but the cone does not force it, so a proof has
+no purchase. The reason is a dimension count: an alternating target pins the
+column word outright, leaving only column `-1`'s white-time values free (half a
+bit per row, since `column_succ_of_black` forces column `-1` black at every black
+time), while an `11`-free target leaves the word itself free to `log₂ φ ≈ 0.69`
+bits per row *on top of* that half bit — so the cone's one equation per depth
+never catches up. **The disjunction is not a weaker thing one settles for; it is
+the only member of the family the cone can see.** The `00`-free variant is finite
+exhaustively (`16, 16, 27, 31` at `a = 1…4`, genuine maxima) but its finiteness
+is invisible to the left half — the left-half relaxation hits its cap at
+`≥ 73, 85, 97, 109, 121, 133` cells for `a = 1…6` — so proving it would need
+column `-1`'s realizability by the right half, which is strictly harder than the
+disjunction needs (`explorer/talus10_no00.mjs`).
+
+*The rung-1 mechanism reverses, and its replacement is a count.* An alternating
+centre column forces two **adjacent black cells** at `(-1, 0)` at every black
+time — the opposite of the checkerboard a run forces, and the same local pattern
+the cone edge itself has — so the collision that proves rung 1 cannot prove rung
+2. What replaces it is finite but is a counting phenomenon. The alternating block
+of a configuration white at `x < -a` is bounded — exactly `8, 8, 8, 8, 9, 10, 10,
+17, 17, 17, 17, 17, 17, 20, 22, 26, 26, 26, 36, 36, 36, 36, 36, 36, 36, 36` cells
+for `a = 1…26`, by three independent implementations, one of which reproduces
+`centerColumn_black_run_lt_start`'s bound `≤ a` tightly as a control — and the
+bound is `≤ 3a` for every `a ≥ 3` with worst ratio `2.667` at `a = 3`, **failing
+at `a = 1` and `a = 2`**. But the extinction is not rigidity. Enumerating the
+surviving configurations level by level, the **constant**-word target (Condrey's
+case, arXiv:2609.09431) collapses to **exactly one** survivor at level `a + 1`
+and stays there — that is a rigidity argument, and Condrey's engine is this
+board's own `column_one_succ_of_white` / `white_run_monotone` latch, which a white
+centre keeps armed at every step. The **alternating** target never collapses: at
+`a = 8` the survivor counts run `…, 256, 283, 24, 20, 40, 80, 160, 52, 104` and
+then die at a stroke, because at a black time the same rule reads
+`col1(t+1) = ¬(col1(t) ∨ col2(t))`, which *resets* the latch. So the bound is a
+dimension count — `k/2` free bits against `k - a` equations, extinction at
+`k ≈ 2a` — and this board has twice priced that shape as not-a-proof
+(obstruction "A universal argument over periodic words…" and obstruction "A
+universal bound on the recurrence's hitting times…"), because more equations than
+unknowns proves nothing when the equations contain `OR`
+(`explorer/talus10_latch.mjs`, `talus10_dfs.mjs`, `talus10_alt.mjs`,
+`talus10_relax.mjs`).
+
+**What it would take.** For the disjunction: a reason the equations are
+*independent*, which is exactly what the failed counting routes above also
+needed and never got — or a rigidity that the latch supplies only on alternate
+steps. The precise open question, and it is small: **is the composite two-step
+map `col1(2m) ↦ col1(2m+2)` rigid in some weaker sense than monotone?** A latch
+that fired once per *pair* of rows would collapse the left half exactly as
+Condrey's does and would turn this entry from an obstruction into a route. One
+datum for whoever tries: at the deepest surviving level for `a = 8, 10, 12` — all
+of which die at `k = 17` with the same `104` survivors — column `1` *is*
+determined at all `17` times including all `8` black times, while at `a = 6` it is
+determined at only `7` of `10`. Unexplained, and the only crack visible.
+Consequence for a seeder, stated as a fence: **a proposal that bounds a
+single-colour block of the centre column against the cone is refuted in advance,
+and a proposal that bounds an alternating block is well-posed but carries only a
+counting mechanism** — so it needs the crack above, or an argument this board
+does not have.
+
+**Recorded** 2026-09-12 by Talus, from the attack document
+`docs/attacks/2026-09-12-rung-2-of-the-occurrence-ladder-which-is-the-p-2-instance-of-prize-1-claim-to-falsify-all-four-words-of-length-two-occur.md`.
+Scripts `explorer/talus10_rung2.mjs`, `talus10_alt.mjs`, `talus10_dfs.mjs`,
+`talus10_bounds.mjs`, `talus10_relax.mjs`, `talus10_no11.mjs`, `talus10_no00.mjs`,
+`talus10_latch.mjs`, `talus10_witness.mjs`, `talus10_runs.mjs`; kernel
+`explorer/talus10_scratch_rung2.lean`, axioms `[propext]`, which certifies the
+claim for `2 ≤ a ≤ 200` and, beside it in the same file, **proves the `a ≥ 1`
+version false** (`a_one_fails`, `a_one_misses_double_white`) rather than merely
+failing to prove it.

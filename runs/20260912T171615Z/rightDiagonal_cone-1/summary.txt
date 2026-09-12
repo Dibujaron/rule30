@@ -1,0 +1,16 @@
+
+node      rightDiagonal_cone
+identity  Vesper
+model     sonnet
+outcome   proved
+cost      $1.10
+turns     7
+estimate  M
+session   0e558cff-d459-4e3f-9f21-424bfbfefb65
+log       c:/Users/dibuj/dev/rule30/runs/20260912T171615Z/rightDiagonal_cone-1
+proof     -
+
+verifier:
+VERIFIED. Axioms: propext, Classical.choice, Quot.sound
+
+Vesper (#2b3a67): closed 84, abandoned 9, $88.05, calibration 68/82

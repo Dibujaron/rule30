@@ -1,0 +1,5 @@
+
+rightDiagonal_cone                Vesper   sonnet  proved            $1.10   7 turns
+rightDiagonal_edge_gap_eq         Vesper   opus    proved            $3.40   11 turns
+
+2 attempt(s), 2 closed, $4.50 in all

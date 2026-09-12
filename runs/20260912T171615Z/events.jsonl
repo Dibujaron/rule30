@@ -1,0 +1,21 @@
+{"ts":"2026-09-12T17:16:15Z","kind":"run","max_attempts":2,"concurrency":1}
+{"ts":"2026-09-12T17:16:32Z","kind":"statement_gate","node":"rightDiagonal_cone","result":"resolves","statement":"Statements.rightDiagonal_cone : ∀ (k : ℕ), 1 ≤ k → rightDiagonal k (2 ^ k - k) = false"}
+{"ts":"2026-09-12T17:16:32Z","kind":"dispatch","node":"rightDiagonal_cone","identity":"Vesper","model":"sonnet","reason":"open leaf; unblocks 1; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4130,"log":"c:/Users/dibuj/dev/rule30/runs/20260912T171615Z/rightDiagonal_cone-1","in_flight":1}
+{"ts":"2026-09-12T17:17:52Z","kind":"index","node":"rightDiagonal_cone","module":"Rule30.Proofs.RightDiagonalCone","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-12T17:17:52Z","kind":"theorem_index","node":"rightDiagonal_cone","file":"blueprint/index.md","outcome":"written"}
+{"ts":"2026-09-12T17:18:00Z","kind":"statement_gate","node":"rightDiagonal_edge_gap_eq","result":"resolves","statement":"Statements.rightDiagonal_edge_gap_eq : ∀ (p D : ℕ),\n  0 < p →\n    (∀ d < D + 2, minimalPeriod (rightDiagonal d) ∣ p) →\n      ¬minimalPeriod (rightDiagonal (D + 2)) ∣ p →\n        (∀ (d : ℕ), 1 ≤ d → d < D + 2 → evolve p (↑p - ↑d) = false) ∧ evolve p (↑p - ↑(D + 2)) = true"}
+{"ts":"2026-09-12T17:18:00Z","kind":"dispatch","node":"rightDiagonal_edge_gap_eq","identity":"Vesper","model":"opus","reason":"open leaf; unblocks 0; ladder step 1","max_turns":40,"max_budget_usd":4.0,"port":4131,"log":"c:/Users/dibuj/dev/rule30/runs/20260912T171615Z/rightDiagonal_edge_gap_eq-1","in_flight":1}
+{"ts":"2026-09-12T17:21:07Z","kind":"index","node":"rightDiagonal_edge_gap_eq","module":"Rule30.Proofs.RightDiagonalEdgeGapEq","file":"Rule30/Proofs.lean"}
+{"ts":"2026-09-12T17:21:08Z","kind":"theorem_index","node":"rightDiagonal_edge_gap_eq","file":"blueprint/index.md","outcome":"written"}
+{"ts":"2026-09-12T17:21:13Z","kind":"stray","file":"explorer/chorobates_scratch_whitetimes.lean","verdict":"clean"}
+{"ts":"2026-09-12T17:21:18Z","kind":"stray","file":"explorer/ephemeris2_scratch_occur.lean","verdict":"clean"}
+{"ts":"2026-09-12T17:21:23Z","kind":"stray","file":"explorer/ephemeris2_scratch_orbit.lean","verdict":"clean"}
+{"ts":"2026-09-12T17:21:29Z","kind":"stray","file":"explorer/ephemeris_scratch_dilations.lean","verdict":"clean"}
+{"ts":"2026-09-12T17:21:35Z","kind":"stray","file":"explorer/ephemeris_scratch_mutant.lean","verdict":"broken"}
+{"ts":"2026-09-12T17:21:41Z","kind":"stray","file":"explorer/seeder13_scratch_front.lean","verdict":"clean"}
+{"ts":"2026-09-12T17:21:49Z","kind":"stray","file":"explorer/sextant10_scratch_cone.lean","verdict":"broken"}
+{"ts":"2026-09-12T17:21:57Z","kind":"stray","file":"explorer/sextant10_scratch_mutant.lean","verdict":"broken"}
+{"ts":"2026-09-12T17:21:57Z","kind":"stray","file":"explorer/sextant8_scratch_mutant.lean","verdict":"no_theorems"}
+{"ts":"2026-09-12T17:21:57Z","kind":"stray","file":"explorer/sextant8_scratch_rows.lean","verdict":"no_theorems"}
+{"ts":"2026-09-12T17:22:02Z","kind":"stray","file":"explorer/sextant9_scratch_mutant.lean","verdict":"broken"}
+{"ts":"2026-09-12T17:22:17Z","kind":"stray","file":"explorer/sextant9_scratch_reach.lean","verdict":"broken"}
