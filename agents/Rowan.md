@@ -4133,3 +4133,56 @@ sixth by Dib in one question. The instruments that came out of it — Talus's
 cone-visibility classification, Keel's `status` disclaimer line, and
 `rowan_rulecontrol.mjs` — all exist to take target choice away from my taste,
 and on today's record that is the correct place to put it.
+
+## 2026-09-12, late — first Fable session; reading the board cold after /clear
+
+**Band, first: Nothing.** No mathematics was produced this session; it was a
+reading of four days of my predecessor's record through four subagents, and a
+recommendation.
+
+**What the record says, compressed.** Board 167/171 proved, zero dispatchable
+leaves, four walls: two are logically equivalent to P1 (obstruction 10), two
+disclaim prize bearing in their own text. Every band statement from 09-11 on
+is Nothing or project-internal. Six targets falsified in one day, one of them
+(left-pin) a tautology I retracted myself. P3 is *vacuous* in `Prize.lean` —
+`IsFaithfulCostModel` is `opaque`, so the theorem has no inhabitable
+hypothesis — and has 0 nodes. P2 is fenced at 3/5. P1 has one proved rung
+(period 1) and its mechanism (one constant column freezes a neighbour, two
+frozen columns collide with the cone edge) *reverses* at period 2
+(obstruction 29): alternation leaves `c₋₁` free at white times, so nothing
+marches left and `not_isEventuallyPeriodic_adjacent` has nothing to consume.
+
+**The one live target is rung 2** — "the centre column is not eventually
+period 2" — and it is the only statement anywhere on the board that would be
+Novel if proved: Condrey (arXiv:2609.09431, 2026-09-08, unrefereed, and its
+shipped Lean does not prove its headline, per Keel) has rung 1 and says
+nothing above it. Rung 2 is finite at every measured `a` (alternating block
+≤ 3a over the coned class for a ≥ 3, to a = 26; 21 cells in the seed below
+3·10⁶), and the finiteness is a *count* — equations overtake unknowns — with
+no mechanism that generalises over `a`. Kopra 2022 prices the family version
+at prize difficulty; the single-seed instance is not the family.
+
+**The recommendation I am making to Dib, and why it is a different approach
+rather than a new target.** Everything tried so far searched for a *proof*;
+what is missing is a *mechanism*, and the exhaustive sweeps that establish
+finiteness at each `a` throw away the one thing that would reveal it — *which*
+constraints conflict. Encode "class C_a, column 0 alternating for 3a+1 rows"
+as SAT, get UNSAT, extract a minimal unsatisfiable core per `a`, and look at
+the cores' *shape*: if they live in a band of bounded width near the cone
+edge, that band is an inductive invariant candidate and a proof by induction
+on `a` becomes a Lean task; if the cores grow with `a` or scatter, that is a
+cheap, decisive negative on rung 2 by this route. Nobody here has done this
+(no solver installed; `grep` of the notebook and obstructions for unsat
+core / IC3 / inductive invariant is empty). It takes target selection *and
+mechanism selection* away from my judgement, which is the direction my
+predecessor's own summary points.
+
+**Two things I am not recommending, and why.** More seeding: there are no
+leaves and the tractable region is the left edge, which is anti-progress by
+CLAUDE.md's own measurement. Making P3 sayable: real and cheap
+(`periodic_polyTime`), project-internal, and Dib has ruled P3 off the DAG;
+it goes in the report as an option, not a plan.
+
+**Session cost note.** Fable, budget-limited; all reading delegated to Opus
+subagents at Dib's instruction. My own turns: startup, one registration
+commit, one solver check, this entry.
