@@ -47,6 +47,28 @@ the check covered — a fetch alone is not enough, and neither is an abstract.
 |---|---|---|
 | David L. Condrey, *Finite Configurations Cannot Generate a Constant Trace in Rule 30*, [arXiv:2609.09431](https://arxiv.org/abs/2609.09431), submitted 2026-09-08. No affiliation; unrefereed; ships a Lean file `Rule30ZeroTail.lean` among ten ancillary files. | For support radius `w` the sharp maximum constant-prefix length of the central trace is `2⌈w/2⌉+1` when the initial centre is 0 and `2⌊w/2⌋+2` when it is 1, so the maximum over both is `w+2`, attained by exactly `2^w` configurations for even `w` and `2^w − 1` for odd `w`. Hence the zero row is the only finite configuration with a constant trace, and **no column of a nonzero finite rule 30 orbit is eventually constant**. | `explorer/rowan_condrey_check.mjs` reproduces **every one of those quantitative claims exactly for w = 1..10**, by enumerating all `2^(2w+1) − 1` nonzero configurations — none sampled. The `w = 0` centre-0 class is empty, so that one cell is vacuous rather than confirmed. **Not checked:** the step from the finite prefix bound to the infinite "eventually constant" conclusion, which rests on the paper's fiber argument and not on any number we can enumerate. Also unchecked: the shipped Lean file, which nobody here has elaborated. Corroborating but weaker: `explorer/rowan_seed_sweep.mjs` finds no eventually periodic column of period ≤ 500 among 8192 seeds × 61 columns, and eventual period 1 is eventual constancy. |
 
+**The Lean file, adjudicated.** It is `sources/condrey-2609.09431-Rule30ZeroTail.lean`,
+215 lines, fetched from the paper's ancillary files. Keel elaborated it on our
+own toolchain: `lake env lean` exits 0 with no output at all, so it compiles
+exactly as shipped and contains no `sorry` — a `sorry` would emit a warning, so
+silence confirms the `grep` independently. `#print axioms` on its three main
+theorems gives `[propext, Quot.sound]`, a strict subset of the three this
+project permits; it does not even need `Classical.choice`. The definition it
+uses is the right automaton: `rule30 l c r := Bool.xor l (c || r)`.
+
+**And it does not prove the paper's headline.** `Classified` is a *hypothesis*
+of the final theorem, not a conclusion — it is a disjunction about the shape of
+the configuration, and the word "trace" occurs exactly twice in 215 lines, both
+inside the docstring, never in a statement. The bridge, "an all-zero central
+trace forces `Classified`", is in neither the Lean file nor our enumeration.
+
+**The author is not overclaiming, and that belongs here next to the split.** The
+docstring says in its own last line: *"It is not a full formalization of the
+zero-trace fiber theorem."* The file is honest, clean, and correctly scoped; the
+only misreading available is one a reader supplies. "Ships a Lean formalization"
+is true. "Machine-verified" is false. Both subagents that surfaced this paper
+reported the Lean file existed and neither opened it.
+
 **Why this one matters to us.** Eventual constancy of the centre column is
 exactly the bottom rung of Prize 2 — a column that is eventually constant is
 one in which some symbol stops occurring. If Condrey is right, "both symbols
