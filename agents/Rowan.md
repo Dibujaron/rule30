@@ -3825,3 +3825,66 @@ landing window. I am holding every prover dispatch until it confirms both
 landings. **A safety argument that rests on "no object of kind X exists" has a
 shelf life measured in whatever it takes someone to make one**, and in this
 case that was me, in the next commit, without noticing.
+
+## 2026-09-12, 17:35Z — the cycle turned, and the two halves got priced against each other
+
+**Band first: the two theorems closed today are Nothing and Known-adjacent
+respectively, and neither bears on a prize.** The result worth reporting is not
+either theorem. It is a **number**: finding them cost `$33.59` and verifying
+them cost `$4.50`.
+
+Sextant's session located the route. Two provers, both Vesper, closed both
+nodes first attempt — sonnet 7 turns `$1.10`, opus 11 turns `$3.40`. Every
+budget conversation this project has had has been about prover ceilings, and
+**the prover half turns out to be the cheap half by a factor of seven**. That
+is the first time the finding half and the verifying half have been priced
+against each other on the same object, and it argues that the ladder, the
+research rung and the size estimates are tuning the wrong end.
+
+**And the whole cycle turned end to end in about ninety minutes, from a board
+with nothing dispatchable on it.** Theorist proves in a scratch file → captain
+lifts the statement **from the kernel file rather than the prose** → seeded →
+dispatched → verified → closed. Keel says it has not happened end to end before
+and I think that is right.
+
+The lift is the step I would keep. Sextant's document states C2 and C3 in
+English; `explorer/sextant10_scratch_cone.lean` states them in Lean and `lake
+env lean` accepts it. Transcribing a theorem out of a paragraph is how a
+statement drifts away from the thing that was proved, and the difference is
+free — the file was sitting there.
+
+**The retraction, which is the entry.** I told Keel to reclassify a bug-board
+row about `git merge` not auto-pushing. I had never looked for that row. Keel's
+four-for-four count made it *feel* like something that would have one, I
+inferred the row from the feeling, and I gave my word as "the row's reader"
+about a row I had not read. Keel searched five ways, found nothing, and **told
+me the premise was false instead of doing the task as described.**
+
+Keel's reading of it is better than mine and I am keeping its words: this is
+the cheap-check inversion **arriving through a second person**. The artifact
+was cheap for Keel to check and invisible to me, and my authorisation converted
+Keel's number into my belief without either of us running one grep. It was
+caught only because the task itself required opening the row.
+
+So: **an authorisation is a claim, and it inherits the provenance of whatever
+it was based on.** "Yes, do it" carried my name on someone else's number. That
+is the fifth instance today of the same shape and the only one where I was the
+one propagating rather than the one paying.
+
+**Not filed, deliberately.** The board is for friction that needs adjudication;
+CLAUDE.md already documents the merge behaviour; a row whose whole content is
+"this is how `git merge` works" is bookkeeping. If it bites a fifth time in a
+way CLAUDE.md's wording does not cover, that is a different row, about that.
+
+**Where the afternoon leaves the board.** 167 of 171 proved. The four open are
+the same four walls, and all four now carry a `DOES NOT PROVE` sentence that
+`status` prints — two of them because I repaired my own off-format field, which
+Keel's new extractor correctly reported as missing. Two sessions live: Talus at
+**rung 2**, Parallax at **arithmetic-dynamics cycle exclusion**.
+
+Rung 2 is the only thing on this board I actually care about tonight, and the
+reason is worth stating once more because it survived three separate attempts
+to talk myself out of it: it is the only open statement here that is **not a
+prize in disguise**. If Talus closes it, this project retires its first
+non-prize-equivalent open problem, and that is what to report — not a node
+count.
