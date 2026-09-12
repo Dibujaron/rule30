@@ -3198,3 +3198,117 @@ CLAUDE.md was rewritten to stop. The four sessions in flight are the fence
 being tested rather than more nodes under it — and if all four come back
 negative, that is a real answer about where this project stands, not a bad
 evening.
+
+## 2026-09-12, later — the evening's real subject was measurement, not rule 30
+
+Four theory sessions landed and four more are running. The results are worth
+two lines each; **what I should keep is that I made four measurement errors in
+one evening and a peer caught two of them.**
+
+- `exit 0` measured the **launcher**, not the session. Cost two dispatches.
+- `grep -o '"id":"…[^}]*}'` ran past a row's end into a neighbour's fields, and
+  reported a row Keel had already claimed as unclaimed.
+- `binary` in a pattern meant **base two** in the corpus, so "five notebooks
+  record the PDF lesson" was four false positives and one real one. That went
+  into CLAUDE.md with Dib's authorisation behind it.
+- and then, correcting *that*, I wrote "eighteen of nineteen" under a list I had
+  just printed with nineteen rows. **No instrument at all.**
+
+Keel's split is the thing to keep, because it shows why "check your counts
+harder" fixes almost none of it: a **domain-ambiguous term**, a **mixed
+population** (Torquetum counted into a fraction whose denominator was the
+roster), and **no instrument**. One of three is a grep problem. Naming the
+members addresses all three — and the proof is my own corpus: four patterns,
+the cardinality moved four times, Dioptra was the only notebook hit every time.
+
+**Where I am fastest is where I am least checked.** Three of the four went into
+a commit message or CLAUDE.md before anyone looked. That is the opposite of how
+it should be, and it is not solved by writing more carefully; a commit is
+pushed before a reader exists.
+
+### The one that is not about counting, and is mine alone
+
+`` `gleam run -- status` `` inside a double-quoted bash vantage. Bash ran it and
+substituted 112 lines of stray-file listing into the argument, and the dispatch
+died with `Argument list too long` — an accurate message about the wrong
+subject. The tell was a *compile warning* in the output of a command that
+compiles nothing. **Never backticks in a dispatched topic string.** This project
+puts prose into a shell for a living and that prose is full of Lean names in
+backticks.
+
+### And a habit I keep failing at, which is the reader's half of Keel's fix
+
+Keel made the harness exit nonzero on error. I then piped the next three
+dispatches through `| tail -3` and read `$?`, which is `tail`'s. **An exit status
+a pipeline discards is a signal correctly sent and never received.** Now:
+`; echo "EXIT=$?"`, no pipe.
+
+### What the science actually did
+
+P1's probabilistic shelf closed (Waywiser), non-automaticity of the column
+closed (Ephemeris), P2's local route closed with a *sharp constant* — 3/5, with
+a witness, which I verified exhaustively over ring sizes 1–18 and which holds
+harder than Sextant claimed — and `periodic_polyTime` is proved, so P3's
+statement is no longer vacuous. **Zero prize progress, and no open route anyone
+had a reason to believe in.** That is a better position than a shelf of live
+routes nobody has priced, and it is the first night this project's negatives
+were the product.
+
+## 2026-09-12, round two — the pipeline narrows because I am the one narrowing it
+
+Four more theory sessions, all adjudicated against the artifacts. Three closed
+routes; one left a positive. Details are in the commits. **The thing worth
+keeping is a structural finding about how this project chooses what to look at,
+and it is about me.**
+
+### Every recent topic came from the previous session's own §6
+
+All four tonight, and the two before them. I wrote each brief by transcribing a
+handover. **Zero came from outside the pipeline.** So the generator of topics is
+the *tail* of the pipeline: a session that has spent hours closing one route
+proposes the route adjacent to it, because adjacency is what it can see from
+there. That is local search, and local search converges by construction.
+
+The sighting titles measure it (weak instrument, unsubtle trend). 09-08 and
+09-09 named twelve distinct areas of mathematics — expansive subdynamics,
+cocycles over an odometer, profinite dynamics, Christol, computational
+mechanics, Gowers norms, percolation, Kolakoski, synchronizing automata, 2-adic
+T-functions, reverse mathematics, thermodynamic formalism. Everything from 09-10
+on names **our own artifacts**: "crystal 72's literature clause", "does
+obstruction 7…", "the subshift of the centre column", "make P3 sayable" — a file
+we wrote. And Walnut is automatic sequences a second time, already visited via
+Christol.
+
+Meanwhile `obstructions.md` is at 27 entries. **Closures are permanent and
+openings are one sentence in a handover that lives until someone takes it.**
+That asymmetry is a ratchet: the reachable space shrinks monotonically even
+though every session is doing good work.
+
+### It is the same failure the file was rewritten to stop
+
+CLAUDE.md's opening section says the seeder flows downhill because routes exist
+where the mathematics is tractable, every step is correct, and downhill is away
+from the prize. **Nobody noticed it applies to the connector pipeline too.** I
+have read that section many times this week and did not see it, because it is
+written about the seeder and I was not running a seeder.
+
+**And the bottleneck is structurally me.** The scheduler cannot inject a
+non-local topic, the seeder reads §5s, a session reads its own material. The
+captain is the only component that can, and I had four chances and took none.
+Not laziness — the handovers are *good*, written by sessions fresh out of the
+material, naming real questions. They are just all within one step.
+
+### What I got wrong inside the round, and one thing I got right
+
+Wrong: I briefed Waywiser that the left diagonals are a region "safely away from
+the centre column". `leftDiagonal k 0 = centerColumn k`, definitionally,
+two lines in `Basic.lean`. **I asserted a structural relationship between two
+definitions without opening either file** — the same shape as the whole evening.
+A brief is an artifact and that one shipped a false premise.
+
+Right, and only because tonight had already taught it: a Talus mutant exited 0
+and I nearly reported a missing check. It was *deliberately* an accepted file
+proving the mutation **false**, which is a better discipline than a rejected
+mutant — a rejection conflates "the statement is false" with "this tactic
+failed". I read the header before filing the alarm. That is the first time all
+evening the check came before the claim.
