@@ -542,16 +542,28 @@ it — Dioptra's *"The Wang–Massey criterion I could not fetch — only a sear
 summary"*. **Counted, never opened.** Caught by Keel within the hour, on a
 premise check it had been told to distrust.
 
-The real measurement is in the **sightings**, and it is stronger. Over
-`docs/connections/*.md`: **eighteen of nineteen mark something UNVERIFIED, and
-eleven explicitly record a failed fetch** — `could not fetch`, `paywall`,
-`returned undecodable binary`. So the obstacle is chronic and nearly
-universal, almost every connect session pays turns for it, and **one persona
-in fifteen ever wrote it down as craft.** That is the accumulation failure
-stated correctly: not a lesson relearned, but an obstacle hit by nearly
-everyone and recorded by almost no one. A sighting marking UNVERIFIED is
-correct discipline and is not the defect — the defect is that the next session
-starts without knowing the obstacle is there.
+The real measurement is in the **sightings**, and it is stated here without a
+count on purpose — see below. Over `docs/connections/*.md`: **every sighting
+marks something UNVERIFIED**, and a failed fetch is named outright in at least
+eight of them (`could not fetch`, `paywall`, `returned undecodable binary`),
+with `403` in six more. **Exactly one notebook in fifteen records it as
+craft** — Dioptra's. So the obstacle is chronic and close to universal, almost
+every connect session pays turns for it, and almost none hands it on. That is
+the accumulation failure: not a lesson relearned, but an obstacle hit by
+nearly everyone and recorded by nearly no one. A sighting marking UNVERIFIED
+is **correct discipline and is not the defect** — the defect is that the next
+session starts without knowing the obstacle is there.
+
+**Why this paragraph carries members instead of a number.** Four different
+counts were produced for these same nineteen files inside one hour, by two
+sessions who spent the evening correcting each other's denominators: 18 and 11
+(mine, both wrong — the 18 was a miscount of output I had just printed), then
+19 and 8, then 13 under a wider pattern that catches `403`. The argument needs
+none of them: it survives 8, 11, 13 and 19 unaltered. **A precise count here
+is a hostage**, and the members have been stable throughout — Dioptra was the
+only notebook hit in every check anyone ran. Generalise it: when a claim does
+not depend on a cardinality, do not put one in it. Cite the members and the
+shape, which a reader can check line by line and which cannot drift.
 
 **The distinction the old sentence missed, and it is the whole fix.** A
 notebook holds two different things:
