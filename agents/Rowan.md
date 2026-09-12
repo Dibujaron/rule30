@@ -3517,3 +3517,70 @@ project memory already said so. I knew it and did not think of it, which is a
 different failure from not knowing it, and the fix for it is not a better
 memory — it is the default. Keel has that fix on `keel/model-default`, waiting
 on a gap in my run queue.
+
+## 2026-09-12, 16:10Z — the exhaustion is sharper than "165 of 169"
+
+**Band first: no mathematics here. Both items below are already in this
+repo's own documents and I am correcting my own reading of the board, not
+adding to it.**
+
+**The four open nodes are not four open problems. Two of them are the prize.**
+`docs/attacks/2026-09-08-the-residual-itself-…`, claim C0, states it and calls
+it kernel-checked: given Jen's theorem,
+
+```
+(IsEventuallyPeriodic centerColumn → ∃ j ≠ 0, IsEventuallyPeriodic (column j))
+  ↔  ¬ IsEventuallyPeriodic centerColumn
+```
+
+— so `centerColumn_other_isEventuallyPeriodic_of_center` and
+`centerColumn_right_isEventuallyPeriodic_of_center` are not reductions of
+Prize 1, they are Prize 1 wearing a hypothesis that Jen's theorem already
+contradicts. Chorobates reached the same verdict independently on 2026-09-11
+("the fourth residual has no literature by logic rather than by search: it is
+*equivalent* to P1"). The other two open nodes are the left-diagonal walls,
+which CLAUDE.md's own opening says bear on no prize conjecture.
+
+So the honest statement of where this board stands is not "165 of 169 proved".
+It is: **nothing is open that is both prize-relevant and not itself a prize.**
+That is a different sentence and it is the one to give Dib.
+
+I should not have written "closing either gives Prize 1 outright" into today's
+two briefs without the second half of it. It is true, and it invites exactly
+the error C0 exists to retire — treating the wall as a lever. I am not
+messaging either live session to correct it; a message into a guarded session
+arrives from outside its brief and is recorded nowhere. Both carry
+`docs/obstructions.md`, which is where C0's consequence lives.
+
+**The one target that is genuinely below the prize: rung 2.** From Ephemeris's
+sighting of this morning, `…-the-subshift-of-the-centre-column-…`, §5 Topic 1.
+The claim is *all four words of length two occur in every window `[a, 4a]`*.
+`01` and `10` are free from rung 1 applied twice, so the content is "`00`
+occurs infinitely often, or `11` does", which is "the column is not eventually
+alternating"; with the closed `centerColumn_not_eventually_constant` that is
+the `p = 2` instance of Prize 1. I checked the load-bearing premise rather
+than taking it: `centerColumn_not_eventually_constant` is `proved` in the DAG.
+And I re-ran the measurement rather than quoting it — `node
+explorer/ephemeris2_rung2.mjs`, window `[a, 4a]`, length 2: **one failure, at
+`a = 1`**, holding for every `a ≥ 2` to 100,000. Rungs 3 to 6 hold too, past
+`a = 11, 23, 35, 113`, with the window multiplier that clears each length
+climbing like `2^ℓ`.
+
+**Ephemeris undersells its own rung, and this is the one thing I would add to
+its topic.** §5 says rung 2 gives "the `p = 2` instance of P1 and **no more**".
+By crystal 21 — a tail of period `p` has at most `p` distinct factors of each
+length, already used on this board to kill periods from factor counts — four
+distinct factors of length two occurring infinitely often forces `p ≥ 4`. So
+rung 2 kills every period below 4, not the single period 2, and rung `ℓ` kills
+every period below `2^ℓ`. That does not make the ladder a route: its limit is
+"every word occurs", which is disjunctivity and is at least as hard as the
+prize, and Ephemeris's "a rung, not a route" warning survives intact. It does
+change the price of one rung.
+
+**Why this is the next theorist topic and the backward recurrence was not the
+better pick.** Rung 2 is the only statement I can find anywhere on this board
+that is (i) open, (ii) not equivalent to a prize, (iii) not vacuous over
+`ℕ → Bool`, and (iv) measured to 10^5 with a single explicable failure. Every
+other live target fails one of the four. Sextant is mid-session on the
+backward right-diagonal recurrence and I will not interrupt it; Talus takes
+rung 2 the moment the theorist port frees.
