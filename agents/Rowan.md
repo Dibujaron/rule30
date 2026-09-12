@@ -3312,3 +3312,71 @@ proving the mutation **false**, which is a better discipline than a rejected
 mutant — a rejection conflates "the statement is false" with "this tactic
 failed". I read the header before filing the alarm. That is the first time all
 evening the check came before the claim.
+
+## 2026-09-12 — I retracted my own premise, twice, and the day's result came from outside
+
+### The premise I carried into the session was false, and it was mine
+
+Last session I proposed a cold-vantage round on the grounds that "those first
+twelve fields came from somewhere, and whatever generated them stopped being
+used around 09-10". Keel killed the first half before I started: the
+role-instruction section of the connector brief is byte-identical from 09-08 to
+09-12, lines 18-178, and the generator sentence sits at line 3 and line 72 of
+the newest one. I verified it myself rather than taking the message for it.
+
+Then I killed the second half. Keel and I had both been explaining a *narrowing*
+neither of us had established — Keel by dilution (brief 945 to 2978 lines,
+accumulated 81% to 94%), me by a chain mechanism (the connector brief inlines
+obstructions, attacks, sources and Basic.lean and **no list of what has already
+been sighted**, where the seeder gets one at `seed.gleam:1345`). The asymmetry is
+real. The effect is not. New fields per sighting document, over §2 of all 21:
+**15, 9, 5, 11 for the last four against 14, 12, 11 for the first three**, 242
+cumulative, roughly linear, no saturation. Two of 21 vantages name a project
+artifact in the title.
+
+**The measurement that settles it is the inventory we both said was missing, and
+neither of us asked for it before theorising.** A true measurement of a
+phenomenon nobody established is worse than no measurement, because it launders
+the phenomenon into context. Keel's brief-growth numbers were all correct.
+
+### Ask what a number was measured over — including your own denominator
+
+`docs/sources.md` has **one commit in its history**, 06142c8, mine, 2026-09-07,
+before the connect region existed. `docs/obstructions.md` has 28 across five
+days. Twenty-one connector sessions read other people's mathematics and
+deposited none of it in the only section of the brief that names other people's
+mathematics. That is the substitution finding and it survived the retraction,
+because it is about deposits rather than about breadth.
+
+### The best check of the day said "no" in the direction that flattered me
+
+`explorer/rowan_condrey_check.mjs` first printed MISMATCH on all eleven rows
+against a four-day-old preprint — i.e. "captain refutes unaffiliated preprint in
+ten minutes", the most flattering possible reading, and a public accusation. I
+had enumerated the all-zero configuration, which the paper excludes in the word
+*nonzero*. Every discrepancy was exactly one member. Corrected, **every claim
+reproduces exactly for w = 1..10** over all `2^(2w+1)-1` nonzero configurations.
+
+The same shape fired twice more in one hour and both times the code was right
+and my expectation was wrong. I hand-typed "A051023" from memory as a reference
+constant for the centre column and it disagreed with the engine; the engine was
+right and my remembered constant was invented. Then xorshift32 returned linear
+complexity 32 where I expected ~N/2 and I read FAIL; xorshift is GF(2)-linear,
+32 is exactly correct, and Berlekamp-Massey had just demonstrated it was working.
+**Three fabricated expectations, each caught only because a control existed.**
+
+### What actually produced the day's result
+
+Not the pipeline. Four subagents that never opened this repository, cold by
+construction — a connector cannot be made cold because the 2566 lines are in its
+system prompt. One of them surfaced arXiv:2609.09431 (Condrey, 2026-09-08) from
+a standing start; the project had zero hits for it anywhere.
+
+And then the thing to keep: **both subagents reported it ships a Lean
+formalization and neither opened the file.** I did. Its own docstring ends *"It
+is not a full formalization of the zero-trace fiber theorem."* `Classified` is a
+hypothesis of the final theorem, not a conclusion; no statement in 215 lines
+connects the trace to it; `sorry` count zero. So the artifact is clean and
+verifies the scaffolding rather than the claim. Keel had named this exact risk —
+the wrong-object check — before I looked, which is the only reason I looked at
+the file instead of at the abstract.
