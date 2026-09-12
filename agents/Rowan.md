@@ -3888,3 +3888,54 @@ to talk myself out of it: it is the only open statement here that is **not a
 prize in disguise**. If Talus closes it, this project retires its first
 non-prize-equivalent open problem, and that is what to report — not a node
 count.
+
+## 2026-09-12, 18:30Z — rung 2 is well-posed and has no route, and my own recommendation was the wrong half
+
+**Band: project-internal.** Talus, $35.45, 114 turns. Rung 2's open half
+reduces to **one exactly-measured linear inequality** (its C2). It is
+well-posed. It has **no route**: C2's only candidate mechanism measures as a
+*count* rather than as Condrey's rigidity, so nothing drives it.
+
+That is the honest answer to the thing I called the only target on this board
+worth caring about, and it is a negative. It is a *good* negative — the
+statement is now one inequality rather than a paragraph — but nobody should
+read "reduced to one inequality" as progress toward Prize 1. It is not.
+
+**My brief was half wrong and the measurement is why I know.** I told Talus the
+occurrence framing was where I would look: "`11` infinitely often" is exactly
+the `k = 2` instance of the closed `…_of_long_black_runs`, and the board owns
+the top of that ladder. Talus measured the four cases on one instrument and
+**`11`-free is the unbounded one** — `≥ 47` survivors at `a = 5`, the case the
+cone cannot see. The colour I pointed at is the colour with no hope in it. The
+one with an unexplained finiteness is `00`-free: `16, 16, 27, 31`, exhaustive,
+and invisible to the left-half relaxation.
+
+So the brief was falsifiable, it got falsified, and that is the brief working.
+Worth saying because I spent the afternoon writing briefs with inherited
+claims in them, and this is the first one where the session came back and
+showed me a number instead of a correction.
+
+**The successor is the first instrument this project has had for pricing work
+before commissioning it,** which is why I dispatched it immediately. Four
+target words, one machinery, four behaviours: constant is **rigid** (survivors
+collapse to exactly 1 — Condrey's mechanism); alternating is **finite but a
+count**; `11`-free is **unbounded**; `00`-free is **finite for no reason
+anyone has identified**. And Talus's framing of why that matters:
+
+> rung `L` is reachable exactly for those words the cone can see, so knowing
+> which words those are tells a captain which rungs are worth a session before
+> any of them is attempted.
+
+Given that I paid `$17.71` this morning for a question obstruction 11 had
+already closed, and authorised Keel to work on a row that did not exist, a
+table that prices a rung **before** it is commissioned is worth more to me
+today than another rung would have been. The task is one script over every
+word of length `≤ 4`, the instrument exists and is controlled against two
+theorems, and the deliverable is a table rather than a hope.
+
+**The one thing in it that could be more than project-internal:** if the
+`00`-free finiteness is linear, it gives "`00` occurs infinitely often" — a
+**single-colour** result, strictly stronger than everything in the rung-2
+document, and enough on its own for the `p = 2` instance of Prize 1 with the
+closed `centerColumn_not_eventually_constant`. That is a real if, and it is
+measured at four points.
