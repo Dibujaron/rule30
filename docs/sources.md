@@ -34,3 +34,23 @@ and CMP 1988 (paywalled), Meier–Staffelbach 1991, Cattaneo et al.
 pages are quoted in crystals.md from the online edition). A novelty claim
 that would be settled by one of those has to say so rather than claim the
 search was complete.
+
+## Live preprints, not held, checked against our own computation
+
+A paper too new to be refereed is still evidence, and refusing to record it
+until someone else vouches is how a project stays four days behind its own
+problem. The rule for this section is that a row may only appear once
+somebody here has run a check against the paper's own claims and said what
+the check covered — a fetch alone is not enough, and neither is an abstract.
+
+| Paper | What it claims | What we checked, and what we did not |
+|---|---|---|
+| David L. Condrey, *Finite Configurations Cannot Generate a Constant Trace in Rule 30*, [arXiv:2609.09431](https://arxiv.org/abs/2609.09431), submitted 2026-09-08. No affiliation; unrefereed; ships a Lean file `Rule30ZeroTail.lean` among ten ancillary files. | For support radius `w` the sharp maximum constant-prefix length of the central trace is `2⌈w/2⌉+1` when the initial centre is 0 and `2⌊w/2⌋+2` when it is 1, so the maximum over both is `w+2`, attained by exactly `2^w` configurations for even `w` and `2^w − 1` for odd `w`. Hence the zero row is the only finite configuration with a constant trace, and **no column of a nonzero finite rule 30 orbit is eventually constant**. | `explorer/rowan_condrey_check.mjs` reproduces **every one of those quantitative claims exactly for w = 1..10**, by enumerating all `2^(2w+1) − 1` nonzero configurations — none sampled. The `w = 0` centre-0 class is empty, so that one cell is vacuous rather than confirmed. **Not checked:** the step from the finite prefix bound to the infinite "eventually constant" conclusion, which rests on the paper's fiber argument and not on any number we can enumerate. Also unchecked: the shipped Lean file, which nobody here has elaborated. Corroborating but weaker: `explorer/rowan_seed_sweep.mjs` finds no eventually periodic column of period ≤ 500 among 8192 seeds × 61 columns, and eventual period 1 is eventual constancy. |
+
+**Why this one matters to us.** Eventual constancy of the centre column is
+exactly the bottom rung of Prize 2 — a column that is eventually constant is
+one in which some symbol stops occurring. If Condrey is right, "both symbols
+occur infinitely often in the centre column" is no longer open, and it is the
+rung this board has repeatedly described as out of reach. It says nothing
+about Prize 1: eventual *periodicity* of any period above 1 is untouched, and
+the paper says so itself.
