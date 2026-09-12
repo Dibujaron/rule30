@@ -2378,3 +2378,66 @@ build inside a test. The number was the answer and I read it as a puzzle,
 because load was the hypothesis I already had. Fathom made the identical error
 in a different module the same evening, and in both cases the correcting
 instance came from Rowan's run rather than from either of us thinking harder.
+
+## 2026-09-12, closing — five fixes, and a count I could not get right
+
+**Landed tonight:** the `prove_one` injectable twin (so the suite stops
+shelling real Lean from whatever tree it is in), the guard-port collision fix
+plus a CLI that can finally exit nonzero, `bugs search`, the route
+indentation fix, and `reverify`. Five rows closed, four filed, ten-odd
+glossary sections.
+
+**The one I would keep if I could keep one.** `mist.start` does not return an
+error on a taken port — it fails to start a supervised child and EXITS the
+calling process. So the row's own premise ("constants with no bind retry")
+described a bind error nobody handled, and there was never a bind error to
+handle. My first fix was a retry loop around something that cannot fail with
+a value, and my own test proved it by crashing `guard_test` and taking 433
+tests with it. The resolution now says DO NOT ADD A RETRY, because the row's
+body asks for exactly that.
+
+**Four counts, one claim, all four wrong.** Over nineteen sighting documents:
+five notebooks (pattern matched `binary`, which here means BASE TWO), 13 of
+15 personas (counted an unrostered name into a fraction of members), 11
+sightings (8 by the phrases quoted, 13 including `403`), 18 of 19 (the
+command had just printed nineteen rows). The claim was unchanged by every
+one. So the rule is not "count more carefully" — it is **do not put a number
+in a claim that does not rest on one**, and through four patterns the
+cardinality moved four times while the members never moved.
+
+**I skipped a suite run and could defend it.** `git diff … -- harness/src/`
+filtered to non-comment lines was EMPTY, so the suite's subject was
+byte-identical to a tree already at 669/669. Rowan made the same call about
+my comment change earlier and I took it from them. Review in proportion is
+only defensible when the proportion is measured.
+
+**The merge-push hole fired three times on me.** A merge as the last
+operation does not auto-push; `git rev-list --count main --not --remotes`
+read 1 after every fast-forward tonight. And Rowan established the inversion
+I would have got backwards: a CONFLICTED merge ends in `git commit` and so
+DOES push. The clean merge is the silent one — the smooth path is the
+dangerous one.
+
+**The Condrey adjudication is the session's actual result, and it is someone
+else's mathematics.** A four-day-old preprint claims P2's bottom rung. Its
+combinatorics is exhaustively confirmed for w = 1..10 (Rowan, all nonzero
+configs, none sampled). Its Lean file compiles clean on our toolchain —
+`[propext, Quot.sound]`, a subset of our three, no `sorryAx` — and proves the
+SCAFFOLDING: `Classified` is a hypothesis, "trace" appears twice and only in
+the docstring, and the author says so himself. The bridge is in neither.
+"We adjudicated" is not "we proved", and the distance between those is the
+whole of it.
+
+**What I got wrong:** carried Rowan's narrowing premise to Dib without asking
+whether the phenomenon existed — every number I gave was true and the thing
+they explained was not there. Recommended reading the obstruction list when
+it was already inlined in every connector brief, having reached for the
+reachability row because it fit the previous six instances. Said 29 call
+sites when it was 26. Mangled an escape example inside the entry about
+escapes, then dropped half the sentence fixing it.
+
+**The habit that actually paid, twice:** checking the DEFINITION rather than
+the theorems. `rule30 l c r := Bool.xor l (c || r)` is rule 30, and a file
+that defines its own is exactly a lookalike with the right name. That came
+from the machinery rather than from me — a week of watching `type_of%` catch
+statements that were near what was asked.
