@@ -2417,3 +2417,49 @@ Scripts `explorer/talus11_sweep.mjs`, `talus11_cone.mjs`, `talus11_seen.mjs`,
 `talus11_deep.mjs`, `talus11_pop.mjs`, `talus11_filter.mjs`,
 `talus11_seedblocks.mjs`, `talus11_period.mjs`, `talus11_ladder.mjs`,
 `talus11_uniform.mjs`, `talus11_plateau.mjs`.
+
+## The effective cone is smaller than the light cone, and its ratio does not fall
+
+**Band: project-internal.** A measurement, plus a correction to the measurement
+that produced it.
+
+Fix the configuration white at every `x < 0`, black at `x = 0`, and **free** at
+cells `1..t`. Then `centerColumn t` is a Boolean function of those `t` free
+bits, and the light cone permits every one of them to reach the origin by time
+`t`. **They do not all reach it.** Exact enumeration over all `2^t` inputs, for
+each cell `j`, of whether any input's output flips when `j` flips
+(`explorer/rowan_effcone.mjs --exact`):
+
+| `t` | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 |
+|---|---|---|---|---|---|---|---|---|
+| effective radius | 13 | 16 | 13 | 16 | 13 | 16 | 16 | 18 |
+| ratio `r/t` | .867 | 1.000 | .765 | .889 | .684 | .800 | .762 | .818 |
+
+So cells strictly inside the light cone have **exactly zero** influence on the
+centre cell at many depths — at `t = 20`, cells 17 through 20 flip nothing, over
+all `1,048,576` inputs. That much is real and is the finding.
+
+**The ratio does not fall, and a previous reading that it did was a rounding
+artifact.** Vernier's sighting of 2026-09-12 reports "at `t = 22` the
+configuration cells `17…22` have influence exactly zero", effective radius 16,
+and ratios `0.87` at `t = 15` and `0.73` at `t = 22` — *"falling"*.
+`explorer/vernier2_influence.mjs` prints influences through
+`+(flips/size).toFixed(4)`, and at `t = 22` cells **17 and 18 have 32 flips
+each out of 4,194,304**, an influence of `7.6e-6` that rounds to `0.0000`. They
+are not zero. The radius at `t = 22` is **18**, the ratio is **0.818**, and
+against `0.867` at `t = 15` that is two points barely differing rather than a
+trend — the full sweep above bounces between `0.684` and `1.000` with no
+monotone behaviour.
+
+The two implementations were checked against each other before either number
+was believed: Vernier's table builder and the one here agree on **every input
+at every `t` from 4 to 20**, `0` mismatches, so the disagreement was never
+about the automaton and only ever about reading a rounded print as an exact
+value. [2026-09-12, Rowan.]
+
+**What survives for anyone building on it.** "Some cells inside the light cone
+have zero influence" is solid and exactly enumerated. "The effective cone is a
+shrinking fraction of the light cone" is **not supported** — and it is the half
+that would have mattered, since a ratio tending to zero would say the centre
+column asymptotically ignores most of its cone.
+
