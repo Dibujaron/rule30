@@ -160,7 +160,13 @@ fn put(f: Fixture, relative: String, text: String) -> Nil {
 }
 
 fn options(port: Int, topic: String) -> theorist.Options {
-  theorist.Options(model: "haiku", port:, topic: Some(topic), persona: None, mint: False)
+  theorist.Options(
+    model: "haiku",
+    port:,
+    topic: Some(topic),
+    persona: None,
+    mint: False,
+  )
 }
 
 fn init_line(session_id: String) -> String {
@@ -437,7 +443,8 @@ pub fn as_starts_the_named_theorist_and_a_missing_document_is_abandoned_test() {
         model: "haiku",
         port: ports.span(1),
         topic: None,
-        persona: Some("Quill"), mint: False
+        persona: Some("Quill"),
+        mint: False,
       ),
     )
   assert session.identity.name == "Quill"
@@ -506,7 +513,8 @@ pub fn as_with_an_unknown_or_foreign_name_refuses_test() {
         model: "haiku",
         port: ports.span(1),
         topic: Some("x"),
-        persona: Some("Nobody"), mint: False
+        persona: Some("Nobody"),
+        mint: False,
       ),
     )
   assert string.contains(unknown, "no theorist named Nobody")
@@ -518,7 +526,8 @@ pub fn as_with_an_unknown_or_foreign_name_refuses_test() {
         model: "haiku",
         port: ports.span(1),
         topic: Some("x"),
-        persona: Some("Scripted"), mint: False
+        persona: Some("Scripted"),
+        mint: False,
       ),
     )
   assert string.contains(foreign, "Scripted is on the roster for region P1")
@@ -567,7 +576,13 @@ pub fn a_theorist_is_minted_when_the_roster_has_none_test() {
 pub fn who_picks_the_eldest_theorist_or_decides_to_mint_test() {
   assert theorist.who(peopled(), theorist.region, "theorist", None, False)
     == Ok(schedule.Existing(identity("Vesper", theorist.region)))
-  assert theorist.who(peopled(), theorist.region, "theorist", Some("Quill"), False)
+  assert theorist.who(
+      peopled(),
+      theorist.region,
+      "theorist",
+      Some("Quill"),
+      False,
+    )
     == Ok(schedule.Existing(identity("Quill", theorist.region)))
   assert theorist.who(
       roster.Roster([identity("Scripted", "P1")]),
@@ -578,7 +593,13 @@ pub fn who_picks_the_eldest_theorist_or_decides_to_mint_test() {
     )
     == Ok(schedule.Mint(region: theorist.region, busy: []))
   let assert Error(empty) =
-    theorist.who(roster.Roster([]), theorist.region, "theorist", Some("Nobody"), False)
+    theorist.who(
+      roster.Roster([]),
+      theorist.region,
+      "theorist",
+      Some("Nobody"),
+      False,
+    )
   assert string.contains(empty, "leave --as off")
 }
 
@@ -775,17 +796,24 @@ pub fn theorise_flags_parse_in_any_order_test() {
     == theorist.Flags(
       model: "opus",
       topic: Some("the seam"),
-      persona: Some("Quill"), mint: False
+      persona: Some("Quill"),
+      mint: False,
     )
   assert theorist.parse_flags([])
     == Ok(theorist.Flags(
       model: theorist.default_model,
       topic: None,
-      persona: None, mint: False
+      persona: None,
+      mint: False,
     ))
-  assert theorist.default_model == "fable"
+  assert theorist.default_model == "opus"
   assert theorist.parse_flags(["onset"])
-    == Ok(theorist.Flags(model: "fable", topic: Some("onset"), persona: None, mint: False))
+    == Ok(theorist.Flags(
+      model: "opus",
+      topic: Some("onset"),
+      persona: None,
+      mint: False,
+    ))
   let assert Error(needs_value) = theorist.parse_flags(["--model"])
   assert string.contains(needs_value, "--model")
   let assert Error(needs_name) = theorist.parse_flags(["x", "--as"])
@@ -988,4 +1016,13 @@ pub fn theorise_mint_forces_a_new_theorist_test() {
 pub fn theorise_as_and_mint_together_are_refused_test() {
   let assert Error(reason) = theorist.parse_flags(["--as", "Sextant", "--mint"])
   assert string.contains(reason, "--mint")
+}
+
+/// A theorist may still be put on fable deliberately. Unlike the connector,
+/// the role is not refused there — fable simply spends the scarcest allowance
+/// on the account, which is a choice for a captain to make rather than to
+/// inherit from a default.
+pub fn parse_flags_still_allows_fable_test() {
+  let assert Ok(f) = theorist.parse_flags(["--model", "fable"])
+  assert f.model == "fable"
 }

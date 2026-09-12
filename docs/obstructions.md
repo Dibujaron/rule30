@@ -616,7 +616,20 @@ from a single 18-generator product whose minimal transducer has 175,899 states,
 175,680 of them in the eventually-periodic part of its section iteration. Every
 one of those must lie in any nucleus, so no nucleus of size below that exists.
 Forced-set size grows as `≈1.8^ℓ` in word length `ℓ`: 35, 532, 5,873, 57,741,
-175,680 at `ℓ = 4, 8, 12, 16, 18`. Structurally, no state of the minimal
+175,680 at `ℓ = 4, 8, 12, 16, 18`. **These five numbers are maxima over 12
+random words, not values of a function** — the denominator was never stated and
+the numbers read as if it had been. Portage measured the same quantity at
+`ℓ = 8` over 3,000 random words and saw 523, 532, 598 and 634, so `532` is one
+draw among many rather than the size at `ℓ = 8`. It is specifically **not** a
+competing value for `m(8) = 517` in obstruction 21; the two lists are a sample
+and a function and they were being read as two functions that disagreed.
+[2026-09-12, Rowan, from Portage's third sighting.]
+
+**Obstruction 21 is this obstruction.** The number of distinct sections of
+`E^t` is `3, 7, 16, 35, 71, 141, 272, 517, …`, which is obstruction 21's
+reachable-row automaton size at all 20 values computed — the same machine seen
+twice, in two vocabularies, by two sessions that did not know it. Read the two
+entries as one. Structurally, no state of the minimal
 automaton is trivial, so activity is `2^n` — exponential, the lamplighter's
 class rather than the bounded automata of the contracting examples.
 

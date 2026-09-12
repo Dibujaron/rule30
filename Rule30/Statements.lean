@@ -2675,4 +2675,60 @@ theorem centerColumnCount_ge_of_pow (n : ℕ) :
       n ≤ ((Finset.range (5 ^ n)).filter fun t => centerColumn t = false).card := by
   sorry
 
+/-- **The cone condition, in the tower's own coordinates.** Row `2 ^ k` is
+white at the `k` positions immediately left of its black right edge.
+
+This is Rowland 2006's Theorem 1 specialised to rule 30 — row `2 ^ n`
+converges back to the initial row — stated quantitatively at his §1 lines
+123-126 in the mirror orientation. Crystal 11 carries it as its unseeded
+second ingredient and prices it as "Rowland's own induction, not a finite
+check"; **that pricing is wrong**, and correcting it is why this node exists.
+Sextant proved it on 2026-09-12 as a least-element argument over three closed
+nodes — `rightDiagonal_periodicFrom_pow`, `periodicFrom_mul` and
+`rightDiagonal_first_failure`, the last of which landed the day after crystal
+11 was written, which is why nobody saw the route. Kernel-checked in
+`explorer/sextant10_scratch_cone.lean` (`cone_rightDiagonal`), accepted by
+`lake env lean` with axioms inside the allowlist.
+
+DOES NOT PROVE: nothing towards any prize, and the region it lives in was
+fenced the same afternoon. Sextant closed the right edge for P1 from the
+recurrence side and Portage closed it from the self-similar-group side, both
+on 2026-09-12, so no successor of this node reaches Prize 1. It is seeded as a
+**route closure**: it retires crystal 11's second ingredient, corrects that
+crystal's mispricing of the work, and supplies `rightDiagonal_edge_gap_eq`
+below. Band: known as a statement, project-internal as a proof. -/
+theorem rightDiagonal_cone (k : ℕ) (hk : 1 ≤ k) :
+    rightDiagonal k (2 ^ k - k) = false := by
+  sorry
+
+/-- **The white void at a row's right edge is exactly the first depth whose
+period fails to divide the row.** If every right diagonal shallower than
+`D + 2` has minimal period dividing `p`, and the one at depth `D + 2` does
+not, then row `p` is white at every position from one to `D + 1` cells in from
+its right edge, and black at `D + 2` cells in.
+
+Every `P_d` is a power of two, so whether `P_d ∣ p` depends only on `ord₂ p`,
+and therefore so does the gap: the void at row `p` is the void at
+`2 ^ (ord₂ p)`. The restriction to `D + 2` costs nothing — `D = 0` cannot
+occur since `P_0 = 1` divides everything, and `D = 1` is the closed
+`evolve_right_second_diagonal`, so the identity is covered at every `p`.
+
+Crystal 12 records the white-void values `0 2 3 5 6 8 14 15 23 24 26` as
+Cairn's **measurement**. This makes them a theorem. Kernel-checked in
+`explorer/sextant10_scratch_cone.lean` (`edge_gap_eq`).
+
+DOES NOT PROVE: nothing towards any prize; same fence as `rightDiagonal_cone`
+above. Band: **known-adjacent, with a new proof.** Rowland proves the
+black-run sibling (`I(t) = a(ord₂ t)`, §1 lines 117-126, "by right
+bijectivity") and asserts the two-way form in his introduction at line 131.
+Sextant did not re-read his §3, so **"not proved in print" is unestablished**
+— treat this as a new phrasing carrying a proof, not as a new theorem, until
+somebody reads that section. -/
+theorem rightDiagonal_edge_gap_eq (p D : ℕ) (hp : 0 < p)
+    (hlow : ∀ d < D + 2, minimalPeriod (rightDiagonal d) ∣ p)
+    (hhi : ¬ (minimalPeriod (rightDiagonal (D + 2)) ∣ p)) :
+    (∀ d : ℕ, 1 ≤ d → d < D + 2 → evolve p ((p : ℤ) - (d : ℤ)) = false)
+      ∧ evolve p ((p : ℤ) - ((D + 2 : ℕ) : ℤ)) = true := by
+  sorry
+
 end Statements

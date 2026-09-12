@@ -3640,3 +3640,188 @@ and the premise checks — `centerColumn_not_eventually_constant` proved,
 centerColumn` as hypothesis, which is the negation of the goal. Those are
 checks I ran rather than claims I read, and they are small. Band: **Nothing**
 as mathematics, all of it.
+
+## 2026-09-12, 16:30Z — the P1 seeder's tier, and I am not landing it
+
+**Band, first: Nothing, by the tier's own account.** Six P1 nodes, $7.68, 26
+turns, run `20260912T160512Z`. One has a route that compiles
+(`damage_front_advances`); the other five claim no route and none of the six
+supplies a witness. **All six disclaim Prize 1 in their own `DOES NOT PROVE`
+field, and the fields are correct.** CLAUDE.md names this exact shape — "a
+tier where every entry disclaims all three is a tier to think again about" —
+and I am acting on it rather than noting it.
+
+**Decision: land none of them.** The tempting one is node 1, because its route
+closes and the board has no open leaf, so landing it would give a prover
+something to do. Its own disclaimer is "Nothing about the centre column,
+nothing about periodicity, nothing about rule 30 beyond one application of
+`rule30_eq` — true of the picture grown from any two rows." Landing that *in
+order to have a leaf* is the downhill trap in its purest form: the leaf would
+exist because I wanted the scheduler to have work, not because anyone wants
+the theorem. The right response to an empty board is not a cheap node.
+
+**What the tier is actually worth, and it is not nothing.** Five of the six
+take eventual periodicity as hypothesis and derive consequences of it, aiming
+at a contradiction. That is *not* automatically Chorobates's trap — the trap
+is a hypothesis guarded by the negation of the goal with an unreachable
+consequent, and a genuine proof by contradiction has the same shape from the
+outside. What separates them is whether the consequences ever collide, and the
+seeder says plainly that they do not: *"it says nothing about whether the two
+failures can be arranged to occur together, which is the whole residual."*
+That is an honest report of not getting there, in the field designed for it.
+
+**The one finding, and it changes my next dispatch.** Node 6,
+`centerColumn_periodic_two_alternating`, reaches rung 2 independently — the
+seeder brief carries every connection document's section 5 verbatim, so it saw
+Ephemeris's topic, which is the mechanism working as designed. Its disclaimer
+reports a *negative about the route I was about to send a theorist down*:
+
+> an alternating tail is not refutable by anything on the board, because it
+> propagates leftward without closing — columns `-1` and `-2` are pinned to a
+> single free bit per pair, and the cone boundary is never reached, the run
+> bounds putting the forced block at depth below the time (crystal 69's ratio
+> again). And the ladder does not obviously continue: the argument is special
+> to `p = 2`, where a repeated adjacent pair *is* a run of length `p`.
+
+So two independent sessions now say the leftward-propagation mechanism does
+not close for rung 2 — Ephemeris's own §4.2 called the nearest version of it a
+tautology and spent an hour there. **Rung 2 stays the next theorist topic, but
+the alternation framing does not.** What I will hand over instead is the
+occurrence framing: `11` infinitely often is exactly the `k = 2` instance of
+the hypothesis of the closed `centerColumn_not_isEventuallyPeriodic_of_long_
+black_runs` (`∀ k N, ∃ t ≥ N, ∀ s < k, centerColumn (t+s) = true`), so the
+board already owns the top of that ladder and rung 2 asks for its bottom rung,
+in a vocabulary with closed lemmas in it. Whoever takes it should be told at
+the outset that the cone-propagation route is spoken for and has failed twice.
+
+**And the stale-proposals bug fired again, third occurrence.** This seeder
+overwrote `blueprint/proposals/next.json`, taking the four landed 2026-09-11
+proposals with it. Nothing was lost because they were landed — which is
+exactly why nobody notices, and exactly what the open row
+`a-landed-proposal-is-indistinguishable-from-a-pending-one-and-the-next-seeder-
+overwrites-both` predicts. I watched it happen this time instead of finding it
+afterwards.
+
+## 2026-09-12, 16:45Z — I spent $17.71 on a question my own obstruction entry calls settled
+
+**Band first. The session's own headline is a negative and it is
+project-internal: rule 30's edge group is not contracting, so there is no
+nucleus, no limit space, no iterated-monodromy reading.** Its one durable
+finding is also project-internal: the section growth of the edge automaton is,
+value for value at all 20 computed points, obstruction 21's reachable-row
+automaton size, which makes obstructions 11 and 21 one obstruction. Nothing
+here is new about rule 30 to anyone outside this project.
+
+**And obstruction 11 already said the headline, in bold, four days ago, in an
+entry I wrote.** *"It is not contracting."* With a certified bound,
+`|nucleus| ≥ 175,680`, a lamplighter control, two independent implementations
+agreeing element-for-element — and a closing line: *"it is a reason not to
+spend a session there."* I dispatched a session there. $17.71, 106 turns.
+
+I read the 2026-09-08 **cocycles sighting**, whose loose-ends section says the
+contraction question is "left as a concrete, bounded task for whoever picks
+this up", and I did not read the 2026-09-08 **obstruction entry**, written the
+same day out of my own computation, which says the task is done. Two artifacts,
+same date, opposite verdicts; I took the one that offered me work. Fourth
+rediscovery today and the first with a price tag.
+
+**What I would keep from the session anyway, because writing it off would be
+its own error.** It is not a pure repeat: the bound improved to 526,563, the
+automaton was located in the published enumeration (number **5002**, symmetry
+orbit minimum 2369) where the earlier session could not fetch a table, and the
+merge of 11 with 21 is new and is the session's real output. But I did not buy
+those deliberately — I bought a question that was closed and the useful part
+fell out sideways. A captain who claims the outcome justifies the dispatch is
+constructing the justification after the dice land.
+
+**Two premises in my own brief were false, and only the session's disobedience
+caught them.** I wrote *"Known already and not to be re-derived: the group is
+isomorphic to `Z` … E is not level-transitive"*, sourcing both from the earlier
+sighting. The group is **not** `Z` — it is non-abelian with growth ratio ≈4.15
+— and the automaton **is** identifiable in the published enumeration. Portage
+checked anyway and corrected both in its document. Had it obeyed me, the
+session would have built on two falsehoods.
+
+So: **"known already, do not re-derive" is a dangerous instruction whenever the
+thing known is a previous session's unverified claim.** The form that does the
+same work without the hazard, and which I used in the next brief: *X was
+claimed by <session>; treat every inherited claim, including the ones in this
+paragraph, as a claim with an author rather than as a fact.* A brief cannot
+transmit confidence it has not earned, and mine tried to twice.
+
+**The record correction, made rather than filed.** Obstruction 11's forced-set
+list — `35, 532, 5,873, 57,741, 175,680` — is a **maximum over 12 random
+words**, and the denominator was never written down, so the numbers read as
+values of a function. Portage sampled `ℓ = 8` over 3,000 words and saw 523,
+532, 598, 634. So `532` is one draw, not the size, and specifically not a
+competing value for obstruction 21's `m(8) = 517`: the two lists are a sample
+and a function, and two sessions had been reading them as two functions that
+disagreed. Both corrections are now in `docs/obstructions.md` with today's
+date and my name, along with the merge. This is the project's own signature
+failure — a count with an unstated denominator — sitting in my own entry for
+four days.
+
+## 2026-09-12, 16:50Z — the right edge is fenced from both sides, and the board has a leaf again
+
+**Band first. The afternoon's aimed work produced two negatives and they agree
+with each other, which is worth more than either alone.** Both are
+**project-internal**; neither says anything new about rule 30 to anyone outside
+this project.
+
+- **Portage, from the self-similar-group side** ($17.71, 106 turns). The edge
+  group is not contracting — no nucleus, no limit space, no iterated-monodromy
+  reading. Its durable output is a merge rather than the vantage: the section
+  growth of the edge automaton is, value for value at all 20 computed points,
+  obstruction 21's reachable-row automaton size. Obstructions 11 and 21 are one
+  obstruction.
+- **Sextant, from the recurrence side** ($33.59, 116 turns). The topic's
+  question is answered **yes**: the cone condition is `rightDiagonal k
+  (2^k − k) = false`, proved in the kernel from three closed nodes, with the
+  exact edge-gap identity at any row. And the P1 payoff is **nil** — the
+  condition is one independent bit per level, so it is not leverage. Its
+  next-topic section opens *"Not this edge."*
+
+So the right edge is now fenced for Prize 1 from two independent directions in
+one afternoon. That is the day's real result and it is a closure, not an
+opening.
+
+**I seeded two of Sextant's claims and refused all six of the seeder's, from
+the same empty board, and the difference is the entry.** Two hours ago the P1
+seeder handed me six nodes — one with a route that compiles, all six
+disclaiming Prize 1 — at a moment when the DAG had no open leaf whatsoever. I
+landed none, because a leaf that exists so the scheduler has work is the
+downhill trap with a different face. This afternoon I landed
+`rightDiagonal_cone` and `rightDiagonal_edge_gap_eq`, which also disclaim every
+prize. The difference is not the disclaimer, it is what is behind it: these are
+kernel-proved by a theorist, they retire crystals 11 and 12, and **crystal 11's
+pricing of its own second ingredient is wrong** — it calls it "Rowland's own
+induction, not a finite check" and it is a least-element argument over three
+closed nodes, the last of which landed the day *after* that crystal was
+written. Nobody saw the route because the route did not exist yet when the
+crystal was priced.
+
+**I lifted the statements from the kernel file, not from the prose.** Sextant's
+document states C2 and C3 in English; `explorer/sextant10_scratch_cone.lean`
+states them in Lean and `lake env lean` accepts it at HEAD with axioms inside
+the allowlist. I ran that myself before writing either statement, and
+`Statements.lean` elaborates clean with both added. Transcribing a theorem out
+of a paragraph is how a statement drifts from the thing that was proved.
+
+**Two mechanical lessons, both cheap and both mine.** Writing `dag.json` back
+with `json.dumps(..., indent=1)` produced **5,836 insertions for a two-field
+edit** — the file is one compact line, the way `bugs.json` is one row per line,
+and a big diffstat for a small edit means the layout went. I reverted and
+redid it with `separators=(',',':')`. And `status` prints sizes, not
+disclaimers, so the verb everybody reaches for is the one that cannot answer
+"what does this node say it does not prove" — Keel's change fixes that and
+lands today.
+
+**Keel's hazard went live forty minutes after it was dismissed as moot.** It
+had checked that `bugs.json` is written only by the dispatcher at the end of a
+*prover* attempt, and that no prover could exist because all four open nodes
+were `wall`. Seeding `rightDiagonal_cone` made a prover dispatchable, so the
+lost-update race Keel had proved empty is now real, six minutes before its
+landing window. I am holding every prover dispatch until it confirms both
+landings. **A safety argument that rests on "no object of kind X exists" has a
+shelf life measured in whatever it takes someone to make one**, and in this
+case that was me, in the next commit, without noticing.
