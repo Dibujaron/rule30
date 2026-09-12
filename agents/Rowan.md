@@ -3999,3 +3999,55 @@ all die at once, and at `p ≥ 2` has **no identified cause**.
 
 I am not dispatching it: Dib wants to clear this session and a live worker
 blocks that. It is the first thing for the next captain.
+
+## 2026-09-12, 19:55Z — session close. Twelve sessions, $243.81, two theorems, eight fences
+
+**Band, for the day as a whole: project-internal.** Nothing produced today is
+novel about rule 30. Two theorems closed, both Known or Known-adjacent,
+neither bearing on a prize. The output is **fences** — eight routes closed
+with reasons — and one reframing of Prize 1 that is not yet a route.
+
+**The last session, Vernier on `ε`-biased codes, $8.92**, and it found the one
+thing today I would call a measurement worth keeping rather than a closure:
+**the effective cone is strictly smaller than the light cone.** At `t = 22`
+the configuration cells `17…22` have influence **exactly zero** — the centre
+cell does not depend on them in any input, though the light cone permits it.
+Effective radius 13 at `t = 15`, 16 at `t = 22`, ratios `0.87` and `0.73`,
+falling. That is the left damage front read as Boolean influence, and it is a
+**worst case over all inputs** rather than an average, which is the quantity
+crystal A3 prices at zero for arbitrary pairs. Whether the worst case over
+this cone-conditioned family is genuinely below 1 is now a measurable
+question, and this is the first instrument that measures it as a function
+rather than as a front.
+
+Its influence profile at `t = 22` is worth copying out, because the shape is
+the finding: `.505 .449 .543 .494 .475 .455 .420 .337 .258 .197 .131 .104
+.037 .025 .002 .002 0 0 0 0 0 0`. The first seven cells sit at a random
+balanced function's `≈ 1/2`; the rest decay to nothing. Total influence `4.44`
+against a random function's `t/2 = 11` — below the null **entirely because the
+outer half contributes nothing**, not because the inner half is structured.
+The document corrects its own first draft of that bullet in place, which is
+the behaviour I want from these and rarely see.
+
+**The day's arithmetic.** Twelve research sessions, `$239.31`, plus `$4.50` of
+provers: **`$243.81`**. Two nodes closed. The single most useful number is
+still the split — `$33.59` to find a theorem, `$4.50` to verify it — and the
+one I am least comfortable with is `$65.47` for Talus's classification, which
+was also the session that produced the most.
+
+**What I would tell the next captain, in one line each.**
+
+- **Rung 3 of the period ladder** is the first thing to dispatch. Not the
+  occurrence ladder — the cone sees exactly the zero-entropy targets, so that
+  ladder is dead above rung 2, and I championed it for six hours before a
+  measurement said otherwise.
+- **Some finite bound `f(p,a)`, of any shape, implies Prize 1.** Not the
+  fitted `2p + 2a + 2`, which is 180 cells over a small range and which Talus
+  itself says not to build on.
+- **Print the object before deriving what it means.** Four times today I paid
+  to rediscover my own notes, once for `$17.71`, and the artifacts were the
+  fields designed to answer exactly the questions I was answering badly.
+- **An authorisation is a claim.** I told Keel to reclassify a board row I had
+  never looked for; it did not exist. Keel checked instead of complying.
+- **The board's bottleneck is retrieval, not production.** Everything above is
+  one sentence.
