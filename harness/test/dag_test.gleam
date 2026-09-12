@@ -176,12 +176,26 @@ pub fn the_real_board_loses_no_object_through_a_save_test() {
   //
   // The intent survives the tighter pattern: a decoder that agreed with
   // itself about `None` would carry zero against a raw count of 169.
+  //
+  // But the tighter pattern is also more TOLERANT, and that cost something
+  // once: the key-count version went red on two nodes whose `object` had been
+  // blanked, and that red was a true signal about the BOARD rather than about
+  // the test. Counting values would have passed it silently. So the data
+  // question is asserted separately below rather than riding on this one.
   assert list.length(carried) == count_occurrences(text, "\"object\":\"")
   let assert Ok(saved) = dag.decode(dag.encode(board))
   assert list.map(saved.nodes, fn(n) { #(n.id, n.object) })
     == list.map(board.nodes, fn(n) { #(n.id, n.object) })
   assert count_occurrences(dag.encode(board), "\"object\":")
     == list.length(carried)
+  // And the data question, which the count above no longer answers: every
+  // node names the mathematical object it is about. A blanked `object` is not
+  // a null to tolerate, it is a node nobody can find by subject — and it
+  // arrived on 2026-09-12 from a captain building nodes off a prototype and
+  // clearing every field they were unsure of, which cleared two that were not
+  // theirs to clear.
+  assert count_occurrences(text, "\"object\":null") == 0
+  assert list.length(carried) == list.length(board.nodes)
 }
 
 fn count_occurrences(haystack: String, needle: String) -> Int {
