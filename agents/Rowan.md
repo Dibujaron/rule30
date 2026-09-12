@@ -3136,3 +3136,65 @@ Worth keeping: **transcript file mtime dates a session's last activity from
 outside it.** Metadata only — I did not read Fathom's transcript, which is
 not mine — and it is the one check here that needed no cooperation from a
 session that was already gone.
+
+## 2026-09-12 — four dispatches, two silences, and the silence was mine to cause
+
+Dib's two open calls from last night, both closed. `docs/prize.md`'s P3 signpost
+said the uniform machine model still had to be built and guessed `Turing.TM0` /
+`TM1`; Pantograph had already found the model in the pinned Mathlib and shown
+the guess makes P3 **false**, not merely unproven. Corrected. `Prize.lean` left
+alone, and the file now carries the reason — `periodic_polyTime` is `sorry`, so
+non-vacuity is unestablished and restating P3 would swap a safe hole for a
+possibly-vacuous statement. And the fable question: **fable does not refuse in
+the theorist role.** Talus took the `periodic_polyTime` topic on fable and was
+writing `explorer/talus8_scratch_periodic.lean` within ten minutes. So the ToS
+`reasoning_extraction` trigger is connector-specific, and the hunt narrows from
+the shared nine-hundred-line spine to the web/citation section. One $2 dispatch
+answered what three $2.34 rediscoveries would not have.
+
+### The thing worth keeping, and it is about me, not the harness
+
+I fired four sessions in four minutes and **two of them died at birth.** The
+cause is dull — `connector.gleam:174` and `theorist.gleam:156` derive the guard
+port as a *constant* offset from the run base, so the second session of a role
+always grabs a port the first is holding. Filed, with the fix that matters
+being the loud failure rather than the port arithmetic.
+
+What is not dull is what the failure looked like. **An Erlang supervisor dump,
+then `[exited with code 0]`.** A run directory that exists, with
+`events.jsonl` at zero bytes and no `briefs/`. That is byte-identical to a
+session which simply has not started work yet. Had I dispatched three and
+walked away — which is exactly what a captain does — I would have come back to
+one document and two directories I would have read as *still thinking*.
+
+This is CLAUDE.md's own recurring shape and I walked into it from the inside:
+**I read a true value (`exit 0`) and drew a false conclusion (it ran).** The
+question that catches it is the file's own — *what was this measured over?* An
+exit code is measured over the *process*, and the process here is a launcher
+whose child is the thing I care about. The launcher exited fine. Nothing about
+that sentence is about the session.
+
+Two smaller ones from the same twenty minutes, both mine:
+
+- I hung a tool call for two minutes with a stray `cat` that had no heredoc,
+  eating stdin, and then briefly believed `bugs file` was blocked on a lock.
+  **The suspicious thing was my own command, and I suspected the harness
+  first.** Cheapest possible check — count the bytes in the output file — said
+  zero, which meant gleam never spoke at all.
+- `bugs file` refused my row twice, on `area` and `severity`, and it was right
+  both times: the vocabularies are closed (`guard dispatch verify brief board
+  hooks docs other`, and `blocks friction papercut`). Worth knowing before
+  writing a row rather than after. The refusal named every fault at once, which
+  is the guard design working.
+
+### The board is out of prover work and that is the real state
+
+165 of 169 closed, **zero open leaves**, and the four that remain are `wall`.
+So nothing the scheduler is allowed to start exists, and I deliberately did
+**not** seed. Both regions are fenced right now: P1 by crystal 72's clause,
+which Chorobates closed last night with a qualified negative, and P2 by Talus's
+own C2. A seeder dispatched into that produces exactly the `unblocks 0` tier
+CLAUDE.md was rewritten to stop. The four sessions in flight are the fence
+being tested rather than more nodes under it — and if all four come back
+negative, that is a real answer about where this project stands, not a bad
+evening.
