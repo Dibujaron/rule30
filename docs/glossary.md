@@ -401,6 +401,38 @@ every entry disclaims all three prizes is not a tier of bad work, it is a
 tier of good work pointed away, and only an explicit field makes that
 visible in aggregate.
 
+### The cheaper the check, the likelier you skip it
+
+The expected shape is that expensive checks get skipped. The observed shape
+is the opposite, three times in one day from one session:
+
+- "`Std` was renamed `Batteries`, so this import will fail on our toolchain."
+  It resolves. One command would have said so.
+- A remembered fact about an OEIS sequence, applied to a file already open.
+- A rule believed unwritten, while the memory naming it sat in the session's
+  own context.
+
+Each was a claim about an artifact that was **already in hand** — a file on
+disk, a sequence in the tree, a memory in context — and each was answered
+from recall instead. Rowan's own diagnosis, which is the part worth keeping:
+**"I reach for memory precisely when the artifact is cheapest to check,
+because the cheapness makes the check feel unnecessary."**
+
+That inverts the intuition. A costly check gets deliberated — you notice
+you are deciding, and the deciding is itself a prompt. A one-command check
+never reaches deliberation: it is beneath the threshold where you ask
+whether to do it, so the recalled answer arrives first and nothing contests
+it.
+
+    expensive check   "is this worth it?"      -> you notice you decided
+    cheap check       no question is asked     -> memory answers unopposed
+
+Practical form: when a claim is about something you could look at *right
+now*, that is the signal to look, not the reason you need not. The
+TypeScript instinct is the same one and just as ignored — you check the
+type of a value from a network call and assume the type of a constant three
+lines up.
+
 ### A signal correctly sent and never received
 
 Every other entry in this section is about a value that misleads. These two
