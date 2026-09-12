@@ -370,6 +370,47 @@ every entry disclaims all three prizes is not a tier of bad work, it is a
 tier of good work pointed away, and only an explicit field makes that
 visible in aggregate.
 
+### Look at the members, not the cardinality
+
+"Name what a number was measured over" is already the rule here. It is not
+enough on its own, because it is satisfied by a count whose set you never
+open. A count is a lossy summary: comparing two counts tells you only that
+they differ, and enumerating tells you *what* differs.
+
+2026-09-11, and the instance argues against its own tidiness. Asked how many
+CLI call sites exited zero on error, I ran
+
+```bash
+grep -cE "print_outcome|io.println_error" src/harness.gleam   # 29
+```
+
+and said 29. The right number was 26. The 29 was two different tokens plus
+the function's own definition — a bad denominator, exactly the error the
+existing rule names.
+
+**But the bad count contained the answer.** Its three extra members were the
+definition and two `io.println_error` lines, and one of those was
+`harness.gleam:34` — `config.load()` failing, which printed and returned, and
+which my fix had missed entirely. A config that will not load is the earliest
+failure there is. Had I counted correctly the first time, 26-of-26 would have
+felt complete and the gap would have shipped.
+
+So the useful move was not correcting the number. It was **reading the three
+members the number disagreed about**, which is a different action from
+re-running the count. Rowan's framing: this is not an argument for sloppy
+counting, it is an argument for looking at the members and not just the
+cardinality.
+
+The TypeScript version is the one everybody has shipped:
+
+```ts
+if (errors.length === expected) return;   // right count, wrong errors
+```
+
+Practically: when two counts disagree, do not pick one. **Diff the sets.** The
+disagreement is a pointer at the members that differ, and those members are
+the only part of either count that carries information.
+
 ### A measurement that includes its own apparatus
 
 Twice in one evening a process query answered confidently about the wrong
