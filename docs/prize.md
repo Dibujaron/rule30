@@ -144,10 +144,31 @@ that cannot mislead beats a statement that can be trivially satisfied.
 > **P3 is not a task. Do not put it in the DAG as a solver goal.**
 
 Making it real means committing to a concrete uniform machine model with binary
-input encoding and step-counted cost — plausibly on Mathlib's `Turing.TM0` /
-`TM1`. That is a research question for someone who knows complexity theory, not
-a formalization chore, and it needs expert review before any mission built on
-it is published.
+input encoding and step-counted cost. **That model is `Turing.FinTM2` with
+`Computability.encodeNat`, and it is already in the pinned Mathlib** — see
+`docs/connections/2026-09-11-make-p3-sayable-*.md` and the elaborating sketch
+in `explorer/pantograph_scratch_p3.lean`. `FinTM2` bundles `Fintype` on `K`,
+`Λ`, `σ` and `Γ k₀`, which is exactly what stops trap 1: cost is the number of
+`step` applications, derived rather than supplied, so there is no field to set
+to zero. `encodeNat` is little-endian binary, which is what stops trap 2.
+
+**`Turing.TM0` / `TM1` was this file's guess and the guess was wrong — not
+merely unproven, but wrong in the direction that matters.** Neither carries a
+`Fintype` on the state type (`PostTuringMachine.lean:135`), so taking
+`Λ := ℕ` lets you bake `centerColumn` into the transition table and read the
+*n*-th cell in O(log *n*). P3 over `TM0` is not open; it is **false**. Anyone
+following the old pointer would have built a refutable statement.
+
+What is still open is **non-vacuity, and it is the half that matters.** The
+statement elaborates; nothing yet shows it is not an empty shell. Two holes:
+`periodic_polyTime` (every eventually periodic `f : ℕ → Bool` is
+`TM2ComputableInPolyTime`) is `sorry`, and `ShortcutExists` is an unproved
+`def`, so the P3-implies-P1 derivation rests on `sorryAx` by `#print axioms`.
+Until at least the first is proved, restating `Prize.lean`'s P3 against this
+model would trade a hole nobody can game for a statement that could be vacuous
+and look fine — so **`Prize.lean` stays as it is.** Whether the threshold
+should be `∉ DTIME(poly(log n))` or the Ω(*n*) form is a separate question and
+is the part that still wants a complexity theorist's reading.
 
 ---
 
@@ -156,7 +177,11 @@ it is published.
 Not proving these. Realistic near-term contributions:
 
 - Faithful, reviewed statements of P1 and P2 that a mathematician signs off on.
-- A concrete machine model that makes P3 sayable at all.
+- ~~A concrete machine model that makes P3 sayable at all.~~ Found
+  2026-09-11: `Turing.FinTM2` + `Computability.encodeNat`, already in the
+  pinned Mathlib. What replaces it on this list is **proving
+  `periodic_polyTime`**, the one lemma that makes the statement demonstrably
+  non-vacuous. No rule 30 in it anywhere.
 - Named lemmas *around* the questions — properties of the evolution, the
   light cone, symmetry, or the relationship to rule 30's algebraic structure —
   that a real attack would eventually need.
