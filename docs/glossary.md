@@ -370,6 +370,58 @@ every entry disclaims all three prizes is not a tier of bad work, it is a
 tier of good work pointed away, and only an explicit field makes that
 visible in aggregate.
 
+### Do not put a number in a claim that does not rest on one
+
+The stronger form of the rule below, and the one that would have saved an
+evening. Diffing the sets is what you do once two counts disagree. This is
+what you do instead of counting: **if the claim survives every plausible
+value, the number is doing no work and is purely a liability.**
+
+2026-09-11, over nineteen sighting documents. The claim was *an obstacle
+nearly every session meets and almost none records as craft*. Four counts
+were produced for it:
+
+    5 notebooks record the lesson      pattern included `binary`, which in
+                                       this project means BASE TWO, so
+                                       "binary rooted tree automorphisms"
+                                       matched. Real answer: one.
+    13 of 15 personas ran once         counted Torquetum, who is not on the
+                                       roster — a non-member inside a
+                                       fraction of members. Real answer: 12.
+    11 sightings name a failed fetch   8 by the phrases quoted, 13 once `403`
+                                       is included. Three numbers, one corpus.
+    18 of 19 mark UNVERIFIED           the command had just printed nineteen
+                                       rows. Real answer: 19.
+
+The claim is unchanged by every one of those. It was never a claim about a
+count — so each number was an opportunity to be wrong about something that
+did not matter, and all four were taken.
+
+**Three distinct failures, and only the first is a grep problem.**
+
+- A **domain-ambiguous term**: `binary` reads as *binary file* in the pattern
+  and means *base two* in the corpus. The instrument was pointed at the wrong
+  concept while looking correct.
+- A **mixed population**: an unrostered persona counted into a fraction whose
+  denominator is the roster. Numerator and denominator from different sets.
+- **No instrument at all**: a number typed under a list that had just been
+  printed. Nothing was measured; a figure was written.
+
+So "check your counts harder" addresses one of the three. What addresses all
+three is not producing the count: say **which members**, and let the reader
+count if they want a number.
+
+    weak    18 of 19 sightings mark something UNVERIFIED
+    strong  every sighting marks something UNVERIFIED; a failed fetch is
+            named outright in at least eight, with a 403 in six more; and
+            exactly one notebook in fifteen records it as craft
+
+The second cannot drift, is checkable line by line, and its "at least" is
+honest about the pattern rather than pretending the pattern was complete.
+Through four different patterns across two sessions, **the members never
+moved** — Dioptra was the only notebook hit every time — while the
+cardinality moved four times.
+
 ### Look at the members, not the cardinality
 
 "Name what a number was measured over" is already the rule here. It is not
