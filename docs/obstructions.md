@@ -2476,3 +2476,177 @@ shrinking fraction of the light cone" is **not supported** — and it is the hal
 that would have mattered, since a ratio tending to zero would say the centre
 column asymptotically ignores most of its cone.
 
+## The period ladder's finiteness question is Kopra's family question, and the work in a rung is all in the left half
+
+**The natural attempt.** The entry above this one but three ("The cone sees
+exactly the zero-entropy targets") ends by naming the period ladder as the
+successor to the occurrence ladder. Let `C2(a)` be the configurations white at
+every `x < -a` and black at `-a` — the class row `N` of the seed lives in, by
+`evolve_eq_false_of_outside_cone` and `evolve_left_edge` — and let `f(p,a)` be
+the longest block, from time 0, over which such a configuration's centre column
+repeats with period `p`. Then `f(p,a) < ∞` for every `p` and `a` implies Prize 1.
+That is the only target this project has produced that asks for **finiteness of
+any shape** rather than for a specific true thing, so it looks cheaper than
+everything else on the board: no constant to find, no rate, just "the surviving
+set is eventually empty". Go and prove it dies.
+
+**Why it fails, and it is one sentence in print.** `C2(a)` is compact and "the
+first `T` cells of the centre column are `p`-periodic" is a closed condition,
+because a block of length `T` reads only cells in `[-(T-1), T-1]` of row 0
+(`evolveFrom_eq_of_agree_on_window`). So the nested closed sets meet, and
+
+> `f(p,a) = ∞` **iff** some configuration in `C2(a)` has an exactly `p`-periodic
+> centre column for ever.
+
+Compactness is exactly what converts "a bound of any shape" into "no such
+configuration", so the shape genuinely stops mattering — and with it goes the
+cheapness. Quantified over all `p` and `a`, and using that a leftmost black cell
+moves left one cell per step and stays black (so row `N` of a coned picture is
+again coned), the statement reads: *no configuration white far to the left with
+a leftmost black cell has an eventually periodic centre column.* **Kopra 2022
+§4, one sentence before stating the prize question as his Problem 4.8, says of
+that family: "it is probably equally difficult for all configurations of
+`N(Σ₂)`"** (`sources/kopra-2022-natural-class.txt`, lines 553–557). So the
+ladder's finiteness question is not a weakening of P1 with a cheap proof in it;
+it is the family version, priced in print at the same difficulty by the author
+of the nearest published theorem. Note what this does **not** say: it is not
+obstruction 9's failure mode, where the family version turned out false. Nothing
+found here is a surviving configuration — 188 exhaustive ladder cells (`p ≤ 12`,
+`a ≤ 18`), 663 per-word cells (period `≤ 5`, `a ≤ 13`) and a `p = 3` row
+exhaustive to `a = 25` are all finite, and the family statement is expected true.
+It is priced, not refuted.
+
+**What survives, and it is where a rung should be attacked.** A single rung —
+one fixed `p` — is genuinely smaller than the ladder, and rung 3 proved would
+say the centre column is not eventually periodic with period 3, one more period
+than the board excludes today. And the work in a rung is **entirely in the left
+half**. Pin the centre column to a periodic word and solve the picture leftward
+from columns 0 and 1, as `leftSolve_eq_column` allows; the demand that every
+column left of `-a` be white at time 0 is then already unsatisfiable at a finite
+depth, with the right half of the configuration never mentioned. Measured
+(`explorer/talus12_leftdfs3.mjs`): over every primitive word of period at most 5
+and `a ≤ 13`, **663 cells where both the left-only search and the exhaustive
+outward search terminate, 0 violations of `f_w(a) ≤ LB(w,a) + 1`, and the
+left-only bound is exactly tight at 293 of them**; over the same word set at
+`a` up to 20, 405 cells with a finite left-only bound and 8 where only the node
+budget ran out. **The one exception is the all-white word**, where the cone can
+never bound anything (with the black cell at `-a` imposed and without it,
+identically, to depth 240) because `sideways_inverse` with a white column makes
+column `-1` equal to column 1 and the cone conditions become a satisfiable
+finite system. That case is Condrey's and is handled by the right half's latch
+(`column_one_succ_of_white`, `white_run_monotone`). **Consequence for a seeder,
+and it corrects the entry above:** that entry's "what it would take" asks for a
+two-step latch, `col1(2m) ↦ col1(2m+2)`, which is a statement about the right
+half; the measurement says the right half is not where a rung above `p = 1`
+lives, so that recommendation is withdrawn by its author.
+
+**Two cautions, both from controls that fired.** The reason the right half
+cannot help is exact and worth having: building outward by radius, the free cell
+at `(0, +k)` changes the centre cell at time `k` **iff** the centre cell at time
+`k-1` is white and the whole anti-diagonal from `(0, k-1)` to `(k-2, 1)` is
+white — predicted from the rule (the right argument matters only when the centre
+is white, the dual of `rule30_left_local_law`; the Bool-level law is
+`right_local_law` in `explorer/talus12_scratch_rung3.lean`, which depends on no
+axioms at all) and then checked at every node of
+five exhaustive trees, **0 mismatches**, with the deepest level retaining any
+freedom at all being 4, 4, 9, 7 and 11 against final depths 17 to 19. So past a
+shallow level the column is a forced trajectory and the surviving population is
+a multiplicity rather than a diversity, which is what makes the whole set die on
+one level. And: **the emptiness of the left solution set is not by itself
+improbable.** The counting heuristic (`T` unknowns, `T-2-a` constraints, so
+`2^(a+2)` solutions expected) suggests it is a `2^{-2^{a+2}}` event, and that is
+refuted — replacing rule 30's leftward step by each of the 256 three-argument
+Boolean functions gives an empty set for 130 to 198 of them, median 0
+(`explorer/talus12_null.mjs`). What is informative is the narrower comparison:
+rules 90 and 150 are right-permutive as well as left-permutive, every column-1
+prefix is realisable by some right half for them, the left system has exactly the
+counted `2^(a+2)` solutions, and the block is unbounded — so crystal 66's filter
+fires the right way and the finiteness is created by the `OR`. Rule 86, rule
+30's mirror, is **not** a control here: the mirror of a left-permutive rule is
+right-permutive, so it lands with 90 and 150 for a reason unrelated to rule 30's
+own asymmetry.
+
+**Recorded** 2026-09-12 by Talus, from the attack document
+`docs/attacks/2026-09-12-rung-3-of-the-period-ladder-and-the-finite-bound-question-underneath-it-your-own-next-topic-section-6-of-your-classifica.md`.
+Scripts `explorer/talus12_ladder.mjs`, `talus12_branch.mjs`, `talus12_halves.mjs`,
+`talus12_left.mjs`, `talus12_leftdfs2.mjs`, `talus12_leftdfs3.mjs`,
+`talus12_cause.mjs`, `talus12_null.mjs`, `talus12_rung3deep.mjs`,
+`talus12_seedprint.mjs`; kernel `explorer/talus12_scratch_rung3.lean`, axioms
+`[propext]`, which decides `f(3,a)` exactly for `a = 1, 2, 3` over every
+configuration the light cone allows and carries `mutant_a1_8_is_false` beside it
+as the proof that the check can fail. One correction to the record while the
+file is open: the leftward solve itself is **not** new — it is
+Meier–Staffelbach 1991's attack on Wolfram's rule-30 cipher, described in
+`sources/spencer-2013-ca-cryptographic-generators.txt` lines 599–609 and already
+on this board as crystal 9. What is new is running it on a coned class, with the
+column hypothesised rather than known, for unsatisfiability rather than recovery.
+
+## How much rule 30 is in a statement: a control over all 256 elementary rules
+
+**Band: project-internal, and it is an instrument rather than a result.**
+`explorer/rowan_rulecontrol.mjs`.
+
+CLAUDE.md asks whether a node bears on a prize, and the sharp form of that is
+*is this statement about rule 30, or about anything?* The board answers it by
+hand, one `DOES NOT PROVE` field at a time, and got it wrong for the P2 tier
+this week — the seeder wrote that all twelve closed P2 nodes hold of every
+`ℕ → Bool`; ten do. "True of every `Bool` sequence" is not mechanically
+checkable here. **"True of every elementary cellular automaton" is**, and it is
+the useful half: a property shared with rule 45 is not a property *of* rule 30.
+Talus used exactly this once against rule 86 and it killed a claim; this runs
+it over all 256 rules from the same single black cell.
+
+| statement | rules | classes |
+|---|---|---|
+| `centerColumn_white_run_lt_start` (proved) | **256 / 256** | — |
+| `centerColumn_black_run_lt_start` (proved) | 242 / 256 | — |
+| not eventually constant (proved) | 84 / 256 | — |
+| rung 1 — both colours in `[a, 4a]` | 89 / 256 | 36 / 88 |
+| **rung 2 — all four pairs in `[a, 4a]`** | **10 / 256** | **3 / 88** |
+| **rung 3 — all eight triples in `[a, 16a]`** | **8 / 256** | **2 / 88** |
+| rung 3 at `[a, 4a]`, rung 4 at `[a, 16a]` | 0 / 256 | — |
+
+So **the board's two proved run bounds are near-universal facts about
+elementary CAs rather than facts about rule 30** — the white one holds for
+every rule there is. The occurrence rungs are the opposite: rung 2 is satisfied
+by exactly three classes — rule 30's `{30, 86, 135, 149}`, rule 45's
+`{45, 75, 89, 101}`, and `{54, 147}` — and rung 3 by two, rule 30's and rule
+45's. Whatever rung 2 is, it is not a fact about elementary CAs in general.
+
+**Read the class column only on the rung rows.** Reflection fixes the centre
+column, so every centre-column property is reflection-invariant; complement is
+*not* a symmetry of a colour-specific property, since it turns a black run into
+a white one. That is why the run-bound rows read the nonsensical "242 of 256
+rules but 88 of 88 classes".
+
+**The ladder as a profile** (`explorer/rowan_ladderprofile.mjs`): the least
+power-of-two `m` with every word of length `L` inside `[a, m·a]` for all
+`a ≥ 2`.
+
+| rule | L=1 | 2 | 3 | 4 | 5 | 6 |
+|---|---|---|---|---|---|---|
+| 30 | 2 | 4 | 8 | 64 | 64 | 256 |
+| 45 | 2 | 4 | 16 | 32 | 64 | 256 |
+| 86 | 2 | 4 | 8 | 64 | 64 | 256 |
+| 54 | 2 | 4 | — | — | — | — |
+| 90, 150, 110 | — | — | — | — | — | — |
+
+Rule 86 reproduces rule 30 exactly, which is the reflection control, and rule
+30's row reproduces `explorer/ephemeris2_rung2.mjs` exactly — an independent
+measurement this instrument did not produce. Rule 45 is the only other class
+that climbs, and it is neither richer nor poorer: it wants `16` where rule 30
+wants `8` at `L = 3`, and `32` where rule 30 wants `64` at `L = 4`.
+
+**Three errors of mine are recorded in the scripts, because each produced a
+plausible wrong number.** (i) The first version demanded `run length < a` where
+the node says `L < a` with the run spanning `a..a+L`, i.e. `run length ≤ a`;
+it reported rule 30 as *failing its own proved node*. (ii) The class caveat
+above. (iii) **The window convention**: a word starting at `t` occupies
+`t..t+L-1`, so requiring it *inside* `[a, m·a]` means `t ≤ m·a − L + 1`. My
+loop ran `t` to `m·a` and let the word spill, silently widening the window and
+returning multipliers too small — rule 30's `L = 4` came out `32` against the
+true `64`, and rule 45 appeared to pass rung 4 where rule 30 failed, which I
+nearly reported as an asymmetry between the two rules. It is an artifact. The
+disagreement with `ephemeris2_rung2.mjs` is what exposed it. [2026-09-12,
+Rowan.]
+

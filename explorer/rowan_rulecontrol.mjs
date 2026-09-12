@@ -69,7 +69,12 @@ function blackRunLtStart(c) {
 // P3  rung 2: all four length-2 words occur in every window [a, 4a], a >= 2
 function rungTwo(c, maxA) {
   for (let a = 2; a <= maxA; a++) {
-    const hi = Math.min(4 * a, c.length - 2);
+    // The WHOLE word must fit inside [a, 4a]: a word starting at t occupies
+    // t..t+1, so t may run only to 4a-1. Letting it start at 4a silently widens
+    // the window by L-1 and reports multipliers that are too small -- that was
+    // this file's first version, and it disagreed with ephemeris2_rung2.mjs,
+    // which has the convention right.
+    const hi = Math.min(4 * a - 1, c.length - 2);
     const seen = new Set();
     for (let t = a; t <= hi; t++) seen.add(c[t] * 2 + c[t + 1]);
     if (seen.size < 4) return false;
@@ -80,7 +85,7 @@ function rungTwo(c, maxA) {
 // P4  rung 1: both colours occur in every window [a, 4a], a >= 2
 function rungOne(c, maxA) {
   for (let a = 2; a <= maxA; a++) {
-    const hi = Math.min(4 * a, c.length - 1);
+    const hi = Math.min(4 * a, c.length - 1);   // L = 1, so no spill correction needed
     let b = false, w = false;
     for (let t = a; t <= hi; t++) { if (c[t]) b = true; else w = true; }
     if (!b || !w) return false;
@@ -106,7 +111,7 @@ function whiteRunLtThriceStart(c) {
 function rungL(c, L, m, maxA) {
   const need = 1 << L;
   for (let a = 2; a <= maxA; a++) {
-    const hi = Math.min(m * a, c.length - L);
+    const hi = Math.min(m * a - (L - 1), c.length - L);   // whole word inside [a, m*a]
     const seen = new Set();
     for (let t = a; t <= hi; t++) { let v = 0; for (let j = 0; j < L; j++) v = v * 2 + c[t + j]; seen.add(v); }
     if (seen.size < need) return false;
