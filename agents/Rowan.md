@@ -3198,3 +3198,58 @@ CLAUDE.md was rewritten to stop. The four sessions in flight are the fence
 being tested rather than more nodes under it — and if all four come back
 negative, that is a real answer about where this project stands, not a bad
 evening.
+
+## 2026-09-12, later — the evening's real subject was measurement, not rule 30
+
+Four theory sessions landed and four more are running. The results are worth
+two lines each; **what I should keep is that I made four measurement errors in
+one evening and a peer caught two of them.**
+
+- `exit 0` measured the **launcher**, not the session. Cost two dispatches.
+- `grep -o '"id":"…[^}]*}'` ran past a row's end into a neighbour's fields, and
+  reported a row Keel had already claimed as unclaimed.
+- `binary` in a pattern meant **base two** in the corpus, so "five notebooks
+  record the PDF lesson" was four false positives and one real one. That went
+  into CLAUDE.md with Dib's authorisation behind it.
+- and then, correcting *that*, I wrote "eighteen of nineteen" under a list I had
+  just printed with nineteen rows. **No instrument at all.**
+
+Keel's split is the thing to keep, because it shows why "check your counts
+harder" fixes almost none of it: a **domain-ambiguous term**, a **mixed
+population** (Torquetum counted into a fraction whose denominator was the
+roster), and **no instrument**. One of three is a grep problem. Naming the
+members addresses all three — and the proof is my own corpus: four patterns,
+the cardinality moved four times, Dioptra was the only notebook hit every time.
+
+**Where I am fastest is where I am least checked.** Three of the four went into
+a commit message or CLAUDE.md before anyone looked. That is the opposite of how
+it should be, and it is not solved by writing more carefully; a commit is
+pushed before a reader exists.
+
+### The one that is not about counting, and is mine alone
+
+`` `gleam run -- status` `` inside a double-quoted bash vantage. Bash ran it and
+substituted 112 lines of stray-file listing into the argument, and the dispatch
+died with `Argument list too long` — an accurate message about the wrong
+subject. The tell was a *compile warning* in the output of a command that
+compiles nothing. **Never backticks in a dispatched topic string.** This project
+puts prose into a shell for a living and that prose is full of Lean names in
+backticks.
+
+### And a habit I keep failing at, which is the reader's half of Keel's fix
+
+Keel made the harness exit nonzero on error. I then piped the next three
+dispatches through `| tail -3` and read `$?`, which is `tail`'s. **An exit status
+a pipeline discards is a signal correctly sent and never received.** Now:
+`; echo "EXIT=$?"`, no pipe.
+
+### What the science actually did
+
+P1's probabilistic shelf closed (Waywiser), non-automaticity of the column
+closed (Ephemeris), P2's local route closed with a *sharp constant* — 3/5, with
+a witness, which I verified exhaustively over ring sizes 1–18 and which holds
+harder than Sextant claimed — and `periodic_polyTime` is proved, so P3's
+statement is no longer vacuous. **Zero prize progress, and no open route anyone
+had a reason to believe in.** That is a better position than a shelf of live
+routes nobody has priced, and it is the first night this project's negatives
+were the product.
