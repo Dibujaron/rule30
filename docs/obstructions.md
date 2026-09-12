@@ -2809,19 +2809,47 @@ determines column 1 at every white time up to a lag of one**: at depth `T`, the
 white-time bits at times `< T` are pinned to a single value and only the most
 recent one is free.
 
-**Why that phrasing matters, and what would have to be checked before anyone
-believes it is a route.** `centerColumn_not_isEventuallyPeriodic_of_white_times`
-is closed, and Chorobates's fifth clause of crystal 72 shows its *hypothesis* is
-guarded by the negation of its own goal, hence equivalent to P1 and not a route.
-The determination measured here is **not so guarded** — it is unconditional, and
-says nothing about a hypothetical periodic column. If it held with a bounded lag
-as a theorem, an eventually periodic centre column would force column 1 to be
-eventually periodic at the white times, which is that node's hypothesis
-supplied *non-vacuously*. **That is a sketch and not an argument**, and the step
-it hides is whether "determined with bounded lag" transfers periodicity at all —
-a function of a periodic sequence need not be periodic unless it is also
-shift-equivariant, and nothing here establishes that. Measured to `T = 25` is
-also not measured. [2026-09-12, Rowan.]
+**RETRACTED THE SAME EVENING, AND IT IS A TAUTOLOGY.** I wrote here that this
+determination is *not* guarded by the negation of its goal, unlike the
+hypothesis of `centerColumn_not_isEventuallyPeriodic_of_white_times`, and that
+if it held with bounded lag it would supply that node's hypothesis
+non-vacuously. Dib asked one question — *isn't column `N+1` already known to be
+tightly tied to column `N`?* — and the answer dissolves the whole thing.
+
+**It is the rule at the origin, solved for `c₁`.** Read the rule at cell 0:
+
+> `c₀(t+1) = c₋₁(t) XOR (c₀(t) OR c₁(t))`
+
+At a **white** time, `c₀(t) = 0`, so this is `c₀(t+1) = c₋₁(t) XOR c₁(t)`, i.e.
+`c₁(t) = c₀(t+1) XOR c₋₁(t)` — determined, with the lag of one that the counts
+showed. At a **black** time, `c₀(t) OR c₁(t) = 1` whatever `c₁(t)` is, so `c₁`
+leaves the equation and is free. That is exactly the measured pattern: white-time
+bits pinned, black-time bits varying, ambiguity only at the most recent white
+time. Checked rather than argued: over 3,000 rows, `c₁(t) = c₀(t+1) XOR c₋₁(t)`
+fails at **0 of 1,516** white times, and `c₀(t+1) = ¬c₋₁(t)` holds at **1,484 of
+1,484** black times.
+
+**And `c₋₁` is free too, for a second one-line reason.** Cell `(t+1, i)` reads
+`i−1, i, i+1`, so for `i ≤ −1` it reads only cells `≤ 0`: the left half is a
+**closed system driven by column 0**, and it starts all white in this family. So
+column 0 determines the entire left half by induction, which is why the sweep
+found all 29 column-0 classes pinning columns `−1..−8` uniquely. Nothing about
+rule 30 is used beyond the neighbourhood shape.
+
+So the exhaustive sweep over `2^26` configurations confirms a two-line identity.
+The counts are right, `rowan_leftpin.mjs` is right, and **the finding is
+`Nothing`** — it says nothing about rule 30 that the rule itself does not say at
+the origin. It supplies no hypothesis to any node, because a tautology
+constrains no eventually periodic column.
+
+**This is the trap Ephemeris already named**, in §4.2 of the subshift sighting
+of the same morning: *"the tempting reduction — `no 11 past N ⟹ column −1 is
+black at every late black time` — is a tautology, the rule at the origin read
+backwards, and I spent an hour on it."* Same equation, same origin, same
+direction, recorded twelve hours earlier, and I walked into it while holding a
+brief that quoted the warning. What made it feel like a discovery was the
+2^26 exhaustive sweep behind it: **the size of a computation is not evidence
+about the depth of what it computes.** [2026-09-12, Rowan.]
 
 The `p = 1` rung is the one case where the cone sees nothing — the
 all-white word makes `col(-1)` equal to column 1 and the system satisfiable — and
