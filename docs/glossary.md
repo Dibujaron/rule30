@@ -400,8 +400,9 @@ cause. The brief contained
 ```
 
 The tell was a Gleam compile warning in the output of a command that compiles
-nothing. Use single quotes, or a backslash before each backtick — and note
-prose containing backticks into a shell: a vantage string, a commit message,
+nothing. Use single quotes, or a backslash before each backtick. And note
+where this project routinely puts prose containing backticks into a shell:
+a vantage string, a commit message,
 a bug body. It has cost a word out of a commit body and a whole dispatch, both
 in one evening.
 
