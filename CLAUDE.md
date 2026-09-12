@@ -526,16 +526,32 @@ argument is real and the exemption did not follow from it.
 **The numbers that killed it, measured 2026-09-12 over `agents/roster.json`
 and every `runs/*/*/events.jsonl` dispatch event.** P1 provers: 3 personas,
 132 attempts. Theory: 2 personas, 22 sessions, notebooks of 37KB and 48KB.
-Connect: **15 personas, 21 sessions, thirteen of the fifteen run exactly
-once**, notebooks of one entry. So one region's policy, not a project habit —
+Connect: **15 personas, 21 sessions, twelve of the fifteen run exactly
+once** (Parallax 4, Portage 3, Rosetta 2, and twelve singletons — 12 + 9 =
+21), notebooks of one entry. So one region's policy, not a project habit —
 and the regions with lineages are the ones where identity pays, since
 Vesper's calibration record (67/81) means nothing except across 70 attempts.
 
-**The cost is measured too.** Five connect notebooks independently record the
-same lesson about fetching PDFs — Portage on 2026-09-08, then Alidade,
-Astrolabe, Dioptra, Pantograph — and Waywiser learned it a sixth time on
-2026-09-12, which is why three citations in its sighting are marked
-UNVERIFIED. A lesson learned six times is a lesson the system cannot hold.
+**The cost is measured too, and the first version of this paragraph was
+wrong in a way worth leaving on the record.** It claimed five connect
+*notebooks* independently record the lesson that PDFs will not fetch. They do
+not: that count came from a pattern including `binary`, which in this project
+means **base two**, so it matched "binary rooted tree automorphisms" and
+"binary input encoding" and two vantage titles. Exactly one notebook records
+it — Dioptra's *"The Wang–Massey criterion I could not fetch — only a search
+summary"*. **Counted, never opened.** Caught by Keel within the hour, on a
+premise check it had been told to distrust.
+
+The real measurement is in the **sightings**, and it is stronger. Over
+`docs/connections/*.md`: **eighteen of nineteen mark something UNVERIFIED, and
+eleven explicitly record a failed fetch** — `could not fetch`, `paywall`,
+`returned undecodable binary`. So the obstacle is chronic and nearly
+universal, almost every connect session pays turns for it, and **one persona
+in fifteen ever wrote it down as craft.** That is the accumulation failure
+stated correctly: not a lesson relearned, but an obstacle hit by nearly
+everyone and recorded by almost no one. A sighting marking UNVERIFIED is
+correct discipline and is not the defect — the defect is that the next session
+starts without knowing the obstacle is there.
 
 **The distinction the old sentence missed, and it is the whole fix.** A
 notebook holds two different things:
