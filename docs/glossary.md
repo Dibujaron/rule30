@@ -370,6 +370,47 @@ every entry disclaims all three prizes is not a tier of bad work, it is a
 tier of good work pointed away, and only an explicit field makes that
 visible in aggregate.
 
+### A signal correctly sent and never received
+
+Every other entry in this section is about a value that misleads. These two
+are about a value that never arrives, and both were produced by the reader
+rather than the writer — which is why fixing the writer does not close them.
+
+**A pipeline discards the exit status.** `harness` now exits nonzero on every
+error, which took an FFI and a landing. It bought nothing for a caller who
+writes
+
+```bash
+gleam run -- prove-one x | tail -3   # $? is tail's. Always 0.
+```
+
+That bit the same session twice within an hour of the fix landing. The
+harness is now correct and the message still does not arrive. In bash:
+`${PIPESTATUS[0]}`, or drop the pipe and `; echo "EXIT=$?"`. This project has
+made the identical mistake with `grep` over a test suite and with `tail` over
+`lean` — three times, in the tool you reach for precisely when you are trying
+to *look at* output.
+
+**Backticks inside a double-quoted bash string run.** A dispatch died with
+`Argument list too long`, which was accurate and had nothing to do with the
+cause. The brief contained
+
+```bash
+"use `gleam run -- status`"       # bash ran it and pasted 112 lines in
+```
+
+The tell was a Gleam compile warning in the output of a command that compiles
+nothing. Single quotes, or `\`` — and note where this project routinely puts
+prose containing backticks into a shell: a vantage string, a commit message,
+a bug body. It has cost a word out of a commit body and a whole dispatch, both
+in one evening.
+
+**What the two share.** Nothing was measured wrongly; a true statement was
+produced about the wrong subject, and in both cases the subject was something
+the author had written themselves one line earlier. The fix is not more care
+at the point of reading — it is knowing that `$?` after a pipe and `"` around
+a backtick are both silently about something else.
+
 ### Do not put a number in a claim that does not rest on one
 
 The stronger form of the rule below, and the one that would have saved an

@@ -495,6 +495,14 @@ pub fn flag_value(
 ///
 /// One silent failure is a bug; a CLI that cannot report failure at all is
 /// the reason nobody noticed which bug it was.
+///
+/// **The reader is now the weak link, and this cannot fix that.** A caller
+/// that pipes — `gleam run -- prove-one x | tail -3` — reads `tail`'s status,
+/// not this one, so the exit code is correctly sent and never received. It
+/// bit the same session twice within an hour of this landing. In bash the
+/// answer is `${PIPESTATUS[0]}`, or no pipe at all and `; echo "EXIT=$?"`.
+/// Worth knowing when you next wonder why a verb you know failed looked like
+/// it succeeded.
 fn print_outcome(outcome: Result(String, String)) -> Nil {
   case outcome {
     Ok(text) -> io.println(text)
