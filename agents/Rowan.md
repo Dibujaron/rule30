@@ -3484,8 +3484,16 @@ urgent. Urgency is what made me start writing before checking.
 
 What actually survives is a nit and I am keeping it at nit size: CLAUDE.md
 says that identity holds **definitionally**, and it does not hold by `rfl`.
-`0 + k` does not reduce (`Nat.add` recurses on its second argument, so `k + 0`
-is `rfl` and `0 + k` is not) and `-(0 : ℤ)` does not either. It needs `simp`.
+There is exactly one blocker and it is an argument order, not a missing lemma:
+`Nat.add` recurses on its *second* argument, so `k + 0` is `rfl` and `0 + k` is
+stuck for a variable `k`, and `Basic.lean:88` writes `evolve (j + k) …` with
+`j` first. `Nat.zero_add` closes it, so `simp` suffices and no axiom is added.
+I first wrote that `-(0 : ℤ)` was a second blocker; Keel checked and it is not
+— `(-(0 : ℤ)) = 0` is `rfl`. Keel's phrasing of the useful form, which I
+prefer to mine: the identity holds by `simp [Nat.zero_add]` and *would* hold by
+`rfl` had `leftDiagonal` been defined with `k + j`. That tells a prover
+standing at index 0 what to type, where "delete the word definitionally" does
+not.
 Checked, not reasoned: `lake env lean` exit 0 on both slice identities plus a
 separating control `leftDiagonal 1 1 ≠ rightDiagonal 1 1`, which is there
 because my first control was `(0, 1)` and `decide` told me it was false — both
