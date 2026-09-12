@@ -4051,3 +4051,85 @@ was also the session that produced the most.
   never looked for; it did not exist. Keel checked instead of complying.
 - **The board's bottleneck is retrieval, not production.** Everything above is
   one sentence.
+
+## 2026-09-12, 23:15Z — the evening: a tactic change, three corrections, and one retraction I earned
+
+**Dib said the gains felt marginal and told me to try another tactic. He was
+right, and the tactic that worked was not exploring somewhere new — it was
+re-running what the afternoon had already measured.** Four hours of that found
+more than the afternoon's twelfth document would have, and then destroyed my
+own best finding. Band for the evening: **Nothing** as mathematics. Every item
+below is a correction or an instrument.
+
+**The harvest, tried and exhausted in twenty minutes.** 71 stray `.lean` files
+prove 165 theorem names the build cannot see, 94 absent from the board. Nearly
+all are helper lemmas or already landed: `centerColumn_black_infinitely_often`
+and its white twin are *literally the two halves* of the closed
+`centerColumn_not_eventually_constant`, and the `shield` family's headline is
+the closed `exists_config_same_centerColumn`. This afternoon's Sextant file was
+landable because it was hours old, not because strays are a seam.
+
+**Correction 1 — a rounded print read as an exact zero.** I told Dib, as a
+finding, that the effective cone was "strictly smaller than the light cone,
+ratios 0.87 and 0.73, falling". `vernier2_influence.mjs` prints influences
+through `toFixed(4)`. At `t = 22` cells 17 and 18 flip on **32 of 4,194,304**
+inputs — `7.6e-6`, rendered `0.0000`. True radius 18, not 16; ratio 0.818, not
+0.727; and the exact sweep to `t = 26` **bounces between 0.684 and 1.000 with
+no trend.** The surviving half is real. The half that would have mattered is
+gone. I diffed the two implementations before believing either: 0 mismatches at
+every `t` from 4 to 20, so it was never the automaton.
+
+**Correction 2 — three of my own, inside one new instrument.**
+`explorer/rowan_rulecontrol.mjs` runs a property over all 256 elementary rules,
+the mechanical half of "is this about rule 30 or about anything". It says the
+board's two proved run bounds are near-universal — **white run holds for 256 of
+256 rules** — while rung 2 holds for 3 equivalence classes of 88 and rung 3 for
+2. Getting there I (i) demanded `run length < a` where the node says `L < a`
+over `a..a+L`, and **reported rule 30 as failing its own proved node**; (ii)
+treated complement as a symmetry of a colour-specific property, which it is not
+— it turns a black run into a white one; (iii) let a word of length `L` start
+at `m*a` and spill past the window, silently widening it, giving rule 30's
+`L = 4` multiplier as 32 against the true 64 — and making rule 45 look as though
+it passed rung 4 where rule 30 failed, **which I nearly reported as an asymmetry
+between the two rules.** Disagreeing with `ephemeris2_rung2.mjs` exposed it.
+Every one produced a plausible number.
+
+**The retraction, and it is the entry.** Talus measured that the seed's centre
+column pins column 1 at its own white times to 1 or 2 possibilities. I built a
+bit-parallel engine, reproduced `T = 21` exactly, extended exhaustively to
+`T = 25` over `2^26` configurations, and found the structure: patterns are
+strict prefixes, the ambiguity is always the last white time's bit, and it
+resolves one step later. I wrote that up as **"the centre column determines
+column 1 at every white time, up to a lag of one"**, flagged that — unlike the
+hypothesis of `..._of_white_times`, which Chorobates showed is guarded by the
+negation of its own goal — this one is unconditional, and said it might supply
+that closed node's hypothesis non-vacuously.
+
+Dib asked one question: *isn't column N+1 already known to be tightly tied to
+column N?* It dissolves entirely. The rule at the origin is
+`c0(t+1) = cm1(t) XOR (c0(t) OR c1(t))`. At a white time `c0(t) = 0`, so
+`c1(t) = c0(t+1) XOR cm1(t)` — determined, **with exactly the lag of one my
+counts had "discovered"**. At a black time `c0 OR c1 = 1` whatever `c1` is, so
+`c1` leaves the equation and is free. 0 failures in 1,516 white times, 1,484 of
+1,484 black times. And `cm1` is free for a second one-line reason: cell
+`(t+1,i)` reads `i-1,i,i+1`, so for `i <= -1` it reads only cells `<= 0`, making
+the left half a closed system driven by column 0 that starts all white. Column 0
+determines the left half **by induction on the neighbourhood shape**, using
+nothing about rule 30.
+
+**Ephemeris named this exact trap twelve hours earlier** — §4.2, *"the rule at
+the origin read backwards, and I spent an hour on it"* — and I walked into it
+while holding a brief in which I had quoted that warning to Talus.
+
+**What made it feel like a discovery was the size of the computation.** `2^26`
+configurations, exhaustive, bit-parallel, reproducing an independent count
+exactly. All true, none of it evidence about depth. **The size of a computation
+is not evidence about the depth of what it computes** — the sentence I want my
+successor to have, because every safeguard I ran was a correctness check and
+correctness was never the problem.
+
+**Five targets of mine were falsified today by sessions I briefed**, and the
+sixth by Dib in one question. The instruments that came out of it — Talus's
+cone-visibility classification, Keel's `status` disclaimer line, and
+`rowan_rulecontrol.mjs` — all exist to take target choice away from my taste,
+and on today's record that is the correct place to put it.
