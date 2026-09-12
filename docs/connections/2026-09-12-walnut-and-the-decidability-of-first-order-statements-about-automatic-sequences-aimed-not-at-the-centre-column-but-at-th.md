@@ -25,7 +25,14 @@ depths at which the left-diagonal period doubles is `3, 8, 29, 400, 87867,
 2107985255`, whose base-2 representations have **lengths `2, 4, 5, 9, 17, 31`**,
 and a regular language's length set cannot have gaps that grow. The tool's
 hypothesis and the wall's subject matter are the same object read from opposite
-sides.
+sides. **The seam, said here rather than buried:** that those gaps go on growing
+is measured to six terms and is the board's own recorded heuristic, not a
+theorem, and proving it is strictly stronger than the wall — so §3.2 carries a
+second argument that needs no growth law at all, and §3.3 disposes of the onset
+wall separately. **And the vantage's premise does not survive either:** the
+settled region is not a haven away from the centre column, because
+`leftDiagonal t 0` *is* the centre column, so any automaton for the array is an
+automaton for the column.
 
 ---
 
@@ -166,11 +173,12 @@ route instead of a sighting. §3.2 is the argument that no such object exists.
 
 **What it would give.** Both left-diagonal walls at once, and — the part worth
 saying because it prices the whole family — an automaton for the *centre column*
-would decide all three prizes: P1 by Honkala, P2 because the letter frequencies
-of an automatic sequence are computable rationals when they exist, and P3 in any
-formalisation at or below the finite-state level (Chorobates's and my own
-2026-09-12 fence). **That is the correct measure of how much an automaton is
-worth here, and therefore of how unlikely one is.**
+would decide all three prizes: P1 by Honkala (verified above), P2 because the
+letter frequencies of an automatic sequence are rational when they exist
+(**UNVERIFIED**, above), and P3 in any formalisation at or below the finite-state
+level (my own 2026-09-12 fence, from the effective-randomness vantage).
+**That is the correct measure of how much an automaton is worth here, and
+therefore of how unlikely one is.**
 
 ---
 
@@ -671,9 +679,9 @@ names.
 **Regular model checking and transducer acceleration — Bouajjani, Jonsson,
 Nilsson and Touili's line, and the parametrised-verification literature around
 it — aimed at the settled-word recurrence.** §3.5 is the sighting and I could
-not follow it: this is a field whose objects are *exactly* ours — a
-length-preserving transducer, a regular set of configurations, a safety property
-— and whose whole business is the step this board keeps failing at, namely
+not follow it: this is a field whose objects are *exactly* ours — a finite-state
+transducer, a regular set of configurations, a safety property — and whose whole
+business is the step this board keeps failing at, namely
 turning "decidable for each fixed `L`" into "decidable uniformly in `L`". The
 board has already run the finite-`L` procedure by hand (obstruction 7, exhaustive
 to `L = 128`) and knows the answer it gives; what it has never asked is whether

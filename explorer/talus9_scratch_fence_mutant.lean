@@ -9,7 +9,7 @@ nothing else is changed.
 THIS FILE IS EXPECTED TO FAIL, and to fail in one exact place.  `lake env lean`
 exits 1 with
 
-  talus9_scratch_fence_mutant.lean:70:30: error: Application type mismatch: ...
+  talus9_scratch_fence_mutant.lean:77:30: error: Application type mismatch: ...
   but is expected to have type
     ⟨k, f v⟩ ∈ pushes (push k f q)
 

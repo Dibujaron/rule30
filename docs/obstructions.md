@@ -1957,7 +1957,7 @@ fail", not "the question is closed".
 Kernel `explorer/talus9_scratch_fence.lean`, with
 `explorer/talus9_scratch_fence_mutant.lean` beside it as the demonstration that
 the check can fail: it deletes the `push` case's contribution and nothing else,
-Lean rejects the mutated invariant at line 70 — its `push` case — and the same
+Lean rejects the mutated invariant at line 77 — its `push` case — and the same
 file *accepts* a two-stack counterexample showing the mutated statement is false,
 not merely unproved.
 

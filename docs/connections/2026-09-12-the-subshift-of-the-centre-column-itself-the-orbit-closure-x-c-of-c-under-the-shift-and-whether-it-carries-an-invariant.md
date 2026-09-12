@@ -755,7 +755,12 @@ instances supplied by the 256 rules and by the `X_b` family, and so it escapes
 the "one object, no instances" seam that killed everything else in this
 document. I could not reach it because I spent the session on the single-orbit
 question the vantage named, and because the decisive fact — that the board's rung
-1 is already proved — only appeared in hour four.
+1 is already proved — only appeared in hour four. **UNVERIFIED**: I name
+Cervelle–Guillon and Di Lena–Margara from memory as that field's standard
+references and fetched neither this session; the held
+`sources/kurka-topological-dynamics-1d-ca.txt` is the one part of this
+recommendation a reader can check today, and the next connector should search
+before citing the other two.
 
 **The vantage I could not reach from where I stood: the vertical ω-limit set of
 the space-time diagram as a two-dimensional object, and its two projections.**

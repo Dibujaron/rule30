@@ -197,8 +197,8 @@ cell by cell, against the first seven rows of the cone the script printed —
 an *asymmetric* fact (the cone has a left edge and a right edge and the seven
 rows are not palindromic in time). *(ii) The Lean statement is not the claim.*
 The aperiodicity theorem is stated with `Rule30/Prize.lean`'s **own**
-`IsEventuallyPeriodic`, imported rather than re-spelled — the witness file
-`import`s `Rule30.Prize`. *(iii) A vacuously-true `iff`,
+`IsEventuallyPeriodic`, imported rather than re-spelled — both Lean files
+`import Rule30.Prize` and neither defines a lookalike. *(iii) A vacuously-true `iff`,
 or a bound in the statement that is doing nothing.* The mutant
 `explorer/talus9_scratch_mutant_col1.lean` drops `1 ≤ j` — the reading a
 glance at the script's `isPowerOfTwo(t + 1)` suggests — and is **accepted**,
@@ -383,7 +383,7 @@ true about a set that does not need the pushes in it, and the fence would be
 measuring nothing. So `explorer/talus9_scratch_fence_mutant.lean` deletes
 exactly the `push` case's contribution and changes nothing else. It fails, and
 it fails twice over, which is the point: Lean **rejects** the mutated
-`stepAux_ok` at line 70, its `push` case, with
+`stepAux_ok` at line 77, its `push` case, with
 `... is expected to have type ⟨k, f v⟩ ∈ pushes (push k f q)`; and the second
 half of the same file is **accepted** and exhibits a two-stack machine whose
 work stack acquires a symbol the mutated alphabet does not contain
@@ -561,13 +561,25 @@ algorithm; the witness in this document sits at the very bottom of that gap
 (`O(log n)`), which is precisely why it is a good litmus and precisely why it
 says nothing about the threshold. That question wants a complexity theorist
 and a decision about which statement the prize file should carry, not another
-theorist session. **What a theorist should take next is the fence's remaining
-half as a topic in its own right, or better, the P2/P1 board**: of the three
-prize regions, P3 is now the one with the most recently built ground and the
-least left that a theorist can move, while P1's residual is untouched since
-2026-09-10 and every route into it closed that day. Concretely, I would send
-the next theorist at **crystal 72's third clause** — a sufficient condition
-for P1 over a *strictly smaller object* — with Groma's first-passage
-reformulation (crystal 73) as the one candidate that has ever satisfied that
-clause, and the instruction to find a second or to say plainly that the clause
-is unsatisfiable.
+theorist session. And the fence's remaining half — the simulation that turns
+"only finitely many symbols occur" into "there is an equivalent machine with
+every alphabet finite" — is **node work, not a topic**: it is routine, it is
+size L, and a theorist sent at it would spend the session writing a quotient
+construction with nothing to falsify.
+
+**So what a theorist should take next is P1, and specifically crystal 72's
+third clause.** Of the three prize regions, P3 now has the most recently built
+ground and the least a theorist can move; P2's last named route closed on
+2026-09-12 with a sharp constant (Sextant's `3/5`); and P1's residual has been
+untouched since 2026-09-10, when four routes into it closed in one day. Crystal
+72 says a fifth sufficient condition for P1 is worth seeding only if it comes
+with a measurement the residual admits that P1 does not, a literature the
+residual connects to, or a **strictly smaller object** — and it records that the
+second clause has never been satisfied by anything that survived contact.
+Groma's first-passage reformulation (crystal 73) is the single candidate that
+has ever satisfied the third. The topic I would set is: **find a second
+statement satisfying crystal 72's third clause, or show with evidence that the
+clause is unsatisfiable** — the latter being the more likely and the more
+valuable answer, because it would convert crystal 72 from a fence a seeder must
+remember into a closed door, and it is exactly the shape of result this role
+exists to produce.
