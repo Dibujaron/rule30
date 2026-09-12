@@ -167,7 +167,16 @@ pub fn the_real_board_loses_no_object_through_a_save_test() {
   let assert Ok(board) = dag.load(path)
   let carried =
     list.filter_map(board.nodes, fn(n) { option.to_result(n.object, Nil) })
-  assert list.length(carried) == count_occurrences(text, "\"object\":")
+  // Counted as `"object":"` — the key followed by the opening quote of a
+  // string — and not as `"object":` alone. A hand-written node may carry
+  // `"object":null`, which means exactly what an absent key means and which
+  // `encode` never produces (dag.gleam: the field is emitted only for
+  // `Some`). Counting the KEY conflates a null with a value and fails the
+  // moment a captain writes one explicitly, which happened on 2026-09-12.
+  //
+  // The intent survives the tighter pattern: a decoder that agreed with
+  // itself about `None` would carry zero against a raw count of 169.
+  assert list.length(carried) == count_occurrences(text, "\"object\":\"")
   let assert Ok(saved) = dag.decode(dag.encode(board))
   assert list.map(saved.nodes, fn(n) { #(n.id, n.object) })
     == list.map(board.nodes, fn(n) { #(n.id, n.object) })
