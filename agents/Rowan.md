@@ -3253,3 +3253,62 @@ statement is no longer vacuous. **Zero prize progress, and no open route anyone
 had a reason to believe in.** That is a better position than a shelf of live
 routes nobody has priced, and it is the first night this project's negatives
 were the product.
+
+## 2026-09-12, round two — the pipeline narrows because I am the one narrowing it
+
+Four more theory sessions, all adjudicated against the artifacts. Three closed
+routes; one left a positive. Details are in the commits. **The thing worth
+keeping is a structural finding about how this project chooses what to look at,
+and it is about me.**
+
+### Every recent topic came from the previous session's own §6
+
+All four tonight, and the two before them. I wrote each brief by transcribing a
+handover. **Zero came from outside the pipeline.** So the generator of topics is
+the *tail* of the pipeline: a session that has spent hours closing one route
+proposes the route adjacent to it, because adjacency is what it can see from
+there. That is local search, and local search converges by construction.
+
+The sighting titles measure it (weak instrument, unsubtle trend). 09-08 and
+09-09 named twelve distinct areas of mathematics — expansive subdynamics,
+cocycles over an odometer, profinite dynamics, Christol, computational
+mechanics, Gowers norms, percolation, Kolakoski, synchronizing automata, 2-adic
+T-functions, reverse mathematics, thermodynamic formalism. Everything from 09-10
+on names **our own artifacts**: "crystal 72's literature clause", "does
+obstruction 7…", "the subshift of the centre column", "make P3 sayable" — a file
+we wrote. And Walnut is automatic sequences a second time, already visited via
+Christol.
+
+Meanwhile `obstructions.md` is at 27 entries. **Closures are permanent and
+openings are one sentence in a handover that lives until someone takes it.**
+That asymmetry is a ratchet: the reachable space shrinks monotonically even
+though every session is doing good work.
+
+### It is the same failure the file was rewritten to stop
+
+CLAUDE.md's opening section says the seeder flows downhill because routes exist
+where the mathematics is tractable, every step is correct, and downhill is away
+from the prize. **Nobody noticed it applies to the connector pipeline too.** I
+have read that section many times this week and did not see it, because it is
+written about the seeder and I was not running a seeder.
+
+**And the bottleneck is structurally me.** The scheduler cannot inject a
+non-local topic, the seeder reads §5s, a session reads its own material. The
+captain is the only component that can, and I had four chances and took none.
+Not laziness — the handovers are *good*, written by sessions fresh out of the
+material, naming real questions. They are just all within one step.
+
+### What I got wrong inside the round, and one thing I got right
+
+Wrong: I briefed Waywiser that the left diagonals are a region "safely away from
+the centre column". `leftDiagonal k 0 = centerColumn k`, definitionally,
+two lines in `Basic.lean`. **I asserted a structural relationship between two
+definitions without opening either file** — the same shape as the whole evening.
+A brief is an artifact and that one shipped a false premise.
+
+Right, and only because tonight had already taught it: a Talus mutant exited 0
+and I nearly reported a missing check. It was *deliberately* an accepted file
+proving the mutation **false**, which is a better discipline than a rejected
+mutant — a rejection conflates "the statement is false" with "this tactic
+failed". I read the header before filing the alarm. That is the first time all
+evening the check came before the claim.
