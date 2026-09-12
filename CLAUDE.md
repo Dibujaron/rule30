@@ -27,6 +27,23 @@ precisely because periodicity is already proved there.** So the machine flows
 downhill, every individual step is correct, and downhill is away from the
 prize. Getting better at closing nodes makes this worse rather than better.
 
+**Sharpened 2026-09-12, and it cuts the same way rather than the other.**
+`Basic.lean:88` is `leftDiagonal k j = evolve (j + k) (-(j : ℤ))`, so at
+`j = 0` it is `evolve k 0`, which is `centerColumn k` by `Basic.lean:79`.
+**The centre column is the `j = 0` slice of the left-diagonal family** —
+definitionally, and nobody had written it down. Read that as a *stronger*
+reason to stay off the left edge, not a licence to return to it. The region is
+tractable precisely because the node work lives at large `j`, where
+periodicity is proved; the moment a statement reaches index 0 it has the prize
+inside it, which is why the two walls are walls. So it explains the walls
+rather than opening them, and a proposal that "the left diagonals turn out to
+be prize-relevant after all" is this trap wearing the discovery as a costume.
+
+It does pay once, and only as impossibility: an automaton for the
+left-diagonal array would give one for its `j = 0` slice, hence a 2-automatic
+centre column, which crystal 73 excludes by measurement. That is one of the
+three legs under the 2026-09-12 Walnut closure.
+
 Two consequences for anyone seeding or reviewing. **Ask what a proof of a
 prize would cite before asking whether a statement is provable** — a `DOES NOT
 PROVE` field that names a prize is the point of the field, and a tier where
@@ -294,6 +311,28 @@ Rowan; its notebook is `agents/Rowan.md` and is loaded into no prover's
 context. A framework agent's notebook is `agents/<Name>.md`, written by
 that agent directly — a framework agent is hand-started rather than
 dispatched, so no report ever writes it on their behalf.
+
+**Working conventions live in that project memory as well as in this file, and
+a grep of the repo will not find them.** The split is roughly: what the
+mathematics and the machinery *are* is here and in `docs/glossary.md`; **how
+to work** is a `type: feedback` file in the memory directory, often quoting
+Dib verbatim, with a *Why* and a *How to apply*. Both are loaded into your
+context and both bind.
+
+**So "not in CLAUDE.md and not in the glossary" is not evidence that something
+is not a rule.** On 2026-09-12 the overseer went to correct a peer's doc
+comment, grepped those two files, found nothing, and told Dib it was a
+personal preference binding nobody — while
+`memory/files-describe-now-not-history.md` said exactly that rule in Dib's own
+words, and had been listed by name in that session's own context from its first
+turn. The peer found it and cited it back.
+
+And what this pointer does **not** license, because the failure was not
+ignorance that the memory exists: **treating a list of searched places as
+exhaustive.** Three negatives are not a proof either. The question that
+actually works is *what would a genuine "nothing found" look like if the thing
+were there, and did I look where it would be* — asked before sending the
+correction, not after. **Coming back empty feels like having checked.**
 
 ## Reporting a result: say what a mathematician would make of it, first
 
