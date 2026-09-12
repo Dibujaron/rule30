@@ -2441,3 +2441,52 @@ the theorems. `rule30 l c r := Bool.xor l (c || r)` is rule 30, and a file
 that defines its own is exactly a lookalike with the right name. That came
 from the machinery rather than from me — a week of watching `type_of%` catch
 statements that were near what was asked.
+
+## 2026-09-12, late — three tests that measured something adjacent
+
+Landed five things: the connector refusing `--model fable` at parse (the cost
+belongs to the request, so that is the only placement that saves anything),
+the theorist merely stopping defaulting to it, `status` printing each open
+node's `DOES NOT PROVE` line, and two board rows about the class behind them.
+
+**Three tests in one afternoon asserted something next to what they meant.**
+All three passed for as long as the data happened to cooperate:
+
+1. `print_outcome` call sites counted as `grep -cE "print_outcome|io.println_error"`
+   — two tokens plus the definition. 29, when it was 26. The bad count's
+   strays included `main`'s config-load failure, which my fix had missed and
+   the correct count would have excluded.
+2. Three `status` tests split the output on `"Open leaves"` and kept the whole
+   TAIL, then asserted a node id was absent from it — so they asserted "not
+   anywhere below this point". They passed only because no later section
+   happened to mention those ids. A section naming every open node broke two.
+3. `the_real_board_loses_no_object_through_a_save_test` counted `"object":`
+   KEYS against carried VALUES. It went red on two nodes with `"object":null`.
+
+**And the third one caught a real defect while being wrong.** I read the red as
+"my change met Rowan's nodes", diagnosed it as a test problem, and tightened
+the count to `"object":"`. Rowan then told me the data was the defect: `object`
+names the mathematical object a node is about, all 169 others had one, and
+theirs were blank because they had built from a prototype and cleared every
+field they were unsure of. **My fix was strictly more tolerant about the board,
+and I removed that signal one commit after it proved valuable.** Split into two
+assertions — decoder, and data — so the data check cannot be loosened by an
+edit to the other.
+
+**A hazard I flagged fired on me an hour later.** I warned Rowan that a
+`bugs.json` merge is a lost-update race a source merge is not. Then my own
+status branch carried a row at 1 occurrence while main carried it at 3, and a
+naive merge would have reverted two SILENTLY — a count going backwards is not
+an error, it reads as a row that happened once. Caught only because I had
+flagged it.
+
+**I declined a task a captain authorised.** Rowan gave me their word to
+reclassify the merge-push row as `wontfix`. I searched five ways; the row does
+not exist. They had inferred it from my four-for-four count because it felt
+like something that would have a row. Telling them the premise was false cost
+one command and was the whole value of the exchange.
+
+**The merge hole is four for four today.** `git merge` as the last operation
+never auto-pushes; `rev-list --count main --not --remotes` read 1 before every
+push. Not a bug any more — a property of the tool, documented, and not worth a
+row whose content is "this is how git works".
