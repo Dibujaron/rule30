@@ -3939,3 +3939,63 @@ theorems, and the deliverable is a table rather than a hope.
 document, and enough on its own for the `p = 2` instance of Prize 1 with the
 closed `centerColumn_not_eventually_constant`. That is a real if, and it is
 measured at four points.
+
+## 2026-09-12, 19:45Z — the occurrence ladder is dead and the period ladder is not
+
+**Band: project-internal, and it is the most useful thing produced today
+because it kills the thing I spent the afternoon championing.** Talus, second
+session, 225 turns.
+
+**The cone sees exactly the zero-entropy targets.** That single sentence
+prices the whole occurrence ladder as **dead above rung 2** — the ladder I
+called "the only target on this board worth caring about" six hours ago, and
+pushed two sessions at. It is not a route and now there is a reason rather
+than a measurement.
+
+And it names the replacement in the same breath: **the period ladder**,
+measured exhaustively at 96 cells, and equivalent to a sufficient condition
+for Prize 1. Rung `p = 1` is Condrey's and half of it is already on the board
+(`centerColumn_black_run_lt_start`, `centerColumn_white_run_lt_start`); `p = 2`
+is this morning's alternating result; **rung 3 is the first rung of Prize 1's
+own ladder that nobody has.**
+
+**The part that is worth more than the rung, and I want it stated carefully
+because it is the kind of claim I have mishandled all day.** Pushing `p` at
+fixed small `a`, `f` grows linearly in `p` with slope 1.10 to 1.31, and
+`f(p,a) ≤ 2p + 2a + 2` holds at **all 180 distinct cells measured**, tight at
+`(p,a) = (2,1)`. Talus flags this itself, correctly, as *a fitted shape over a
+small range that must not be built on as a law*. So the inequality is **not**
+the finding.
+
+The finding is the sentence under it: **some finite bound in `p` and `a`, of
+any shape, implies Prize 1.** That converts P1 into "there exists a finite
+bound", which is a different kind of target from anything else on this board —
+it does not need the *right* bound, only *a* bound. Whether that is easier is
+unknown and I am not going to guess, but it is the first P1 statement today
+that is neither equivalent to the prize nor fenced.
+
+**Why this is the entry rather than the rung.** Three times today I picked a
+target, briefed a session at it, and the session came back with a measurement
+showing the target was the wrong half — `11`-free when `00`-free was the
+interesting one, then the occurrence ladder when the period ladder was. Each
+time the brief was falsifiable and got falsified with a number. That is the
+machinery working exactly as designed, and it is also a captain who keeps
+choosing by which statement *reads* most like progress. The classification
+Talus built exists precisely to stop that: it prices a rung before anyone
+commissions one, and I should use it rather than my taste.
+
+**Held for the next session, not dispatched.** Rung 3 of the period ladder,
+with the exhaustive table `f(3,a) = 8, 10, 9, 9, 10, 14, 13, 17, 16, 15, 19,
+18` for `a ≤ 12` that a candidate proof can be checked against **at every cell
+rather than at a limit**. The machinery it cites is already closed
+(`column_alternating_of_black_run`, `column_black_run_of_alternating`,
+`sideways_inverse`, `leftSolve_eq_column`, `evolve_left_edge`,
+`evolve_left_second_diagonal`). The one hard step is named: at `p = 1` the
+latch `white_run_monotone` is armed at every step, and from `p = 2` on it is
+reset at every black time. New datum for whoever takes it — at `λ = 1` the
+whole surviving set dies on one level rather than decaying, which at `p = 1` is
+a single shared obstruction with population exactly `2^k` and no deaths until
+all die at once, and at `p ≥ 2` has **no identified cause**.
+
+I am not dispatching it: Dib wants to clear this session and a live worker
+blocks that. It is the first thing for the next captain.
