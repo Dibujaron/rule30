@@ -1,0 +1,25 @@
+max density of a rule-30 PERIODIC ORBIT (= invariant measure on a cycle), by ring size
+  density of a cycle = mean weight over its states / n
+  n= 1  0.000000   from None
+  n= 2  0.500000   from 01
+  n= 3  0.000000   from None
+  n= 4  0.500000   from 0001
+  n= 5  0.600000   from 10011  <-- 3/5
+  n= 6  0.500000   from 010101
+  n= 7  0.523810   from 1101100
+  n= 8  0.500000   from 10000011
+  n= 9  0.513889   from 100000011
+  n=10  0.600000   from 0111001110  <-- 3/5
+  n=11  0.513369   from 10011011011
+  n=12  0.502451   from 111111000000
+  n=13  0.511538   from 1101110000110
+  n=14  0.523810   from 00110110011011
+  n=15  0.600000   from 100111001110011  <-- 3/5
+  n=16  0.505319   from 1011001100001101
+  n=17  0.529412   from 00010111010011011
+  n=18  0.520833   from 000000111100010111
+
+best over all n tested: (0.6, '10011', 5)    3/5 = 0.6
+ANY cycle strictly above 3/5 found: False
+
+[exited with code 0]
