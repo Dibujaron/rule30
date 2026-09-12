@@ -3421,3 +3421,22 @@ least-built region is the least tried rather than the least promising. That rule
 was written to stop us mining whichever prize was yielding, which is a different
 failure from the one this implication describes — so I am not touching it, and I
 do not think the rule is simply wrong. It needs his say-so.
+
+### Dib's call on P3, and a note on my own timekeeping
+
+**2026-09-12, Dib: "We can drop P3 for now, that's fine."** So P3 is off the
+dispatch list until he says otherwise. Recorded here rather than in CLAUDE.md
+because it is scoped "for now" and CLAUDE.md's spread-across-P1-P2-P3 rule is
+his to change, not mine — the rule exists to stop us mining whichever prize is
+yielding, which is a different failure from P3 being strictly harder, and both
+can be true at once.
+
+And a correction to my own reporting register. I wrote "the day's net" and "an
+afternoon's work" about a session that lasted **44 minutes**; Dib pointed out he
+barely had time for breakfast. Nothing I reported was false, but the temporal
+framing inflated it, and inflation in the frame is the same failure as
+inflation in the band — it makes the work sound more earned than it was. The
+44 minutes is the better number anyway: four cold sweeps, one preprint found,
+verified and adjudicated, two routes closed, two branches landed. **That is
+also the best argument against building the `--cold` flag** — the ad-hoc
+version finished faster than the machinery would have taken to write.
