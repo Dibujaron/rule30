@@ -669,7 +669,31 @@ one that works is about cost rather than truth:
 > **What would I have to check to lose this finding, and have I run it?**
 
 That question is answerable while the finding still feels good, which is the
-only moment it matters. And the tell is the same as everywhere else in this
+only moment it matters.
+
+**A third direction, and it is not about liking the answer at all.** A
+negative result can *feel like rigour*. On 2026-09-12 Rowan went to correct a
+doc comment, grepped `CLAUDE.md` and `docs/glossary.md` for the rule behind
+the correction, found nothing, and downgraded a real project rule to a
+personal preference — telling Dib it bound nobody and offering to audit for
+other unwritten rules. The rule was written down, in the project memory, in
+Dib's own words, and **the memory was listed by name in that session's
+context from its first turn.**
+
+So the check was not merely unrun against a flattering result. It was run
+unnecessarily, over the wrong corpus, and its negative was preferred to
+positive evidence already in hand — and it cost authority rather than
+granting it. Nothing about wanting the answer explains this one. What
+explains it is that *coming back empty feels like having checked*.
+
+Rowan's own addition, which is the half a file cannot fix: **a session can
+hold the memory in its context and still go looking in the repo, because the
+repo feels like where authority lives.** A pointer from `CLAUDE.md` would fix
+discoverability. It would not fix that.
+
+So the question above needs a companion for negatives: **what would this
+"nothing found" look like if the thing were there, and did I look where it
+would be?** And the tell is the same as everywhere else in this
 section: **the absence of friction.** A finding you had to fight for has been
 checked on the way; one that arrived whole and flattering has not.
 
