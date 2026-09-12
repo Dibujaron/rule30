@@ -763,15 +763,11 @@ pub fn start(
 /// the collision and destroy that, so the first session of a role still lands
 /// exactly where the arithmetic says and only a second one moves.
 ///
-/// **Why this exists at all.** Those three derivations were bare constants
-/// with no retry, so the SECOND hand-started session of a role always aimed
-/// at the port the first was holding, failed to bind, and died. `mist` logs a
-/// supervisor report on the way down, which is why it looked like a crash
-/// rather than a refusal. Measured on 2026-09-11: 127.0.0.1:4330 held by one
-/// theorist while a second started, 4430 likewise for connectors. Provers
-/// never hit it because a run counts its ports up from the base already —
-/// only the hand-started roles were fixed, and nobody fired two of one role
-/// in a minute until that night.
+/// **Every hand-started role must come through here rather than `start`.** A
+/// fixed port with no retry means the second session of a role aims at the
+/// port the first holds, and `mist` does not refuse — it exits the caller
+/// (see `port_is_free`). Provers are safe without this because a run counts
+/// its ports up from the base already.
 ///
 /// The `Error` names every port tried, because "could not bind" without the
 /// range is a message that cannot be acted on.

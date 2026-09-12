@@ -486,23 +486,15 @@ pub fn flag_value(
 
 /// Print a verb's result and, on failure, EXIT NONZERO.
 ///
-/// The exit status is the point. Until 2026-09-11 this printed to stderr and
-/// returned, so `main` completed normally and every verb exited 0 on every
-/// error — a node that does not resolve, a board row the decoder refused, a
-/// guard that could not bind. Two hand-started sessions died on a port
-/// collision that night and printed `[exited with code 0]`, which is what
-/// anything reading `$?` saw of it.
+/// The exit status is the contract. Every error path here halts: an
+/// unresolvable node, a board row the decoder refused, a guard that could not
+/// bind. A verb that prints an error and returns is indistinguishable from
+/// success to anything reading `$?`.
 ///
-/// One silent failure is a bug; a CLI that cannot report failure at all is
-/// the reason nobody noticed which bug it was.
-///
-/// **The reader is now the weak link, and this cannot fix that.** A caller
-/// that pipes — `gleam run -- prove-one x | tail -3` — reads `tail`'s status,
-/// not this one, so the exit code is correctly sent and never received. It
-/// bit the same session twice within an hour of this landing. In bash the
-/// answer is `${PIPESTATUS[0]}`, or no pipe at all and `; echo "EXIT=$?"`.
-/// Worth knowing when you next wonder why a verb you know failed looked like
-/// it succeeded.
+/// **The reader is the weak link and this cannot fix it.** A caller that
+/// pipes — `gleam run -- prove-one x | tail -3` — reads `tail`'s status, not
+/// this one, so the exit code is sent and never received. Use
+/// `${PIPESTATUS[0]}`, or no pipe and `; echo "EXIT=$?"`.
 fn print_outcome(outcome: Result(String, String)) -> Nil {
   case outcome {
     Ok(text) -> io.println(text)

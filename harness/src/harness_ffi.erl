@@ -199,11 +199,10 @@ sha256_hex(Bin) ->
 %% ---- Exit status -----------------------------------------------------------
 
 %% halt_with(Status) -> no return
-%%   Stop the node with an exit status. The CLI had no way to do this, so every
-%%   verb exited 0 on every error: a failed dispatch, a refused board row and a
-%%   guard that could not bind were all indistinguishable from success to
-%%   anything reading `$?`. On 2026-09-11 two hand-started sessions died on a
-%%   port collision and printed `[exited with code 0]`.
+%%   Stop the node with an exit status. Every error path in the CLI ends here:
+%%   a failed dispatch, a refused board row, a guard that could not bind. A
+%%   verb that printed its error and returned would be indistinguishable from
+%%   success to anything reading `$?`.
 %%
 %%   `flush` is left at its default of true rather than turned off for speed:
 %%   the whole point of a nonzero exit is that the message explaining it was
@@ -214,12 +213,12 @@ halt_with(Status) -> erlang:halt(Status).
 %% port_is_free(Port) -> boolean()
 %%   Can 127.0.0.1:Port be bound right now. Binds and closes immediately.
 %%
-%%   This exists because `mist.start` does NOT return an error on a port that
-%%   is taken -- it fails to start a supervised child and EXITS the calling
-%%   process, so `result.map_error` never runs and a retry loop cannot see the
-%%   failure at all. That is the Erlang supervisor dump a colliding session
-%%   printed on 2026-09-11, and why it looked like a crash rather than a
-%%   refusal.
+%%   Callers must ask BEFORE starting, never react after failing: `mist.start`
+%%   does NOT return an error on a taken port -- it fails to start a
+%%   supervised child and EXITS the calling process, so `result.map_error`
+%%   never runs and a retry loop around it cannot see the failure at all. A
+%%   colliding session prints an Erlang supervisor report and looks like a
+%%   crash rather than a refusal.
 %%
 %%   So a caller that wants to move to another port has to ask BEFORE it
 %%   starts, not react afterwards. The answer is "was free a moment ago",
