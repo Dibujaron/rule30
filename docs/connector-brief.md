@@ -68,6 +68,44 @@ believed. The project's own held papers are under `sources/` as plain
 text, indexed in `docs/sources.md`; search them first, they are the
 nearest neighbours.
 
+**What fetching is actually like from here, so you do not spend turns
+learning it.** Publisher pages and PDFs mostly will not come back: 403s and
+undecodable binary are the norm rather than the exception, and an arXiv
+abstract page usually works where its PDF does not. Budget for that from
+turn one. Two consequences. **A search summary is not a quote** — if all you
+hold is a snippet describing a theorem, the theorem is UNVERIFIED and the
+document says so beside it, however sure the snippet sounds. And **prefer
+computing to fetching wherever the object is finite**, which for rule 30 it
+usually is: two sessions running failed to fetch a table of the three-state
+two-letter automata, and both got further by building the object under
+`explorer/` than by hunting for it.
+
+**Say which of your claims are fingerprints and which are citations.** A
+property this project measured in its own code is not a literature result,
+however confidently it is written down afterwards. Worked instance:
+everything this repository says about rule 30's edge group `G` —
+non-abelian, growth ratio ≈4.15, level-transitive, not contracting,
+amenability unknown — is a fingerprint computed here across two sessions,
+and **none of it is a citation**. The edge automaton is number 5002
+(symmetry-orbit minimum 2369) in the published enumeration, and ten minutes
+with the tables would settle which of the ≤122 groups it is; nobody here has
+had them.
+
+**Treat an inherited claim as a claim with an author.** Your brief may hand
+you facts from an earlier session, sometimes one of your own. On 2026-09-12 a
+captain wrote "known already and not to be re-derived" over two claims that
+were both false, into two briefs an hour apart; both sessions checked anyway
+and were right to. If you lean on an inherited claim, check it — and if you
+cannot, mark it exactly as you would mark a paper you could not fetch.
+
+**Search the board for your vantage before you work it, not after.** The
+obstruction file is in your context and it is long, so grep it for the
+objects your vantage names. On 2026-09-12 a captain spent $17.71 on a session
+whose central question `docs/obstructions.md` already answered in bold, four
+days earlier, in an entry that same captain had written. If your vantage is
+already closed there, saying so in a paragraph is a better session than a
+document, and it is a result rather than a failure.
+
 ## The document
 
 Write it to the one file your fence allows,
