@@ -3640,3 +3640,64 @@ and the premise checks — `centerColumn_not_eventually_constant` proved,
 centerColumn` as hypothesis, which is the negation of the goal. Those are
 checks I ran rather than claims I read, and they are small. Band: **Nothing**
 as mathematics, all of it.
+
+## 2026-09-12, 16:30Z — the P1 seeder's tier, and I am not landing it
+
+**Band, first: Nothing, by the tier's own account.** Six P1 nodes, $7.68, 26
+turns, run `20260912T160512Z`. One has a route that compiles
+(`damage_front_advances`); the other five claim no route and none of the six
+supplies a witness. **All six disclaim Prize 1 in their own `DOES NOT PROVE`
+field, and the fields are correct.** CLAUDE.md names this exact shape — "a
+tier where every entry disclaims all three is a tier to think again about" —
+and I am acting on it rather than noting it.
+
+**Decision: land none of them.** The tempting one is node 1, because its route
+closes and the board has no open leaf, so landing it would give a prover
+something to do. Its own disclaimer is "Nothing about the centre column,
+nothing about periodicity, nothing about rule 30 beyond one application of
+`rule30_eq` — true of the picture grown from any two rows." Landing that *in
+order to have a leaf* is the downhill trap in its purest form: the leaf would
+exist because I wanted the scheduler to have work, not because anyone wants
+the theorem. The right response to an empty board is not a cheap node.
+
+**What the tier is actually worth, and it is not nothing.** Five of the six
+take eventual periodicity as hypothesis and derive consequences of it, aiming
+at a contradiction. That is *not* automatically Chorobates's trap — the trap
+is a hypothesis guarded by the negation of the goal with an unreachable
+consequent, and a genuine proof by contradiction has the same shape from the
+outside. What separates them is whether the consequences ever collide, and the
+seeder says plainly that they do not: *"it says nothing about whether the two
+failures can be arranged to occur together, which is the whole residual."*
+That is an honest report of not getting there, in the field designed for it.
+
+**The one finding, and it changes my next dispatch.** Node 6,
+`centerColumn_periodic_two_alternating`, reaches rung 2 independently — the
+seeder brief carries every connection document's section 5 verbatim, so it saw
+Ephemeris's topic, which is the mechanism working as designed. Its disclaimer
+reports a *negative about the route I was about to send a theorist down*:
+
+> an alternating tail is not refutable by anything on the board, because it
+> propagates leftward without closing — columns `-1` and `-2` are pinned to a
+> single free bit per pair, and the cone boundary is never reached, the run
+> bounds putting the forced block at depth below the time (crystal 69's ratio
+> again). And the ladder does not obviously continue: the argument is special
+> to `p = 2`, where a repeated adjacent pair *is* a run of length `p`.
+
+So two independent sessions now say the leftward-propagation mechanism does
+not close for rung 2 — Ephemeris's own §4.2 called the nearest version of it a
+tautology and spent an hour there. **Rung 2 stays the next theorist topic, but
+the alternation framing does not.** What I will hand over instead is the
+occurrence framing: `11` infinitely often is exactly the `k = 2` instance of
+the hypothesis of the closed `centerColumn_not_isEventuallyPeriodic_of_long_
+black_runs` (`∀ k N, ∃ t ≥ N, ∀ s < k, centerColumn (t+s) = true`), so the
+board already owns the top of that ladder and rung 2 asks for its bottom rung,
+in a vocabulary with closed lemmas in it. Whoever takes it should be told at
+the outset that the cone-propagation route is spoken for and has failed twice.
+
+**And the stale-proposals bug fired again, third occurrence.** This seeder
+overwrote `blueprint/proposals/next.json`, taking the four landed 2026-09-11
+proposals with it. Nothing was lost because they were landed — which is
+exactly why nobody notices, and exactly what the open row
+`a-landed-proposal-is-indistinguishable-from-a-pending-one-and-the-next-seeder-
+overwrites-both` predicts. I watched it happen this time instead of finding it
+afterwards.
