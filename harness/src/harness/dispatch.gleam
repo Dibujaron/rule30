@@ -1240,6 +1240,8 @@ pub fn status(cfg: config.Config) -> Result(String, String) {
     <> "\n\nOpen leaves, in dispatch order:\n"
     <> string.join(startable_lines, "\n")
     <> "\n\n"
+    <> disclaimer_section(d)
+    <> "\n\n"
     <> stray_section(cfg)
     <> "
 
@@ -1418,6 +1420,58 @@ fn sweep_strays(
 /// The `stray_proofs` section, listed by `status` rather than behind a
 /// verb of its own: not going to look IS the failure this addresses, and
 /// a verb a captain has to remember would reproduce it.
+/// What each open node says it does NOT prove, one line apiece.
+///
+/// **Why this is in `status` rather than left to the reader.** The
+/// `DOES NOT PROVE` sentence is the field that says whether a node bears on
+/// a prize, and this verb printed id, status, size, region and an attempt
+/// count -- everything except that. So a reader summarising from `status`
+/// cannot tell a wall that IS a prize from a wall that bears on nothing, and
+/// a reader who goes to the descriptions has to know the field exists.
+///
+/// **A node with no such sentence prints as having none, deliberately.** It
+/// is not a synonym for "bears on nothing": it means nobody wrote down what
+/// this node fails to prove, and that is indistinguishable from a node whose
+/// disclaimer was never filled in. A node that IS a prize has nothing to
+/// disclaim and lands in the same bucket, so the line says to open it.
+fn disclaimer_section(d: dag.Dag) -> String {
+  let open = list.filter(d.nodes, fn(n) { n.status != dag.Proved })
+  let lines = case open {
+    [] -> ["  (none -- every node is proved)"]
+    ns ->
+      list.map(ns, fn(n) {
+        "  "
+        <> n.id
+        <> "\n      "
+        <> case disclaimer_of(n.description) {
+          Ok(text) -> text
+          Error(Nil) ->
+            "no DOES NOT PROVE sentence -- open the node; it may be a prize "
+            <> "itself, or the field may never have been written"
+        }
+      })
+  }
+  "What each open node says it does not prove:\n" <> string.join(lines, "\n")
+}
+
+/// The `DOES NOT PROVE:` sentence of a description and nothing else -- these
+/// descriptions run to paragraphs and `status` is already long.
+fn disclaimer_of(description: String) -> Result(String, Nil) {
+  use #(_, after) <- result.try(string.split_once(description, "DOES NOT PROVE"))
+  let rest = case string.starts_with(after, ":") {
+    True -> string.drop_start(after, 1)
+    False -> after
+  }
+  let cut = fn(text: String, at: String) {
+    case string.split_once(text, at) {
+      Ok(#(head, _)) -> head
+      Error(Nil) -> text
+    }
+  }
+  let one = cut(cut(rest, "\n"), ". ")
+  Ok("DOES NOT PROVE: " <> string.trim(one))
+}
+
 fn stray_section(cfg: config.Config) -> String {
   let strays = stray_proofs(cfg)
   let cache = stray.load(stray.cache_path(cfg.repo_root))

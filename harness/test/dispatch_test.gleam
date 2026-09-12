@@ -6,6 +6,7 @@
 import gleam/json
 import gleam/list
 import gleam/option.{None, Some}
+import gleam/result
 import gleam/string
 import harness/bugs
 import harness/config
@@ -104,6 +105,24 @@ fn attempt(outcome: dag.Outcome) -> dag.Attempt {
   )
 }
 
+/// The open-leaves list ALONE, bounded at the next section.
+///
+/// Splitting on the header and keeping the whole tail asserts "not anywhere
+/// below this point", which is not what these tests mean and weakens as
+/// `status` grows -- it passed only while no later section happened to
+/// mention the node ids being excluded. A section naming every open node
+/// broke both tests without either being wrong about the leaves.
+fn open_leaves_section(text: String) -> Result(String, Nil) {
+  use #(_, tail) <- result.try(string.split_once(
+    text,
+    "Open leaves, in dispatch order:\n",
+  ))
+  case string.split_once(tail, "\n\n") {
+    Ok(#(section, _)) -> Ok(section)
+    Error(Nil) -> Ok(tail)
+  }
+}
+
 // --- status -------------------------------------------------------------------
 
 pub fn status_lists_every_node_and_the_open_leaves_test() {
@@ -111,8 +130,7 @@ pub fn status_lists_every_node_and_the_open_leaves_test() {
   assert string.contains(text, "harness_probe")
   assert string.contains(text, "ghost_lemma")
   assert string.contains(text, "attempts=")
-  let assert Ok(#(_, leaves)) =
-    string.split_once(text, "Open leaves, in dispatch order:\n")
+  let assert Ok(leaves) = open_leaves_section(text)
   // `harness_probe` unblocks one other node, so it leads; `probe_corollary`
   // is not a leaf at all while its dependency is open.
   assert string.starts_with(string.trim(leaves), "harness_probe")
@@ -192,8 +210,7 @@ pub fn status_lists_a_walled_ready_node_separately_from_open_leaves_test() {
       node("walled_probe", "walled_probe", dag.Wall, []),
     ])
   let assert Ok(text) = dispatch.status(cfg_for(d))
-  let assert Ok(#(_, leaves)) =
-    string.split_once(text, "Open leaves, in dispatch order:\n")
+  let assert Ok(leaves) = open_leaves_section(text)
   // A wall node whose deps are satisfied is ready by the DAG's own
   // definition, but the scheduler will never start it, so it must not be
   // listed as if it were dispatchable.
@@ -266,8 +283,7 @@ pub fn status_marks_a_research_node_and_lists_it_last_test() {
     ])
   let assert Ok(text) = dispatch.status(cfg_for(d))
   assert string.contains(text, "L research")
-  let assert Ok(#(_, leaves)) =
-    string.split_once(text, "Open leaves, in dispatch order:\n")
+  let assert Ok(leaves) = open_leaves_section(text)
   let assert Ok(#(before, after)) = string.split_once(leaves, "deep_probe")
   assert string.contains(before, "harness_probe")
   assert string.contains(after, "size L research")
@@ -1349,4 +1365,65 @@ pub fn status_names_the_stray_proofs_test() {
   assert string.contains(text, "runs/r1/probe-1/Probe.lean")
   assert string.contains(text, "explorer/scratch_done.lean")
   assert !string.contains(text, "Half.lean")
+}
+
+// --- what an open node says it does not prove ---------------------------------
+
+/// `status` printed id, status, size, region and an attempt count, and not
+/// the one field that says whether a node bears on a prize. Two identities
+/// answered that question wrongly in opposite directions on 2026-09-12 while
+/// all four open nodes carried the answer.
+pub fn status_prints_an_open_nodes_disclaimer_test() {
+  let n =
+    dag.Node(
+      ..node("probe_disclaimed", "probe_disclaimed", dag.Wall, []),
+      status: dag.Open,
+      description: "WALL. Some prose about the node. DOES NOT PROVE: not a prize conjecture; a claim about the left edge only. LITERATURE: something else entirely.",
+    )
+  let assert Ok(text) = dispatch.status(cfg_for(Dag([n])))
+  assert string.contains(text, "What each open node says it does not prove")
+  assert string.contains(
+    text,
+    "DOES NOT PROVE: not a prize conjecture; a claim about the left edge only",
+  )
+  // The sentence and nothing after it: these descriptions run to paragraphs.
+  assert !string.contains(text, "LITERATURE: something else entirely")
+}
+
+/// A node with no such sentence says so, and says to open it. That is not a
+/// synonym for "bears on nothing" — a node that IS a prize has nothing to
+/// disclaim and lands in the same bucket as one whose field was never filled
+/// in, and the reader has to be told those are indistinguishable from here.
+pub fn status_says_when_an_open_node_has_no_disclaimer_test() {
+  let n =
+    dag.Node(
+      ..node("probe_silent", "probe_silent", dag.Wall, []),
+      status: dag.Open,
+      description: "THE RESIDUAL OF P1. Proving it proves P1.",
+    )
+  let assert Ok(text) = dispatch.status(cfg_for(Dag([n])))
+  assert string.contains(text, "no DOES NOT PROVE sentence")
+  assert string.contains(text, "open the node")
+}
+
+/// Proved nodes are not listed: the section answers "what is left", and a
+/// closed node's disclaimer is not a question anybody is asking.
+pub fn status_disclaimer_section_lists_only_open_nodes_test() {
+  let open_ =
+    dag.Node(
+      ..node("probe_open", "probe_open", dag.Wall, []),
+      status: dag.Open,
+      description: "DOES NOT PROVE: nothing at all.",
+    )
+  let closed =
+    dag.Node(
+      ..node("probe_closed", "probe_closed", dag.S, []),
+      status: dag.Proved,
+      description: "DOES NOT PROVE: this must not appear.",
+    )
+  let assert Ok(text) = dispatch.status(cfg_for(Dag([open_, closed])))
+  let assert Ok(#(_, section)) =
+    string.split_once(text, "What each open node says it does not prove")
+  assert string.contains(section, "probe_open")
+  assert !string.contains(section, "probe_closed")
 }
