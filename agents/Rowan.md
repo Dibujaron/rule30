@@ -3440,3 +3440,72 @@ inflation in the band — it makes the work sound more earned than it was. The
 verified and adjudicated, two routes closed, two branches landed. **That is
 also the best argument against building the `--cold` flag** — the ad-hoc
 version finished faster than the machinery would have taken to write.
+
+## 2026-09-12, afternoon — the board ran out, and a near-miss I want on record
+
+**The state, said plainly: the DAG is exhausted.** 165 of 169 nodes proved.
+The four that remain are all `size: wall`, all region P1 —
+`centerColumn_right_isEventuallyPeriodic_of_center`,
+`centerColumn_other_isEventuallyPeriodic_of_center`, `leftDiagonal_onset_le`,
+`leftDiagonal_period_le`. `status` prints `Open leaves: (none)`, and it will
+keep printing that however long anyone leaves it: `wall` is never dispatched,
+flag or no. Keel's phrasing is better than mine and I am adopting it — **the
+machine did not slow down, it ran out of board.** Every verb left to this
+project is seed, theorise, connect, adjudicate.
+
+**Four P2 proposals I went to land were already landed.** `blueprint/proposals/
+next.json` still lists `centerColumn_black_run_lt_start`,
+`centerColumn_white_run_lt_start`, `centerColumn_window_not_constant` and
+`centerColumnCount_ge_of_pow` as pending, `seed check` reports `4 holds`, and
+all four are `proved` in the DAG and in `Statements.lean` since 2026-09-11 with
+a captain's correction already written into the last one. The proposals file
+is not truncated when a proposal lands, so it reads as a queue and is a log.
+I lost ten minutes to it and the next captain will too.
+
+**The near-miss, which is the real entry.** CLAUDE.md got a sharpening this
+morning: `leftDiagonal k 0` is `centerColumn k`, the centre column is the
+`j = 0` slice of the left-diagonal family, "and nobody had written it down".
+I noticed the same unfolding works on the right — `rightDiagonal k j =
+evolve (j + k) j`, so `rightDiagonal k 0 = centerColumn k` too — and, with two
+sessions live on the right edge, started writing it up as a caution nobody had
+stated. Then I grepped. It is in `docs/obstructions.md:1521`, in four
+documents under `docs/attacks` and `docs/connections`, and it is *used* in a
+closed proof, `Rule30/Proofs/CenterColumnEqEvolveMulPow.lean:25`. Known for
+days, by several identities, in writing.
+
+The grep is the only thing between me and telling Dib I had found something,
+and I want to name what made the grep feel unnecessary: **CLAUDE.md said
+"nobody had written it down" about the left half, and I read that as a fact
+about the pair.** It was a fact about one of them. A claim of novelty attached
+to one member of a symmetric pair does not transfer to the other member, and
+it is *most* tempting to let it transfer exactly when the other member is
+where your live sessions are working — because then it is not just true, it is
+urgent. Urgency is what made me start writing before checking.
+
+What actually survives is a nit and I am keeping it at nit size: CLAUDE.md
+says that identity holds **definitionally**, and it does not hold by `rfl`.
+`0 + k` does not reduce (`Nat.add` recurses on its second argument, so `k + 0`
+is `rfl` and `0 + k` is not) and `-(0 : ℤ)` does not either. It needs `simp`.
+Checked, not reasoned: `lake env lean` exit 0 on both slice identities plus a
+separating control `leftDiagonal 1 1 ≠ rightDiagonal 1 1`, which is there
+because my first control was `(0, 1)` and `decide` told me it was false — both
+cone edges are black at step 1, so the two families agree there and the check
+would have been vacuous. Band: **Nothing** as mathematics, both halves. Not
+editing CLAUDE.md for it; that file needs Dib.
+
+**Two sessions live, both on opus, both aimed at the P1 fence.** Portage
+connecting from contracting self-similar groups at the three-state Mealy
+automaton `E` — Portage's own bounded leftover from 2026-09-08, build the
+nucleus and decide whether the group contracts. Sextant theorising on its own
+§6, the right-diagonal recurrence run backwards. Both aimed at the two fence
+walls, either of which gives Prize 1 outright, since
+`centerColumn_not_eventually_periodic_of_any_other` is closed.
+
+**And the $2.81 I paid to learn nothing.** `gleam run -- connect` with no
+`--model` defaults to fable at `connector.gleam:111`; fable in the connector
+role is refused at turn one by a ToS classifier, and the refusal bills the
+cache-creation tokens anyway. Two open board rows already said so and my own
+project memory already said so. I knew it and did not think of it, which is a
+different failure from not knowing it, and the fix for it is not a better
+memory — it is the default. Keel has that fix on `keel/model-default`, waiting
+on a gap in my run queue.
