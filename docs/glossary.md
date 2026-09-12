@@ -174,6 +174,37 @@ Where it breaks, twice:
   of this project's worktree failures happened: code that had already been
   fixed, still running, with nothing on screen to say so.
 
+## Prove the mutation false, do not merely fail to prove it
+
+A **mutant** here is a deliberately broken variant of a checked file, run to
+establish that the checker would have noticed. The usual discipline is that
+the mutant must be REJECTED, and that is weaker than it looks.
+
+```lean
+-- weak:   lake env lean mutant.lean   ->  exits 1
+-- strong: theorem mutation_is_false : ¬ (the mutated claim) := by …
+```
+
+**A rejected theorem shows only that one proof did not go through.** Rejection
+conflates two different facts — the statement is false, and this tactic script
+failed — and a checker cannot tell you which it found. So a rejected mutant
+leaves the question open in exactly the direction that matters: the mutation
+might be true and merely hard.
+
+Proving the negation closes it. A file that **elaborates**, carrying
+`¬ (mutation)` on the three permitted axioms, says the mutated claim is false
+rather than unproved — and such a mutant is *supposed* to exit 0, which reads
+as a missing check to anyone applying the weaker rule. That cost one near-miss
+here: a captain flagged exactly such a file as an unexercised mutant before
+reading its header.
+
+Related: the third outcome below. A rejection is the middle case wearing the
+costume of the second — "not a pass" without saying whether the subject or the
+check was at fault. This is that distinction applied to the check on the check.
+
+Reached by a theorist rather than by the framework, which is worth recording:
+the discipline it replaces was ours.
+
 ## Adjudication, and the third outcome
 
 An **adjudicator** here is anything that decides a claim from outside the
