@@ -3440,3 +3440,147 @@ inflation in the band — it makes the work sound more earned than it was. The
 verified and adjudicated, two routes closed, two branches landed. **That is
 also the best argument against building the `--cold` flag** — the ad-hoc
 version finished faster than the machinery would have taken to write.
+
+## 2026-09-12, afternoon — the board ran out, and a near-miss I want on record
+
+**The state, said plainly: the DAG is exhausted.** 165 of 169 nodes proved.
+The four that remain are all `size: wall`, all region P1 —
+`centerColumn_right_isEventuallyPeriodic_of_center`,
+`centerColumn_other_isEventuallyPeriodic_of_center`, `leftDiagonal_onset_le`,
+`leftDiagonal_period_le`. `status` prints `Open leaves: (none)`, and it will
+keep printing that however long anyone leaves it: `wall` is never dispatched,
+flag or no. Keel's phrasing is better than mine and I am adopting it — **the
+machine did not slow down, it ran out of board.** Every verb left to this
+project is seed, theorise, connect, adjudicate.
+
+**Four P2 proposals I went to land were already landed.** `blueprint/proposals/
+next.json` still lists `centerColumn_black_run_lt_start`,
+`centerColumn_white_run_lt_start`, `centerColumn_window_not_constant` and
+`centerColumnCount_ge_of_pow` as pending, `seed check` reports `4 holds`, and
+all four are `proved` in the DAG and in `Statements.lean` since 2026-09-11 with
+a captain's correction already written into the last one. The proposals file
+is not truncated when a proposal lands, so it reads as a queue and is a log.
+I lost ten minutes to it and the next captain will too.
+
+**The near-miss, which is the real entry.** CLAUDE.md got a sharpening this
+morning: `leftDiagonal k 0` is `centerColumn k`, the centre column is the
+`j = 0` slice of the left-diagonal family, "and nobody had written it down".
+I noticed the same unfolding works on the right — `rightDiagonal k j =
+evolve (j + k) j`, so `rightDiagonal k 0 = centerColumn k` too — and, with two
+sessions live on the right edge, started writing it up as a caution nobody had
+stated. Then I grepped. It is in `docs/obstructions.md:1521`, in four
+documents under `docs/attacks` and `docs/connections`, and it is *used* in a
+closed proof, `Rule30/Proofs/CenterColumnEqEvolveMulPow.lean:25`. Known for
+days, by several identities, in writing.
+
+The grep is the only thing between me and telling Dib I had found something,
+and I want to name what made the grep feel unnecessary: **CLAUDE.md said
+"nobody had written it down" about the left half, and I read that as a fact
+about the pair.** It was a fact about one of them. A claim of novelty attached
+to one member of a symmetric pair does not transfer to the other member, and
+it is *most* tempting to let it transfer exactly when the other member is
+where your live sessions are working — because then it is not just true, it is
+urgent. Urgency is what made me start writing before checking.
+
+What actually survives is a nit and I am keeping it at nit size: CLAUDE.md
+says that identity holds **definitionally**, and it does not hold by `rfl`.
+There is exactly one blocker and it is an argument order, not a missing lemma:
+`Nat.add` recurses on its *second* argument, so `k + 0` is `rfl` and `0 + k` is
+stuck for a variable `k`, and `Basic.lean:88` writes `evolve (j + k) …` with
+`j` first. `Nat.zero_add` closes it, so `simp` suffices and no axiom is added.
+I first wrote that `-(0 : ℤ)` was a second blocker; Keel checked and it is not
+— `(-(0 : ℤ)) = 0` is `rfl`. Keel's phrasing of the useful form, which I
+prefer to mine: the identity holds by `simp [Nat.zero_add]` and *would* hold by
+`rfl` had `leftDiagonal` been defined with `k + j`. That tells a prover
+standing at index 0 what to type, where "delete the word definitionally" does
+not.
+Checked, not reasoned: `lake env lean` exit 0 on both slice identities plus a
+separating control `leftDiagonal 1 1 ≠ rightDiagonal 1 1`, which is there
+because my first control was `(0, 1)` and `decide` told me it was false — both
+cone edges are black at step 1, so the two families agree there and the check
+would have been vacuous. Band: **Nothing** as mathematics, both halves. Not
+editing CLAUDE.md for it; that file needs Dib.
+
+**Two sessions live, both on opus, both aimed at the P1 fence.** Portage
+connecting from contracting self-similar groups at the three-state Mealy
+automaton `E` — Portage's own bounded leftover from 2026-09-08, build the
+nucleus and decide whether the group contracts. Sextant theorising on its own
+§6, the right-diagonal recurrence run backwards. Both aimed at the two fence
+walls, either of which gives Prize 1 outright, since
+`centerColumn_not_eventually_periodic_of_any_other` is closed.
+
+**And the $2.81 I paid to learn nothing.** `gleam run -- connect` with no
+`--model` defaults to fable at `connector.gleam:111`; fable in the connector
+role is refused at turn one by a ToS classifier, and the refusal bills the
+cache-creation tokens anyway. Two open board rows already said so and my own
+project memory already said so. I knew it and did not think of it, which is a
+different failure from not knowing it, and the fix for it is not a better
+memory — it is the default. Keel has that fix on `keel/model-default`, waiting
+on a gap in my run queue.
+
+## 2026-09-12, 16:10Z — the exhaustion is sharper than "165 of 169"
+
+**Band first: no mathematics here. Both items below are already in this
+repo's own documents and I am correcting my own reading of the board, not
+adding to it.**
+
+**The four open nodes are not four open problems. Two of them are the prize.**
+`docs/attacks/2026-09-08-the-residual-itself-…`, claim C0, states it and calls
+it kernel-checked: given Jen's theorem,
+
+```
+(IsEventuallyPeriodic centerColumn → ∃ j ≠ 0, IsEventuallyPeriodic (column j))
+  ↔  ¬ IsEventuallyPeriodic centerColumn
+```
+
+— so `centerColumn_other_isEventuallyPeriodic_of_center` and
+`centerColumn_right_isEventuallyPeriodic_of_center` are not reductions of
+Prize 1, they are Prize 1 wearing a hypothesis that Jen's theorem already
+contradicts. Chorobates reached the same verdict independently on 2026-09-11
+("the fourth residual has no literature by logic rather than by search: it is
+*equivalent* to P1"). The other two open nodes are the left-diagonal walls,
+which CLAUDE.md's own opening says bear on no prize conjecture.
+
+So the honest statement of where this board stands is not "165 of 169 proved".
+It is: **nothing is open that is both prize-relevant and not itself a prize.**
+That is a different sentence and it is the one to give Dib.
+
+I should not have written "closing either gives Prize 1 outright" into today's
+two briefs without the second half of it. It is true, and it invites exactly
+the error C0 exists to retire — treating the wall as a lever. I am not
+messaging either live session to correct it; a message into a guarded session
+arrives from outside its brief and is recorded nowhere. Both carry
+`docs/obstructions.md`, which is where C0's consequence lives.
+
+**The one target that is genuinely below the prize: rung 2.** From Ephemeris's
+sighting of this morning, `…-the-subshift-of-the-centre-column-…`, §5 Topic 1.
+The claim is *all four words of length two occur in every window `[a, 4a]`*.
+`01` and `10` are free from rung 1 applied twice, so the content is "`00`
+occurs infinitely often, or `11` does", which is "the column is not eventually
+alternating"; with the closed `centerColumn_not_eventually_constant` that is
+the `p = 2` instance of Prize 1. I checked the load-bearing premise rather
+than taking it: `centerColumn_not_eventually_constant` is `proved` in the DAG.
+And I re-ran the measurement rather than quoting it — `node
+explorer/ephemeris2_rung2.mjs`, window `[a, 4a]`, length 2: **one failure, at
+`a = 1`**, holding for every `a ≥ 2` to 100,000. Rungs 3 to 6 hold too, past
+`a = 11, 23, 35, 113`, with the window multiplier that clears each length
+climbing like `2^ℓ`.
+
+**Ephemeris undersells its own rung, and this is the one thing I would add to
+its topic.** §5 says rung 2 gives "the `p = 2` instance of P1 and **no more**".
+By crystal 21 — a tail of period `p` has at most `p` distinct factors of each
+length, already used on this board to kill periods from factor counts — four
+distinct factors of length two occurring infinitely often forces `p ≥ 4`. So
+rung 2 kills every period below 4, not the single period 2, and rung `ℓ` kills
+every period below `2^ℓ`. That does not make the ladder a route: its limit is
+"every word occurs", which is disjunctivity and is at least as hard as the
+prize, and Ephemeris's "a rung, not a route" warning survives intact. It does
+change the price of one rung.
+
+**Why this is the next theorist topic and the backward recurrence was not the
+better pick.** Rung 2 is the only statement I can find anywhere on this board
+that is (i) open, (ii) not equivalent to a prize, (iii) not vacuous over
+`ℕ → Bool`, and (iv) measured to 10^5 with a single explicable failure. Every
+other live target fails one of the four. Sextant is mid-session on the
+backward right-diagonal recurrence and I will not interrupt it; Talus takes
+rung 2 the moment the theorist port frees.
