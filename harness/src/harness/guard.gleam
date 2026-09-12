@@ -490,10 +490,10 @@ fn bash_deny(role: Role) -> Decision {
     NotPermitted,
     "harness guard: only 'lake build [modules]', 'lake env lean <file>'"
       <> case role {
-        Prover(..) -> ""
-        Seeder(..) | Theorist(..) | Connector(..) ->
-          " and 'node <script>' under explorer/"
-      }
+      Prover(..) -> ""
+      Seeder(..) | Theorist(..) | Connector(..) ->
+        " and 'node <script>' under explorer/"
+    }
       <> " are permitted, with no shell operators",
   )
 }
@@ -753,6 +753,81 @@ pub fn start(
 ) -> Result(Guard, String) {
   start_with(rules, lock, log, port, build_lock_wait_ms)
 }
+
+/// `start`, trying `from`, `from + 1`, ... until one binds or `tries` are
+/// spent. Returns the guard and the port it actually got.
+///
+/// **Why counting up rather than an OS-assigned port.** A hand-started role's
+/// port is derived from the run base so that a captain can find it — seeder
+/// at +100, theorist at +200, connector at +300. An ephemeral port would fix
+/// the collision and destroy that, so the first session of a role still lands
+/// exactly where the arithmetic says and only a second one moves.
+///
+/// **Why this exists at all.** Those three derivations were bare constants
+/// with no retry, so the SECOND hand-started session of a role always aimed
+/// at the port the first was holding, failed to bind, and died. `mist` logs a
+/// supervisor report on the way down, which is why it looked like a crash
+/// rather than a refusal. Measured on 2026-09-11: 127.0.0.1:4330 held by one
+/// theorist while a second started, 4430 likewise for connectors. Provers
+/// never hit it because a run counts its ports up from the base already —
+/// only the hand-started roles were fixed, and nobody fired two of one role
+/// in a minute until that night.
+///
+/// The `Error` names every port tried, because "could not bind" without the
+/// range is a message that cannot be acted on.
+pub fn start_counting_up(
+  rules: Rules,
+  lock: Subject(lock.Msg),
+  log: log.Log,
+  from: Int,
+  tries: Int,
+) -> Result(Guard, String) {
+  case tries <= 0 {
+    True ->
+      Error(
+        "harness guard: no free port in "
+        <> int.to_string(from)
+        <> "..="
+        <> int.to_string(from - 1)
+        <> " (none tried; `tries` must be at least 1)",
+      )
+    False -> count_up(rules, lock, log, from, from, tries)
+  }
+}
+
+fn count_up(
+  rules: Rules,
+  lock: Subject(lock.Msg),
+  log: log.Log,
+  first: Int,
+  port: Int,
+  left: Int,
+) -> Result(Guard, String) {
+  // Asked BEFORE starting, not after failing. `mist.start` does not return an
+  // error on a taken port — it fails to start a supervised child and exits
+  // the calling process, so a retry loop around it can never run. That exit
+  // is the supervisor dump a colliding session printed, and it is why this
+  // probes instead of reacting.
+  case port_is_free(port), left <= 1 {
+    True, _ -> start(rules, lock, log, port)
+    False, False -> count_up(rules, lock, log, first, port + 1, left - 1)
+    False, True ->
+      Error(
+        "harness guard: no free port in "
+        <> int.to_string(first)
+        <> "..="
+        <> int.to_string(port)
+        <> "; all "
+        <> int.to_string(port - first + 1)
+        <> " were bound by something else",
+      )
+  }
+}
+
+/// Can `127.0.0.1:port` be bound right now. See `harness_ffi:port_is_free/1`
+/// for why the question has to be asked in advance.
+@external(erlang, "harness_ffi", "port_is_free")
+fn port_is_free(port: Int) -> Bool
 
 /// `start`, with the build-lock wait chosen by the caller. Exists so a test
 /// can drive the timeout path in milliseconds; the dispatcher uses `start`.

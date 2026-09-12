@@ -6,7 +6,8 @@
 -module(harness_ffi).
 -export([spawn_port/3, port_send/2, port_recv/2, port_close/1,
          run_cmd/4, to_utf8/1, find_executable/1, now_iso/0, run_id/0,
-         mono_ms/0, token/0, set_cwd/1, free_port_span/1, sha256_hex/1]).
+         mono_ms/0, token/0, set_cwd/1, free_port_span/1, sha256_hex/1,
+         halt_with/1, port_is_free/1]).
 
 %% ---- Deadlines -------------------------------------------------------------
 
@@ -194,3 +195,39 @@ hold_span(Base, N, Held) ->
 %% in the tree without changing a byte of it.
 sha256_hex(Bin) ->
     string:lowercase(binary:encode_hex(crypto:hash(sha256, Bin))).
+
+%% ---- Exit status -----------------------------------------------------------
+
+%% halt_with(Status) -> no return
+%%   Stop the node with an exit status. The CLI had no way to do this, so every
+%%   verb exited 0 on every error: a failed dispatch, a refused board row and a
+%%   guard that could not bind were all indistinguishable from success to
+%%   anything reading `$?`. On 2026-09-11 two hand-started sessions died on a
+%%   port collision and printed `[exited with code 0]`.
+%%
+%%   `flush` is left at its default of true rather than turned off for speed:
+%%   the whole point of a nonzero exit is that the message explaining it was
+%%   read first, and halting before stderr drains would trade one silent
+%%   failure for another.
+halt_with(Status) -> erlang:halt(Status).
+
+%% port_is_free(Port) -> boolean()
+%%   Can 127.0.0.1:Port be bound right now. Binds and closes immediately.
+%%
+%%   This exists because `mist.start` does NOT return an error on a port that
+%%   is taken -- it fails to start a supervised child and EXITS the calling
+%%   process, so `result.map_error` never runs and a retry loop cannot see the
+%%   failure at all. That is the Erlang supervisor dump a colliding session
+%%   printed on 2026-09-11, and why it looked like a crash rather than a
+%%   refusal.
+%%
+%%   So a caller that wants to move to another port has to ask BEFORE it
+%%   starts, not react afterwards. The answer is "was free a moment ago",
+%%   which leaves a race this cannot close -- the same one `free_port_span`
+%%   documents -- but it converts the common case from a process exit into a
+%%   decision.
+port_is_free(Port) ->
+    case gen_tcp:listen(Port, [{ip, {127,0,0,1}}, {reuseaddr, false}]) of
+        {ok, Sock} -> gen_tcp:close(Sock), true;
+        {error, _} -> false
+    end.

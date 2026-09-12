@@ -31,7 +31,15 @@ import harness/writes
 
 pub fn main() {
   case config.load() {
-    Error(reason) -> io.println_error(reason)
+    // Halting here too, not only in `print_outcome`. A config that will not
+    // load is the earliest failure there is and was the last one still
+    // exiting 0 — found by Rowan asking what my count of the exit-zero call
+    // sites had been measured over, which turned out to be two different
+    // tokens and this line among them.
+    Error(reason) -> {
+      io.println_error(reason)
+      halt_with(1)
+    }
     Ok(cfg) -> {
       let _ = set_cwd(cfg.repo_root)
       run(cfg, argv.load().arguments)
@@ -476,12 +484,31 @@ pub fn flag_value(
   }
 }
 
+/// Print a verb's result and, on failure, EXIT NONZERO.
+///
+/// The exit status is the point. Until 2026-09-11 this printed to stderr and
+/// returned, so `main` completed normally and every verb exited 0 on every
+/// error — a node that does not resolve, a board row the decoder refused, a
+/// guard that could not bind. Two hand-started sessions died on a port
+/// collision that night and printed `[exited with code 0]`, which is what
+/// anything reading `$?` saw of it.
+///
+/// One silent failure is a bug; a CLI that cannot report failure at all is
+/// the reason nobody noticed which bug it was.
 fn print_outcome(outcome: Result(String, String)) -> Nil {
   case outcome {
     Ok(text) -> io.println(text)
-    Error(reason) -> io.println_error("harness: " <> reason)
+    Error(reason) -> {
+      io.println_error("harness: " <> reason)
+      halt_with(1)
+    }
   }
 }
+
+/// Stop the node with an exit status. See `harness_ffi:halt_with/1` for why
+/// stderr is flushed first.
+@external(erlang, "harness_ffi", "halt_with")
+fn halt_with(status: Int) -> Nil
 
 @external(erlang, "harness_ffi", "set_cwd")
 fn set_cwd(dir: String) -> Result(Nil, Nil)

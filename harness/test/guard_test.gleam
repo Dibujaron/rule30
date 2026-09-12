@@ -1,5 +1,6 @@
 import gleam/dynamic/decode
 import gleam/erlang/process.{type Subject}
+import gleam/int
 import gleam/json
 import gleam/list
 import gleam/option.{None, Some}
@@ -788,4 +789,48 @@ pub fn a_seeders_send_message_is_denied_over_the_wire_test() {
       ),
     ]
   let assert Ok(_) = simplifile.delete(dir)
+}
+
+// --- counting up past an occupied port ----------------------------------------
+
+/// The second hand-started session of a role aims at the port the first is
+/// holding. Before `start_counting_up` the three derivations were bare
+/// constants with no retry, so that session failed to bind, `mist` logged a
+/// supervisor report on the way down, and the process printed
+/// `[exited with code 0]` — leaving an empty run directory byte-identical to
+/// a session that had not begun work.
+///
+/// This occupies a real port and asserts the next guard moves past it, rather
+/// than asserting anything about the arithmetic.
+pub fn start_counting_up_moves_past_an_occupied_port_test() {
+  let assert Ok(lock_actor) = lock.start(60_000)
+  let assert Ok(run_log) = log.open("build/test-runs", "guard-countup")
+  let base = ports.span(4)
+  let assert Ok(first) =
+    guard.start_counting_up(rules, lock_actor, run_log, base, 4)
+  assert first.port == base
+  // Same `from`, and the first is still listening on it.
+  let assert Ok(second) =
+    guard.start_counting_up(rules, lock_actor, run_log, base, 4)
+  assert second.port > base
+  assert second.port <= base + 3
+  let assert Ok(_) = simplifile.delete("build/test-runs")
+}
+
+/// A role that cannot bind anything in its range gets an `Error` naming the
+/// range it tried. "Could not bind" without the ports is a message nobody can
+/// act on, and the whole cost of the original defect was a failure that said
+/// nothing.
+pub fn start_counting_up_names_the_range_it_exhausted_test() {
+  let assert Ok(lock_actor) = lock.start(60_000)
+  let assert Ok(run_log) = log.open("build/test-runs", "guard-exhaust")
+  let base = ports.span(2)
+  let assert Ok(_) =
+    guard.start_counting_up(rules, lock_actor, run_log, base, 1)
+  // One try, at a port that is now held: no room to move.
+  let assert Error(reason) =
+    guard.start_counting_up(rules, lock_actor, run_log, base, 1)
+  assert string.contains(reason, int.to_string(base))
+  assert string.contains(reason, "no free port")
+  let assert Ok(_) = simplifile.delete("build/test-runs")
 }

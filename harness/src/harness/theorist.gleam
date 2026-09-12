@@ -152,6 +152,16 @@ fn parse_flags_into(flags: List(String), acc: Flags) -> Result(Flags, String) {
 /// The port a hand-started theorist's guard listens on: two hundred above
 /// the run base, clear of any run (which counts up from the base) and of
 /// a seeder started beside it (a hundred above).
+/// How many ports to try, counting up from the derived one, before giving up.
+///
+/// Eight rather than one because the derivations are a hundred apart, so a
+/// role can absorb seven concurrent sessions before it could collide with the
+/// role above it — and rather than unbounded, because a role that cannot bind
+/// eight consecutive ports has something wrong with it that a ninth attempt
+/// will not fix, and the `Error` naming the range is more use than a longer
+/// silence.
+const guard_port_tries = 8
+
 pub fn default_port(cfg: config.Config) -> Int {
   cfg.guard_port + 200
 }
@@ -867,7 +877,7 @@ pub fn run(cfg: config.Config, options: Options) -> Result(Session, String) {
       "could not start the build lock: " <> string.inspect(e)
     }),
   )
-  use g <- result.try(guard.start(
+  use g <- result.try(guard.start_counting_up(
     guard.Rules(
       repo_root: cfg.repo_root,
       role: guard.Theorist(attack_path: attack, obstructions_path: obstructions),
@@ -876,6 +886,7 @@ pub fn run(cfg: config.Config, options: Options) -> Result(Session, String) {
     lock_actor,
     l,
     options.port,
+    guard_port_tries,
   ))
   use _ <- result.try(guard.write_settings(g, g.settings_path))
   use identity <- result.try(ensure_identity(
@@ -895,7 +906,11 @@ pub fn run(cfg: config.Config, options: Options) -> Result(Session, String) {
     #("role", json.string("theorist")),
     #("identity", json.string(identity.name)),
     #("model", json.string(options.model)),
-    #("port", json.int(options.port)),
+    // `g.port`, not `options.port`: the guard counts up from the derived
+    // port when it is taken, so the two differ for the second session of a
+    // role — and a dispatch event naming a port nothing is listening on is
+    // exactly the well-formed wrong record this change exists to stop.
+    #("port", json.int(g.port)),
     #("topic", json.string(topic)),
     #("attack", json.string(attack)),
     #("max_turns", json.int(session_cfg.max_turns)),

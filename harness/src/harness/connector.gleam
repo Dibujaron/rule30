@@ -170,6 +170,16 @@ const as_and_mint = "connect takes --as <Name> or --mint, not both: --as runs as
 /// above the run base, clear of any run (which counts up from the base), of
 /// a seeder started beside it (a hundred above) and of a theorist (two
 /// hundred above).
+/// How many ports to try, counting up from the derived one, before giving up.
+///
+/// Eight rather than one because the derivations are a hundred apart, so a
+/// role can absorb seven concurrent sessions before it could collide with the
+/// role above it — and rather than unbounded, because a role that cannot bind
+/// eight consecutive ports has something wrong with it that a ninth attempt
+/// will not fix, and the `Error` naming the range is more use than a longer
+/// silence.
+const guard_port_tries = 8
+
 pub fn default_port(cfg: config.Config) -> Int {
   cfg.guard_port + 300
 }
@@ -558,7 +568,7 @@ pub fn run(cfg: config.Config, options: Options) -> Result(Session, String) {
       "could not start the build lock: " <> string.inspect(e)
     }),
   )
-  use g <- result.try(guard.start(
+  use g <- result.try(guard.start_counting_up(
     guard.Rules(
       repo_root: cfg.repo_root,
       role: guard.Connector(sighting_path: sighting),
@@ -567,6 +577,7 @@ pub fn run(cfg: config.Config, options: Options) -> Result(Session, String) {
     lock_actor,
     l,
     options.port,
+    guard_port_tries,
   ))
   use _ <- result.try(guard.write_settings(g, g.settings_path))
   use identity <- result.try(theorist.ensure_identity(
@@ -592,7 +603,11 @@ pub fn run(cfg: config.Config, options: Options) -> Result(Session, String) {
     #("role", json.string("connector")),
     #("identity", json.string(identity.name)),
     #("model", json.string(options.model)),
-    #("port", json.int(options.port)),
+    // `g.port`, not `options.port`: the guard counts up from the derived
+    // port when it is taken, so the two differ for the second session of a
+    // role — and a dispatch event naming a port nothing is listening on is
+    // exactly the well-formed wrong record this change exists to stop.
+    #("port", json.int(g.port)),
     #("problem", json.string(wall.id)),
     #("vantage", json.string(option.unwrap(options.vantage, ""))),
     #("sighting", json.string(sighting)),
