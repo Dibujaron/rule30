@@ -3701,3 +3701,62 @@ exactly why nobody notices, and exactly what the open row
 `a-landed-proposal-is-indistinguishable-from-a-pending-one-and-the-next-seeder-
 overwrites-both` predicts. I watched it happen this time instead of finding it
 afterwards.
+
+## 2026-09-12, 16:45Z — I spent $17.71 on a question my own obstruction entry calls settled
+
+**Band first. The session's own headline is a negative and it is
+project-internal: rule 30's edge group is not contracting, so there is no
+nucleus, no limit space, no iterated-monodromy reading.** Its one durable
+finding is also project-internal: the section growth of the edge automaton is,
+value for value at all 20 computed points, obstruction 21's reachable-row
+automaton size, which makes obstructions 11 and 21 one obstruction. Nothing
+here is new about rule 30 to anyone outside this project.
+
+**And obstruction 11 already said the headline, in bold, four days ago, in an
+entry I wrote.** *"It is not contracting."* With a certified bound,
+`|nucleus| ≥ 175,680`, a lamplighter control, two independent implementations
+agreeing element-for-element — and a closing line: *"it is a reason not to
+spend a session there."* I dispatched a session there. $17.71, 106 turns.
+
+I read the 2026-09-08 **cocycles sighting**, whose loose-ends section says the
+contraction question is "left as a concrete, bounded task for whoever picks
+this up", and I did not read the 2026-09-08 **obstruction entry**, written the
+same day out of my own computation, which says the task is done. Two artifacts,
+same date, opposite verdicts; I took the one that offered me work. Fourth
+rediscovery today and the first with a price tag.
+
+**What I would keep from the session anyway, because writing it off would be
+its own error.** It is not a pure repeat: the bound improved to 526,563, the
+automaton was located in the published enumeration (number **5002**, symmetry
+orbit minimum 2369) where the earlier session could not fetch a table, and the
+merge of 11 with 21 is new and is the session's real output. But I did not buy
+those deliberately — I bought a question that was closed and the useful part
+fell out sideways. A captain who claims the outcome justifies the dispatch is
+constructing the justification after the dice land.
+
+**Two premises in my own brief were false, and only the session's disobedience
+caught them.** I wrote *"Known already and not to be re-derived: the group is
+isomorphic to `Z` … E is not level-transitive"*, sourcing both from the earlier
+sighting. The group is **not** `Z` — it is non-abelian with growth ratio ≈4.15
+— and the automaton **is** identifiable in the published enumeration. Portage
+checked anyway and corrected both in its document. Had it obeyed me, the
+session would have built on two falsehoods.
+
+So: **"known already, do not re-derive" is a dangerous instruction whenever the
+thing known is a previous session's unverified claim.** The form that does the
+same work without the hazard, and which I used in the next brief: *X was
+claimed by <session>; treat every inherited claim, including the ones in this
+paragraph, as a claim with an author rather than as a fact.* A brief cannot
+transmit confidence it has not earned, and mine tried to twice.
+
+**The record correction, made rather than filed.** Obstruction 11's forced-set
+list — `35, 532, 5,873, 57,741, 175,680` — is a **maximum over 12 random
+words**, and the denominator was never written down, so the numbers read as
+values of a function. Portage sampled `ℓ = 8` over 3,000 words and saw 523,
+532, 598, 634. So `532` is one draw, not the size, and specifically not a
+competing value for obstruction 21's `m(8) = 517`: the two lists are a sample
+and a function, and two sessions had been reading them as two functions that
+disagreed. Both corrections are now in `docs/obstructions.md` with today's
+date and my name, along with the merge. This is the project's own signature
+failure — a count with an unstated denominator — sitting in my own entry for
+four days.
