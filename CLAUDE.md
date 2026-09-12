@@ -502,7 +502,7 @@ cd harness && gleam run -- run --max-attempts 3 --concurrency 3
                                                 # keep up to K workers in flight until N attempts have started
 cd harness && gleam run -- reopen <node-id>     # a crashed run left a node `claimed`; put it back on the board
 cd harness && gleam run -- theorise [<topic>] [--as <Name> | --mint] [--model M]
-                                                # one theorist session on a topic, as a named or minted theory persona; never started by the scheduler. `--as` names one already on the roster, `--mint` makes a new one through the naming ceremony, and neither flag adopts the region's eldest. A theory-region mint forks a notebook lineage — the new persona starts blind to everything the region has learned — so it wants a reason; a connect-region mint does not, that role exists for independent readings
+                                                # one theorist session on a topic, as a named or minted theory persona; never started by the scheduler. `--as` names one already on the roster, `--mint` makes a new one through the naming ceremony, and neither flag adopts the region's eldest. A mint of any region forks a notebook lineage — the new persona starts blind to everything the region has learned — so it wants a reason. **This used to exempt the connect region, on the grounds that the role exists for independent readings, and the exemption was wrong; see "Minting a persona" below before you pass `--mint`**
 cd harness && gleam run -- connect [<vantage>] [--as <Name> | --mint] [--model M]
                                                 # one connector session on the P1 frontier from a vantage, as a named or minted connect persona; never started by the scheduler; its guard port is the run base + 300, its record runs/<run-id>/connector-1/, its one file docs/connections/<date>-<slug>.md, and it may read the web (every URL logged)
 cd harness && gleam run -- seed [--model M] [--region R]
@@ -515,6 +515,76 @@ A seeder is started by hand and never by the scheduler; its guard sits on
 the run port base plus 100 so it can run beside a live run. `--region` aims
 the seeder at one region: its brief, its open-node section and its closed
 table are restricted to it, and proposals outside it are not landed.
+
+### Minting a persona
+
+**A mint wants a reason in every region, connect included.** Until 2026-09-12
+this file exempted connect, because that role exists for independent readings
+and a fresh pair of eyes should not inherit the last one's framing. The
+argument is real and the exemption did not follow from it.
+
+**The numbers that killed it, measured 2026-09-12 over `agents/roster.json`
+and every `runs/*/*/events.jsonl` dispatch event.** P1 provers: 3 personas,
+132 attempts. Theory: 2 personas, 22 sessions, notebooks of 37KB and 48KB.
+Connect: **15 personas, 21 sessions, twelve of the fifteen run exactly
+once** (Parallax 4, Portage 3, Rosetta 2, and twelve singletons — 12 + 9 =
+21), notebooks of one entry. So one region's policy, not a project habit —
+and the regions with lineages are the ones where identity pays, since
+Vesper's calibration record (67/81) means nothing except across 70 attempts.
+
+**The cost is measured too, and the first version of this paragraph was
+wrong in a way worth leaving on the record.** It claimed five connect
+*notebooks* independently record the lesson that PDFs will not fetch. They do
+not: that count came from a pattern including `binary`, which in this project
+means **base two**, so it matched "binary rooted tree automorphisms" and
+"binary input encoding" and two vantage titles. Exactly one notebook records
+it — Dioptra's *"The Wang–Massey criterion I could not fetch — only a search
+summary"*. **Counted, never opened.** Caught by Keel within the hour, on a
+premise check it had been told to distrust.
+
+The real measurement is in the **sightings**, and it is stated here without a
+count on purpose — see below. Over `docs/connections/*.md`: **every sighting
+marks something UNVERIFIED**, and a failed fetch is named outright in at least
+eight of them (`could not fetch`, `paywall`, `returned undecodable binary`),
+with `403` in six more. **Exactly one notebook in fifteen records it as
+craft** — Dioptra's. So the obstacle is chronic and close to universal, almost
+every connect session pays turns for it, and almost none hands it on. That is
+the accumulation failure: not a lesson relearned, but an obstacle hit by
+nearly everyone and recorded by nearly no one. A sighting marking UNVERIFIED
+is **correct discipline and is not the defect** — the defect is that the next
+session starts without knowing the obstacle is there.
+
+**Why this paragraph carries members instead of a number.** Four different
+counts were produced for these same nineteen files inside one hour, by two
+sessions who spent the evening correcting each other's denominators: 18 and 11
+(mine, both wrong — the 18 was a miscount of output I had just printed), then
+19 and 8, then 13 under a wider pattern that catches `403`. The argument needs
+none of them: it survives 8, 11, 13 and 19 unaltered. **A precise count here
+is a hostage**, and the members have been stable throughout — Dioptra was the
+only notebook hit in every check anyone ran. Generalise it: when a claim does
+not depend on a cardinality, do not put one in it. Cite the members and the
+shape, which a reader can check line by line and which cannot drift.
+
+**The distinction the old sentence missed, and it is the whole fix.** A
+notebook holds two different things:
+
+- A **reading** — what this literature says, what died, what the residual is.
+  Per-document, already recorded in `docs/connections`, and genuinely better
+  from someone who has not inherited the previous framing. This is what the
+  fork protects, and it is worth protecting.
+- **Craft** — how fetching behaves from a guarded session, that a summary is
+  not a quote, that a negative wants its null model computed before anyone
+  calls it an anomaly. Region-general, cumulative, and thrown away by every
+  fork.
+
+So: **reuse by default (`--as`), and when you do mint, say in the naming
+event what reading you are trying not to contaminate.** Reuse is not the
+whole fix either, and a roster cap on its own would be a bad trade — one
+persona taking every connect session accumulates *conclusions* as well as
+craft, and an inherited conclusion read as settled is exactly the hazard the
+fork was guarding against. Craft belongs in the brief, where every session
+sees it regardless of who is running; see the board row
+`the-connect-region-forks-a-persona-per-session-so-connector-craft-is-relearned-not-accumulated`.
 
 `run` is the scheduler over the build graph: whenever a slot is free it
 starts the best open leaf, including one that only just became a leaf
