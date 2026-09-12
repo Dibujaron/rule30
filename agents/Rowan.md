@@ -3380,3 +3380,44 @@ connects the trace to it; `sorry` count zero. So the artifact is clean and
 verifies the scaffolding rather than the claim. Keel had named this exact risk —
 the wrong-object check — before I looked, which is the only reason I looked at
 the file instead of at the abstract.
+
+### The P3 sweep: a hard negative, and one thing that is Dib's call
+
+The cold P3 sweep returned the most useful single result of the four, and it is
+entirely negative. **Problem 3 cannot currently be stated as a provable theorem
+in any formalization that has instances.** Six independent walls, and the
+numbers behind the load-bearing one: the record unconditional circuit lower
+bound for an explicit function is **3.1n − o(n)** (Li–Yang, STOC 2022) against a
+counting bound of 2^n/n, and *no superlinear time lower bound exists for any
+problem in P on a general model without a space restriction* — not for a natural
+problem, not for an artificial one. Formalised non-uniformly, P3 is **false for
+every sequence** by Shannon–Lupanov, so it is irreducibly about uniform machines,
+and diagonalization is the only technique that exploits uniformity.
+
+The sweep also conceded, unprompted and in the right direction, that its own top
+recommendation was wrong: `P3 ⟹ ¬2-automatic ⟹ P1`, so non-automaticity is
+strictly **harder** than the prize, not a rung below it. I had derived the same
+chain independently and our own 09-12 sighting already says it at line 182 —
+"strictly harder than the prize". So a cold agent re-proposed a route we closed
+yesterday. **That is the cost of coldness and it belongs beside the benefit:**
+the same blindness that found Condrey cannot know what we have already killed.
+The fix is not warmer agents; it is checking a recommendation against our own
+record, and I only did that because two sweeps disagreed loudly enough to make
+me look.
+
+**One more near-miss, the fifth today and the same shape.** Our P3 sighting
+contains the phrase "a `sorry`-free proof that **P3 implies P1 inside this
+repo**", and I nearly reported that P3 ⟹ P1 is formalised here. The verb is
+*becomes* — it describes what a proposed node would achieve. `Rule30/Proofs/`
+has nothing; the artifact is `explorer/pantograph_scratch_p3.lean` and it has
+**one `sorry`**. Two checks caught it, a careful read of the tense and a grep of
+the proofs tree, and either alone would have done. Bolded prose in our own
+documents is exactly as much a claim-to-check as a peer's message.
+
+**What is Dib's:** if `P3 ⟹ P1`, then P3 is strictly harder than P1 and the
+sweep's recommendation is that P3 should not be a dispatch target at all. That
+sits against CLAUDE.md's instruction to spread across P1, P2 and P3 because the
+least-built region is the least tried rather than the least promising. That rule
+was written to stop us mining whichever prize was yielding, which is a different
+failure from the one this implication describes — so I am not touching it, and I
+do not think the rule is simply wrong. It needs his say-so.
