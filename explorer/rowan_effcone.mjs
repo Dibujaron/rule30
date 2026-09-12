@@ -12,13 +12,23 @@
 // range. Exact enumeration is 2^t and dies past t ~ 24, so this uses SAMPLING, which
 // is one-sided on purpose: finding one input whose flip changes the output PROVES
 // influence > 0. Failing to find one in N samples does not prove influence = 0 --
-// it bounds it above by roughly 1/N. So the radius printed is an UPPER bound on the
-// true effective radius at the sampled confidence, and the honest reading is "no
-// dependence detected beyond here", not "no dependence".
+// it bounds it above by roughly 1/N. So the sampled radius is a LOWER bound on the
+// true radius. (An earlier version of this comment said UPPER. It is lower, and the
+// direction matters: a sampled radius of t PROVES a full cone, while a sampled
+// radius below t proves nothing at all.)
+//
+// AND SAMPLING IS ALMOST USELESS FOR THIS QUANTITY, which is the warning worth
+// carrying. The live outer cells have influences around 1e-6 -- at t = 22 cells 17
+// and 18 flip on exactly 32 of 4,194,304 inputs -- so 4,000 samples per cell miss
+// them about 97% of the time. Measured: sampled 16 against exact 18 at t = 22, and
+// sampled 18 against exact 24 at t = 26. Never read a sampled radius as the radius.
 //
 // Exact mode (--exact) enumerates all 2^t and is the control: it must reproduce
-// Vernier's 13 at t = 15 and 16 at t = 22 exactly, and the sampled run must agree
-// with it wherever both are available. If they disagree, the sampler is wrong.
+// Vernier's 13 at t = 15. It does NOT reproduce its 16 at t = 22: the true radius
+// there is 18, and Vernier's 16 comes from toFixed(4) rendering a 7.6e-6 influence
+// as 0.0000. The sampled run does NOT agree with exact and is not expected to --
+// see the paragraph above. Both builders were diffed input by input first: 0
+// mismatches at every t from 4 to 20, so the disagreement was never the automaton.
 
 function centreCell(t, freeBits) {
   const W = 2 * t + 3;

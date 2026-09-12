@@ -2457,6 +2457,19 @@ at every `t` from 4 to 20**, `0` mismatches, so the disagreement was never
 about the automaton and only ever about reading a rounded print as an exact
 value. [2026-09-12, Rowan.]
 
+**Exact to `t = 26`, and the radius is oddly sparse.** Radii for `t = 6..26`:
+`3, 7, 8, 7, 8, 8, 9, 9, 12, 13, 16, 13, 16, 13, 16, 16, 18, 16, 18, 16, 24`.
+Only nine distinct values appear, and the cone is **full** (zero dead cells) at
+`t = 7, 8, 16`. That is three points and not yet a pattern; `t = 32` would test
+it and `2^32` inputs will not enumerate.
+
+**Do not test it by sampling.** The live outer cells have influences around
+`1e-6`, so random sampling misses them: 4,000 samples per cell gives 16
+against the exact 18 at `t = 22`, and 18 against the exact 24 at `t = 26`.
+Sampling is one-sided — it *proves* dependence when it finds a flip, so a
+sampled radius of `t` would prove a full cone, but a sampled radius below `t`
+proves nothing. Same defect as the rounded print above, opposite direction.
+
 **What survives for anyone building on it.** "Some cells inside the light cone
 have zero influence" is solid and exactly enumerated. "The effective cone is a
 shrinking fraction of the light cone" is **not supported** — and it is the half
