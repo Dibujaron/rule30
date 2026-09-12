@@ -93,7 +93,13 @@ pub type Flags {
   )
 }
 
-pub const default_model = "fable"
+/// The model a `theorise` with no `--model` uses.
+///
+/// Not fable, and for a different reason than the connector's: fable WORKS
+/// for a theorist, it is simply the scarcest allowance on the account, so
+/// spending it is a choice a captain should make rather than inherit.
+/// `--model fable` is still accepted here.
+pub const default_model = "opus"
 
 const usage = "theorise [<topic>] [--as <Name> | --mint] [--model M]"
 

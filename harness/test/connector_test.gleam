@@ -202,11 +202,17 @@ pub fn connect_flags_parse_in_any_order_test() {
     == connector.Flags(
       model: "opus",
       vantage: Some("ergodic theory"),
-      persona: Some("Lodestar"), mint: False
+      persona: Some("Lodestar"),
+      mint: False,
     )
   assert connector.parse_flags([])
-    == Ok(connector.Flags(model: "fable", vantage: None, persona: None, mint: False))
-  assert connector.default_model == "fable"
+    == Ok(connector.Flags(
+      model: "opus",
+      vantage: None,
+      persona: None,
+      mint: False,
+    ))
+  assert connector.default_model == "opus"
   let assert Error(needs_value) = connector.parse_flags(["--model"])
   assert string.contains(needs_value, "--model")
   let assert Error(unknown) = connector.parse_flags(["--modle", "opus"])
@@ -237,7 +243,8 @@ pub fn who_picks_the_eldest_connector_or_decides_to_mint_test() {
       False,
     )
     == Ok(schedule.Mint(region: connector.region, busy: []))
-  let assert Error(empty) = connector.who(roster.Roster([]), Some("Nobody"), False)
+  let assert Error(empty) =
+    connector.who(roster.Roster([]), Some("Nobody"), False)
   assert string.contains(empty, "leave --as off")
   // A theorist's name is refused, not borrowed: its notebook in a
   // connector's brief would be a theorist wearing the name.
@@ -367,7 +374,10 @@ pub fn the_first_message_names_the_problem_the_vantage_and_the_file_test() {
   // recorded") was false for that path, and section 5's cite-or-mark rule
   // rests on it, so the sentence below is load-bearing rather than advisory.
   assert string.contains(with, "Do not fetch from a script")
-  assert string.contains(with, "If you fetched it with a script, it is UNVERIFIED")
+  assert string.contains(
+    with,
+    "If you fetched it with a script, it is UNVERIFIED",
+  )
   assert string.contains(with, "may not add to docs/obstructions.md")
   assert string.contains(with, "`sighted`")
   assert string.contains(with, "next_vantage")
@@ -476,7 +486,8 @@ fn options(port: Int, vantage: String) -> connector.Options {
     model: "haiku",
     port:,
     vantage: Some(vantage),
-    persona: None, mint: False
+    persona: None,
+    mint: False,
   )
 }
 
@@ -766,7 +777,8 @@ pub fn as_starts_the_named_connector_and_a_missing_document_is_abandoned_test() 
         model: "haiku",
         port: ports.span(1),
         vantage: None,
-        persona: Some("Lodestar"), mint: False
+        persona: Some("Lodestar"),
+        mint: False,
       ),
     )
   assert session.identity.name == "Lodestar"
@@ -803,7 +815,8 @@ pub fn as_with_an_unknown_or_foreign_name_refuses_before_writing_test() {
         model: "haiku",
         port: ports.span(1),
         vantage: Some("x"),
-        persona: Some("Nobody"), mint: False
+        persona: Some("Nobody"),
+        mint: False,
       ),
     )
   assert string.contains(unknown, "no connector named Nobody")
@@ -814,7 +827,8 @@ pub fn as_with_an_unknown_or_foreign_name_refuses_before_writing_test() {
         model: "haiku",
         port: ports.span(1),
         vantage: Some("x"),
-        persona: Some("Vesper"), mint: False
+        persona: Some("Vesper"),
+        mint: False,
       ),
     )
   assert string.contains(foreign, "Vesper is on the roster for region theory")
@@ -936,8 +950,43 @@ pub fn mint_forces_a_new_connector_rather_than_adopting_the_existing_one_test() 
 /// and the other refuses to use one. Picking a winner silently is how a
 /// captain ends up with a session running as someone they did not choose.
 pub fn as_and_mint_together_are_refused_test() {
-  let assert Error(reason) = connector.parse_flags(["--as", "Portage", "--mint"])
+  let assert Error(reason) =
+    connector.parse_flags(["--as", "Portage", "--mint"])
   assert string.contains(reason, "--as")
   assert string.contains(reason, "--mint")
   let assert Error(_) = connector.parse_flags(["--mint", "--as", "Portage"])
+}
+
+// --- the model a connector may not run on --------------------------------------
+
+/// `fable` is refused for the connector role by a ToS classifier at turn one,
+/// for zero output tokens — and the request is billed before the classifier
+/// runs, so the failure arrives as a paid empty session. Refusing the flag is
+/// the only point at which that cost can be avoided.
+pub fn parse_flags_refuses_fable_test() {
+  let assert Error(reason) = connector.parse_flags(["--model", "fable"])
+  assert string.contains(reason, "fable")
+  assert string.contains(reason, "reasoning_extraction")
+  // The message must carry the COST, because the reader's question is why a
+  // flag they typed is being refused rather than obeyed.
+  assert string.contains(reason, "billed")
+}
+
+/// The refusal is on the model, not on the shape of the command: a vantage
+/// and a persona alongside it must not rescue it.
+pub fn parse_flags_refuses_fable_whatever_else_is_passed_test() {
+  let assert Error(_) =
+    connector.parse_flags(["a vantage", "--as", "Portage", "--model", "fable"])
+  Nil
+}
+
+/// And every other model still parses, so the refusal is a named exception
+/// rather than an allowlist nobody can extend.
+pub fn parse_flags_allows_the_other_models_test() {
+  let assert Ok(o) = connector.parse_flags(["--model", "opus"])
+  assert o.model == "opus"
+  let assert Ok(s) = connector.parse_flags(["--model", "sonnet"])
+  assert s.model == "sonnet"
+  let assert Ok(h) = connector.parse_flags(["--model", "haiku"])
+  assert h.model == "haiku"
 }

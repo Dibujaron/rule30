@@ -108,7 +108,36 @@ pub type Flags {
   )
 }
 
-pub const default_model = "fable"
+/// The model a `connect` with no `--model` uses.
+///
+/// Not fable: the connector role is REFUSED on fable by a ToS classifier
+/// (`reasoning_extraction`), at turn one, for zero output tokens — and the
+/// request is billed first, so a refusal costs about $2.81 of
+/// cache-creation. `refused_model` below rejects it before a session starts.
+///
+/// Opus because that is what the other hand-started role chose deliberately
+/// (`seeder.default_model`) rather than inherited.
+pub const default_model = "opus"
+
+/// Models a connector must not be launched on, with the reason.
+///
+/// `fable` is not a preference here, it is a hard refusal: the API accepts
+/// the request, writes the cache, and a ToS classifier stops it — so the
+/// failure arrives as a billed zero-output session rather than as an error.
+/// Refusing the flag is the only place that cost can be avoided, because by
+/// the time the stream says `model_refusal_no_fallback` it has been paid.
+pub fn refused_model(model: String) -> Result(Nil, String) {
+  case model {
+    "fable" ->
+      Error(
+        "connect refuses `--model fable`: the connector role is blocked by a"
+        <> " ToS classifier (reasoning_extraction) at turn one for zero output,"
+        <> " and the request is billed before the classifier runs — about $2.81"
+        <> " of cache-creation per attempt. Use opus or sonnet.",
+      )
+    _ -> Ok(Nil)
+  }
+}
 
 const usage = "connect [<vantage>] [--as <Name> | --mint] [--model M]"
 
@@ -126,10 +155,14 @@ const usage = "connect [<vantage>] [--as <Name> | --mint] [--model M]"
 /// text: the obstructions file is curated and these are raw, and a reader
 /// should be able to tell which is which.
 pub fn parse_flags(flags: List(String)) -> Result(Flags, String) {
-  parse_flags_into(
+  use parsed <- result.try(parse_flags_into(
     flags,
     Flags(model: default_model, vantage: None, persona: None, mint: False),
-  )
+  ))
+  // Checked here rather than at launch: the cost is incurred by the request,
+  // so the only useful place to refuse is before one is made.
+  use _ <- result.try(refused_model(parsed.model))
+  Ok(parsed)
 }
 
 fn parse_flags_into(flags: List(String), acc: Flags) -> Result(Flags, String) {
