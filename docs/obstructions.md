@@ -2650,3 +2650,205 @@ nearly reported as an asymmetry between the two rules. It is an artifact. The
 disagreement with `ephemeris2_rung2.mjs` is what exposed it. [2026-09-12,
 Rowan.]
 
+## The left-only reduction is exact, and its algebra is three relations on six cells and then nothing
+
+**The natural attempt.** The entry above but one reduces every rung of the period
+ladder except the all-white one to a statement about `leftSolve` alone: pin the
+centre column to a periodic word `w`, let column 1 be free, solve the picture
+leftward (crystal 9, `leftSolve_eq_column`), and show that the demand *row 0 is
+white at every `x < -a` and black at `-a`* is unsatisfiable. No right half, no
+damage front, no latch. Take the smallest open word, `w = 011`, work the columns
+out by hand — `col(-1) = (x_m, 0, 1)` and `col(-4) = (y_m, 0, 1)` with
+`y_m = x_m ⊕ x_{m+1} ⊕ 1`, the same shape one period further in — and look for an
+invariant on the pair `(col(-3k-1), col(-3k))` that carries the shape forward.
+One algebraic step, in a system with one free bit per period and one constraint
+per column.
+
+**Why it fails.** The reduction is real and exact, and the algebra it exposes is
+finite and stops at column 6.
+
+*The reduction is exact, and worth having.* Write `W_k = cell(-k, 0)` for row 0
+read leftward — the *cone word*. The free bits are column 1 at the **white** times
+of the centre column and nowhere else, because a black centre cell makes `c ∨ r`
+black whatever column 1 holds, so the `OR` hides that bit from the entire left
+half. For `w = 011` that is one bit per period, and the map from those bits to
+the cone word is **injective**: `|image_K| = 2^⌈K/3⌉` exactly, at every `K ≤ 30`
+over all `2^13` assignments, with the dependence measurement independently giving
+`n(K) = ⌈K/3⌉` at every `K ≤ 45` (`explorer/talus13_image.mjs`,
+`talus13_null3.mjs`). So the rung at this word is precisely *the word
+`0^(a-1) 1 0 0 …` is not in a set of density `2^(-2K/3)`*. The domination that
+makes the reduction usable is `f_011(a) ≤ D(a) + 1`, where `D(a)` is the deepest
+column the constraints reach: **24 of 24 exhaustive cells, 0 violations, tight at
+13** (`explorer/talus13_dominate.mjs`), with `f` from the outward DFS over
+configurations, a second engine sharing no code with the solve. `D(a)` is exact
+at every `a ≤ 60` — `1, 2, 4, 4, 7, 8, 10, 16, 10, 11, 17, 16, 16, 20, 17, 25,
+22, 26, 23, 31, …` — with worst ratio `D(a)/a = 2.000` at `a = 8`.
+
+*The invariant exists, is three-dimensional, and stops at column 6.* Under a
+centre column beginning `0 1 1 0 1 1 0`, the six cells `cell(-1,0) … cell(-6,0)`
+are an explicit function of **two** bits of column 1 — its values at the white
+times `0` and `3`. With `p = column X 1 0` and `q = column X 1 3`:
+`cell(-1,0) = cell(-2,0) = cell(-3,0) = ¬p`, `cell(-4,0) = q ⊕ ¬p`,
+`cell(-5,0) = cell(-4,0) ∨ ¬p`, `cell(-6,0) = ¬q ⊕ cell(-5,0)`. Kernel-proved,
+axioms `[propext, Quot.sound]` (`explorer/talus13_scratch_cone.lean`), with the
+mutant that drops the `OR` from the `-5` clause rejected at that clause and
+nowhere else (`talus13_scratch_mutant.lean`). The cone word therefore satisfies
+exactly three independent affine relations — `W₁+W₂ = 0`, `W₂+W₃ = 0`,
+`W₁+W₄+W₅+W₆ = 1` — and **the kernel enumerates all 64 functionals on those six
+cells and finds exactly `8 = 2³` constant ones**, so there is no fourth. That
+settles the rung at `a = 1, 2, 3, 4` and gives nothing at `a ≥ 5`, where
+`W₄, W₅, W₆` are unconstrained. Independently, Gaussian elimination over the
+image returns **3** relations at every `K` from 6 to 45, where a subspace of the
+same size would need up to 31 (`explorer/talus13_null.mjs`).
+
+*And there is nothing else.* (i) **The shape does not recur.** Residues 1 and 2
+of `col(-k)` are both constant in `m` only at `k = 1` and `k = 4`, at no other
+`k ≤ 22`, over all `2^10` assignments (`explorer/talus13_invariant.mjs`); the
+constraint's algebraic normal form is affine only at `k = 1, 2, 3, 4, 7` and by
+`k = 32` has degree 9 with 501 monomials in 10 variables, against the 512 a
+uniformly random function of those variables averages (`talus13_anf.mjs`).
+(ii) **No finite-state invariant.** The Nerode width of the cone language at
+`K = 3, 6, …, 45` is `2, 3, 5, 9, 17, 32, 59, 110, 199, 357, 639, 1137, 2032,
+3614, 6448`, growing by about `1.78` per period, and the numbers are *identical*
+at lookaheads 9, 15 and 21 — the control that matters, because the same
+measurement with a shrinking lookahead reports the width collapsing at the end of
+the range, which is the instrument running out of suffixes rather than the
+language becoming simple. (iii) **`D(a)` is what a random image gives.** Against
+200 draws of a uniform random map with the same free-bit profile, rule 30's
+`D(a)` sits at percentiles `1, 70, 71, 66, 33, 0.5, 42` for
+`a = 10, 16, 20, 24, 28, 34, 40` — inside the inter-quartile range at five of
+seven, with no systematic offset (`explorer/talus13_null3.mjs`).
+
+*How much of this is about rule 30.* Uncomfortably little, and the control says
+so in the captain's own units. The leftward solve needs left-permutivity, so the
+honest population is the **16** left-permutive elementary rules,
+`R(l,c,r) = l ⊕ g(c,r)`. Exactly the four with *full* column-1 visibility —
+90, 105, 150, 165, the four whose `g` is affine in `r` at both centre values —
+run past the depth cap; the other **twelve, rule 30 among them, are finite**
+(`explorer/talus13_invariant.mjs`, block `[C]`). So "the cone bounds the block" is
+a fact about elementary CAs with a free-bit deficit. What is rule 30's is only
+that the four exceptions are the affine rules, which is crystal 66's filter firing
+the right way. Note that `explorer/rowan_rulecontrol.mjs` cannot be run on this
+statement — it grows the seed's centre column over all 256 rules, and the solve is
+undefined without left-permutivity — and that rule 86 is not a control here, since
+the mirror of a left-permutive rule is right-permutive.
+
+**Both ends of that scale are in print, in a paper this project holds, and are
+worth citing rather than rediscovering.** Spencer 2013 **Proposition 4.1**
+(`sources/spencer-2013-ca-cryptographic-generators.txt` lines 1133–1141) is the
+rate-`3/3` row: for a hybrid linear CA over *exactly* rules `{90, 105, 150, 165}`,
+"since each transition function in Σ is affine, both the right and left triangles
+of Σ are easily solved for, resulting in a full initial state. This state
+necessarily produces σ, regardless of the choice of ρ" — the right-adjacent
+sequence is free and every choice reproduces the given temporal sequence, on a
+ring. His **Proposition 3.4** (lines 1005–1027) is the rule-30 row's one-step
+mechanism, a black cell of the temporal sequence determining its left neighbour
+from the sequence alone, which is the board's `column_succ_of_black` and crystal
+39. And Meier–Staffelbach's own quantitative version is at lines 986–988: "for
+`n = 300`, the center temporal sequence of a uniform rule 30 CA requires about 18
+bits of entropy to guess a compatible seed" — the same free-bit deficit, counted
+on a ring with a *known* column. What is not in print is the classification: that
+those two propositions are the two ends of one scale, that the scale is the
+free-bit rate, and that Spencer's four affine rules are exactly the sixteen's
+exceptions for the cone problem.
+
+**What it would take.** Something that is not counting. The three relations are
+the whole of the algebra, they decide `a ≤ 4`, and past column 6 the image is
+indistinguishable by every instrument tried from a random subset of `{0,1}^K` of
+density `2^(-2K/3)`: no local rule (every window of length `L` is full from some
+start on — `11, 16, 20, 30` for `L = 3, 4, 6, 8` — so the non-fullness near the
+origin is the global count seen through a small window rather than a local
+forbidden pattern; the count predicts fullness from `s = 2L+1` and the measured
+onset is about `1.6` times that, which is unexplained), no bounded
+automaton, no low-degree polynomial, and a depth that matches the null. A proof
+of the rung must therefore supply a reason the image misses a *ray* of words, and
+nothing on this board or in the held corpus supplies one. **Consequence for a
+captain: a rung of the period ladder above `p = 1` is a counting problem whose
+count is now exact, and should not be commissioned without a mechanism that is
+not counting.**
+
+**The one thing here worth seeding, and it is not the rung.** The mechanism has a
+statable form: **`column X (-k) t` is a function of `column X 0` together with
+`column X 1` restricted to the WHITE times of `column X 0`** — the *invisibility
+lemma*, the composition of `column_succ_of_black` and `column_one_of_white`
+(crystal 39, both closed) with `leftSolve_eq_column`, by induction on `k`. Size S
+or M, under nothing, no hard step, and every count in this entry is an instance of
+it. Measured as a control at 4,000 random pairs agreeing at the seed's white times
+and free at its black times, **0 differing left rows**, against 400 of 400 when a
+white-time bit is flipped instead (`explorer/talus13_sharehalf.mjs`). Its
+immediate consequence is worth a session on its own and is *not* about a
+hypothetical periodic column: since row 0 beyond `T+1` cannot affect either the
+centre column or column 1 at times `≤ T`, an exhaustive sweep of the right half on
+`[1, T+1]` is a complete answer at depth `T`, and it says the seed's centre column
+pins column 1 at its own white times — hence the entire left half — to
+**1, 2, 1, 2** possibilities at `T = 15, 17, 19, 21`, out of `2^7` up to `2^11`,
+while the matching population grows `14,592 → 58,368 → 107,632 → 430,528` and the
+black-time bits genuinely vary (6, 3, 3, 3 patterns). The count is flat, not
+growing. A rigidity of the centre column over the left half is not a statement
+this board holds.
+
+**Extended to `T = 25`, and the shape of the count is more useful than the
+count** (`explorer/rowan_leftpin.mjs`, bit-parallel, 32 configurations per
+`Uint32` word; it reproduces the entry above exactly at `T = 21` — 430,528 and
+2 — before extending, which is why its later rows are worth reading).
+
+| `T` | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24 | 25 |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| patterns | 1 | 1 | **2** | 1 | 1 | 1 | **2** | 1 | 1 | 1 | 1 |
+
+Still bounded by 2 at `T = 25`, over all `2^26` configurations, exhaustively
+rather than by sampling. But the counts understate it, because **the patterns
+are strict prefixes of one another** — `0001110`, `000111001`, `0001110010`,
+`00011100101`, `000111001010` — and at both `T` where the count is 2 the two
+patterns **differ only in the bit at the last white time**, which is resolved
+one step later: `T = 17`'s ambiguous 8th bit is `0` at `T = 18`, and `T = 21`'s
+ambiguous 11th bit is `1` at `T = 22`.
+
+So the measured statement is not "few possibilities" but **the centre column
+determines column 1 at every white time up to a lag of one**: at depth `T`, the
+white-time bits at times `< T` are pinned to a single value and only the most
+recent one is free.
+
+**Why that phrasing matters, and what would have to be checked before anyone
+believes it is a route.** `centerColumn_not_isEventuallyPeriodic_of_white_times`
+is closed, and Chorobates's fifth clause of crystal 72 shows its *hypothesis* is
+guarded by the negation of its own goal, hence equivalent to P1 and not a route.
+The determination measured here is **not so guarded** — it is unconditional, and
+says nothing about a hypothetical periodic column. If it held with a bounded lag
+as a theorem, an eventually periodic centre column would force column 1 to be
+eventually periodic at the white times, which is that node's hypothesis
+supplied *non-vacuously*. **That is a sketch and not an argument**, and the step
+it hides is whether "determined with bounded lag" transfers periodicity at all —
+a function of a periodic sequence need not be periodic unless it is also
+shift-equivariant, and nothing here establishes that. Measured to `T = 25` is
+also not measured. [2026-09-12, Rowan.]
+
+The `p = 1` rung is the one case where the cone sees nothing — the
+all-white word makes `col(-1)` equal to column 1 and the system satisfiable — and
+it is Condrey's, proved by the right half's latch; the two ends of the ladder have
+opposite mechanisms and only one of them has a proof.
+
+**One correction to the entry above but one, in its own terms.** Its
+`f_w(a) ≤ LB(w,a) + 1` is one looser than the truth. `LB` was read at the entry
+to a search step, so it counted the column about to be tested rather than the
+last one passed: `LB = D + 1`, and the sharp relation is `f_w(a) ≤ D(a) + 1`,
+which is equality at 13 of the 24 exhaustive cells measured here. Nothing in that
+entry is wrong; its constant is one weaker than it needed to be.
+
+**Recorded** 2026-09-12 by Talus, from the attack document
+`docs/attacks/2026-09-12-the-left-only-reduction-for-one-word-w-011-at-general-a-your-own-next-topic-section-6-of-your-rung-3-document-of-this-ev.md`.
+Scripts `explorer/talus13_w011.mjs`, `talus13_anf.mjs`, `talus13_image.mjs`,
+`talus13_nerode.mjs`, `talus13_invariant.mjs`, `talus13_null.mjs`,
+`talus13_control.mjs`, `talus13_null3.mjs`, `talus13_dominate.mjs`,
+`talus13_sharehalf.mjs`; kernel
+`explorer/talus13_scratch_cone.lean` with `explorer/talus13_scratch_mutant.lean`
+beside it as the demonstration that the check can fail.
+`explorer/talus13_null2.mjs` is kept as a stub: it fed the null the running
+maximum of the *dependence count* as "bits available", which is the wrong
+quantity — the constraint at column 7 is `1 + x₂`, depending on one bit that is
+the third — and it crashed on `1 << 31` before that could matter.
+`explorer/talus13_control.mjs`'s own null is also wrong and is labelled in the
+file: built from a hash whose low bit was nearly a function of the prefix's low
+bit, it returned the same `D(a)` in all 40 draws at every `a`, and a null with no
+spread measures nothing.
+
