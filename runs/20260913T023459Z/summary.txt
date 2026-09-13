@@ -1,0 +1,18 @@
+
+connector  Groma
+model      opus
+problem    centerColumn_other_isEventuallyPeriodic_of_center
+vantage    Bispecial factors and the Cassaigne special-factor calculus, aimed at P1 directly. By Morse-Hedlund (crystal 21 on the board) P1 is exactly p(n) >= n+1 for every n, that is, at least one right-special factor of the centre column at every length. The board measures p(n) = 2^n to n = 14 (the aperiodicity-census sighting of 2026-09-09) and has never tried to prove the lower bound; the one combinatorics-on-words reading so far (the Groma switch-index sighting of 2026-09-10, whose section 3.3 identifies right-special factors with the board horizon count - read it first) aimed the subject at proving a sequence PERIODIC, which is the direction the subject does not run; this vantage aims it the way the subject runs. The standard lower-bound machinery is the Cassaigne calculus: s(n) = p(n+1) - p(n) counts right-special factors, the first difference of s is a signed sum over the bispecial factors of length n, and an infinite chain of right-special factors under the suffix order is equivalent to aperiodicity. Every worked instance in print reaches that chain through a morphism (Cassaigne 1997, Pansiot) or an automaton (Cobham), and the rule 30 column has neither. So the question is: which lower-bound mechanisms for special factors do NOT route through a morphism or an automaton - return words and derived sequences (Durand), Rauzy graphs, cyclic complexity (Cassaigne-Fici-Sciortino-Zamboni), maximal pattern complexity (Kamae-Zamboni, whose windows are non-contiguous and so the natural shape for a column carved out of a space-time diagram; check where its aperiodicity threshold sits), the two-dimensional theory (Cyr-Kra, Nivat) applied to the diagram whose column this is - and can any of them be fed by structure rule 30 actually has: left-permutivity (rule30_leftPermutive, proved: the centre column together with the columns to its right determines everything to its left), and the left diagonals, eventually periodic with unbounded period (leftDiagonal_period_unbounded, proved), of which the centre column is definitionally the j = 0 member. Control, and it is the sharp one: the left diagonals at j >= 1 are the same kind of object read from the same diagram and ARE eventually periodic, so any mechanism that would prove every diagonal read aperiodic is wrong, and the place it fails at j >= 1 but not at j = 0 is the whole content. Linear rules 90 and 150 have constant centre columns and are not controls here.
+sighting   c:/Users/dibuj/dev/rule30/docs/connections/2026-09-13-bispecial-factors-and-the-cassaigne-special-factor-calculus-aimed-at-p1-directly-by-morse-hedlund-crystal-21-on-the-boar.md
+document   exists, 897 bytes
+ended      timed out
+ceilings   600 turns, $80.0
+cost       $0.00
+turns      0
+session    
+log        c:/Users/dibuj/dev/rule30/runs/20260913T023459Z/connector-1
+
+no turn result within 900000 ms; session closed, then killed
+
+next vantage, in the connector's words:
+(no report, so no next vantage)
