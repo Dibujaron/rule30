@@ -1,6 +1,18 @@
 // Parallax, 2026-09-13.  The controls for the clone computation, and the
 // geometric side of the seam.
 //
+// TWO OF ITS FIVE BLOCKS ARE WRONG AND ARE SUPERSEDED.  See parallax_geom2.mjs.
+//   [D] carried a frontier that GREW by one cell per step; the anti-diagonal
+//       x + t = R never leaves the cone (the cone edge is x + t = -a), so the
+//       true frontier is infinite with a constant tail.  Its f(a) column is
+//       non-monotone, which is the tell.  Corrected in parallax_geom2.mjs [D].
+//   [E] used the wrong left-diagonal recurrence and fails on half the cells.
+//       Corrected and derived in parallax_geom2.mjs [E].
+// [A] is RIGHT and is the one block here that the later scripts got wrong: it
+// updates the whole array, so for the 128 non-quiescent rules it evolves the
+// flipping background correctly.  parallax_bg.mjs redoes it exactly and agrees.
+// [B] and [C] stand.
+//
 // [A] Does the clone verdict correlate with anything about the centre column?
 //     (control: rules whose centre column IS eventually periodic but whose
 //      local relation has the same trivial clone as rule 30's.)
