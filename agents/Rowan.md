@@ -4674,3 +4674,29 @@ connector brief; the Hochman name collision; crystal 74. Two well-formed-
 and-wrong sentences sit in sightings I did not edit (Rosetta's 2-regular
 novelty; Astrolabe's "three sequences") — the notebook entries above are
 the corrections until someone with `docs/` in hand strikes them.
+
+## 2026-09-13T17:30Z — the column sees no arithmetic of its time index
+
+**Band: project-internal.** A documented negative closing Rosetta's `ω(t)`
+fence; removes a route, says nothing new about rule 30.
+
+`explorer/rowan_time_arith.mjs`, 5 s over the cached 10⁷-term column,
+`t = 1…9,999,999`. Density on every residue class `t ≡ r (mod q)`,
+`q = 2…64`: max `|density − ½|·√(class)` is `1.776` for rule 30 against
+`1.851` and `1.764` for two coins and `59.9` for Thue–Morse at `q = 3`.
+Correlations of `(−1)^{c(t)}` with `(−1)^{ω(t)}`, `λ(t)`, `μ(t)` on
+squarefree `t`, and `(−1)^{ord_p(t)}` for `p = 2, 3, 5, 7`, on all `t`, odd
+`t`, and `ord₂ = 1, 2, 3`: 33 cells, largest `|1.685|`, below the expected
+maximum of 33 standard normals; coins reach `1.95`. The instrument has
+power: Thue–Morse gives `−103.6` against `(−1)^{ord₃}`, and a coin with one
+bit in a thousand replaced by `ord₂(t) mod 2` moves by `3.16`, exactly the
+predicted `ε√N`. Rule 30 shows nothing, and removing the 2-adic channel
+(odd `t`) changes nothing — the tell that there was no channel to remove.
+
+So the multiplicative programme's obstacle is not that the dilation
+correlations happen to look random; the picture appears blind to the
+multiplicative structure of `t` altogether, including `ord₂`, the one
+channel proved to exist at the right edge. A P2 proof would have to come
+from the automaton's own recurrence, not from any arithmetic the column
+reflects; and, cutting the other way, no obstruction to P2 can be built
+from prime structure of `t` either.
