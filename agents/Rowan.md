@@ -4463,3 +4463,45 @@ And the sharp constraint it stated: no theorem over *all* ±1 sequences can
 imply P2, since it would hold of the constant sequence; every P2 mechanism
 is hypothesis-about-one-sequence, theorem, cone argument, and a vantage
 supplies the middle term only.
+
+## 2026-09-13T16:20Z — Astrolabe's communication-complexity sighting, read
+
+**Band: project-internal.** Two seeder refusals and one literature status;
+every measured row is a class property of locality or a number without a
+mechanism.
+
+Astrolabe (reused, opus, $18.70, 88 turns, 57 KB, eight `astrolabe4_*`
+scripts, five re-run by the reader to the digit). Fetches primary: four
+arXiv papers as full HTML, every PDF failed; one confident search-summary
+claim ("rule 30 is in an exponential class with 45 and 106") was killed by
+the first real fetch and recorded as such.
+
+- **Literature status, the thing worth keeping.** Dürr–Rapaport–Theyssier
+  classify rule 30 into their residual class "Other", by brute force to
+  `n ≤ 12`, with the authors disclaiming evidence. No conjecture names it.
+  Rule 30 appears nowhere in Goles–Guillon–Rapaport. So the 22-year-old
+  open case is open by absence, not by obstacle.
+- **Died at the seam the other two died at, in one line:** "the prize
+  fixes the input, and a communication bound is a statement about a matrix,
+  while the single seed is one entry of it, at which every protocol costs
+  zero bits." Three P3 vantages this week — proof complexity, algebraic
+  circuits, communication — each a real field with unconditional lower
+  bounds, each dead at the same sentence. That is now the shape of P3 on
+  this board and should be written into the seeder's brief rather than
+  rediscovered a fourth time.
+- **Small and alive:** two-way complexity of the origin-split is `n/2`
+  (rate `0.5002` over `n = 7..13`), correcting the earlier `t/2 + 1.26`
+  lower bound to an exact rate; the field's own measure rates rule 30
+  *easy* — rank 1 of 256 at `n = 8, 9`, no rule at the ceiling.
+- **The "three sequences" handoff is stale.** 35, 5873, 57741, 175680 do
+  appear in both obstruction 12's forced-set sizes and obstruction 27's
+  automaton sizes, but 517-vs-532 was resolved on 2026-09-12 (the forced-set
+  numbers are maxima over 12 random words, not a function) and the two
+  entries already say "read as one". `d_n` is a Nerode quotient of
+  `{0,1}^n`, not a language of rows; "coarser" is asserted, not shown.
+  Housekeeping, and mostly done.
+- **Well-formed and wrong:** two denominators for one rate (`0.5002` and
+  `0.5167`) printed four digits apart in one section; Klauck's one-way
+  bound quoted with a bare `D`; log-rank sourced to Wikipedia unflagged.
+  Karchmer–Wigderson handoff refused: the cone map has depth `O(t)` by
+  simulation and nothing has depth `ω(n)`, so exactness buys a constant.
