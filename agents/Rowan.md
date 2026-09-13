@@ -4730,3 +4730,53 @@ correction of me, two of its own corrections wrong. $18.21, 62 turns.
   whose image the board already knows misses words (obstruction 33,
   `f(p,a) < ∞`). Not commissioning it as framed; if run, the black-versus-
   white arm at `c(−t)` is the null model, and Talus did not specify it.
+
+## 2026-09-13T19:05Z — Parallax's sheaf-contextuality sighting, read; the day closes
+
+**Band: project-internal.** No new fact about rule 30; the one live object
+is a constant read off a sweep, and one of the document's fences does not
+hold.
+
+Parallax (reused, opus, **$54.70, 228 turns**, the day's most expensive; 16
+`parallax6_*` scripts, six re-run by the reader, all reproducing).
+
+- **Nothing-band facts dressed as findings:** no degree-1 refutation at the
+  clause level over all 256 rules is crystal 59 (the affine hull of the
+  rule 30 relation is all of `F₂⁴`; the sixteen exceptions are the sixteen
+  affine rules). "Every monotone saturated" is `CF ≡ 1` for every
+  unsatisfiable CSP — a property of the invariant, evidence for nothing.
+  The Čech class with `F₂` coefficients on the faithful encoding is
+  identically zero on 1,021 sections: a total false negative, dead.
+- **The one live seam:** a degree-1 refutation *does* exist once windows of
+  `5 × 7` cells are allowed, at every `a` from 3 to 10 (measured, each cell
+  a found certificate, hence an upper bound, nothing known at `a ≥ 11`).
+  The reader's observation: a `5 × 7` window has 15 free cells, so this
+  *is* a bounded-degree Nullstellensatz statement, and §3.4 and the §6
+  handoff are one topic. Worth a theorist's session whose first task is
+  falsification at `a = 11, 12`, not proof. Not killed by the fixed-input
+  seam: rung 2 has `Θ(a)` free cells.
+- **Controls:** rule 120 unsatisfiable with `f(a) = 4,4,6,8,10,11`; the
+  invariant does not separate 30 from 120 by growth. **Rules 90 and 150
+  are satisfiable on the real one-sided rung-2 family** and cannot control
+  it; the "chasm" was measured on a two-sided family. The diagonal control
+  fires correctly (diagonal 4 goes UNSAT at `a = 4`, period 4).
+- **Well-formed and wrong:** the deletion-distance fence ("1 at every `a`;
+  refuse a seeder proposing this") was measured only at the first
+  unsatisfiable length, where distance 1 is near-tautological; re-run past
+  it, 0 of 110/132/156/182 single deletions repair at `a = 1`, so distance
+  `≥ 2`. Do not quote that fence. A rule-120 control positive (`γ ≠ 0`,
+  66/66 at `a = 2`) is in the script output and absent from the table.
+  Razborov / Impagliazzo–Pudlák–Sgall are lower-bound tools; a degree
+  lower bound would kill the `5 × 7` route, not prove rung 2 — the handoff
+  has the direction inverted.
+
+**The day, final.** Seven connector sightings, one theorist attack, three
+measurements: every one banded project-internal or Nothing by an independent
+reader. Connector spend $184.24 (Groma 29.55, Astrolabe 13.43 + 18.70,
+Parallax 22.70 + 54.70, Rosetta 11.65, Ephemeris 14.83), Talus 18.21, plus
+about a dozen opus subagent readings. What the board has that it did not
+have this morning: crystal 74 with its scope corrected; the four seams
+written down; rule 120 as the standing control; four board rows; and one
+merged theorist topic (bounded-width affine refutations of rung 2 as a
+Nullstellensatz degree question) that survives every seam on its face and
+wants falsifying at `a = 11` before anyone calls it a route.
