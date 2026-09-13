@@ -4551,3 +4551,52 @@ all re-run by the reader, all reproducing).
 if the file is cited cold. I have not edited the document — `docs/` is not
 mine to change unasked — so this entry is the correction until someone
 does.
+
+## 2026-09-13T16:50Z — Parallax's CSP-dichotomy sighting, read
+
+**Band: Nothing for the mathematics, project-internal for the deliverable.**
+The polymorphism clone of the rule 30 relation is projections only, and
+that is a textbook consequence: `f(0,c,r) = c ∨ r` and `f(l,c,0) = l ⊕ c`
+form a complete basis, so every polymorphism is a Boolean-algebra
+homomorphism, hence a projection, at every arity. The exhaustive run
+(`explorer/parallax_clone.mjs`, 232 of 256 rules trivial, WNU-versus-
+Schaefer 0 disagreements) is a check on the two-line proof, not the result.
+
+Parallax (reused, opus, $22.70, 102 turns, 55 KB; five scripts re-run by
+the reader, all matching; Zhuk fetched primary, the Barto–Kozik half
+fetched two hops out — Kozik 2016 and Jovanović 2012 — with JACM 2014 never
+fetched).
+
+- **Unbounded width, Post class ⊥, Schaefer NP-complete.** A theorem about
+  the *language*; the rung-2 family is one structured instance family, and
+  §4 of the document says outright that the algebraic negative and my
+  empirical no-bounded-width-invariant negative "point the same way and
+  neither implies the other" — while its abstract says the one "converts"
+  the other. Headline contradicts body, in the flattering direction.
+- **The finding is the control, and it is sharper than the one it names.**
+  Every invariant computed is an invariant of the rule and is shared with
+  rule 110, whose centre column is constant black (verified; growth is
+  leftward). But 110 is unbalanced and non-permutive, so it rejects nothing
+  on crystal 66's list; "strictly finer sieve" is false. The rule that
+  *does* dominate crystal 66 is **rule 120 = `l ⊕ (c ∧ r)`**: left-
+  permutive, balanced, non-affine, trivial clone, and from a single seed
+  the black cell simply moves right, so the centre column is white from
+  `t = 1`. Rule 30 is `l ⊕ (c ∨ r)`. **The whole distance between "P1 is
+  trivially settled" and "P1 is open" is OR against AND on the `(c, r)`
+  pair — whether a single black cell can spread.** Any P1 proof must use
+  that, and no rule-level invariant on this board sees it. Keep rule 120
+  (and 184) as the standing control, not 110.
+- **My misphrased control** ("diagonals at `j ≥ 1`") was silently corrected
+  to `k ≥ 1` by the connector; no conclusion changed.
+- **2D-SFT subaction handoff, refused.** Not because of crystal 49 (which is
+  computed, regional, and does not say what the caveat says) but because
+  Durand–Romashchenko–Shen / Hochman characterise 1D subactions of ℤ²-SFTs
+  as the effectively closed subshifts, and the column is computable, so
+  membership is free and the conclusion vacuous. That is crystal 67's
+  ensemble filter.
+- **Hazard for the next seeder:** `Hochman` has 54 hits in 5 files, all
+  Hochman–*Shmerkin* inverse entropy (a dead programme), a different theorem
+  from Hochman on ℤ²-SFT subactions. A grep would report the latter dead.
+  Filing it.
+- Scripts are `explorer/parallax_*`, colliding with a 2026-09-08 Parallax
+  session's bare prefix.
