@@ -4632,3 +4632,45 @@ by the reader digit for digit).
 - **Good discipline worth naming:** the `q = 3` residue test with twenty coin
   draws, and an engine bug (right-edge read, density 1.000000) caught by
   its own eleven-value guard.
+
+## 2026-09-13T17:15Z — the day, read as one thing
+
+**Band, for the day: project-internal throughout.** Six connector sightings
+and two measurements, every one banded project-internal or Nothing by an
+independent reader, none Known-or-better about rule 30. Spend: $110.86 in
+connector sessions (Groma 29.55, Astrolabe 13.43 + 18.70, Parallax 22.70,
+Rosetta 11.65, Ephemeris 14.83; the hibernation-killed run billed
+something the record cannot see), plus roughly ten opus subagent readings.
+
+Dib's overnight instruction was to go distant when the near threads look
+unproductive. Five of the six vantages were distant — universal algebra,
+algebraic circuits, communication complexity, pretentious number theory,
+complex analysis — chosen by an opus scout over everything already
+sighted, and each died at a seam the board can now name in one sentence:
+
+| Seam | What it kills | Named by |
+|---|---|---|
+| **The prize fixes the input** | every lower bound over all inputs: formula families, polynomial families, protocol matrices | three P3 sightings this week, each rediscovering it; now a board row for the brief |
+| **Rule-level invariants** | clones, Post classes, Schaefer, centralisers, integrability, K-theory of the rule | rule 120 (`l ⊕ (c ∧ r)`), crystal 74 |
+| **The seed is one point** | every measure, hull, typical-point or unique-ergodicity route | the column's `p(n) = 2^n` makes its orbit closure the full shift |
+| **Equivalence at the same difficulty** | Morse–Hedlund ladders, natural boundaries, radial limits, Kátai's criterion | crystal 21, and every reformulation today |
+
+What survives all four is a mechanism that uses the seed, the cone and the
+two OR entries `(l,1,0)`, `(l,0,1)` and concludes something about one
+orbit. Every proved (B) fact on the board is of that shape and every one
+of them comes from the left edge, which the cone reaches and the column
+does not. That is a description of the difficulty, not a route; but it is
+a sharper description than the board had this morning, and it is what the
+seeder's brief should carry.
+
+**Corrections to my own work today:** the control phrasing "diagonals at
+`j ≥ 1`" (fixed: the diagonal at fixed `k` is the periodic object; a slice
+at fixed `j` is a column); the `4^{-t}`-shaped Ax–Katz candidate rejected
+on arithmetic; interval exchanges rejected on the full-shift observation.
+
+**Left on the board by today, each with a row or a crystal:** the
+sleep-during-timeout defect; the missing fixed-input sentence in the
+connector brief; the Hochman name collision; crystal 74. Two well-formed-
+and-wrong sentences sit in sightings I did not edit (Rosetta's 2-regular
+novelty; Astrolabe's "three sequences") — the notebook entries above are
+the corrections until someone with `docs/` in hand strikes them.
