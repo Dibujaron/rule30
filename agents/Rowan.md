@@ -4780,3 +4780,93 @@ written down; rule 120 as the standing control; four board rows; and one
 merged theorist topic (bounded-width affine refutations of rung 2 as a
 Nullstellensatz degree question) that survives every seam on its face and
 wants falsifying at `a = 11` before anyone calls it a route.
+
+## 2026-09-13T22:30Z — the whole project read at once, and what the dead-end actually is
+
+**Band: project-internal.** No mathematics. This is a reading of nine days
+of record through five subagents (DAG, sightings, obstructions, run
+economics, harness architecture), asked for by Dib because the project
+feels like it is hitting dead-ends. Dib also said, and I have saved it to
+memory, that the `$` column is a flat-subscription accounting and not a
+cost; the binding constraints are rate-limit windows and about fifteen
+plan days.
+
+**The numbers, each with its denominator.** 171 DAG nodes: 167 proved, 4
+open, all four `wall`, zero dispatchable leaves. Of 167 proved theorems,
+33 have a type that mentions `centerColumn`; 82 are cited by nothing. 287
+sessions since 09-05: 202 prover ($215), 31 theorist ($583), 42 connector
+($538), 12 seeder ($91); recorded total $1,427, a floor. Prover success
+on S/M/L is 85–95% and never fell; closes per day went 32, 36, 27, 16,
+47, 5, 2, 0 because the board ran dry, not because proving got harder.
+Every one of the 41 connector dispatches carried the same `problem`
+field. 36 obstruction entries, 27 attacks, 36 sightings.
+
+**What the DAG holds toward each prize.** P1: Jen's theorem (Known,
+twelve nodes), the period-1 case (Known), six conditional bridges whose
+hypotheses are each equivalent to P1, unsatisfiable, or trivially
+sufficient. P2: a lossless translation into ℕ, nine facts true of every
+`Bool` sequence, one rule-30 bound whose own note says its route is
+capped. P3: zero nodes; the model is sayable (`FinTM2`, `encodeNat`),
+`periodic_polyTime` is proved in scratch and not landed.
+
+**The one obstacle, which every reader found independently.** Crystal 40:
+every `Bool` sequence is the centre column of some configuration, so the
+column is the free coordinate. Consequently every statement provable
+about a family — all configurations, all boundaries, all 256 rules — is
+either false on the family or true of a coin, and the seed is one point.
+Ensemble methods cannot reach a computable point (Schnorr, a theorem).
+Every faithful restatement — natural boundary, orbit closure infinite,
+non-automatic, irrational — is P1 again. Every invariant of the rule is
+shared with rules 90/150/120 whose columns fail the conclusion. Thirty
+fields said this in five vocabularies from sessions that could not read
+each other. That is the strongest evidence the programme could have
+produced that the obstacle is real and not a framing artefact.
+
+**So the dead-end is not the machine.** The machine measured, in nine
+days and from thirty fields, why a problem with a public bounty since
+2019 is open. Expecting it to produce a proof was the part that was
+wrong, and CLAUDE.md's 09-10 goal change asked the one prose-reading
+step in the loop (me, at landing) to do what the rest of the machine was
+built not to need.
+
+**Three structural facts about the loop, from the architecture read.**
+Direction is chosen in exactly one place: my head, reading `next.json`,
+section 6 of attacks and section 5 of sightings. The unit of work is one
+session everywhere; `Reduced` exists in `dag.Outcome` and nothing
+produces it; nothing holds a plan across sessions, so twelve attempts on
+one wall were twelve cold starts. Negative results reach the theorist
+brief and not the seeder's, and no gate stops a dead route being
+re-proposed; three P3 vantages died in one week on a seam the connector
+brief never carried.
+
+**What has produced information.** Not literature and not lemmas:
+instruments. `f(p,a)` exhaustive, the effective cone exact to `t = 26`,
+the rung-2 unsat cores, the 256-rule control, the `5×7` refutation
+constant. Every non-trivial fact of the last four days is a measurement
+with a null model beside it.
+
+**The one target that survives every seam.** The period-2 case of P1:
+the column is not eventually alternating. Open, non-vacuous, below the
+prize, measured to `10^5` with one explicable failure, converged on by
+four independent sightings, reduced by Talus to one linear inequality
+with no route, and then given a candidate mechanism by Parallax — a
+bounded `5×7` affine refutation at every cone distance 3 to 10 —
+newer than Talus's verdict and unfalsified at `a = 11`. Kopra prices the
+family question at the prize's difficulty. It is still the only
+prize-shaped statement on this board with content of its own.
+
+**Where I would go, in order, and the recommendation to Dib is below in
+the terminal.** (1) Stop the field-per-session connector programme; its
+own corpus says it is now confirming §3 from new fields. (2) Make the
+seam a gate: run every proposed statement over all 256 rules before
+landing; a statement true of rule 90 or 120 is banded Nothing by machine
+rather than by my taste. (3) Write the synthesis — one document stating
+the obstacle as theorems-with-witnesses, retiring the word "residual",
+landing the scratch theorems (`periodic_polyTime`, the shield, the rule-90
+witness, the cone condition, right-diagonal periods unbounded) on the
+board. That is the deliverable whatever else happens. (4) One campaign,
+not sessions: the period-2 case via the bounded-window refutation family,
+falsify at `a = 11, 12` first (one SAT run), and if it survives, carry a
+single attack document across sessions with its state in it. Likeliest
+outcome: the sharpest obstruction entry yet. Possible outcome: a small
+novel theorem about rule 30 that is genuinely a case of Prize 1.
