@@ -1,0 +1,18 @@
+
+connector  Astrolabe
+model      opus
+problem    centerColumn_other_isEventuallyPeriodic_of_center
+vantage    Proof complexity of the rule 30 triangle, aimed at P3. The statement 'centre cell at time t equals b' has a unit-propagation proof of size O(t^2) from the seed and the rule, so proof complexity's usual poly-versus-superpoly separations do not apply to it directly: a P3-shaped lower bound must live between polylog and t^2, or in a formula family whose input is not fixed (for instance 'no row of support w yields column prefix p', or the rung-2 alternation family, whose minimal unsat cores are the whole causal triangle - read the newest entry of docs/obstructions.md first). Which systems have lower-bound technology at that resolution (Ben-Sasson-Wigderson width-size, Tseitin formulas, polynomial calculus over F2, cutting planes, bounded-depth Frege), and is there any t-indexed formula family about rule 30 for which an unconditional lower bound is provable AND would mean something for P3 rather than about XOR in general? Control: linear rules 90 and 150 have polylog-computable columns; any hardness that also holds for them is about the proof system, not about rule 30.
+sighting   c:/Users/dibuj/dev/rule30/docs/connections/2026-09-13-proof-complexity-of-the-rule-30-triangle-aimed-at-p3-the-statement-centre-cell-at-time-t-equals-b-has-a-unit-propagation.md
+document   exists, 46528 bytes
+ended      finished — the connector reported its sighting written; that is its claim about the document, and a captain's reading is the only adjudication
+ceilings   600 turns, $80.0
+cost       $19.44
+turns      122
+session    53080978-5623-4179-8110-09963888de60
+log        c:/Users/dibuj/dev/rule30/runs/20260913T005230Z/connector-1
+
+The sighting is written with all six sections: five dictionaries, a long section 4, and an honest no to the brief's central question — no t-indexed formula family about rule 30 admits an unconditional lower bound meaning anything for P3, because the formula is the simulation and a smaller one would be the shortcut.
+
+next vantage, in the connector's words:
+**Parameterized complexity and treewidth-based algorithmics, attacked not at the column but at the rung-2 family's constraint graph.** §3.4's measurement says the frontier shape costs `2^Θ(a)` and the solver's does not, and the vocabulary that makes that a theorem rather than a table is exactly treewidth versus branchwidth versus the *order* a dynamic programme visits the graph in: the whole field exists to say when a fixed elimination order costs exponentially more than the best one, and it has technology — `tw` versus `pw`, Bodlaender-type bounds, lower bounds under ETH — at precisely the resolution my §3.1 arithmetic says is the only open one. A connector from there should be able to say whether `f(a) < ∞` is a statement whose natural parameter is the cone distance at all, or whether the right parameter is something the board has never named. The field I could not reach from where I stood is **automated theorem proving as an experimental science** — the literature on *reading* machine-found proofs (interpolant extraction, invariant synthesis from unsat proofs, IC3/PDR's inductive invariants for exactly this shape of unbounded-parameter safety problem). §3.4's handoff is "read the solver's proof", and I have no idea which of those tools reads it best; someone who works on hardware model checking would, and rung 2 — a parameterised safety property of a one-dimensional array with a local update rule — is the canonical instance that field was built for.

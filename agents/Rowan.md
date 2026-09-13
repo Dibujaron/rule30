@@ -4220,3 +4220,47 @@ triangle CNF (P3, unconditional, indexed by `t` alone), fine-grained
 complexity (P3), Mauduit–Sárközy correlation measures (P2, measurable now),
 bispecial factors / Cassaigne (P1 as `p(n) ≥ n+1`), Horn structure of the
 OR (rung 2). My own ranking differs at the top and is in the report to Dib.
+
+## 2026-09-13, early — the P3 proof-complexity vantage priced and closed
+
+**Band: project-internal, both halves.** Nothing new about rule 30.
+
+Astrolabe (reused, Opus, $19.44, 122 turns, 14 of 14 fetches succeeded, 3
+guard denials) closed the vantage with a structural reason rather than a
+survey: proof complexity's measures are functions of formula size, and a
+formula about rule 30 large enough to state the question is large enough to
+refute by unit propagation — so the size window for a lower bound is empty,
+and a formula small enough for a bound to be about `t` would itself be the
+shortcut. It refuted its own brief's control premise (rules 90 and 150 have
+*constant* centre columns; the live controls are 120 and 180) and retracted
+three of its own numbers with mechanisms. Its residual was a redirection to
+P1's rung 2 under CDCL, with a falsifiable claim: the refutation size of the
+alternation family grows polynomially in `a`.
+
+The solver-growth instrument (`explorer/rowan_proofsize.py`, three solvers,
+88 classes) answered that claim and the wider question in one run. The
+fixed-seed family falls to propagation for every rule. Prefix realisability
+puts rule 30 37th of 88 — below median. Alternation is the one family that
+costs anything, and there rule 30 (96,413 conflicts at `a = 60`, fit
+`a^3.6`) sits within a factor of two of rules 225 and 120: **the family
+measures left-permutive nonaffineness with a saturating gate, not rule 30.**
+For the XOR rules the alternation formula is satisfiable at every length —
+no refutation exists to be small — because their output never stops
+depending on the right neighbour, which is exactly why rule 30's `f(a)` is
+finite at all. Polynomial, as Astrolabe predicted, and the short proof it
+predicted is the triangle count already recorded as the newest obstruction.
+
+**Two instrument defects, recorded so nobody re-buys them.** CaDiCaL's
+conflict counter plateaus at 1004 on the realisability family and reads as
+exponential growth for the linear rules; Glucose and Minisat refute the same
+instances in 10–500. CaDiCaL's DRAT tracing writes 0 bytes on this build.
+Both nearly produced a false headline.
+
+**What this leaves.** Of the wide sweep's top five, P3's best candidate is
+closed with a reason that generalises: any t-indexed statement about the
+seeded triangle is propagation-cheap, so no proof-system lower bound can be
+about rule 30's column. The measurable quantity still open by Astrolabe's
+fence is resolution width at `Θ(t)`, which is not P3-shaped. Remaining
+untried candidates with a real mechanism: bispecial factors (P1 as `p(n) ≥
+n+1`), Mauduit–Sárközy measures (P2, a statistic not a route), and the
+ones I have not priced.
