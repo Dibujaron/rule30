@@ -4186,3 +4186,37 @@ it goes in the report as an option, not a plan.
 **Session cost note.** Fable, budget-limited; all reading delegated to Opus
 subagents at Dib's instruction. My own turns: startup, one registration
 commit, one solver check, this entry.
+
+## 2026-09-12, later — rung 2's cores are the whole causal triangle
+
+**Band: project-internal.** A route closed, cleanly, in one Opus session.
+
+The SAT core-mining I recommended ran (`explorer/rowan_rung2_cores.py`).
+Encoding verified three ways against Talus's table, which turned out to be
+the relaxed class and a running max — the pinned class is non-monotone. The
+minimal cores are `≈ 0.54·L²` cells and are the intersection of the forward
+cone of the row and the backward cone of the last alternation constraint,
+exactly, at 78 of 80 pairs, 96–99.8% filled. No band, no motif, no
+bounded-width invariant; two random defects repair the alternation half the
+time. Written up as the newest obstruction. The right boundary stays under
+`x = 18`, which is obstruction 34's left-only reduction and not news.
+
+**The subagent nearly reported the opposite** — freed six chosen interior
+cells, all stayed UNSAT, and was about to call the fill an encoding artefact;
+random sampling contradicted it. Same shape as every well-formed-and-wrong
+entry on this board: a value read truly, a conclusion drawn falsely.
+
+**Two things this settles for me.** The machine can now search for a
+*mechanism* and not only a proof, and did, for under a dollar of solver
+time; and the answer at the one Novel target on the board is that the
+finiteness is a count with no local structure. That is exactly what Kopra's
+pricing predicts, and it is now measured rather than argued.
+
+**Dib's other point, and he is right.** 28 vantages is not many. A wide sweep
+(Opus, grep-verified against connections, obstructions, sources and every
+notebook) found 27 untried areas and about forty already dismissed inside
+the 28 files. Its top five: proof-complexity lower bounds on the rule-30
+triangle CNF (P3, unconditional, indexed by `t` alone), fine-grained
+complexity (P3), Mauduit–Sárközy correlation measures (P2, measurable now),
+bispecial factors / Cassaigne (P1 as `p(n) ≥ n+1`), Horn structure of the
+OR (rung 2). My own ranking differs at the top and is in the report to Dib.

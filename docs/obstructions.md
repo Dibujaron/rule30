@@ -2880,3 +2880,68 @@ file: built from a hash whose low bit was nearly a function of the prefix's low
 bit, it returned the same `D(a)` in all 40 draws at every `a`, and a null with no
 spread measures nothing.
 
+
+## Rung 2's finiteness is a global count over the whole causal triangle, and its minimal unsatisfiable cores hold no bounded-width invariant
+
+**Band: project-internal.** Closes a route; says nothing new about rule 30.
+
+*Rowan, 2026-09-12, late. `explorer/rowan_rung2_cores.py`, results in
+`explorer/rowan_rung2_cores.txt`. Solver: python-sat with cadical153.*
+
+**The question.** Obstruction 29 and 30 say the alternating target
+(`{00,11}`-free, i.e. an eventual period of 2 in the centre column) is finite
+at every measured cone distance `a`, and that the finiteness is a count —
+equations overtaking unknowns — rather than a rigidity. The exhaustive sweeps
+that establish it discard *which* constraints conflict. This entry asked the
+solver for a minimal unsatisfiable core per `a`: if the cores lived in a band
+of bounded width along the cone edge or along column 0, that band would be an
+inductive-invariant candidate and rung 2 a proof by induction on `a`.
+
+**What the measurement is.** For each `a` from 1 to 40 and each phase, encode
+"initial row white at `x < -a`, free from `-a` rightwards; column 0 alternates
+for `L` rows" as CNF with one selector per cell's rule clauses and one per
+alternation constraint; find `f(a)` = the largest satisfiable `L`; take the
+core at `L = f(a)+1` and minimise by deletion. Cone facts are hard background
+and never counted.
+
+**Three checks before believing it.** (i) The SAT `f(a)` reproduces Talus's
+published 26 values exactly, and an independently written DFS with no solver
+agrees value for value at `a ≤ 7`. (ii) The published sequence is the
+*relaxed* class — `c(-a,0)` free, not pinned black — and is the max over both
+phases; the pinned class runs 8,7,6,5,9,… and the published one is its
+running maximum. (iii) One SAT model re-run through a plain rule-30 loop
+alternates for exactly `f(a)` rows and then breaks.
+
+**What came out.**
+
+- `|core| ≈ 0.54·(f(a)+1)²`, ratio 0.51–0.63 for every `a` from 8 to 40,
+  both phases. Quadratic in the block length, not bounded, not linear.
+- The core's left boundary is `max(-a-t, -(L-1-t))` — the intersection of the
+  forward light cone of the initial row and the backward cone of the last
+  alternation constraint — exactly, at 78 of 80 `(a, phase)` pairs, off by one
+  at the other two. Fill inside that triangle is 0.96–0.998, rising with `a`.
+  **The core is the causal triangle.**
+- The right boundary is the one bounded thing: `x ≤ 7` at most `a`, `x ≤ 13`
+  once, never past `x = 18`. That is obstruction 34's left-only reduction
+  seen from the solver's side, not a new localisation.
+- Three shuffled minimisations per `a` give cores 95–99% identical with the
+  same bounding box. The core is not unique; its shape is.
+- Slack: freeing `k` random rule cells inside the triangle makes the block
+  satisfiable at `k = 1` in about one trial in eight, at `k = 2` in about
+  half, at `k = 16` always, at every `a` tested. The contradiction has
+  essentially no redundancy.
+- New values `f(a)` for `a = 27..40`: 36,36,38,39,40,41,42,42,43,45,46,48,49,49.
+
+**What it means.** A bounded-width inductive invariant would show up as a
+core confined to a band; instead every cell that could causally matter is
+load-bearing, the core's width grows linearly in `a`, and two random defects
+anywhere inside it repair the alternation half the time. That is the
+signature of a tight global count, not of a local mechanism, and it is
+consistent with `f(a)` having the plateau structure it has. **Rung 2 does not
+have a proof by induction on the cone distance by this route**, and the
+route was the one way the machine had of searching for a mechanism rather
+than for a proof.
+
+**Premise to check first next time.** The class matters: pinned and relaxed
+differ, and the published table is the relaxed one. A sweep that says
+"`f(a)` is non-monotone" has probably pinned `c(-a,0)`.
