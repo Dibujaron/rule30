@@ -4700,3 +4700,33 @@ channel proved to exist at the right edge. A P2 proof would have to come
 from the automaton's own recurrence, not from any arithmetic the column
 reflects; and, cutting the other way, no obstruction to P2 can be built
 from prime structure of `t` either.
+
+## 2026-09-13T17:50Z — Talus's four-seams attack, read; two of my sentences withdrawn
+
+**Band: project-internal, thin.** One valuable control, one correct
+correction of me, two of its own corrections wrong. $18.21, 62 turns.
+
+- **The control that matters:** rule 120 satisfies the period ladder at
+  all 20 `(p, a)` cells measured, with the engine reproducing obstruction
+  35's published `f(3,a)` and `f(1,a)` before the control ran. So the
+  OR-to-AND filter is a filter on a *complete argument* for P1 and on
+  nothing smaller: (B)-ness is preserved along no DAG edge. Crystal 74's
+  per-lemma tally was the over-reach; I have replaced "three in five
+  survive" with the audited count and the scope sentence.
+- **My 17:15Z sentence withdrawn:** "every (B) fact comes from the left
+  edge, which the cone reaches and the column does not." The column *does*
+  reach the left edge, at exactly `2t`, by `rightmost_difference_moves_right`
+  (`Rule30/Proofs/RightmostDifferenceMovesRight.lean:26`, closed) — a
+  theorem, which Talus re-measured 201/201. The difficulty is not reach:
+  the cone delivers one bit per row against a row of `2t + 1` bits. And
+  `centerColumn_not_eventually_constant` descends from Jen's theorem, not
+  from the left edge.
+- **Talus's own errors, one landed:** it twice attributed crystal 66's
+  "run this on your own proposal" to crystal 74, once in the obstruction it
+  appended; fixed in place. "Four (B) facts about column 0" is two, plus two
+  pair statements quantified over `i < j` that the audit instantiated at
+  `(0,1)` and `(0,5)`. The next topic's decisive citation slips from
+  unrestricted windows (crystal 67, trivially surjective) to the coned class,
+  whose image the board already knows misses words (obstruction 33,
+  `f(p,a) < ∞`). Not commissioning it as framed; if run, the black-versus-
+  white arm at `c(−t)` is the null model, and Talus did not specify it.

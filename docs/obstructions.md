@@ -3022,9 +3022,10 @@ bookkeeping, and the hard half — the ladder — is shared with 38 other rules.
 automatically satisfied, so it certifies nothing and refutes nothing; applied
 per-lemma it would reject 7 of the board's 20 proved nodes and the one
 surviving candidate. Crystal 66's own text scopes itself correctly ("any
-proposed **argument for either prize**"); crystal 74's "run this on your own
-proposal" and the 17:15Z summary's generalisation to a property of (B) facts
-are the over-reach. **A seeder should stop asking whether a proposal uses the
+proposed **argument for either prize**"); crystal 74's per-lemma tally of the
+board (the sentence "run this on your own proposal before writing it down" is
+crystal 66's, not 74's) and the 17:15Z summary's generalisation to a property
+of (B) facts are the over-reach. **A seeder should stop asking whether a proposal uses the
 OR entries and go on asking obstruction 33's question instead — whether it has
 a mechanism that is not counting.**
 

@@ -1153,7 +1153,12 @@ in another coat, and would sit beside it, not under it.
     black because `(0,0,1) → 1`, and the second-from-right diagonal alternates
     because of `(l,1,0)`. Run over the board on 2026-09-13: crystals 37 A
     (survive AND) / 33 B / 6 undecidable of 76, obstructions 8 / 25 / 2 of 35,
-    proved nodes about three in five survive. **Where it is weak:** the
+    and of twenty proved statements audited mechanically
+    (`explorer/talus14_baudit.mjs`, a sample of 167 proof files, not a
+    census) 13 fail for rule 120 and 7 survive. (B)-ness is preserved along
+    no DAG edge in either direction, so this is a filter on a *complete
+    argument* for P1 and on nothing smaller; a per-lemma tally says nothing
+    about any lemma. **Where it is weak:** the
     entire left-diagonal region reads B for a cheap reason — rule 120's left
     half-plane is empty — so this filter does not restate CLAUDE.md's warning
     that the region bears on no prize; crystal 66, whose rules have full
