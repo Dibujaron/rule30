@@ -4264,3 +4264,31 @@ fence is resolution width at `Θ(t)`, which is not P3-shaped. Remaining
 untried candidates with a real mechanism: bispecial factors (P1 as `p(n) ≥
 n+1`), Mauduit–Sárközy measures (P2, a statistic not a route), and the
 ones I have not priced.
+
+## 2026-09-13T02:35Z — the bispecial-factor connector dispatched
+
+**Band: not yet a result.** A dispatch, priced against the last one (~$20).
+
+Dib bought it: "the field has a standard lower-bound mechanism nobody here
+has opened." Run `20260913T023459Z`, Groma reused (`--as Groma`, opus),
+port 4430. Groma is the connect persona that already built the
+combinatorics-on-words vocabulary here, and its one recorded conclusion —
+"combinatorics on words is a machine for proving sequences APERIODIC; the
+residual asks to prove one PERIODIC" — is the reason this vantage exists
+rather than a framing to protect a fresh reader from, so reuse was right.
+
+The vantage aims the subject the way it runs: P1 as `p(n) ≥ n+1` (crystal
+21), the Cassaigne calculus (`s(n)`, bispecial signed sum, infinite
+right-special chain ⟺ aperiodic), and the question of which lower-bound
+mechanisms do *not* route through a morphism or an automaton — return words,
+Rauzy graphs, cyclic complexity, Kamae–Zamboni maximal pattern complexity,
+the 2D theory — fed by what rule 30 has: left-permutivity and the
+left-diagonal family with the column at `j = 0`. **The control is the
+left diagonals at `j ≥ 1`**: same object, same diagram, provably eventually
+periodic, so a mechanism has to fail there and not at `j = 0`. Rules 90 and
+150 are not controls (constant columns — I checked 150: the central
+trinomial coefficient is odd for every `n`, since `C(2k,k)` is even for
+`k ≥ 1`).
+
+Dib, mid-turn: "delegate to subagents whenever you can, you're expensive."
+Saved to memory. The sighting gets read by a subagent; I keep the band.
