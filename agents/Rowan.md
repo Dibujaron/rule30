@@ -4341,3 +4341,36 @@ C*-algebras and Krieger dimension groups (P1); (10) matrix product ansatz
 integrability, Yang–Baxter maps (P3). The P2 candidates are the weakest of
 the list, and the scout flagged P3's thinness as a finding in itself: three
 structural closures leave two technologies that speak about a named object.
+
+## 2026-09-13T15:40Z — Astrolabe's algebraic-circuit sighting, read
+
+**Band: project-internal.** Every measured row is a class property of
+elementary CAs or a trivial bound restated; nothing new about rule 30.
+
+Astrolabe (reused, opus, $13.43, 62 turns). Route closed at the seam that
+closed proof complexity: a bound on the cone polynomial is about the cone
+map, and the fixed-seed column is not reached. The five sections die
+honestly: the size window `[t log t, t²]` is arithmetic; degree `2^t` versus
+`2t − 1` is crystal 59; the Nisan–Wigderson ceiling dies at `deg = vars − 2`;
+Baur–Strassen twice, with a multilinear control at zero disagreements.
+
+**The one product.** §3.5 measured the rank of the origin-split communication
+matrix (`4, 7, 10, 19, 26, 39, 53, 79, 104` for `t = 1..9`, all re-run by the
+reader, all matching) and called it novel. It is not: Dürr–Rapaport–Theyssier,
+*Cellular automata and communication complexity* (TCS 2004, arXiv
+cs/0210008) defines exactly this two-half-line split for the 256 elementary
+rules, puts 60/90/105/150 in the bounded class — matching Astrolabe's rank-2
+controls exactly — and leaves rule 30 unresolved. A 22-year-old open case
+in a real field, never on this board. That is the next vantage.
+
+**Well-formed and wrong, two instances.** §3.3 says a random polynomial
+attains the ceiling at every `k` for `t = 3..6`; its own table shows 120
+against 126 and 220 against 232. §6 infers from "rule 30 is less complex
+than random" that a small circuit may exist, while its own rule control
+shows 0 of 256 rules reach full rank — the deficiency is locality, a class
+property, the same inference the previous Astrolabe session closed on.
+The suggested `t ≤ 8` circuit search is not an experiment: `o(t²)` versus
+`Θ(t²)` is invisible at gate counts of 16 to 256.
+
+The nulls are iid-Bernoulli matrices of size 2048×4096 over `F₂`; full rank
+is a certainty, so they control sparsity and nothing else.
