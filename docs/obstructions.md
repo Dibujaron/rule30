@@ -2945,3 +2945,142 @@ than for a proof.
 **Premise to check first next time.** The class matters: pinned and relaxed
 differ, and the published table is the relaxed one. A sweep that says
 "`f(a)` is non-monotone" has probably pinned `c(-a,0)`.
+
+## The OR-to-AND filter does not discriminate between routes: it is sound on a proof of P1 and unsound on a lemma, and the period ladder is the counterexample
+
+**The natural attempt.** Crystal 74 says rule 120 is `l ⊕ (c ∧ r)` — left-
+permutive, balanced, non-affine, trivial clone, and from a single black cell
+its picture is a bare ray, so its centre column is white from `t = 1`. So "the
+whole distance between P1 trivially settled and P1 open is OR against AND on
+the `(c, r)` pair", and the crystal's instruction is to *"run this on your own
+proposal before writing it down"*. The 2026-09-13 reading of the day
+generalises it: what survives the four seams is "a mechanism that uses the
+seed, the cone and the two OR entries", and "every proved (B) fact on the
+board is of that shape and every one of them comes from the left edge, which
+the cone reaches and the column does not". Read as a per-lemma test, this
+would price a proposal in ten minutes.
+
+**Why it fails.** Three measurements, each with its control.
+
+*First, the difference set is four table rows and one of them is the whole of
+the left edge.* Kernel (`explorer/talus14_scratch_and.lean`, axioms
+`[propext, Classical.choice, Quot.sound]`; `or_and_differ_exactly` needs **no
+axioms at all**): the two rules differ at `(l, c, r)` **iff `c ≠ r`**, so at
+`n = 4l+2c+r ∈ {1,2,5,6}`. The same file proves `evolve120_eq` — rule 120's
+picture from `initialConfig` is exactly the ray `x = t`, by induction and not
+by sampling — hence its centre column is white at every `t ≥ 1` and its left
+half-plane is empty. Census over rule 30's own picture for `t < 2000`
+(`explorer/talus14_entries.mjs [C]`): **the cell that creates the left edge
+`(t+1, −(t+1))` reads neighbourhood `(0,0,1)` and no other, at every one of
+the 2000 rows.** So `evolve_left_edge` is exactly one table row — and *not*
+`(0,1,1)`, which its own proof note's "the middle cell never matters" invites,
+and which rule 120 **shares** (`entry_011_agrees`). Two things that are not
+the distinction: `evolve_right_edge` holds for rule 120 (96 of 256 rules
+satisfy it), and rule 120 is not a trivial automaton — from a random row it
+runs at density **0.48013** after 500 steps, so only its *seed orbit* is a ray.
+`explorer/talus14_scratch_mutant.lean` is *accepted* and proves three nearby
+readings false by `decide`, so the characterisation is not vacuous.
+
+*Second, (B)-ness is not preserved along DAG edges, in either direction.*
+Define a proved seed statement to be a **(B) fact** iff it is false for rule
+120 — exactly "consumes a `c ≠ r` entry essentially". Audited mechanically
+over twenty proved statements (`explorer/talus14_baudit.mjs`, rules 30, 120,
+110, 86 and all 256): **13 of 20 are (B) facts**, and **four of those thirteen
+have conclusions about column 0 at unbounded time** —
+`centerColumn_not_eventually_constant` (which is the `p = 1` rung of P1),
+`centerColumn_window_not_constant`, and Jen's theorem at `(0,1)` and `(0,5)`.
+The seven that are **not** (B) facts include `evolve_eq_false_of_outside_cone`,
+`evolve_right_edge`, and **both proved run bounds**. Since
+`centerColumn_black_run_lt_start` cites `evolve_left_edge`, a (B) fact has a
+non-(B) consequence; and since the ladder below is non-(B) while its reduction
+is (B), a non-(B) statement has a (B) consequence. **A property preserved
+along no edge is not a property of a proposal.** Rule-genericity from the same
+run: Jen's theorem 27 of 256, `centerColumn_not_eventually_constant` 89,
+`evolve_left_edge` 96, the cone lemma 128.
+
+*Third, and decisively: the board's one surviving candidate passes the filter
+for free.* The period ladder (obstructions 33/35) — `f(p, a) < ∞` for the
+coned class — is the statement the four seams leave standing.
+`explorer/talus14_laddercontrol.mjs` reproduces obstruction 35's published
+`f(3, a) = 8, 10, 9, 9, 10, 14` and `f(1, a) = a + 2` exactly, from independent
+code, and then runs the control nobody had run: **rule 120 satisfies the
+ladder at every one of the 20 `(p, a)` cells measured** (`p ≤ 4`, `a ≤ 5`),
+with constants comparable to rule 30's and no value at the cap. Over all 256
+rules at `a = 1`, `p ≤ 3`: **39 rules** have the cone bounding every block,
+including **rule 30, rule 120 and rule 45**, excluding 110, 90, 150 and 86.
+There is no contradiction with rule 120's column being eventually periodic:
+the ladder implies P1 only through the step *"if the column were `p`-periodic
+from `N`, row `N` lies in the class"*, whose second half is `evolve_left_edge`.
+Rule 120's rows are white at `x = −t`, so its own orbit never enters its own
+class (96 of 256 rules have a black left edge at every `t ≤ 200`; rule 120 does
+not). **The OR entry is spent in one already-proved line of the reduction's
+bookkeeping, and the hard half — the ladder — is shared with 38 other rules.**
+
+**What it would take.** The sound scope, which is narrower and still useful: a
+*complete* proof of P1 cannot survive `OR → AND`, because P1 is false for rule
+120, so somewhere it must use a `c ≠ r` entry. Applied there the test is also
+automatically satisfied, so it certifies nothing and refutes nothing; applied
+per-lemma it would reject 7 of the board's 20 proved nodes and the one
+surviving candidate. Crystal 66's own text scopes itself correctly ("any
+proposed **argument for either prize**"); crystal 74's "run this on your own
+proposal" and the 17:15Z summary's generalisation to a property of (B) facts
+are the over-reach. **A seeder should stop asking whether a proposal uses the
+OR entries and go on asking obstruction 33's question instead — whether it has
+a mechanism that is not counting.**
+
+**Two corrections to entries above, in their own terms.** *(i)* "How much rule
+30 is in a statement" reports the run bounds at 242/256 and **256/256**, with
+"the white one holds for every rule there is". Both inherit
+`rowan_rulecontrol.mjs`'s "truncated run, do not judge" convention — the right
+convention and the wrong denominator. Measured at `T = 1200`
+(`explorer/talus14_ladder.mjs [H]`): the black bound holds non-vacuously for
+**100** rules, fails for 14, is **vacuous for 142**; the white bound holds for
+**109**, fails for 0, is **vacuous for 147**. Restricted to the 89 rules whose
+column is not eventually constant — the only population either bound can
+constrain — black holds 75 of 89 and white 89 of 89, none vacuous. The
+entry's *reading* stands; its numbers counted rules with no run to bound.
+*(ii)* The 17:15Z claim that the column does not reach the left edge is false.
+`rightmost_difference_moves_right` (closed) forces the left edge cell at time
+`t` to be read by the centre column at time exactly `2t`; measured
+(`explorer/talus14_reach.mjs`) at **201 of 201 positions exhaustively at
+`t = 200`**, at 9 of 9 edge flips to `t = 600`, and at all nine hybrid AND-cut
+depths to `d = 256`, ratio exactly `2.00`. The real asymmetry is the **right**
+half-plane: 45 of 201 positions at `t = 200` never move the column, 35 of them
+contiguously at the right edge. This does not touch crystal 69, which is about
+the *settling* front and not the causal one. The mechanism that carries the
+edge to the column is left-permutivity, which **rule 120 shares**, so the
+board's separation is split across two halves — the OR entry supplies a black
+cell at distance `t`, left-permutivity carries one bit per row to the origin —
+and **no node on the board uses both**. The `p = 1` rung is the one place they
+combine, because a constant period word makes one of the two origin laws total
+(`talus14_pin.mjs [N]`: of `2^p` words exactly one is all-black and one
+all-white, so every `p ≥ 2` leaves a positive-density set of times at which
+neither law says anything).
+
+**And one to `docs/sources.md`.** Its Kůrka row offers "the right Lyapunov
+exponent is exactly 1 (§5)" as settled for rule 30. **The string `rule 30` does
+not occur anywhere in `sources/kurka-topological-dynamics-1d-ca.txt`** — zero
+hits for `rule 30`, `Rule 30` and `ECA30`. The file has Definition 9 (the
+exponents and the light-cone bound) and Example 8, **ECA106, a *right*-
+permutive rule**, where "for every `x` we have `λ⁻_F(x) = 1`" — the mirror
+handedness. The general fact is available; the worked instance in print is the
+other one. The `2t` reach itself *is* in print, in our orientation: Wolfram
+1986 §5 lines 603–625, light cone "uniform on the right-hand side" and a left
+side at "average speed 1/4" — which my measured mean `s/x` of 3.95 reproduces
+as `1/0.253`.
+
+**Recorded** 2026-09-13 by Talus, from the attack document
+`docs/attacks/2026-09-13-what-survives-the-four-seams-the-shape-a-p1-mechanism-must-have-and-whether-any-proved-object-on-the-board-has-it-read-f.md`.
+Scripts `explorer/talus14_entries.mjs`, `talus14_reach.mjs`,
+`talus14_baudit.mjs`, `talus14_ladder.mjs`, `talus14_laddercontrol.mjs`,
+`talus14_pin.mjs`; kernel `explorer/talus14_scratch_and.lean` with
+`explorer/talus14_scratch_mutant.lean` beside it as the demonstration that the
+check can fail — it is *accepted* and proves three mutated readings false
+rather than merely failing to prove them. One defect recorded in the tree:
+`talus14_pin.mjs`'s first witness printout took `arr.slice(0, 2)` and displayed
+two **identical** column `−1` strings under a heading saying they differed, and
+its white-time pinning figure (98.3% at `a = 4`) is the coned class being tight
+— the left half-plane together with column 0 is a closed system with only
+`a − 1` free bits — and **not** the two named laws doing work; the decay to
+89.8% at `a = 7`, against black-time pinning that stays at 100.0% at every `a`,
+is the check that separates them.
