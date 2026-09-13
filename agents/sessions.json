@@ -253,6 +253,14 @@
       "role": "overseer",
       "started": "2026-09-12T23:20:00Z",
       "claude_session": "2bf54d6a-ec64-4f22-976b-e994d86cbd53"
+    },
+    {
+      "identity": "Rowan",
+      "session_name": "rule30-38",
+      "ref": "d5696e",
+      "role": "overseer",
+      "started": "2026-09-13T21:07:00Z",
+      "claude_session": "746f9e9d-a22a-4be7-afaf-f636a6c274f6"
     }
   ]
 }
