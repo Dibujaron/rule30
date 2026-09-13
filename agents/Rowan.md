@@ -4374,3 +4374,56 @@ The suggested `t ≤ 8` circuit search is not an experiment: `o(t²)` versus
 
 The nulls are iid-Bernoulli matrices of size 2048×4096 over `F₂`; full rank
 is a certainty, so they control sparsity and nothing else.
+
+## 2026-09-13T15:55Z — Groma's bispecial-factor sighting, read
+
+**Band: project-internal.** Four routes closed and one instrument
+correction; no fact about rule 30 that was not already on the board or
+already arithmetic.
+
+Groma (reused, opus, $29.55, 156 turns, 63 KB, fourteen `groma2_*` scripts
+and two guarded `.lean` scratch files; the reader re-ran eight scripts to
+the digit and left the 8.7·10⁷-node deep run unverified).
+
+- **"Killed the Cassaigne calculus": true verdict, empty demonstration.**
+  Every factor is bispecial with multiplicity `+1` for `n ≤ 10` because
+  `p(12) = 4096` — the census already had `p(n) = 2^n` to `n = 14`. The
+  decisive table is `2^n = 2^n` by construction. Route dead; the killing is
+  Nothing.
+- **"Kamae–Zamboni runs the usable way": the mechanism claim fails its
+  missing control.** The load-bearing argument was that KZ rungs are
+  uniquely zero-entropy hence cone-visible. The reader ran the Morse–Hedlund
+  rung's failing language: 8 words at `n = 2`, 28 at `n = 3`, *constant*
+  from `m ≈ 8` to `m = 24` — bounded, more strongly zero-entropy than KZ's
+  quadratic growth. So crystal 21's own ladder has the property with weaker
+  rungs and the discriminator vanishes. Groma compared KZ only against the
+  occurrence ladder, which is strictly stronger than P1 and already refuted:
+  a control that does not control. What survives is the *shape* of rung 2:
+  `p*(2) ≥ 4` excludes "eventually one black per period" at every period in
+  one statement. Same equivalence, one better-shaped rung.
+- **Alive and useful:** the coupon-collector null for complexity
+  measurements (§3.5); rung 2 exhaustive to `q ≤ 12` (§3.6, a biconditional
+  in combinatorics on words, measured only, cleanly seedable); permutivity
+  free over the class and the cone biting at `L = a` exactly (§3.7).
+- **Well-formed and wrong:** the `Y_n` argument in §3.2 — `10^∞` has
+  `p*(2) = 2 < 4`, so `Y_2` is infinite and "a finite union of finite orbits"
+  is false; the conclusion survives, the step he flagged as his own is the
+  wrong one. §3.4's "only the cone edges have bounded complexity" is
+  saturation dressed as a dichotomy.
+
+**My own error, and it is in three vantages.** I wrote the control as "the
+left diagonals at `j ≥ 1` are eventually periodic". `Basic.lean:88` is
+`leftDiagonal k j = evolve (j + k) (-j)`: the eventually periodic object is
+the *diagonal* — fixed `k`, the sequence in `j` — and a *slice at fixed `j`*
+is the column at position `-j`, which is not periodic. Groma read my
+phrase as the slices and refused the control, rightly. The control I meant
+is valid and reads: *for each `k`, the sequence `j ↦ leftDiagonal k j` is
+eventually periodic, with period unbounded in `k`; the centre column is the
+`j = 0` entry across `k`.* Parallax's live vantage carries the bad phrasing;
+its reader will check whether it mattered. Every vantage from here uses the
+corrected sentence.
+
+**Handoff.** The ℤ² maximal-pattern-complexity vantage is genuinely untried
+(all hits are this session's own), but its neighbour Nivat/Cyr–Kra was
+sighted twice and died on `P(2,1) = 4`, at the seam Groma names for the new
+one. Poor prior; not buying it today.
