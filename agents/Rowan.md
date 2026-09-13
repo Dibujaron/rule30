@@ -4505,3 +4505,49 @@ the first real fetch and recorded as such.
   bound quoted with a bare `D`; log-rank sourced to Wikipedia unflagged.
   Karchmer–Wigderson handoff refused: the cone map has depth `O(t)` by
   simulation and nothing has depth `ω(n)`, so exactness buys a constant.
+
+## 2026-09-13T16:35Z — Rosetta's Kátai-criterion sighting, read
+
+**Band: project-internal.** Prices a P2 route the board never held and kills
+the brief's own reason for hope; the one thing it calls novel is crystal 73
+re-measured, and the "strictly stronger" claim attached to it is false.
+
+Rosetta (reused, opus, $11.65, 59 turns, 44 KB, seven `rosetta_*` scripts,
+all re-run by the reader, all reproducing).
+
+- **The criterion does contain P2.** The reader re-fetched Theorem 1.2
+  (arXiv 1705.07322): bounded `a`, dilation correlations `Σ a(pn) ā(qn) =
+  o(x)` for all distinct primes, then `Σ f(n) a(n) = o(x)` for every
+  multiplicative `f` bounded by 1 — no restriction on `f`, so `f ≡ 1` is
+  admitted. Kátai 1986 itself UNVERIFIED (paywall), correctly.
+- **Dead where it matters, correctly:** the hope that the cone supplies the
+  dilation hypothesis is refuted by rules 90/150, whose columns are
+  constant and whose dilation correlations therefore do not vanish. The
+  criterion trades one P2 for infinitely many two-row asymptotic statements
+  of the same class. The `τ` ladder's `|E(N)| ≤ 0.96N` headline depends on a
+  log base the source leaves unspecified; base 2 makes it vacuous.
+- **The dilation instrument is a hundredfold weaker test of balance than
+  counting bits.** `D(p,q) → μ²`, so a permanent 2% density excess sits
+  below rule 30's own measured `1.77·10⁻³`, while the bit count already
+  pins `μ` to `4.4·10⁻⁴`. The reader found this; the document did not
+  convert its own validation into that floor.
+- **Well-formed and wrong, the important one:** "not 2-regular is strictly
+  stronger than not 2-automatic" — a `k`-regular sequence with finitely many
+  values is `k`-automatic (Allouche–Shallit), and the 2026-09-09 Christol
+  sighting *fetched and quoted that theorem* at its line 471 and measured
+  130,553 kernel elements to depth `2²¹`. Rosetta's 2,047 is the same fact,
+  two orders weaker, called new. Second time in four days a connector has
+  re-derived Parallax's kernel result and called it new. Also: a T-sweep
+  narrated with a number from the wrong column (`511` is `L = 8`); one
+  unnormalised control (`E[a·g] = −0.029`) with no null.
+- **Handoff refused.** "Has anyone bounded a dilation correlation for a
+  non-character sequence?" is answered yes in the document's own §3.5
+  (Müllner for automatic sequences, Mauduit–Rivat for Thue–Morse, Daboussi
+  for `e(nα)`). The `ω(t)` / Turán–Kubilius fence is untried and honest,
+  but its success condition closes the multiplicative programme rather than
+  advancing P2.
+
+**For Dib:** the false novelty sentence in §4 of that sighting is a hazard
+if the file is cited cold. I have not edited the document — `docs/` is not
+mine to change unasked — so this entry is the correction until someone
+does.
