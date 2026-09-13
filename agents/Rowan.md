@@ -4292,3 +4292,52 @@ trinomial coefficient is odd for every `n`, since `C(2k,k)` is even for
 
 Dib, mid-turn: "delegate to subagents whenever you can, you're expensive."
 Saved to memory. The sighting gets read by a subagent; I keep the band.
+
+## 2026-09-13T15:00Z — hibernation, the re-dispatch, and two distant vantages beside it
+
+**Band: not yet a result.** Three connectors in flight; two rejections recorded.
+
+The machine hibernated at about 02:55Z, twenty minutes into Groma's
+bispecial-factor session. On wake at 14:49Z the harness's 900-second
+no-turn-result timer fired on the wall clock and killed a healthy session,
+then wrote `turns 0`, `cost $0.00` for a run with 77 events. Filed:
+`a-machine-sleep-during-the-turn-timeout-kills-a-healthy-session-and-records-it-as-zero-turns`.
+Re-dispatched the identical vantage as Groma at 14:51Z (run
+`20260913T145110Z`); same filename, so the stub is overwritten.
+
+**Dib's overnight instruction, now in memory as `unproductive-threads-go-distant`:**
+when the near fields are priced, spend the next connector on a distant one.
+An opus scout read all 29 sightings and ranked twelve untried fields (its
+report is in this session's scratchpad, `distant-vantages.md`; the ranked
+names are below so the list outlives the scratchpad). Dispatched two beside
+Groma:
+
+- **Universal algebra / CSP dichotomy at P1 rung 2**, Parallax, port 4432.
+  Barto–Kozik: bounded width ⟺ weak near-unanimity polymorphism, decidable
+  on rule 30's eight-tuple relation. Turns obstruction 35's measured "no
+  bounded-width invariant" into a theorem about the language, or refutes it.
+  I added the seam the scout's paragraph lacked: a width result is about all
+  instances, and rung 2 is one structured family with a fixed seed.
+- **Algebraic circuit complexity at P3**, Astrolabe, port 4431. Partial-
+  derivative methods (Nisan–Wigderson, GKKS shifted partials) give bounds on
+  one named polynomial family; the cone polynomial of degree `2t − 1` is
+  the family, and Astrolabe's own sighting found that degree is the one
+  measure separating rule 30 from the linear controls. Told it to price
+  characteristic two first.
+
+**Rejected, with the reason, so nobody re-buys them.** (3) Interval exchanges
+/ Boshernitzan for P2: the column's `p(n) = 2^n` to `n = 14` means its orbit
+closure is the full shift, which carries uncountably many invariant measures;
+unique ergodicity is dead by measurement and the "tension nobody wrote down"
+is that. (4) Ax–Katz for P2: `n = 2t+1` variables, one equation of degree
+`2t−1`, exponent `⌈2/(2t−1)⌉ = 1`; the theorem says the count is even.
+
+The scout's remaining names, in its order: (5) sheaf-theoretic contextuality
+(Abramsky–Mansfield, P1 rung 2); (6) combinatorial game theory, Guy–Smith
+periodicity (P1); (7) polynomial method / slice rank on the reachable-row set
+(P2); (8) extension complexity, Yannakakis / Rothvoß (P2, P3); (9) Matsumoto
+C*-algebras and Krieger dimension groups (P1); (10) matrix product ansatz
+(P2); (11) Malliaris–Shelah stable regularity (P2); (12) ultradiscrete
+integrability, Yang–Baxter maps (P3). The P2 candidates are the weakest of
+the list, and the scout flagged P3's thinness as a finding in itself: three
+structural closures leave two technologies that speak about a named object.
