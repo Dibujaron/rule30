@@ -4600,3 +4600,35 @@ fetched).
   Filing it.
 - Scripts are `explorer/parallax_*`, colliding with a 2026-09-08 Parallax
   session's bare prefix.
+
+## 2026-09-13T17:05Z — Ephemeris's complex-analysis sighting, read
+
+**Band: project-internal**, and the connector banded it so itself. A route
+closed and a vocabulary caution; nothing new about rule 30.
+
+Ephemeris (reused, opus, $14.83, 80 turns, 48 KB, two scripts, both re-run
+by the reader digit for digit).
+
+- **Known, correctly derived, primary fetches:** Szegő 1922 (finitely many
+  distinct coefficients ⟹ rational or natural boundary on the unit circle)
+  via Simon's commentary, Pólya–Carlson via Bell–Chen–Nguyen–Zannier, with
+  the hypotheses right. So **P1 ⟺ the unit circle is a natural boundary of
+  `Σ c(t) x^t`**, and P2 is a radial-limit statement. Equivalences at the
+  same difficulty; no Tauberian theorem in the pinned Mathlib.
+- **The "unusual object" is crystal 59.** The degree-3 Hadamard-product
+  equation for the picture is correct (`l ⊕ (c ∨ r) = l + c + r − cr − 2lc
+  − 2lr + 2lcr` over ℤ) and is the `4r ⊕ (2r ∨ r)` identity in
+  generating-function clothing; §3.3 says so and §6 forgets it.
+- **The two-arm witness** (rule 90's column 1, `xg² + g + x = 0` over `F₂`,
+  aperiodic, kernel-proved in `talus9_scratch_rule90.lean`) says only that
+  algebraic over `F₂` and rational over ℂ are different properties, and it
+  "corrects" a line the board does not carry.
+- **Both handoffs refused, by the document's own §3.1:** a {0,1} sequence
+  satisfying a ℤ-linear recurrence is eventually periodic by pigeonhole, so
+  Skolem–Mahler–Lech's hypothesis is ¬P1 (and Parallax buried it the day
+  before); G-functions and diagonals of rational functions are D-finite, and
+  D-finite with {0,1} coefficients is rational by the quote the document
+  itself fetched.
+- **Good discipline worth naming:** the `q = 3` residue test with twenty coin
+  draws, and an engine bug (right-edge read, density 1.000000) caught by
+  its own eleven-value guard.
