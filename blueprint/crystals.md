@@ -1139,6 +1139,31 @@ in another coat, and would sit beside it, not under it.
     Groma, connector, 2026-09-10,
     `docs/connections/2026-09-10-the-switch-index-sequence-*.md`. $31.24.
 
+74. **The OR-to-AND filter, complementary to crystal 66.** Rule 120 is
+    `l XOR (c AND r)`: rule 30 with AND for OR, differing at exactly the four
+    table entries with `(c, r) ∈ {(1,0), (0,1)}`. It is left-permutive,
+    balanced, non-affine, has the same trivial polymorphism clone (Parallax,
+    2026-09-13), and from a single black cell the cell simply moves right one
+    step per row, so its centre column is white from `t = 1` and its left
+    half-plane is empty (`explorer/rowan_rule120_check.mjs`, 200 rows). **Any
+    argument for P1 whose reasoning survives replacing OR with AND is refuted
+    on sight.** Crystal 66 isolates the entry `(l,1,1)`; this isolates
+    `(l,1,0)` and `(l,0,1)`; together they cover every entry at which OR can be
+    perturbed. The cone's two edges *are* the two entries: the left edge is
+    black because `(0,0,1) → 1`, and the second-from-right diagonal alternates
+    because of `(l,1,0)`. Run over the board on 2026-09-13: crystals 37 A
+    (survive AND) / 33 B / 6 undecidable of 76, obstructions 8 / 25 / 2 of 35,
+    proved nodes about three in five survive. **Where it is weak:** the
+    entire left-diagonal region reads B for a cheap reason — rule 120's left
+    half-plane is empty — so this filter does not restate CLAUDE.md's warning
+    that the region bears on no prize; crystal 66, whose rules have full
+    pictures, is the sharper one there. It is sharp on the right half-plane,
+    on the class-general tier, and on any statement naming a local entry. The
+    two walls split under it: `leftDiagonal_period_le` is satisfied by rule
+    120 at every `k` (A); `leftDiagonal_onset_le` fails for rule 120 only at
+    `k = 0`, which is `evolve_left_edge`. A filter, not a fact about rule 30:
+    project-internal, like 66.
+
 ## The convergence of 2026-09-09, and the object no node states
 
 Four sessions on 2026-09-09 — Talus twice (theorist), Gnomon and Vernier
