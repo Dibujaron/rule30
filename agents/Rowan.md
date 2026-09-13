@@ -4427,3 +4427,39 @@ corrected sentence.
 (all hits are this session's own), but its neighbour Nivat/Cyr–Kra was
 sighted twice and died on `P(2,1) = 4`, at the seam Groma names for the new
 one. Poor prior; not buying it today.
+
+## 2026-09-13T16:30Z — the column is not a low-degree function of its index bits
+
+**Band: project-internal, weakly.** One more statistic under which the
+column is coin-like; the route it closes was mostly dead already.
+
+The P2 scout's second candidate (coding theory: the column as a Boolean
+function of the binary digits of `t`, with Carlitz–Uchiyama / Reed–Muller
+weight bounds on the excess) had a ten-minute killing test, so it went to a
+script (`explorer/rowan_index_anf.mjs`, 1.9 s over the cached 10⁷-term
+column) instead of a session. ANF degree over `t ∈ [0, 2^m)` is `m` or
+`m − 1` at every `m` from 8 to 23; monomial totals within 0.35% of
+`2^{m−1}`; max Walsh coefficient within 10% of the random heuristic; shifts
+`s = 1, 2, 3` change nothing. The instrument has power: Thue–Morse scores
+degree 1, Rudin–Shapiro degree 2. Sixteen nested windows of one sequence
+and two fixed-seed nulls — dependent observations, not draws.
+
+**The scout's theorem was wrong.** Carlitz–Uchiyama bounds the duals of BCH
+codes by polynomial degree over `GF(2^m)`, not Reed–Muller by ANF degree;
+Reed–Muller alone has no balance bound (`x₁⋯x_d` has weight `2^{m−d}`).
+What a low degree would have bought is Ax–McEliece divisibility of the
+excess by `2^{⌈m/d⌉}`, and at `m = 23` the excess 3,686 would have needed
+`d ≤ 2`. Measured: 23.
+
+The P2 scout's remaining names, so they outlive the scratchpad: Szegő /
+Pólya–Carlson natural boundary (P1 ⟺ the unit circle is a natural boundary
+of `Σ c(t) x^t`; a reformulation, mechanism unclear); modular forms mod 2
+and density of odd values (needs a functional equation nobody has); dyadic
+martingales on `ord₂(t)` (the one filtration the seed proves, via
+`edge_gap_eq`). Its own rejections, with the step it could not name, are in
+the report: Wiener–Wintner (a.e., seed is measure zero), Nullstellensatz
+(the seed evaluates, does not count), Kramers–Wannier (refuted at 0.500360).
+And the sharp constraint it stated: no theorem over *all* ±1 sequences can
+imply P2, since it would hold of the constant sequence; every P2 mechanism
+is hypothesis-about-one-sequence, theorem, cone argument, and a vantage
+supplies the middle term only.
